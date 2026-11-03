@@ -61,8 +61,13 @@ const CommandDevicePage = () => {
     >
       <FormSection title={t('sharedRequired')}>
         <FormControl fullWidth>
-          <InputLabel>{t('sharedType')}</InputLabel>
-          <Select label={t('sharedType')} value="custom" disabled>
+          <InputLabel id="command-group-page-shared-type-label">{t('sharedType')}</InputLabel>
+          <Select
+            labelId="command-group-page-shared-type-label"
+            label={t('sharedType')}
+            value="custom"
+            disabled
+          >
             <MenuItem value="custom">{t('commandCustom')}</MenuItem>
           </Select>
         </FormControl>

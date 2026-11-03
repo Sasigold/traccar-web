@@ -11,6 +11,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
+import { useTranslation } from '../LocalizationProvider';
 
 const useStyles = makeStyles()((theme) => ({
   row: {
@@ -48,6 +49,7 @@ const useStyles = makeStyles()((theme) => ({
 // overflow menu (phones). actions: [{ key, title, icon, onClick, color, disabled }]
 const RowActions = ({ actions }) => {
   const { classes, cx } = useStyles();
+  const t = useTranslation();
   const theme = useTheme();
   const phone = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -60,7 +62,11 @@ const RowActions = ({ actions }) => {
   if (phone) {
     return (
       <>
-        <IconButton size="small" onClick={(event) => setAnchorEl(event.currentTarget)}>
+        <IconButton
+          aria-label={t('a11yMoreActions')}
+          size="small"
+          onClick={(event) => setAnchorEl(event.currentTarget)}
+        >
           <MoreVertRoundedIcon fontSize="small" />
         </IconButton>
         <Menu open={Boolean(anchorEl)} anchorEl={anchorEl} onClose={() => setAnchorEl(null)}>
@@ -85,9 +91,10 @@ const RowActions = ({ actions }) => {
   return (
     <div className={classes.row}>
       {actions.map((action) => (
-        <Tooltip title={action.title} key={action.key}>
+        <Tooltip title={action.title} key={action.key} describeChild>
           <span>
             <IconButton
+              aria-label={action.title}
               size="small"
               className={cx(classes.button, action.color === 'error' && classes.danger)}
               onClick={action.onClick}

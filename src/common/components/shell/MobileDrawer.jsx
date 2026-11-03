@@ -77,7 +77,7 @@ const MobileDrawer = ({ open, onClose }) => {
       <div className={classes.brand}>
         <BrandLogo variant="reverse" height={30} />
       </div>
-      <List className={classes.list}>
+      <List component="nav" aria-label={t('shellNavigation')} className={classes.list}>
         {items.map((item) => {
           const Icon = item.icon;
           return (
@@ -86,6 +86,7 @@ const MobileDrawer = ({ open, onClose }) => {
               component={Link}
               to={item.path}
               selected={item.match(location.pathname)}
+              aria-current={item.match(location.pathname) ? 'page' : undefined}
               onClick={onClose}
             >
               <ListItemIcon>

@@ -233,7 +233,13 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
           {formatStatus(device.status, t)}
         </Typography>
       </div>
-      <IconButton size="small" color="inherit" onClick={onClose} onTouchStart={onClose}>
+      <IconButton
+        aria-label={t('a11yClose')}
+        size="small"
+        color="inherit"
+        onClick={onClose}
+        onTouchStart={onClose}
+      >
         <CloseRoundedIcon fontSize="small" />
       </IconButton>
     </div>
@@ -293,9 +299,10 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                 </div>
               )}
               <div className={classes.actions}>
-                <Tooltip title={t('sharedExtra')}>
+                <Tooltip title={t('sharedExtra')} describeChild>
                   <span>
                     <IconButton
+                      aria-label={t('sharedExtra')}
                       size="small"
                       className={classes.action}
                       onClick={(e) => setAnchorEl(e.currentTarget)}
@@ -305,9 +312,10 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                     </IconButton>
                   </span>
                 </Tooltip>
-                <Tooltip title={t('reportReplay')}>
+                <Tooltip title={t('reportReplay')} describeChild>
                   <span>
                     <IconButton
+                      aria-label={t('reportReplay')}
                       size="small"
                       className={classes.action}
                       onClick={() => navigate(`/replay?deviceId=${deviceId}`)}
@@ -317,9 +325,10 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                     </IconButton>
                   </span>
                 </Tooltip>
-                <Tooltip title={t('commandTitle')}>
+                <Tooltip title={t('commandTitle')} describeChild>
                   <span>
                     <IconButton
+                      aria-label={t('commandTitle')}
                       size="small"
                       className={classes.action}
                       onClick={() => navigate(`/settings/device/${deviceId}/command`)}
@@ -329,9 +338,10 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                     </IconButton>
                   </span>
                 </Tooltip>
-                <Tooltip title={t('sharedEdit')}>
+                <Tooltip title={t('sharedEdit')} describeChild>
                   <span>
                     <IconButton
+                      aria-label={t('sharedEdit')}
                       size="small"
                       className={classes.action}
                       onClick={() => navigate(`/settings/device/${deviceId}`)}
@@ -341,9 +351,10 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                     </IconButton>
                   </span>
                 </Tooltip>
-                <Tooltip title={t('sharedRemove')}>
+                <Tooltip title={t('sharedRemove')} describeChild>
                   <span>
                     <IconButton
+                      aria-label={t('sharedRemove')}
                       size="small"
                       className={cx(classes.action, classes.danger)}
                       onClick={() => setRemoving(true)}

@@ -80,7 +80,7 @@ const ResetPasswordPage = () => {
     <LoginLayout>
       <div className={classes.container}>
         <div className={classes.header}>
-          <IconButton color="primary" onClick={() => navigate('/login')}>
+          <IconButton aria-label={t('a11yBack')} color="primary" onClick={() => navigate('/login')}>
             <BackIcon />
           </IconButton>
           <Typography variant="h4" className={classes.title}>

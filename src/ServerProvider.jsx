@@ -5,9 +5,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useAsyncTask } from './reactHelper';
 import { sessionActions } from './store';
 import Loader from './common/components/Loader';
+import { useTranslation } from './common/components/LocalizationProvider';
 
 const ServerProvider = ({ children }) => {
   const dispatch = useDispatch();
+  const t = useTranslation();
 
   const initialized = useSelector((state) => !!state.session.server);
   const [error, setError] = useState(null);
@@ -36,7 +38,12 @@ const ServerProvider = ({ children }) => {
       <Alert
         severity="error"
         action={
-          <IconButton color="inherit" size="small" onClick={() => setError(null)}>
+          <IconButton
+            aria-label={t('a11yRetry')}
+            color="inherit"
+            size="small"
+            onClick={() => setError(null)}
+          >
             <ReplayIcon fontSize="inherit" />
           </IconButton>
         }

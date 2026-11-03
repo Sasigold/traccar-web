@@ -189,7 +189,11 @@ const LoginPage = () => {
     <LoginLayout>
       <div className={classes.options}>
         {nativeEnvironment && changeEnabled && (
-          <IconButton color="primary" onClick={() => navigate('/change-server')}>
+          <IconButton
+            color="primary"
+            onClick={() => navigate('/change-server')}
+            aria-label={t('settingsServer')}
+          >
             <Tooltip
               title={`${t('settingsServer')}: ${window.location.hostname}`}
               open={showServerTooltip}
@@ -200,17 +204,25 @@ const LoginPage = () => {
           </IconButton>
         )}
         {!nativeEnvironment && (
-          <IconButton color="primary" onClick={() => setShowQr(true)}>
+          <IconButton
+            color="primary"
+            onClick={() => setShowQr(true)}
+            aria-label={t('sharedQrCode')}
+          >
             <QrCode2Icon />
           </IconButton>
         )}
         {languageEnabled && (
           <FormControl>
-            <Select value={language} onChange={(e) => setLocalLanguage(e.target.value)}>
+            <Select
+              value={language}
+              onChange={(e) => setLocalLanguage(e.target.value)}
+              aria-label={t('loginLanguage')}
+            >
               {languageList.map((it) => (
                 <MenuItem key={it.code} value={it.code}>
                   <span className={classes.flag}>
-                    <CountryFlag countryCode={it.country} svg />
+                    <CountryFlag countryCode={it.country} svg alt="" aria-hidden="true" />
                   </span>
                   {it.name}
                 </MenuItem>

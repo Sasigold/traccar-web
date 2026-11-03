@@ -66,6 +66,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   triggerText: {
     flex: 1,
+    color: theme.palette.surface.textSecondaryOnTint,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',

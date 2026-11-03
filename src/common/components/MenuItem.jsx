@@ -36,7 +36,12 @@ const MenuItem = ({ title, link, icon, selected, external, secondary }) => {
     ? { component: 'a', href: link, target: '_blank', rel: 'noreferrer' }
     : { component: Link, to: link };
   return (
-    <ListItemButton {...linkProps} selected={selected} className={classes.item}>
+    <ListItemButton
+      {...linkProps}
+      selected={selected}
+      aria-current={selected ? 'page' : undefined}
+      className={classes.item}
+    >
       <ListItemIcon className={classes.icon}>{icon}</ListItemIcon>
       <ListItemText primary={title} secondary={secondary} className={classes.text} />
       {external && <OpenInNewRoundedIcon className={classes.external} />}

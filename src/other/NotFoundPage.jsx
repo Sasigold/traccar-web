@@ -1,11 +1,14 @@
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button, Typography, useTheme } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { BrandSymbol } from '../common/components/brand/BrandLogo';
 import { useTranslation } from '../common/components/LocalizationProvider';
+import { BrandSymbol, logoVariants } from '../common/components/brand/BrandLogo';
 
 const NotFoundPage = () => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const theme = useTheme();
+  // Approved pairings: navy symbol on light surfaces, aqua symbol on dark ones.
+  const variant = theme.palette.mode === 'dark' ? logoVariants.reverse : logoVariants.primary;
 
   return (
     <Box
@@ -23,7 +26,7 @@ const NotFoundPage = () => {
         bgcolor: 'background.default',
       }}
     >
-      <BrandSymbol size={56} />
+      <BrandSymbol size={56} color={variant.mark} />
       <Typography variant="h4" component="h1" sx={{ fontWeight: 700, color: 'text.primary' }}>
         404
       </Typography>

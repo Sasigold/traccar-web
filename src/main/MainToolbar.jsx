@@ -231,8 +231,9 @@ const MainToolbar = ({
             {t('sharedFilter')}
           </Typography>
           <FormControl>
-            <InputLabel>{t('deviceStatus')}</InputLabel>
+            <InputLabel id="main-toolbar-device-status-label">{t('deviceStatus')}</InputLabel>
             <Select
+              labelId="main-toolbar-device-status-label"
               label={t('deviceStatus')}
               value={filter.statuses}
               onChange={(e) => setFilter({ ...filter, statuses: e.target.value })}
@@ -244,8 +245,9 @@ const MainToolbar = ({
             </Select>
           </FormControl>
           <FormControl>
-            <InputLabel>{t('settingsGroups')}</InputLabel>
+            <InputLabel id="main-toolbar-settings-groups-label">{t('settingsGroups')}</InputLabel>
             <Select
+              labelId="main-toolbar-settings-groups-label"
               label={t('settingsGroups')}
               value={filter.groups}
               onChange={(e) => setFilter({ ...filter, groups: e.target.value })}
@@ -261,8 +263,9 @@ const MainToolbar = ({
             </Select>
           </FormControl>
           <FormControl>
-            <InputLabel>{t('sharedGeofences')}</InputLabel>
+            <InputLabel id="main-toolbar-shared-geofences-label">{t('sharedGeofences')}</InputLabel>
             <Select
+              labelId="main-toolbar-shared-geofences-label"
               label={t('sharedGeofences')}
               value={filter.geofences}
               onChange={(e) => setFilter({ ...filter, geofences: e.target.value })}
@@ -278,8 +281,9 @@ const MainToolbar = ({
             </Select>
           </FormControl>
           <FormControl>
-            <InputLabel>{t('sharedSortBy')}</InputLabel>
+            <InputLabel id="main-toolbar-shared-sort-by-label">{t('sharedSortBy')}</InputLabel>
             <Select
+              labelId="main-toolbar-shared-sort-by-label"
               label={t('sharedSortBy')}
               value={filterSort}
               onChange={(e) => setFilterSort(e.target.value)}

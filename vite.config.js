@@ -23,6 +23,9 @@ export default defineConfig(() => ({
       '/api': 'http://localhost:8082',
     },
   },
+  test: {
+    include: ['src/**/*.test.js'],
+  },
   build: {
     outDir: 'build',
     chunkSizeWarningLimit: 1100,

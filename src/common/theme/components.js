@@ -404,6 +404,10 @@ export default {
     },
   },
   MuiTableContainer: {
+    // Tables scroll sideways on phones; a focusable container lets keyboard users scroll them.
+    defaultProps: {
+      tabIndex: 0,
+    },
     styleOverrides: {
       root: {
         borderRadius: 'inherit',
@@ -417,7 +421,7 @@ export default {
           fontSize: '0.75rem',
           fontWeight: 700,
           letterSpacing: '0.02em',
-          color: theme.palette.text.secondary,
+          color: theme.palette.surface.textSecondaryOnTint,
           backgroundColor: theme.palette.surface.sunken,
           borderBottomColor: theme.palette.surface.borderStrong,
           whiteSpace: 'nowrap',

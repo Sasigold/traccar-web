@@ -244,7 +244,7 @@ const ReplayPage = () => {
       )}
       <div className={classes.sidebar}>
         <div className={classes.header}>
-          <IconButton edge="start" onClick={() => navigate(-1)}>
+          <IconButton aria-label={t('a11yBack')} edge="start" onClick={() => navigate(-1)}>
             <BackIcon />
           </IconButton>
           <Typography variant="h6" className={classes.title}>
@@ -296,12 +296,14 @@ const ReplayPage = () => {
                 </Typography>
                 <div className={classes.transport}>
                   <IconButton
+                    aria-label={t('a11yPrevious')}
                     onClick={() => setIndex((index) => index - 1)}
                     disabled={playing || index <= 0}
                   >
                     <FastRewindRoundedIcon />
                   </IconButton>
                   <IconButton
+                    aria-label={t(playing ? 'a11yPause' : 'a11yPlay')}
                     className={classes.play}
                     onClick={() => setPlaying(!playing)}
                     disabled={index >= positions.length - 1}
@@ -309,6 +311,7 @@ const ReplayPage = () => {
                     {playing ? <PauseRoundedIcon /> : <PlayArrowRoundedIcon />}
                   </IconButton>
                   <IconButton
+                    aria-label={t('a11yNext')}
                     onClick={() => setIndex((index) => index + 1)}
                     disabled={playing || index >= positions.length - 1}
                   >

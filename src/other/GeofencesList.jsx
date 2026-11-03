@@ -1,7 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
-import { InputAdornment, List, ListItemButton, ListItemText, TextField } from '@mui/material';
+import {
+  InputAdornment,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  TextField,
+} from '@mui/material';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import HexagonRoundedIcon from '@mui/icons-material/HexagonRounded';
 import { geofencesActions } from '../store';
@@ -95,27 +102,31 @@ const GeofencesList = ({ onGeofenceSelected, selectedId }) => {
       ) : (
         <List className={classes.list}>
           {filtered.map((item) => (
-            <ListItemButton
-              key={item.id}
-              className={classes.item}
-              selected={selectedId === item.id}
-              onClick={() => onGeofenceSelected(item.id)}
-            >
-              <span className={classes.icon}>
-                <HexagonRoundedIcon fontSize="small" />
-              </span>
-              <ListItemText
-                primary={item.name}
-                secondary={item.description}
-                slotProps={{ primary: { noWrap: true, fontWeight: 600 } }}
-              />
+            // The row actions sit beside the select button, not inside it, so screen readers
+            // and keyboards see separate controls.
+            <ListItem key={item.id} disablePadding sx={{ alignItems: 'center', gap: 0.5 }}>
+              <ListItemButton
+                className={classes.item}
+                selected={selectedId === item.id}
+                aria-pressed={selectedId === item.id}
+                onClick={() => onGeofenceSelected(item.id)}
+              >
+                <span className={classes.icon}>
+                  <HexagonRoundedIcon fontSize="small" />
+                </span>
+                <ListItemText
+                  primary={item.name}
+                  secondary={item.description}
+                  slotProps={{ primary: { noWrap: true, fontWeight: 600 } }}
+                />
+              </ListItemButton>
               <CollectionActions
                 itemId={item.id}
                 editPath="/settings/geofence"
                 endpoint="geofences"
                 onReload={refreshGeofences}
               />
-            </ListItemButton>
+            </ListItem>
           ))}
         </List>
       )}

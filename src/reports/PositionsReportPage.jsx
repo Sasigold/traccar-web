@@ -190,6 +190,7 @@ const PositionsReportPage = () => {
                     <TableCell className={classes.columnAction} padding="none">
                       {selectedItem === item ? (
                         <IconButton
+                          aria-label={t('a11yHideOnMap')}
                           size="small"
                           onClick={() => setSelectedItem(null)}
                           ref={selectedRef}
@@ -197,7 +198,11 @@ const PositionsReportPage = () => {
                           <GpsFixedIcon fontSize="small" />
                         </IconButton>
                       ) : (
-                        <IconButton size="small" onClick={() => setSelectedItem(item)}>
+                        <IconButton
+                          aria-label={t('a11yShowOnMap')}
+                          size="small"
+                          onClick={() => setSelectedItem(item)}
+                        >
                           <LocationSearchingIcon fontSize="small" />
                         </IconButton>
                       )}

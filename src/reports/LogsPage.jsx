@@ -62,9 +62,14 @@ const LogsPage = () => {
             <TableRow key={index}>
               <TableCell className={classes.columnAction} padding="none">
                 {item.deviceId ? (
-                  <IconButton color="success" size="small" disabled>
-                    <CheckCircleOutlineIcon fontSize="small" />
-                  </IconButton>
+                  <CheckCircleOutlineIcon
+                    fontSize="small"
+                    color="success"
+                    role="img"
+                    aria-label={t('a11yRegistered')}
+                    aria-hidden={false}
+                    sx={{ m: '5px', verticalAlign: 'middle' }}
+                  />
                 ) : (
                   <Tooltip title={t('loginRegister')}>
                     <IconButton

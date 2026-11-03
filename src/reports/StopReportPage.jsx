@@ -217,11 +217,19 @@ const StopReportPage = () => {
                   <TableRow key={item.positionId}>
                     <TableCell className={classes.columnAction} padding="none">
                       {selectedItem === item ? (
-                        <IconButton size="small" onClick={() => setSelectedItem(null)}>
+                        <IconButton
+                          aria-label={t('a11yHideOnMap')}
+                          size="small"
+                          onClick={() => setSelectedItem(null)}
+                        >
                           <GpsFixedIcon fontSize="small" />
                         </IconButton>
                       ) : (
-                        <IconButton size="small" onClick={() => setSelectedItem(item)}>
+                        <IconButton
+                          aria-label={t('a11yShowOnMap')}
+                          size="small"
+                          onClick={() => setSelectedItem(item)}
+                        >
                           <LocationSearchingIcon fontSize="small" />
                         </IconButton>
                       )}

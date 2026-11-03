@@ -80,8 +80,9 @@ const MaintenancePage = () => {
               label={t('sharedName')}
             />
             <FormControl>
-              <InputLabel>{t('sharedType')}</InputLabel>
+              <InputLabel id="maintenance-page-shared-type-label">{t('sharedType')}</InputLabel>
               <Select
+                labelId="maintenance-page-shared-type-label"
                 label={t('sharedType')}
                 value={item.type || ''}
                 onChange={(e) => setItem({ ...item, type: e.target.value, start: 0, period: 0 })}

@@ -40,7 +40,7 @@ const useStyles = makeStyles()((theme) => ({
     gap: 4,
     fontSize: '0.6875rem',
     fontWeight: 600,
-    color: theme.palette.text.secondary,
+    color: theme.palette.surface.textSecondaryOnTint,
     minWidth: 0,
   },
   labelText: {

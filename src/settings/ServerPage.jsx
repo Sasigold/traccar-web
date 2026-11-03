@@ -82,8 +82,9 @@ const ServerPage = () => {
               label={t('mapOverlayCustom')}
             />
             <FormControl>
-              <InputLabel>{t('mapDefault')}</InputLabel>
+              <InputLabel id="server-page-map-default-label">{t('mapDefault')}</InputLabel>
               <Select
+                labelId="server-page-map-default-label"
                 label={t('mapDefault')}
                 value={item.map || 'openFreeMap'}
                 onChange={(e) => setItem({ ...item, map: e.target.value })}
@@ -98,8 +99,11 @@ const ServerPage = () => {
               </Select>
             </FormControl>
             <FormControl>
-              <InputLabel>{t('settingsCoordinateFormat')}</InputLabel>
+              <InputLabel id="server-page-settings-coordinate-format-label">
+                {t('settingsCoordinateFormat')}
+              </InputLabel>
               <Select
+                labelId="server-page-settings-coordinate-format-label"
                 label={t('settingsCoordinateFormat')}
                 value={item.coordinateFormat || 'dd'}
                 onChange={(event) => setItem({ ...item, coordinateFormat: event.target.value })}
@@ -110,8 +114,11 @@ const ServerPage = () => {
               </Select>
             </FormControl>
             <FormControl>
-              <InputLabel>{t('settingsSpeedUnit')}</InputLabel>
+              <InputLabel id="server-page-settings-speed-unit-label">
+                {t('settingsSpeedUnit')}
+              </InputLabel>
               <Select
+                labelId="server-page-settings-speed-unit-label"
                 label={t('settingsSpeedUnit')}
                 value={item.attributes.speedUnit || 'kmh'}
                 onChange={(e) =>
@@ -127,8 +134,11 @@ const ServerPage = () => {
               </Select>
             </FormControl>
             <FormControl>
-              <InputLabel>{t('settingsDistanceUnit')}</InputLabel>
+              <InputLabel id="server-page-settings-distance-unit-label">
+                {t('settingsDistanceUnit')}
+              </InputLabel>
               <Select
+                labelId="server-page-settings-distance-unit-label"
                 label={t('settingsDistanceUnit')}
                 value={item.attributes.distanceUnit || 'km'}
                 onChange={(e) =>
@@ -144,8 +154,11 @@ const ServerPage = () => {
               </Select>
             </FormControl>
             <FormControl>
-              <InputLabel>{t('settingsAltitudeUnit')}</InputLabel>
+              <InputLabel id="server-page-settings-altitude-unit-label">
+                {t('settingsAltitudeUnit')}
+              </InputLabel>
               <Select
+                labelId="server-page-settings-altitude-unit-label"
                 label={t('settingsAltitudeUnit')}
                 value={item.attributes.altitudeUnit || 'm'}
                 onChange={(e) =>
@@ -160,8 +173,11 @@ const ServerPage = () => {
               </Select>
             </FormControl>
             <FormControl>
-              <InputLabel>{t('settingsVolumeUnit')}</InputLabel>
+              <InputLabel id="server-page-settings-volume-unit-label">
+                {t('settingsVolumeUnit')}
+              </InputLabel>
               <Select
+                labelId="server-page-settings-volume-unit-label"
                 label={t('settingsVolumeUnit')}
                 value={item.attributes.volumeUnit || 'ltr'}
                 onChange={(e) =>

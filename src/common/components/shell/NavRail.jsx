@@ -142,7 +142,12 @@ const NavRail = () => {
           <BrandLogo variant="reverse" height={34} />
         )}
       </div>
-      <List className={classes.list} disablePadding>
+      <List
+        component="nav"
+        aria-label={t('shellNavigation')}
+        className={classes.list}
+        disablePadding
+      >
         {items.map((item) => {
           const Icon = item.icon;
           const selected = item.match(location.pathname);
@@ -152,6 +157,7 @@ const NavRail = () => {
               component={Link}
               to={item.path}
               selected={selected}
+              aria-current={selected ? 'page' : undefined}
               className={classes.item}
             >
               <ListItemIcon className={classes.itemIcon}>

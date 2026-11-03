@@ -80,7 +80,11 @@ const ScheduledPage = () => {
                 <TableCell>{item.description}</TableCell>
                 <TableCell>{calendars[item.calendarId].name}</TableCell>
                 <TableCell className={classes.columnAction} padding="none">
-                  <IconButton size="small" onClick={() => setRemovingId(item.id)}>
+                  <IconButton
+                    aria-label={t('sharedRemove')}
+                    size="small"
+                    onClick={() => setRemovingId(item.id)}
+                  >
                     <DeleteOutlineRoundedIcon fontSize="small" />
                   </IconButton>
                 </TableCell>
