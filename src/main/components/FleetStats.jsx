@@ -23,7 +23,7 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: 'stretch',
     textAlign: 'start',
     gap: 2,
-    padding: theme.spacing(1, 1.25, 1.25),
+    padding: theme.spacing(1, 1, 1.25),
     borderRadius: theme.tokens.radius.lg,
     overflow: 'hidden',
     border: '1px solid transparent',
@@ -37,7 +37,7 @@ const useStyles = makeStyles()((theme) => ({
   label: {
     display: 'flex',
     alignItems: 'center',
-    gap: 5,
+    gap: 4,
     fontSize: '0.6875rem',
     fontWeight: 600,
     color: theme.palette.text.secondary,
@@ -77,7 +77,7 @@ const statuses = ['online', 'offline', 'unknown'];
 const labelKeys = {
   online: 'deviceStatusOnline',
   offline: 'deviceStatusOffline',
-  unknown: 'deviceStatusUnknown',
+  unknown: 'fleetStatsUnknown',
 };
 
 const FleetStats = ({ filter, setFilter }) => {
@@ -118,6 +118,7 @@ const FleetStats = ({ filter, setFilter }) => {
         className={classes.tile}
         style={tileStyle(allActive, theme.palette.primary.main)}
         onClick={() => setFilter({ ...filter, statuses: [] })}
+        aria-pressed={allActive}
       >
         <span className={classes.label}>
           <span className={classes.dot} style={{ backgroundColor: theme.palette.primary.main }} />
@@ -141,6 +142,7 @@ const FleetStats = ({ filter, setFilter }) => {
             style={tileStyle(filter.statuses.includes(status), color)}
             onClick={() => toggle(status)}
             title={t(labelKeys[status])}
+            aria-pressed={filter.statuses.includes(status)}
           >
             <span className={classes.label}>
               <span className={classes.dot} style={{ backgroundColor: color }} />
