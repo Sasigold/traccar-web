@@ -42,3 +42,24 @@ This fork ships a custom theme (teal/amber brand, Heebo font, rounded panels), a
 login screen, Hebrew as the default language and full RTL. Deploy with `sh deploy/deploy.sh`,
 which builds and uploads `build/` into the Traccar container's web directory on the VPS
 (see `deploy/docker-compose.override.example.yml`).
+
+### נתוני דמו לשרת האמיתי
+
+`deploy/demo-data.mjs` יוצר בשרת Traccar צי דמו ישראלי: 12 רכבים (משאיות, ואנים, טנדר, אופנוע,
+אוטובוס ורכבי הנהלה), 4 קבוצות, 8 נהגים ו־6 אזורים גאוגרפיים. הוא ממלא כמה שעות של היסטוריה
+(לדוחות ולהפעלה חוזרת של מסלולים) ואז מזיז את הרכבים בזמן אמת על כבישים אמיתיים (מסלולים מ־OSRM).
+הסטטוסים מגוונים: רוב הרכבים בנסיעה, אחד חונה, אחד מנותק ואחד שמעולם לא דיווח.
+
+```shell
+export TRACCAR_URL=http://72.61.153.60:8082   # כתובת הממשק
+export TRACCAR_EMAIL=admin@example.com        # משתמש מנהל
+export TRACCAR_PASSWORD='...'
+
+node deploy/demo-data.mjs          # יצירה + היסטוריה + סימולציה חיה (Ctrl+C לעצירה)
+node deploy/demo-data.mjs simulate # רק להריץ שוב את התנועה (בלי ליצור מחדש)
+node deploy/demo-data.mjs clean    # מחיקת כל נתוני הדמו, ורק אותם
+```
+
+המיקומים נשלחים בפרוטוקול OsmAnd לפורט 5055 באותו שרת, ולכן הפורט צריך להיות פתוח
+(או להריץ את הסקריפט על ה־VPS עצמו עם `--osmand http://localhost:5055`).
+אפשרויות נוספות: `--history <שעות>` (ברירת מחדל 3), `--interval <שניות>` (ברירת מחדל 10), `--no-osrm`.
