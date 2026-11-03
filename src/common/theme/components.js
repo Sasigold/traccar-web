@@ -209,10 +209,18 @@ export default {
         fontSize: '0.9375rem',
       },
       // Main actions are aqua with ink type in both modes (brand book page 06/17).
-      containedPrimary: ({ theme }) => (brandPrimary(theme) ? ctaStyles(theme) : {}),
-      containedSecondary: ({ theme }) => ({
-        color: theme.palette.secondary.contrastText,
-      }),
+      // MUI 9 no longer resolves the compound `containedPrimary`/`containedSecondary` keys, so the
+      // color is read from ownerState here instead.
+      contained: ({ theme, ownerState }) => {
+        const color = ownerState?.color ?? 'primary';
+        if (color === 'primary') {
+          return brandPrimary(theme) ? ctaStyles(theme) : {};
+        }
+        if (color === 'secondary') {
+          return { color: theme.palette.secondary.contrastText };
+        }
+        return {};
+      },
       outlined: ({ theme }) => ({
         borderColor: theme.palette.surface.borderStrong,
         backgroundColor: theme.palette.background.paper,

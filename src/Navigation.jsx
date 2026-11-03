@@ -10,6 +10,7 @@ import { generateLoginToken } from './common/components/NativeInterface';
 import { useLocalization } from './common/components/LocalizationProvider';
 import fetchOrThrow from './common/util/fetchOrThrow';
 
+const NotFoundPage = lazy(() => import('./other/NotFoundPage'));
 const CombinedReportPage = lazy(() => import('./reports/CombinedReportPage'));
 const PositionsReportPage = lazy(() => import('./reports/PositionsReportPage'));
 const ServerPage = lazy(() => import('./settings/ServerPage'));
@@ -200,6 +201,8 @@ const Navigation = () => {
             <Route path="audit" element={<AuditPage />} />
             <Route path="logs" element={<LogsPage />} />
           </Route>
+
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </Suspense>

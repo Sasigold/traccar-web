@@ -681,5 +681,9 @@
     "categoryVan": "شاحنة صغيرة",
     "categoryScooter": "سكوتر",
     "maintenanceStart": "بداية",
-    "maintenancePeriod": "فترة"
+    "maintenancePeriod": "فترة",
+    "notFoundTitle": "هذه الصفحة غير موجودة",
+    "notFoundDescription": "ربما يكون الرابط معطلاً أو تم نقل الصفحة.",
+    "notFoundBack": "العودة إلى الخريطة",
+    "fleetStatsUnknown": "غير معروف"
 }

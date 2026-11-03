@@ -2,25 +2,25 @@ const roundFloat = (value) => Number(value.toPrecision(12));
 
 const speedConverter = (unit) => {
   switch (unit) {
-    case 'kmh':
-      return 1.852;
+    case 'kn':
+      return 1;
     case 'mph':
       return 1852 / 1609.344;
-    case 'kn':
+    case 'kmh':
     default:
-      return 1;
+      return 1.852;
   }
 };
 
 export const speedUnitString = (unit, t) => {
   switch (unit) {
-    case 'kmh':
-      return t('sharedKmh');
+    case 'kn':
+      return t('sharedKn');
     case 'mph':
       return t('sharedMph');
-    case 'kn':
+    case 'kmh':
     default:
-      return t('sharedKn');
+      return t('sharedKmh');
   }
 };
 

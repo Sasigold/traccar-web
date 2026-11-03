@@ -738,5 +738,9 @@
     "sharedFilter": "Filter",
     "sharedPlay": "Play",
     "sharedStop": "Stop",
-    "sharedSearchGeofences": "Search geofences…"
+    "sharedSearchGeofences": "Search geofences…",
+    "notFoundTitle": "This page does not exist",
+    "notFoundDescription": "The link may be broken or the page may have moved.",
+    "notFoundBack": "Back to the map",
+    "fleetStatsUnknown": "Unknown"
 }

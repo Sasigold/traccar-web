@@ -681,5 +681,9 @@
     "categoryVan": "Фургон",
     "categoryScooter": "Скутер",
     "maintenanceStart": "Начало",
-    "maintenancePeriod": "Период"
+    "maintenancePeriod": "Период",
+    "notFoundTitle": "Такой страницы нет",
+    "notFoundDescription": "Возможно, ссылка неверна или страница перемещена.",
+    "notFoundBack": "Вернуться к карте",
+    "fleetStatsUnknown": "Нет данных"
 }

@@ -26,6 +26,28 @@ export default defineConfig(() => ({
   build: {
     outDir: 'build',
     chunkSizeWarningLimit: 1100,
+    rolldownOptions: {
+      output: {
+        // Long-lived vendor chunks: a UI deploy only invalidates our own code, so returning users
+        // re-download a few hundred KB instead of the whole app. Only libraries the first screen
+        // already needs go here; page-specific ones (charts, draw, excel, video) stay lazy.
+        codeSplitting: {
+          groups: [
+            { name: 'maplibre', test: /node_modules[\\/]maplibre-gl[\\/]/, priority: 30 },
+            {
+              name: 'react',
+              test: /node_modules[\\/](react|react-dom|react-router|react-router-dom|react-redux|@reduxjs|redux|immer|reselect|scheduler)[\\/]/,
+              priority: 20,
+            },
+            {
+              name: 'mui',
+              test: /node_modules[\\/](@mui[\\/](material|system|styled-engine|utils|private-theming)|@emotion|tss-react|stylis|stylis-plugin-rtl)[\\/]/,
+              priority: 10,
+            },
+          ],
+        },
+      },
+    },
   },
   plugins: [
     {

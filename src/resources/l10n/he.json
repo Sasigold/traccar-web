@@ -738,5 +738,9 @@
     "sharedFilter": "סינון",
     "sharedPlay": "הפעלה",
     "sharedStop": "עצירה",
-    "sharedSearchGeofences": "חיפוש אזורים…"
+    "sharedSearchGeofences": "חיפוש אזורים…",
+    "notFoundTitle": "הדף הזה לא קיים",
+    "notFoundDescription": "ייתכן שהקישור שבור או שהדף הועבר.",
+    "notFoundBack": "חזרה למפה",
+    "fleetStatsUnknown": "לא ידוע"
 }
