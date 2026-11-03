@@ -22,22 +22,20 @@
     <link rel="stylesheet" href="styles.css">
     <title>${title}</title>
     <!--${customHead}-->
-    <style>
-      /* Brand loader: the Sync Point symbol on paper (navy) / ink (dark), aqua pulse on the point. */
-      .loader {
-        position: fixed; inset: 0; margin: auto; width: 56px; height: 56px;
-      }
-      .loader path, .loader circle { fill: #102C54; }
-      html.dark .loader path, html.dark .loader circle { fill: #35D7D6; }
-      .loader circle { transform-origin: 50px 50px; animation: lp 1.2s ease-in-out infinite; }
-      @keyframes lp { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.55); } }
-      @media (prefers-reduced-motion: reduce) { .loader circle { animation: none; } }
-    </style>
   </head>
   <body>
     <noscript>Enable JavaScript to use viper fleet.</noscript>
     <div id="root" class="root"></div>
-    <svg class="loader" viewBox="0 0 100 100" aria-hidden="true"><path d="M44 8 H68 C81.255 8 92 18.745 92 32 V56 H73 V33 C73 29.686 70.314 27 67 27 H44 Z M56 92 H32 C18.745 92 8 81.255 8 68 V44 H27 V67 C27 70.314 29.686 73 33 73 H56 Z"/><circle cx="50" cy="50" r="9"/></svg>
+    <!-- Brand loader (styles in styles.css; same markup as src/common/components/brand/BrandLoader.jsx). -->
+    <svg class="loader vf-loader" viewBox="0 0 100 100" role="progressbar" aria-label="viper fleet">
+      <rect class="vf-loader__tile" width="100" height="100" rx="22" />
+      <g transform="translate(14 14) scale(.72)">
+        <circle class="vf-loader__ring" cx="50" cy="50" r="9" />
+        <path class="vf-loader__mark vf-loader__top" d="M44 8 H68 C81.255 8 92 18.745 92 32 V56 H73 V33 C73 29.686 70.314 27 67 27 H44 Z" />
+        <path class="vf-loader__mark vf-loader__bottom" d="M56 92 H32 C18.745 92 8 81.255 8 68 V44 H27 V67 C27 70.314 29.686 73 33 73 H56 Z" />
+        <circle class="vf-loader__mark vf-loader__dot" cx="50" cy="50" r="9" />
+      </g>
+    </svg>
     <script type="module" src="src/index.jsx" onerror="alert('Loading error.')"></script>
   </body>
 </html>
