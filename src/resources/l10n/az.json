@@ -395,6 +395,8 @@
     "serverDisableShare": "Cihaz paylaşımını deaktiv et",
     "serverReboot": "Yenidən başlat",
     "mapTitle": "Xəritə",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Aktiv xəritələr",
     "mapOverlay": "Xəritə örtüyü",
     "mapOverlayCustom": "Xüsusi örtük",

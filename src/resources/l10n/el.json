@@ -395,6 +395,8 @@
     "serverDisableShare": "Απενεργοποίηση διαμοιρασμού συσκευής",
     "serverReboot": "Επανεκκίνηση",
     "mapTitle": "Χάρτης",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Ενεργοί χάρτες",
     "mapOverlay": "Επικάλυψη χάρτη",
     "mapOverlayCustom": "Προσαρμοσμένη επικάλυψη",

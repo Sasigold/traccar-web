@@ -395,6 +395,8 @@
     "serverDisableShare": "Désactiver le partage d'appareils",
     "serverReboot": "Redémarrer",
     "mapTitle": "Carte",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Cartes actives",
     "mapOverlay": "Superposition de cartes",
     "mapOverlayCustom": "Superposition personnalisée",

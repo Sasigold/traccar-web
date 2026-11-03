@@ -395,6 +395,8 @@
     "serverDisableShare": "Забрани споделянето на устройства",
     "serverReboot": "Рестартирай",
     "mapTitle": "Карта",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Активни карти",
     "mapOverlay": "Допълнителен слой на картата",
     "mapOverlayCustom": "Персонализиран допълнителен слой",

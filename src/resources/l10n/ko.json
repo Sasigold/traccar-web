@@ -395,6 +395,8 @@
     "serverDisableShare": "기기 공유 비활성화",
     "serverReboot": "재부팅",
     "mapTitle": "지도",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "활성화된 지도",
     "mapOverlay": "지도 오버레이",
     "mapOverlayCustom": "커스텀 오버레이",

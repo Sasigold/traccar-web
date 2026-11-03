@@ -395,6 +395,8 @@
     "serverDisableShare": "Қурилмаларни улашишни тақиқлаш",
     "serverReboot": "Қайта юклаш",
     "mapTitle": "Харита",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Фаол хариталар",
     "mapOverlay": "Хаританинг қўшимча қатлами",
     "mapOverlayCustom": "Махсус қўшимча қатлам",

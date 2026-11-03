@@ -395,6 +395,8 @@
     "serverDisableShare": "Enjam paýlaşmagy öçürmek",
     "serverReboot": "Gaýtadan işletmek",
     "mapTitle": "Karta",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Işjeň kartalar",
     "mapOverlay": "Kartanyň üstki gatlagy",
     "mapOverlayCustom": "Özbaşdak üstki gatlak",

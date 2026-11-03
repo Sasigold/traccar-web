@@ -395,6 +395,8 @@
     "serverDisableShare": "Zakázat sdílení zařízení",
     "serverReboot": "Restartovat",
     "mapTitle": "Mapa",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Aktivní mapy",
     "mapOverlay": "Překrytí mapy",
     "mapOverlayCustom": "Vlastní překrytí mapy",

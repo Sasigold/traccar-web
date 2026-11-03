@@ -395,6 +395,8 @@
     "serverDisableShare": "ປິດການແບ່ງປັນອຸປະກອນ",
     "serverReboot": "ເລີ່ມເຮັດວຽກໃໝ່",
     "mapTitle": "ແຜນທີ່",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "ແຜນທີ່ທີ່ເປີດໃຊ້",
     "mapOverlay": "ຊັ້ນຂໍ້ມູນຊ້ອນແຜນທີ່",
     "mapOverlayCustom": "ຊັ້ນຂໍ້ມູນຊ້ອນທີ່ກຳນົດເອງ",

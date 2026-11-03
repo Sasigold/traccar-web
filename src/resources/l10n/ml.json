@@ -395,6 +395,8 @@
     "serverDisableShare": "ഉപകരണം പങ്കിടൽ പ്രവർത്തനരഹിതമാക്കുക",
     "serverReboot": "പുനരാരംഭിക്കുക",
     "mapTitle": "ഭൂപടം",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "സജീവ ഭൂപടങ്ങൾ",
     "mapOverlay": "ഭൂപട ഓവർലേ",
     "mapOverlayCustom": "ഇഷ്ടാനുസൃത ഓവർലേ",

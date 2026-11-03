@@ -395,6 +395,8 @@
     "serverDisableShare": "Inaktivera enhetsdelning",
     "serverReboot": "Starta om",
     "mapTitle": "Karta",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Aktiva kartor",
     "mapOverlay": "Kartöverlägg",
     "mapOverlayCustom": "Anpassat överlägg",

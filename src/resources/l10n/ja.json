@@ -395,6 +395,8 @@
     "serverDisableShare": "デバイス共有を無効にする",
     "serverReboot": "再起動",
     "mapTitle": "地図",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "アクティブなマップ",
     "mapOverlay": "マップのオーバーレイ",
     "mapOverlayCustom": "カスタムオーバーレイ",

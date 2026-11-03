@@ -395,6 +395,8 @@
     "serverDisableShare": "Eszközmegosztás letiltása",
     "serverReboot": "Újraindítás",
     "mapTitle": "Térkép",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Aktív térképek",
     "mapOverlay": "Térképfedvény",
     "mapOverlayCustom": "Egyéni fedvény",

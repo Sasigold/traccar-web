@@ -1,10 +1,11 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
+import './mapControls.css';
 import * as maplibregl from 'maplibre-gl';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { googleProtocol } from 'maplibre-google-maps';
 import { Protocol } from 'pmtiles';
 import { useRef, useLayoutEffect, useEffect, useState, useMemo } from 'react';
-import { useTheme } from '@mui/material';
+import { useTheme, alpha } from '@mui/material';
 import MapSwitcher from '../control/MapSwitcher';
 import { useAttributePreference, usePreference } from '../../common/util/preferences';
 import usePersistedState from '../../common/util/usePersistedState';
@@ -146,8 +147,24 @@ const MapView = ({ children }) => {
     };
   }, [containerRef]);
 
+  const controlVariables = useMemo(() => {
+    const dark = theme.palette.mode === 'dark';
+    return {
+      '--map-ctrl-bg': alpha(theme.palette.background.paper, 0.82),
+      '--map-ctrl-border': dark ? alpha('#ffffff', 0.08) : alpha('#ffffff', 0.7),
+      '--map-ctrl-divider': theme.palette.divider,
+      '--map-ctrl-hover': alpha(theme.palette.primary.main, 0.1),
+      '--map-ctrl-fg': theme.palette.text.primary,
+      '--map-ctrl-accent': theme.palette.primary.main,
+      '--map-ctrl-icon-filter': dark ? 'invert(1) brightness(1.1)' : 'none',
+      '--map-ctrl-shadow': dark
+        ? `0 14px 36px ${alpha('#000000', 0.5)}`
+        : `0 14px 36px ${alpha('#0f172a', 0.14)}`,
+    };
+  }, [theme]);
+
   return (
-    <div style={{ width: '100%', height: '100%' }} ref={containerRef}>
+    <div style={{ width: '100%', height: '100%', ...controlVariables }} ref={containerRef}>
       <MapSwitcher styles={styles} selectedId={selectedStyleId} onSelect={setSelectedStyleId} />
       {mapReady && children}
     </div>

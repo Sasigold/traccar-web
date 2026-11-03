@@ -395,6 +395,8 @@
     "serverDisableShare": "ডিভাইস শেয়ার করা নিষ্ক্রিয় করুন",
     "serverReboot": "পুনরায় চালু করুন",
     "mapTitle": "মানচিত্র",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "সক্রিয় মানচিত্রসমূহ",
     "mapOverlay": "মানচিত্রের ওভারলে",
     "mapOverlayCustom": "নিজস্ব ওভারলে",

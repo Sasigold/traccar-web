@@ -395,6 +395,8 @@
     "serverDisableShare": "Estä laitteen jakaminen",
     "serverReboot": "Käynnistä uudelleen",
     "mapTitle": "Kartta",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Aktiiviset kartat",
     "mapOverlay": "Kartan päällystaso",
     "mapOverlayCustom": "Oma päällystaso",

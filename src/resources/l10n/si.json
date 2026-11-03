@@ -395,6 +395,8 @@
     "serverDisableShare": "උපාංග බෙදාගැනීම අබල කරන්න",
     "serverReboot": "නැවත ආරම්භ කරන්න",
     "mapTitle": "සිතියම",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "සක්‍රිය සිතියම්",
     "mapOverlay": "සිතියම් ආවරණය",
     "mapOverlayCustom": "අභිරුචි ආවරණය",

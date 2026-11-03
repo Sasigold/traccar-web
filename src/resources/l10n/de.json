@@ -395,6 +395,8 @@
     "serverDisableShare": "Gerätefreigabe deaktivieren",
     "serverReboot": "Neustart",
     "mapTitle": "Karte",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Aktive Karten",
     "mapOverlay": "Kartenüberlagerung",
     "mapOverlayCustom": "Benutzerdefinierte Kartenüberlagerung",

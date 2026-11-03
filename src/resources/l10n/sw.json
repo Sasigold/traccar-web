@@ -395,6 +395,8 @@
     "serverDisableShare": "Zima ushiriki wa vifaa",
     "serverReboot": "Washa upya",
     "mapTitle": "Ramani",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Ramani zinazotumika",
     "mapOverlay": "Tabaka la ziada la ramani",
     "mapOverlayCustom": "Tabaka maalum la ziada",

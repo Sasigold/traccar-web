@@ -395,6 +395,8 @@
     "serverDisableShare": "Төхөөрөмж хуваалцахыг хориглох",
     "serverReboot": "Дахин асаах",
     "mapTitle": "Газрын зураг",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Идэвхтэй газрын зургууд",
     "mapOverlay": "Газрын зургийн нэмэлт давхарга",
     "mapOverlayCustom": "Өөрийн нэмэлт давхарга",

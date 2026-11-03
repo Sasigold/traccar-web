@@ -40,13 +40,13 @@ const applyVisibility = (hidden) => {
   });
 };
 
-const useStyles = makeStyles()(() => ({
+const useStyles = makeStyles()((theme) => ({
   button: {
     '&&': {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      color: '#333',
+      color: theme.palette.text.primary,
     },
   },
 }));

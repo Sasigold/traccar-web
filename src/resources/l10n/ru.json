@@ -395,6 +395,8 @@
     "serverDisableShare": "Отключить общий доступ к устройству",
     "serverReboot": "Перезагрузка",
     "mapTitle": "Карта",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Активные карты",
     "mapOverlay": "Слой карты",
     "mapOverlayCustom": "Собственный слой",

@@ -395,6 +395,8 @@
     "serverDisableShare": "Isključi dijeljenje uređaja",
     "serverReboot": "Ponovo pokreni",
     "mapTitle": "Karta",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Aktivne karte",
     "mapOverlay": "Prekrivajuća karta",
     "mapOverlayCustom": "Prilagođeno prekrivanje",

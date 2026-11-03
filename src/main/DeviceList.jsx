@@ -10,7 +10,6 @@ import fetchOrThrow from '../common/util/fetchOrThrow';
 const useStyles = makeStyles()((theme) => ({
   list: {
     height: '100%',
-    direction: theme.direction,
   },
   listInner: {
     position: 'relative',

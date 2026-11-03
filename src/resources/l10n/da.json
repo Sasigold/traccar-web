@@ -395,6 +395,8 @@
     "serverDisableShare": "Deaktivér enhedsdeling",
     "serverReboot": "Genstart",
     "mapTitle": "Kort",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Aktive kort",
     "mapOverlay": "Kortoverlejring",
     "mapOverlayCustom": "Brugerdefineret overlejring",

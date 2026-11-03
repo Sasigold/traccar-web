@@ -395,6 +395,8 @@
     "serverDisableShare": "Keela seadme jagamine",
     "serverReboot": "Taaskäivita",
     "mapTitle": "Kaart",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Aktiivsed kaardid",
     "mapOverlay": "Kaardikate",
     "mapOverlayCustom": "Kohandatud kate",

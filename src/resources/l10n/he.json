@@ -395,6 +395,8 @@
     "serverDisableShare": "השבתת שיתוף מכשירים",
     "serverReboot": "אתחול",
     "mapTitle": "מפה",
+    "mapLive": "בזמן אמת",
+    "mapReconnecting": "מתחבר מחדש",
     "mapActive": "מפות פעילות",
     "mapOverlay": "שכבת-על של מפה",
     "mapOverlayCustom": "שכבת-על מותאמת אישית",

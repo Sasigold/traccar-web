@@ -395,6 +395,8 @@
     "serverDisableShare": "Nonaktifkan berbagi perangkat",
     "serverReboot": "Mulai ulang",
     "mapTitle": "Peta",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Peta aktif",
     "mapOverlay": "Lapisan tambahan peta",
     "mapOverlayCustom": "Lapisan tambahan khusus",

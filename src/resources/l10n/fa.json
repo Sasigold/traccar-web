@@ -395,6 +395,8 @@
     "serverDisableShare": "غیرفعال کردن اشتراک‌گذاری دستگاه",
     "serverReboot": "راه‌اندازی مجدد",
     "mapTitle": "نقشه",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "نقشه‌های فعال",
     "mapOverlay": "لایه نقشه",
     "mapOverlayCustom": "لایه سفارشی",

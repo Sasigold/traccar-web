@@ -395,6 +395,8 @@
     "serverDisableShare": "Çaktivizo ndarjen e pajisjes",
     "serverReboot": "Rinis",
     "mapTitle": "Harta",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Hartat aktive",
     "mapOverlay": "Shtresa mbivendosëse e hartës",
     "mapOverlayCustom": "Shtresë mbivendosëse e personalizuar",

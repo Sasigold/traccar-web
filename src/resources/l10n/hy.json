@@ -395,6 +395,8 @@
     "serverDisableShare": "Արգելել սարքով կիսվելը",
     "serverReboot": "Վերագործարկել",
     "mapTitle": "Քարտեզ",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Ակտիվ քարտեզներ",
     "mapOverlay": "Քարտեզի վերադիր շերտ",
     "mapOverlayCustom": "Անհատական վերադիր շերտ",
