@@ -165,7 +165,7 @@ const getDefaultLanguage = () => {
       }
     }
   }
-  return 'en';
+  return 'he';
 };
 
 const LocalizationContext = createContext({

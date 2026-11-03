@@ -35,3 +35,10 @@ npm run build
 ## License
 
 Apache License, Version 2.0. See [LICENSE.txt](https://github.com/traccar/traccar-web/blob/master/LICENSE.txt) for details.
+
+## Custom Hebrew / RTL fork
+
+This fork ships a custom theme (teal/amber brand, Heebo font, rounded panels), a redesigned
+login screen, Hebrew as the default language and full RTL. Deploy with `sh deploy/deploy.sh`,
+which builds and uploads `build/` into the Traccar container's web directory on the VPS
+(see `deploy/docker-compose.override.example.yml`).

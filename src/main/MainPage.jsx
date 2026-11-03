@@ -42,10 +42,16 @@ const useStyles = makeStyles()((theme) => ({
   header: {
     pointerEvents: 'auto',
     zIndex: 6,
+    [theme.breakpoints.up('md')]: {
+      borderRadius: '16px 16px 0 0',
+    },
   },
   footer: {
     pointerEvents: 'auto',
     zIndex: 5,
+    marginTop: theme.spacing(1.5),
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   middle: {
     flex: 1,
@@ -62,6 +68,10 @@ const useStyles = makeStyles()((theme) => ({
     zIndex: 4,
     display: 'flex',
     minHeight: 0,
+    [theme.breakpoints.up('md')]: {
+      borderRadius: '0 0 16px 16px',
+      overflow: 'hidden',
+    },
   },
 }));
 
