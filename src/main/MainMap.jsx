@@ -66,9 +66,7 @@ const MainMap = ({ filteredPositions, selectedPosition, onEventsClick }) => {
       <MapGeocoder />
       {desktop && !features.disableDeviceList && (
         <MapPadding
-          start={
-            parseInt(theme.dimensions.drawerWidthDesktop, 10) + parseInt(theme.spacing(1.5), 10)
-          }
+          start={parseInt(theme.dimensions.drawerWidthDesktop, 10) + parseInt(theme.spacing(2), 10)}
         />
       )}
     </>

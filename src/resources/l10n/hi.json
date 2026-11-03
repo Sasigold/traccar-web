@@ -395,6 +395,8 @@
     "serverDisableShare": "उपकरण साझा करना अक्षम करें",
     "serverReboot": "पुनः आरंभ करें",
     "mapTitle": "मानचित्र",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "सक्रिय मानचित्र",
     "mapOverlay": "मानचित्र ओवरले",
     "mapOverlayCustom": "कस्टम ओवरले",

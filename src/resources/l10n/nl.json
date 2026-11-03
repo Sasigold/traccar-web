@@ -395,6 +395,8 @@
     "serverDisableShare": "Delen van apparaten uitschakelen",
     "serverReboot": "Opnieuw starten",
     "mapTitle": "Kaart",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Actieve kaarten",
     "mapOverlay": "Kaartlaag",
     "mapOverlayCustom": "Aangepaste laag",

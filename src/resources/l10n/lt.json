@@ -395,6 +395,8 @@
     "serverDisableShare": "Išjungti dalijimąsi įrenginiais",
     "serverReboot": "Perkrauti",
     "mapTitle": "Žemėlapis",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Aktyvūs žemėlapiai",
     "mapOverlay": "Žemėlapių sluoksniai",
     "mapOverlayCustom": "Pasirinktinis sluoksnis",

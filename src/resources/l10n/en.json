@@ -395,6 +395,8 @@
     "serverDisableShare": "Disable Device Sharing",
     "serverReboot": "Reboot",
     "mapTitle": "Map",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Active Maps",
     "mapOverlay": "Map Overlay",
     "mapOverlayCustom": "Custom Overlay",

@@ -51,5 +51,15 @@ export default [
       ],
     },
   },
+  {
+    files: ['deploy/**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
   prettierRecommended,
 ];

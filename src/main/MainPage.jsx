@@ -1,7 +1,6 @@
 import { lazy, Suspense, useState, useCallback, useEffect } from 'react';
-import { Paper } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import { useTheme } from '@mui/material/styles';
+import { useTheme, alpha } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useDispatch, useSelector } from 'react-redux';
 import DeviceList from './DeviceList';
@@ -14,6 +13,9 @@ import useFilter from './useFilter';
 import MainToolbar from './MainToolbar';
 import { useAttributePreference } from '../common/util/preferences';
 import useFeatures from '../common/util/useFeatures';
+import { glass } from '../common/theme/glass';
+import MainHeader from './components/MainHeader';
+import FleetStats from './components/FleetStats';
 
 const MainMap = lazy(() => import('./MainMap'));
 
@@ -29,9 +31,10 @@ const useStyles = makeStyles()((theme) => ({
       position: 'fixed',
       left: 0,
       top: 0,
-      height: `calc(100% - ${theme.spacing(3)})`,
+      height: `calc(100% - ${theme.spacing(4)})`,
       width: theme.dimensions.drawerWidthDesktop,
-      margin: theme.spacing(1.5),
+      margin: theme.spacing(2),
+      gap: theme.spacing(1.5),
       zIndex: 3,
     },
     [theme.breakpoints.down('md')]: {
@@ -39,24 +42,84 @@ const useStyles = makeStyles()((theme) => ({
       width: '100%',
     },
   },
+  panel: {
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: 0,
+    [theme.breakpoints.up('md')]: {
+      ...glass(theme),
+      pointerEvents: 'auto',
+      position: 'relative',
+      borderRadius: 22,
+      overflow: 'hidden',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        insetInline: 24,
+        top: 0,
+        height: 2,
+        borderRadius: 2,
+        background: `linear-gradient(90deg, transparent, ${theme.palette.primary.main} 30%, ${theme.palette.info.main} 70%, transparent)`,
+        zIndex: 1,
+      },
+    },
+    [theme.breakpoints.down('md')]: {
+      flex: 1,
+    },
+  },
+  panelOpen: {
+    flex: 1,
+  },
   header: {
     pointerEvents: 'auto',
     zIndex: 6,
-    [theme.breakpoints.up('md')]: {
-      borderRadius: '16px 16px 0 0',
+    position: 'relative',
+    [theme.breakpoints.down('md')]: {
+      ...glass(theme, 0.92),
+      borderRadius: 0,
+      borderWidth: '0 0 1px 0',
     },
   },
+  divider: {
+    height: 1,
+    marginInline: theme.spacing(2),
+    background: `linear-gradient(90deg, transparent, ${theme.palette.divider} 20%, ${theme.palette.divider} 80%, transparent)`,
+  },
   footer: {
+    ...glass(theme),
     pointerEvents: 'auto',
     zIndex: 5,
-    marginTop: theme.spacing(1.5),
-    borderRadius: 16,
+    borderRadius: 22,
     overflow: 'hidden',
+    padding: theme.spacing(0.75),
+    '& .MuiPaper-root, & .MuiBottomNavigation-root': {
+      backgroundColor: 'transparent',
+      boxShadow: 'none',
+      border: 'none',
+    },
+    '& .MuiBottomNavigationAction-root': {
+      borderRadius: 16,
+      transition: 'background-color 160ms ease, color 160ms ease',
+      '&:hover': {
+        backgroundColor: alpha(theme.palette.primary.main, 0.06),
+      },
+    },
+    '& .MuiBottomNavigationAction-root.Mui-selected': {
+      backgroundColor: alpha(theme.palette.primary.main, 0.12),
+    },
+  },
+  footerSpacer: {
+    marginTop: 'auto',
   },
   middle: {
     flex: 1,
     display: 'grid',
     minHeight: 0,
+  },
+  middleHidden: {
+    [theme.breakpoints.up('md')]: {
+      display: 'none',
+    },
   },
   contentMap: {
     pointerEvents: 'auto',
@@ -68,15 +131,14 @@ const useStyles = makeStyles()((theme) => ({
     zIndex: 4,
     display: 'flex',
     minHeight: 0,
-    [theme.breakpoints.up('md')]: {
-      borderRadius: '0 0 16px 16px',
-      overflow: 'hidden',
+    [theme.breakpoints.down('md')]: {
+      backgroundColor: theme.palette.background.paper,
     },
   },
 }));
 
 const MainPage = () => {
-  const { classes } = useStyles();
+  const { classes, cx } = useStyles();
   const dispatch = useDispatch();
   const theme = useTheme();
 
@@ -137,47 +199,58 @@ const MainPage = () => {
         </Suspense>
       )}
       <div className={classes.sidebar}>
-        {!features.disableDeviceList && (
-          <Paper square elevation={3} className={classes.header}>
-            <MainToolbar
-              filteredDevices={filteredDevices}
-              devicesOpen={devicesOpen}
-              setDevicesOpen={setDevicesOpen}
-              keyword={keyword}
-              setKeyword={setKeyword}
-              filter={filter}
-              setFilter={setFilter}
-              filterSort={filterSort}
-              setFilterSort={setFilterSort}
-              filterMap={filterMap}
-              setFilterMap={setFilterMap}
-            />
-          </Paper>
-        )}
-        <div className={classes.middle}>
-          {!desktop && (
-            <div className={classes.contentMap}>
-              <Suspense fallback={null}>
-                <MainMap
-                  filteredPositions={filteredPositions}
-                  selectedPosition={selectedPosition}
-                  onEventsClick={onEventsClick}
+        {(!desktop || !features.disableDeviceList) && (
+          <div className={cx(classes.panel, devicesOpen && classes.panelOpen)}>
+            {!features.disableDeviceList && (
+              <div className={classes.header}>
+                {desktop && <MainHeader />}
+                <MainToolbar
+                  filteredDevices={filteredDevices}
+                  devicesOpen={devicesOpen}
+                  setDevicesOpen={setDevicesOpen}
+                  keyword={keyword}
+                  setKeyword={setKeyword}
+                  filter={filter}
+                  setFilter={setFilter}
+                  filterSort={filterSort}
+                  setFilterSort={setFilterSort}
+                  filterMap={filterMap}
+                  setFilterMap={setFilterMap}
                 />
-              </Suspense>
+                {devicesOpen && <FleetStats filter={filter} setFilter={setFilter} />}
+                {devicesOpen && desktop && <div className={classes.divider} />}
+              </div>
+            )}
+            <div className={cx(classes.middle, !devicesOpen && classes.middleHidden)}>
+              {!desktop && (
+                <div className={classes.contentMap}>
+                  <Suspense fallback={null}>
+                    <MainMap
+                      filteredPositions={filteredPositions}
+                      selectedPosition={selectedPosition}
+                      onEventsClick={onEventsClick}
+                    />
+                  </Suspense>
+                </div>
+              )}
+              {!features.disableDeviceList && (
+                <div
+                  className={classes.contentList}
+                  style={devicesOpen ? {} : { visibility: 'hidden' }}
+                >
+                  <DeviceList devices={filteredDevices} />
+                </div>
+              )}
             </div>
-          )}
-          {!features.disableDeviceList && (
-            <Paper
-              square
-              className={classes.contentList}
-              style={devicesOpen ? {} : { visibility: 'hidden' }}
-            >
-              <DeviceList devices={filteredDevices} />
-            </Paper>
-          )}
-        </div>
+          </div>
+        )}
         {desktop && !features.disableTabs && (
-          <div className={classes.footer}>
+          <div
+            className={cx(
+              classes.footer,
+              (!devicesOpen || features.disableDeviceList) && classes.footerSpacer,
+            )}
+          >
             <BottomMenu />
           </div>
         )}

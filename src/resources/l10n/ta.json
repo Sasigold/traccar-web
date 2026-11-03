@@ -395,6 +395,8 @@
     "serverDisableShare": "சாதனப் பகிர்வை முடக்கு",
     "serverReboot": "மறுதொடக்கம்",
     "mapTitle": "வரைபடம்",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "செயலில் உள்ள வரைபடங்கள்",
     "mapOverlay": "வரைபட மேலடுக்கு",
     "mapOverlayCustom": "தனிப்பயன் மேலடுக்கு",

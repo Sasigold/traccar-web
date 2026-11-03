@@ -395,6 +395,8 @@
     "serverDisableShare": "यन्त्र साझेदारी असक्षम गर्नुहोस्",
     "serverReboot": "पुनः सुरु गर्नुहोस्",
     "mapTitle": "नक्सा",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "सक्रिय नक्साहरू",
     "mapOverlay": "नक्सा ओभरले",
     "mapOverlayCustom": "अनुकूलन ओभरले",

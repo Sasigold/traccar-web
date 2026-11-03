@@ -395,6 +395,8 @@
     "serverDisableShare": "Құрылғымен бөлісуге тыйым салу",
     "serverReboot": "Қайта жүктеу",
     "mapTitle": "Карта",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Белсенді карталар",
     "mapOverlay": "Картаның қосымша қабаты",
     "mapOverlayCustom": "Арнаулы қосымша қабат",

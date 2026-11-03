@@ -10,12 +10,19 @@ import {
   Typography,
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
+import { glass } from '../common/theme/glass';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { formatNotificationTitle, formatTime } from '../common/util/formatter';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import { eventsActions } from '../store';
 
 const useStyles = makeStyles()((theme) => ({
+  paper: {
+    ...glass(theme, 0.86),
+    margin: theme.spacing(2),
+    height: `calc(100% - ${theme.spacing(4)})`,
+    borderRadius: 22,
+  },
   drawer: {
     width: theme.dimensions.eventsDrawerWidth,
   },
@@ -47,7 +54,12 @@ const EventsDrawer = ({ open, onClose }) => {
     });
 
   return (
-    <Drawer anchor="right" open={open} onClose={onClose}>
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={onClose}
+      slotProps={{ paper: { className: classes.paper } }}
+    >
       <Toolbar className={classes.toolbar} disableGutters>
         <Typography variant="h6" className={classes.title}>
           {t('reportEvents')}

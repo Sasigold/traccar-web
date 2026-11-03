@@ -395,6 +395,8 @@
     "serverDisableShare": "Deshabilitar el uso compartido de dispositivos",
     "serverReboot": "Reiniciar",
     "mapTitle": "Mapa",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Mapas activos",
     "mapOverlay": "Capa sobre el mapa",
     "mapOverlayCustom": "Capa personalizada",

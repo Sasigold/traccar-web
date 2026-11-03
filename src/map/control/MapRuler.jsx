@@ -1,7 +1,7 @@
 import * as maplibregl from 'maplibre-gl';
 import { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { useTheme } from '@mui/material';
+import { useTheme, alpha } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import StraightenIcon from '@mui/icons-material/Straighten';
 import { map } from '../core/MapView';
@@ -10,16 +10,17 @@ import { useAttributePreference } from '../../common/util/preferences';
 import { formatDistance } from '../../common/util/formatter';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 
-const useStyles = makeStyles()(() => ({
+const useStyles = makeStyles()((theme) => ({
   button: {
     '&&': {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      color: '#333',
+      color: theme.palette.text.primary,
     },
     '&.active': {
-      backgroundColor: '#e6e6e6',
+      backgroundColor: alpha(theme.palette.primary.main, 0.16),
+      color: theme.palette.primary.main,
       borderRadius: 'inherit',
     },
   },

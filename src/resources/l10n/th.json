@@ -395,6 +395,8 @@
     "serverDisableShare": "ปิดใช้งานการแชร์อุปกรณ์",
     "serverReboot": "รีบูต",
     "mapTitle": "แผนที่",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "แผนที่ที่ใช้งานอยู่",
     "mapOverlay": "การวางซ้อนแผนที่",
     "mapOverlayCustom": "การวางซ้อนแบบกำหนดเอง",

@@ -395,6 +395,8 @@
     "serverDisableShare": "បិទការចែករំលែកឧបករណ៍",
     "serverReboot": "ចាប់ផ្តើមឡើងវិញ",
     "mapTitle": "ផែនទី",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "ផែនទីសកម្ម",
     "mapOverlay": "ស្រទាប់បន្ថែមលើផែនទី",
     "mapOverlayCustom": "ស្រទាប់បន្ថែមផ្ទាល់ខ្លួន",

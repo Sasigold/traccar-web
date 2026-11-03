@@ -395,6 +395,8 @@
     "serverDisableShare": "Atspējot ierīču koplietošanu",
     "serverReboot": "Pārstartēt",
     "mapTitle": "Karte",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Aktīvās kartes",
     "mapOverlay": "Kartes slānis",
     "mapOverlayCustom": "Pielāgots slānis",

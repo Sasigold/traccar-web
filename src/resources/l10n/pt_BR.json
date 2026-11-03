@@ -395,6 +395,8 @@
     "serverDisableShare": "Desativar compartilhamento de dispositivos",
     "serverReboot": "Reiniciar",
     "mapTitle": "Mapa",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Mapas ativos",
     "mapOverlay": "Sobreposição de mapa",
     "mapOverlayCustom": "Sobreposição personalizada",

@@ -395,6 +395,8 @@
     "serverDisableShare": "Dezactivează partajarea dispozitivelor",
     "serverReboot": "Repornește",
     "mapTitle": "Hartă",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Hărți active",
     "mapOverlay": "Suprapunere pe hartă",
     "mapOverlayCustom": "Suprapunere personalizată",

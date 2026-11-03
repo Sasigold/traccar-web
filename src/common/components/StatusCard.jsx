@@ -20,6 +20,8 @@ import {
   Tooltip,
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
+import { alpha } from '@mui/material/styles';
+import { glass, statusColor } from '../theme/glass';
 import CloseIcon from '@mui/icons-material/Close';
 import RouteIcon from '@mui/icons-material/Route';
 import SendIcon from '@mui/icons-material/Send';
@@ -39,15 +41,43 @@ import fetchOrThrow from '../util/fetchOrThrow';
 
 const useStyles = makeStyles()((theme, { desktopPadding }) => ({
   card: {
+    ...glass(theme, 0.86),
     pointerEvents: 'auto',
+    position: 'relative',
     width: theme.dimensions.popupMaxWidth,
+    borderRadius: 20,
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      insetInline: 20,
+      top: 0,
+      height: 2,
+      borderRadius: 2,
+      background: `linear-gradient(90deg, transparent, ${theme.palette.primary.main} 30%, ${theme.palette.info.main} 70%, transparent)`,
+      zIndex: 1,
+    },
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: theme.spacing(1, 1, 0, 2),
-    color: theme.palette.text.secondary,
+    gap: theme.spacing(1),
+    padding: theme.spacing(1.5, 1, 0.5, 2),
+    color: theme.palette.text.primary,
+    cursor: 'grab',
+  },
+  title: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    minWidth: 0,
+    fontWeight: 700,
+  },
+  titleDot: {
+    width: 8,
+    height: 8,
+    borderRadius: '50%',
+    flexShrink: 0,
   },
   media: {
     height: theme.dimensions.popupImageHeight,
@@ -81,6 +111,14 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
   },
   actions: {
     justifyContent: 'space-between',
+    margin: theme.spacing(0, 1, 1),
+    padding: theme.spacing(0.5),
+    borderRadius: 14,
+    backgroundColor: alpha(
+      theme.palette.text.primary,
+      theme.palette.mode === 'dark' ? 0.05 : 0.035,
+    ),
+    border: `1px solid ${theme.palette.divider}`,
   },
   root: {
     pointerEvents: 'none',
@@ -117,7 +155,7 @@ const StatusRow = ({ name, content }) => {
 };
 
 const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPadding = 0 }) => {
-  const { classes, cx } = useStyles({ desktopPadding });
+  const { classes, cx, theme } = useStyles({ desktopPadding });
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const t = useTranslation();
@@ -187,7 +225,14 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                 image={deviceImage && `api/media/${device.uniqueId}/${deviceImage}`}
               >
                 <div className={classes.header}>
-                  <Typography variant="body2" color="inherit">
+                  <Typography variant="subtitle2" color="inherit" className={classes.title} noWrap>
+                    <span
+                      className={classes.titleDot}
+                      style={{
+                        backgroundColor: statusColor(theme, device.status),
+                        boxShadow: `0 0 8px ${alpha(statusColor(theme, device.status), 0.7)}`,
+                      }}
+                    />
                     {device.name}
                   </Typography>
                   <IconButton size="small" color="inherit" onClick={onClose} onTouchStart={onClose}>

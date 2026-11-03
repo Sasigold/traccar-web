@@ -395,6 +395,8 @@
     "serverDisableShare": "Onemogući deljenje uređaja",
     "serverReboot": "Pokreni ponovo",
     "mapTitle": "Mapa",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Aktivne mape",
     "mapOverlay": "Preklopni sloj mape",
     "mapOverlayCustom": "Prilagođeni preklopni sloj",

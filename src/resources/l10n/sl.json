@@ -395,6 +395,8 @@
     "serverDisableShare": "Onemogoči deljenje naprav",
     "serverReboot": "Ponovni zagon",
     "mapTitle": "Zemljevid",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Aktivni zemljevidi",
     "mapOverlay": "Podatkovna plast",
     "mapOverlayCustom": "Podatkovna plast po meri",

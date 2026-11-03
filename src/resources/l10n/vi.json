@@ -395,6 +395,8 @@
     "serverDisableShare": "Vô hiệu hóa chia sẻ thiết bị",
     "serverReboot": "Khởi động lại",
     "mapTitle": "Bản đồ",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Bản đồ đang dùng",
     "mapOverlay": "Lớp phủ bản đồ",
     "mapOverlayCustom": "Lớp phủ tùy chỉnh",

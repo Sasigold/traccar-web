@@ -24,7 +24,7 @@ const useStyles = makeStyles()((theme) => ({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      color: '#333',
+      color: theme.palette.text.primary,
     },
   },
   panel: {

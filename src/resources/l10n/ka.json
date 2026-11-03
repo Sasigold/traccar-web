@@ -395,6 +395,8 @@
     "serverDisableShare": "მოწყობილობის გაზიარების გამორთვა",
     "serverReboot": "გადატვირთვა",
     "mapTitle": "რუკა",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "აქტიური რუკები",
     "mapOverlay": "რუკის დამატებითი ფენა",
     "mapOverlayCustom": "მორგებული დამატებითი ფენა",

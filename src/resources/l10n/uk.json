@@ -395,6 +395,8 @@
     "serverDisableShare": "Заборонити спільний доступ до пристроїв",
     "serverReboot": "Перезавантажити",
     "mapTitle": "Карта",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "Активні карти",
     "mapOverlay": "Накладення карти",
     "mapOverlayCustom": "Власне накладення",

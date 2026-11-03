@@ -395,6 +395,8 @@
     "serverDisableShare": "تعطيل مشاركة الجهاز",
     "serverReboot": "إعادة التشغيل",
     "mapTitle": "خريطة",
+    "mapLive": "Live",
+    "mapReconnecting": "Reconnecting",
     "mapActive": "الخرائط النشطة",
     "mapOverlay": "تراكب الخريطة",
     "mapOverlayCustom": "تراكب مخصص",
