@@ -27,6 +27,7 @@ import HexagonRoundedIcon from '@mui/icons-material/HexagonRounded';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
 import { glass, statusColor } from '../theme/surfaces';
+import DeviceTile from './brand/DeviceTile';
 import { useTranslation } from './LocalizationProvider';
 import RemoveDialog from './RemoveDialog';
 import PositionValue from './PositionValue';
@@ -37,7 +38,6 @@ import { useCatch, useCatchCallback } from '../../reactHelper';
 import { useAttributePreference } from '../util/preferences';
 import fetchOrThrow from '../util/fetchOrThrow';
 import { formatStatus } from '../util/formatter';
-import { mapIconKey, mapIcons } from '../../map/core/preloadImages';
 
 const useStyles = makeStyles()((theme, { desktopPadding }) => ({
   card: {
@@ -48,16 +48,6 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     maxWidth: 'calc(100vw - 32px)',
     borderRadius: theme.tokens.radius.xl,
     overflow: 'hidden',
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      insetInline: 20,
-      top: 0,
-      height: 2,
-      borderRadius: 2,
-      background: `linear-gradient(90deg, transparent, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 70%, transparent)`,
-      zIndex: 1,
-    },
   },
   header: {
     display: 'flex',
@@ -69,22 +59,8 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
   },
   headerMedia: {
     color: theme.palette.common.white,
-    background: `linear-gradient(180deg, ${alpha('#0b1020', 0.1)} 0%, ${alpha('#0b1020', 0.65)} 100%)`,
+    background: `linear-gradient(180deg, ${alpha(theme.palette.brand.ink, 0.1)} 0%, ${alpha(theme.palette.brand.ink, 0.65)} 100%)`,
     alignItems: 'flex-end',
-  },
-  avatar: {
-    width: 36,
-    height: 36,
-    flexShrink: 0,
-    borderRadius: 11,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    '& img': {
-      width: 20,
-      height: 20,
-      filter: 'brightness(0) invert(1)',
-    },
   },
   titles: {
     flex: 1,
@@ -243,9 +219,7 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
 
   const header = device && (
     <div className={cx(classes.header, deviceImage && classes.headerMedia)}>
-      <span className={classes.avatar} style={{ backgroundColor: color }}>
-        <img src={mapIcons[mapIconKey(device.category)]} alt="" />
-      </span>
+      <DeviceTile category={device.category} status={device.status} size={36} />
       <div className={classes.titles}>
         <Typography variant="subtitle2" color="inherit" className={classes.title} noWrap>
           {device.name}

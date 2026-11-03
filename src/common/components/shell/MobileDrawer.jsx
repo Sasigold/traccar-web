@@ -15,7 +15,7 @@ import { makeStyles } from 'tss-react/mui';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
-import Logo from '../../../resources/images/logo.svg?react';
+import BrandLogo from '../brand/BrandLogo';
 import { useTranslation } from '../LocalizationProvider';
 import { useRestriction } from '../../util/permissions';
 import useLogout from '../../util/useLogout';
@@ -35,12 +35,7 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     alignItems: 'center',
     paddingInline: theme.spacing(2.5),
-    borderBottom: `1px solid ${theme.palette.surface.border}`,
-  },
-  logo: {
-    height: 28,
-    width: 'auto',
-    color: theme.palette.primary.main,
+    backgroundColor: theme.palette.chrome.background,
   },
   list: {
     paddingTop: theme.spacing(1),
@@ -80,7 +75,7 @@ const MobileDrawer = ({ open, onClose }) => {
       slotProps={{ paper: { className: classes.paper } }}
     >
       <div className={classes.brand}>
-        <Logo className={classes.logo} />
+        <BrandLogo variant="reverse" height={30} />
       </div>
       <List className={classes.list}>
         {items.map((item) => {

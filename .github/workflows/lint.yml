@@ -2,9 +2,9 @@ name: Run Lint
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, custom-ui ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, custom-ui ]
 
 jobs:
   lint:

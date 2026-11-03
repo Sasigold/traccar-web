@@ -1,5 +1,4 @@
 import { Typography } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 
 const useStyles = makeStyles()((theme) => ({
@@ -22,8 +21,8 @@ const useStyles = makeStyles()((theme) => ({
     gap: theme.spacing(1.5),
     padding: theme.spacing(1.5, 2),
     borderRadius: theme.tokens.radius.lg,
-    border: `1px solid ${theme.palette.surface.border}`,
-    backgroundColor: theme.palette.background.paper,
+    border: '1px solid transparent',
+    backgroundColor: theme.palette.surface.tint,
     minWidth: 0,
   },
   icon: {
@@ -34,7 +33,7 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+    backgroundColor: theme.palette.background.paper,
     color: theme.palette.primary.main,
     '& svg': {
       fontSize: 20,
@@ -46,7 +45,7 @@ const useStyles = makeStyles()((theme) => ({
     flexDirection: 'column',
   },
   value: {
-    fontWeight: 800,
+    fontWeight: 600,
     fontVariantNumeric: 'tabular-nums',
     letterSpacing: '-0.01em',
     lineHeight: 1.2,

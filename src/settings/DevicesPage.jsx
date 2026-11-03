@@ -33,7 +33,7 @@ import fetchOrThrow from '../common/util/fetchOrThrow';
 import AddressValue from '../common/components/AddressValue';
 import exportExcel from '../common/util/exportExcel';
 import { statusColor } from '../common/theme/surfaces';
-import { mapIconKey, mapIcons } from '../map/core/preloadImages';
+import DeviceTile from '../common/components/brand/DeviceTile';
 
 const useStyles = makeStyles()((theme) => ({
   name: {
@@ -41,20 +41,6 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: 'center',
     gap: theme.spacing(1.5),
     fontWeight: 600,
-  },
-  icon: {
-    width: 32,
-    height: 32,
-    flexShrink: 0,
-    borderRadius: 10,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    '& img': {
-      width: 18,
-      height: 18,
-      filter: 'brightness(0) invert(1)',
-    },
   },
   status: {
     display: 'inline-flex',
@@ -210,9 +196,7 @@ const DevicesPage = () => {
               <TableRow key={item.id} hover>
                 <TableCell>
                   <span className={classes.name}>
-                    <span className={classes.icon} style={{ backgroundColor: color }}>
-                      <img src={mapIcons[mapIconKey(item.category)]} alt="" />
-                    </span>
+                    <DeviceTile category={item.category} status={item.status} size={32} />
                     {item.name}
                   </span>
                 </TableCell>

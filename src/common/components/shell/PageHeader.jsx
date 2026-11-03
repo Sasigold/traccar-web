@@ -36,7 +36,7 @@ const useStyles = makeStyles()((theme) => ({
     flex: 1,
   },
   title: {
-    fontWeight: 800,
+    fontWeight: 600,
     letterSpacing: '-0.015em',
     lineHeight: 1.25,
     [theme.breakpoints.down('md')]: {

@@ -1,10 +1,20 @@
-import { brand, cyan, indigo, slate, status, surfaces, violet } from './tokens';
+import {
+  aqua,
+  brandColors,
+  chartColors,
+  chrome,
+  mapColors,
+  navy,
+  status,
+  surfaces,
+} from './tokens';
 
 const validatedColor = (color) => (/^#([0-9A-Fa-f]{3}){1,2}$/.test(color) ? color : null);
 
-export { brand };
-
-// Server attributes colorPrimary / colorSecondary still override the brand.
+// Light mode: navy is the foreground primary (text, focus, selection) and aqua
+// is the accent / main-action color. Dark mode: aqua takes over as primary
+// because navy has no contrast on dark surfaces.
+// Server attributes colorPrimary / colorSecondary can still override the brand.
 export default (server, darkMode) => {
   const mode = darkMode ? 'dark' : 'light';
   const surface = surfaces[mode];
@@ -16,14 +26,17 @@ export default (server, darkMode) => {
   const primary = primaryOverride
     ? { main: primaryOverride }
     : darkMode
-      ? { main: indigo[400], light: indigo[300], dark: indigo[500], contrastText: '#0b1020' }
-      : { main: indigo[600], light: indigo[400], dark: indigo[700], contrastText: '#ffffff' };
+      ? { main: brandColors.aqua, light: aqua[300], dark: aqua[600], contrastText: brandColors.ink }
+      : {
+          main: brandColors.navy,
+          light: navy[600],
+          dark: brandColors.ink,
+          contrastText: brandColors.white,
+        };
 
   const secondary = secondaryOverride
     ? { main: secondaryOverride }
-    : darkMode
-      ? { main: cyan[400], light: cyan[300], dark: cyan[500], contrastText: '#0b1020' }
-      : { main: cyan[500], light: cyan[400], dark: cyan[600], contrastText: '#ffffff' };
+    : { main: brandColors.aqua, light: aqua[300], dark: aqua[600], contrastText: brandColors.ink };
 
   return {
     mode,
@@ -33,6 +46,12 @@ export default (server, darkMode) => {
     },
     primary,
     secondary,
+    // Main call-to-action fill (brand: "aqua for main actions", dark type on aqua).
+    cta: {
+      main: brandColors.aqua,
+      hover: aqua[600],
+      contrastText: brandColors.ink,
+    },
     success: { main: colors.success },
     warning: { main: colors.warning },
     error: { main: colors.error },
@@ -47,24 +66,14 @@ export default (server, darkMode) => {
       main: colors.neutral,
     },
     geometry: {
-      main: cyan[500],
+      main: darkMode ? mapColors.geometryDark : mapColors.geometryLight,
     },
     alwaysDark: {
-      main: slate[900],
+      main: brandColors.ink,
     },
+    brand: brandColors,
+    chrome,
     surface,
-    gradient: {
-      start: primary.main,
-      end: secondary.main,
-    },
-    chart: [
-      primary.main,
-      secondary.main,
-      darkMode ? violet[400] : violet[500],
-      colors.warning,
-      colors.success,
-      colors.error,
-      surface.textSecondary,
-    ],
+    chart: chartColors[mode],
   };
 };

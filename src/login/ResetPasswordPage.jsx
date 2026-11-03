@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Button, TextField, Typography, IconButton } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import { alpha } from '@mui/material/styles';
-import { accentGradient } from '../common/theme/surfaces';
+import { ctaFill } from '../common/theme/surfaces';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LoginLayout from './LoginLayout';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -24,24 +23,14 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: 'center',
   },
   title: {
-    fontWeight: 800,
+    fontWeight: 600,
     letterSpacing: '-0.02em',
     marginInlineStart: theme.spacing(0.5),
   },
   cta: {
     height: 48,
     fontSize: '0.9375rem',
-    backgroundImage: accentGradient(theme),
-    color: '#ffffff',
-    boxShadow: `0 10px 24px ${alpha(theme.palette.primary.main, 0.35)}`,
-    '&:hover': {
-      backgroundImage: accentGradient(theme),
-      filter: 'brightness(1.06)',
-    },
-    '&.Mui-disabled': {
-      backgroundImage: 'none',
-      boxShadow: 'none',
-    },
+    ...ctaFill(theme),
   },
 }));
 

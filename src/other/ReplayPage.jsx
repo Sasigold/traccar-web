@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Chip, IconButton, Slider, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import { alpha, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
@@ -26,7 +26,7 @@ import MapPadding from '../map/MapPadding';
 import BackIcon from '../common/components/BackIcon';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import MapOverlay from '../map/overlay/MapOverlay';
-import { accentGradient, glass } from '../common/theme/surfaces';
+import { ctaFill, glass } from '../common/theme/surfaces';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -63,7 +63,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   title: {
     flexGrow: 1,
-    fontWeight: 800,
+    fontWeight: 600,
   },
   content: {
     display: 'flex',
@@ -110,16 +110,9 @@ const useStyles = makeStyles()((theme) => ({
   play: {
     width: 48,
     height: 48,
-    color: '#ffffff',
-    background: accentGradient(theme),
-    boxShadow: `0 8px 20px ${alpha(theme.palette.primary.main, 0.35)}`,
-    '&:hover': {
-      background: accentGradient(theme),
-      filter: 'brightness(1.08)',
-    },
+    ...ctaFill(theme),
     '&.Mui-disabled': {
-      background: theme.palette.action.disabledBackground,
-      boxShadow: 'none',
+      backgroundColor: theme.palette.action.disabledBackground,
     },
   },
   time: {

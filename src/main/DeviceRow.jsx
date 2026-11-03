@@ -37,7 +37,7 @@ import { useAttributePreference } from '../common/util/preferences';
 import GeofencesValue from '../common/components/GeofencesValue';
 import DriverValue from '../common/components/DriverValue';
 import MotionBar from './components/MotionBar';
-import { accentGradient, statusColor } from '../common/theme/surfaces';
+import { brandTile, statusColor } from '../common/theme/surfaces';
 
 dayjs.extend(relativeTime);
 
@@ -70,22 +70,17 @@ const useStyles = makeStyles()((theme) => ({
     position: 'relative',
     display: 'inline-flex',
   },
+  // Navy tile with an aqua glyph: the app icon, repeated per vehicle.
   avatar: {
+    ...brandTile(),
     width: 42,
     height: 42,
-    borderRadius: 13,
-    backgroundImage: accentGradient(theme),
-    boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.25)}, inset 0 1px 0 ${alpha('#ffffff', 0.3)}`,
+    borderRadius: theme.tokens.radius.md,
+    border:
+      theme.palette.mode === 'dark' ? `1px solid ${theme.palette.surface.borderStrong}` : 'none',
   },
-  avatarOffline: {
-    backgroundImage: 'none',
-    backgroundColor: alpha(theme.palette.error.main, 0.8),
-    boxShadow: 'none',
-  },
-  avatarUnknown: {
-    backgroundImage: 'none',
-    backgroundColor: theme.palette.neutral.main,
-    boxShadow: 'none',
+  avatarIdle: {
+    color: alpha(theme.palette.brand.ice, 0.5),
   },
   statusDot: {
     position: 'absolute',
@@ -130,7 +125,7 @@ const useStyles = makeStyles()((theme) => ({
     fontWeight: 700,
     fontVariantNumeric: 'tabular-nums',
     color: theme.palette.primary.main,
-    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+    backgroundColor: theme.palette.surface.tint,
     whiteSpace: 'nowrap',
     flexShrink: 0,
   },
@@ -147,9 +142,15 @@ const useStyles = makeStyles()((theme) => ({
     backgroundColor: theme.palette.surface.sunken,
   },
   icon: {
-    width: '22px',
-    height: '22px',
-    filter: 'brightness(0) invert(1)',
+    width: 22,
+    height: 22,
+    backgroundColor: 'currentColor',
+    maskSize: 'contain',
+    maskRepeat: 'no-repeat',
+    maskPosition: 'center',
+    WebkitMaskSize: 'contain',
+    WebkitMaskRepeat: 'no-repeat',
+    WebkitMaskPosition: 'center',
   },
   success: {
     color: theme.palette.success.main,
@@ -165,8 +166,8 @@ const useStyles = makeStyles()((theme) => ({
   },
   selected: {
     '&&': {
-      backgroundColor: alpha(theme.palette.primary.main, 0.1),
-      borderColor: alpha(theme.palette.primary.main, 0.3),
+      backgroundColor: theme.palette.surface.tint,
+      borderColor: alpha(theme.palette.primary.main, 0.25),
     },
   },
 }));
@@ -231,13 +232,8 @@ const DeviceRow = ({ devices, index, style }) => {
     );
   };
 
-  const avatarClass =
-    item.status === 'online'
-      ? classes.avatar
-      : cx(
-          classes.avatar,
-          item.status === 'offline' ? classes.avatarOffline : classes.avatarUnknown,
-        );
+  const avatarClass = cx(classes.avatar, item.status !== 'online' && classes.avatarIdle);
+  const iconUrl = `url("${mapIcons[mapIconKey(item.category)]}")`;
 
   return (
     <div style={style}>
@@ -251,7 +247,10 @@ const DeviceRow = ({ devices, index, style }) => {
         <ListItemAvatar className={classes.avatarWrapper}>
           <span className={classes.avatarBox}>
             <Avatar className={avatarClass}>
-              <img className={classes.icon} src={mapIcons[mapIconKey(item.category)]} alt="" />
+              <span
+                className={classes.icon}
+                style={{ maskImage: iconUrl, WebkitMaskImage: iconUrl }}
+              />
             </Avatar>
             <span
               className={classes.statusDot}

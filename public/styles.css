@@ -1,3 +1,4 @@
+/* VIPER FLEET / MIDNIGHT AQUA: pre-React page background (paper / ink). */
 html, body {
   height: 100%;
 }
@@ -5,11 +6,11 @@ html, body {
 body {
   margin: 0;
   padding: 0;
-  background: #f4f6fb;
+  background: #F8FCFD;
 }
 
 html.dark body {
-  background: #0b1020;
+  background: #0A1C30;
 }
 
 .root {

@@ -1,24 +1,13 @@
 import { Paper, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import { keyframes } from 'tss-react';
-import { alpha } from '@mui/material/styles';
-import GpsFixedRoundedIcon from '@mui/icons-material/GpsFixedRounded';
-import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
-import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
 import LogoImage from './LogoImage';
+import SyncArc from '../common/components/brand/SyncArc';
 import { useTranslation } from '../common/components/LocalizationProvider';
-import { glass, meshBackground } from '../common/theme/surfaces';
-import { cyan, indigo, violet } from '../common/theme/tokens';
+import { brandPanel } from '../common/theme/surfaces';
 
-const drift = keyframes`
-  0% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(-6%, 8%, 0) scale(1.08); }
-  100% { transform: translate3d(5%, -6%, 0) scale(0.96); }
-`;
-
-const noise =
-  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E\")";
-
+// Login screen composed like the brand book cover (pages 01 and 16): a flat
+// midnight navy panel with the reverse logo, a two-line display headline whose
+// second line is aqua, and the Sync Point arc bleeding off the edge.
 const useStyles = makeStyles()((theme) => ({
   root: {
     display: 'grid',
@@ -32,14 +21,12 @@ const useStyles = makeStyles()((theme) => ({
     },
   },
   brand: {
+    ...brandPanel(),
     position: 'relative',
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
-    padding: theme.spacing(8),
-    color: '#ffffff',
-    ...meshBackground(),
+    padding: theme.spacing(6, 7),
     [theme.breakpoints.down('lg')]: {
       padding: theme.spacing(5),
     },
@@ -47,118 +34,57 @@ const useStyles = makeStyles()((theme) => ({
       display: 'none',
     },
   },
-  blob: {
-    position: 'absolute',
-    borderRadius: '50%',
-    filter: 'blur(70px)',
-    pointerEvents: 'none',
-    opacity: 0.7,
-    '@media (prefers-reduced-motion: reduce)': {
-      animation: 'none',
-    },
-  },
-  blobOne: {
-    width: 520,
-    height: 520,
-    top: -180,
-    insetInlineEnd: -160,
-    background: indigo[500],
-    animation: `${drift} 22s ease-in-out infinite alternate`,
-  },
-  blobTwo: {
-    width: 440,
-    height: 440,
-    bottom: -180,
-    insetInlineStart: -140,
-    background: cyan[500],
-    opacity: 0.55,
-    animation: `${drift} 26s ease-in-out infinite alternate-reverse`,
-  },
-  blobThree: {
-    width: 360,
-    height: 360,
-    top: '38%',
-    insetInlineStart: '36%',
-    background: violet[500],
-    opacity: 0.45,
-    animation: `${drift} 30s ease-in-out infinite alternate`,
-  },
-  grid: {
-    position: 'absolute',
-    inset: 0,
-    backgroundImage: `radial-gradient(${alpha('#ffffff', 0.18)} 1px, transparent 1px)`,
-    backgroundSize: '28px 28px',
-    maskImage: 'radial-gradient(ellipse at center, black 20%, transparent 70%)',
-    pointerEvents: 'none',
-  },
-  noise: {
-    position: 'absolute',
-    inset: 0,
-    backgroundImage: noise,
-    opacity: 0.08,
-    mixBlendMode: 'overlay',
-    pointerEvents: 'none',
-  },
   brandContent: {
     position: 'relative',
     zIndex: 1,
+    flex: 1,
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(3),
-    maxWidth: 520,
+    marginTop: 'clamp(40px, 13vh, 150px)',
   },
   headline: {
-    fontWeight: 800,
-    lineHeight: 1.12,
-    letterSpacing: '-0.02em',
-    fontSize: 'clamp(2rem, 3vw, 2.75rem)',
+    fontWeight: 400,
+    lineHeight: 1.1,
+    letterSpacing: '-0.01em',
+    fontSize: 'clamp(2.25rem, 3.7vw, 3.75rem)',
+    color: theme.palette.brand.paper,
+  },
+  headlineLine: {
+    display: 'block',
+    whiteSpace: 'nowrap',
+  },
+  headlineAccent: {
+    color: theme.palette.brand.aqua,
   },
   tagline: {
+    color: theme.palette.brand.ice,
     opacity: 0.86,
     lineHeight: 1.7,
     fontSize: '1.0625rem',
+    maxWidth: 420,
   },
-  features: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1.25),
-    marginTop: theme.spacing(1),
-  },
-  feature: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1.5),
-    padding: theme.spacing(1.25, 1.75),
-    borderRadius: theme.tokens.radius.lg,
-    background: alpha('#ffffff', 0.08),
-    border: `1px solid ${alpha('#ffffff', 0.14)}`,
-    backdropFilter: 'blur(8px)',
-  },
-  featureIcon: {
-    width: 36,
-    height: 36,
-    flexShrink: 0,
-    borderRadius: 11,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: alpha('#ffffff', 0.14),
-    '& svg': {
-      fontSize: 20,
-    },
+  brandLine: {
+    position: 'relative',
+    zIndex: 1,
+    fontSize: '0.75rem',
+    fontWeight: 500,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    color: theme.palette.brand.paper,
+    textAlign: 'start',
   },
   mobileBrand: {
     display: 'none',
     [theme.breakpoints.down('md')]: {
+      ...brandPanel(),
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: 150,
+      justifyContent: 'flex-start',
+      minHeight: 132,
       padding: theme.spacing(3),
-      color: '#ffffff',
       position: 'relative',
       overflow: 'hidden',
-      ...meshBackground(),
     },
   },
   formSide: {
@@ -173,26 +99,19 @@ const useStyles = makeStyles()((theme) => ({
       alignItems: 'flex-start',
     },
   },
-  formGlow: {
-    position: 'absolute',
-    width: 640,
-    height: 640,
-    top: -260,
-    insetInlineEnd: -220,
-    borderRadius: '50%',
-    background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.14)} 0%, transparent 65%)`,
-    pointerEvents: 'none',
-  },
   card: {
     position: 'relative',
     width: '100%',
     maxWidth: 440,
     padding: theme.spacing(5),
     borderRadius: theme.tokens.radius.xxl,
-    ...glass(theme, 0.86),
+    backgroundColor: theme.palette.background.paper,
+    border: `1px solid ${theme.palette.surface.border}`,
+    boxShadow: theme.shadows[2],
     [theme.breakpoints.down('sm')]: {
       padding: theme.spacing(3),
       maxWidth: 'none',
+      boxShadow: 'none',
     },
   },
 }));
@@ -201,44 +120,34 @@ const LoginLayout = ({ children }) => {
   const { classes, cx } = useStyles();
   const t = useTranslation();
 
-  const features = [
-    { key: 'live', icon: <GpsFixedRoundedIcon />, text: t('loginFeatureLive') },
-    { key: 'history', icon: <HistoryRoundedIcon />, text: t('loginFeatureHistory') },
-    { key: 'alerts', icon: <NotificationsActiveRoundedIcon />, text: t('loginFeatureAlerts') },
-  ];
-
   return (
     <main className={classes.root}>
       <section className={classes.brand}>
-        <div className={cx(classes.blob, classes.blobOne)} />
-        <div className={cx(classes.blob, classes.blobTwo)} />
-        <div className={cx(classes.blob, classes.blobThree)} />
-        <div className={classes.grid} />
-        <div className={classes.noise} />
+        <LogoImage variant="reverse" height={44} />
         <div className={classes.brandContent}>
-          <LogoImage color="#ffffff" />
-          <Typography variant="h2" className={classes.headline}>
-            {t('loginHeadline')}
+          <Typography variant="h1" component="p" className={classes.headline}>
+            <span className={classes.headlineLine}>{t('loginHeadline')}</span>
+            <span className={cx(classes.headlineLine, classes.headlineAccent)}>
+              {t('loginHeadlineAccent')}
+            </span>
           </Typography>
           <Typography variant="body1" className={classes.tagline}>
             {t('loginTagline')}
           </Typography>
-          <div className={classes.features}>
-            {features.map((feature) => (
-              <div key={feature.key} className={classes.feature}>
-                <span className={classes.featureIcon}>{feature.icon}</span>
-                <Typography variant="body2">{feature.text}</Typography>
-              </div>
-            ))}
-          </div>
         </div>
+        {/* Brand signature: always Latin, left to right, bottom-left (inline dir, not
+            CSS direction, which the RTL style plugin would flip). */}
+        <span className={classes.brandLine} dir="ltr">
+          {t('loginBrandLine')}
+        </span>
+        <SyncArc
+          style={{ right: -24, bottom: '7%', width: 'clamp(150px, 17vw, 270px)', height: 'auto' }}
+        />
       </section>
       <div className={classes.mobileBrand}>
-        <div className={cx(classes.blob, classes.blobOne)} />
-        <LogoImage color="#ffffff" />
+        <LogoImage variant="reverse" height={36} />
       </div>
       <div className={classes.formSide}>
-        <div className={classes.formGlow} />
         <Paper className={classes.card} elevation={0}>
           <form>{children}</form>
         </Paper>

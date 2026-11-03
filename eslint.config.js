@@ -5,6 +5,9 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import prettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
 
+const brandColorMessage =
+  'Raw color values are not allowed outside src/common/theme. Use theme.palette or the brand tokens (see BRAND.md).';
+
 export default [
   {
     ignores: ['build/**', 'switcher.js', 'theme.js', 'vite.config.js'],
@@ -48,6 +51,30 @@ export default [
       '@eslint-react/exhaustive-deps': [
         'warn',
         { additionalHooks: '(useCatchCallback|useAsyncTask)$' },
+      ],
+    },
+  },
+  {
+    // Brand guard (BRAND.md, section 9): every color comes from the design
+    // tokens in src/common/theme. Raw hex / rgb / hsl values anywhere else in
+    // the app fail the lint, and therefore CI.
+    files: ['src/**/*.{js,jsx}'],
+    ignores: ['src/common/theme/**'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'Literal[value=/#[0-9a-fA-F]{3,8}\\b/]',
+          message: brandColorMessage,
+        },
+        {
+          selector: 'TemplateElement[value.raw=/#[0-9a-fA-F]{3,8}\\b/]',
+          message: brandColorMessage,
+        },
+        {
+          selector: 'Literal[value=/^\\s*(rgba?|hsla?)\\(/]',
+          message: brandColorMessage,
+        },
       ],
     },
   },

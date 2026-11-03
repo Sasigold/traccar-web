@@ -54,7 +54,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   title: {
     flexGrow: 1,
-    fontWeight: 800,
+    fontWeight: 600,
   },
   mapContainer: {
     flexGrow: 1,

@@ -8,14 +8,12 @@ import {
   ListItemText,
   Tooltip,
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import KeyboardDoubleArrowLeftRoundedIcon from '@mui/icons-material/KeyboardDoubleArrowLeftRounded';
 import KeyboardDoubleArrowRightRoundedIcon from '@mui/icons-material/KeyboardDoubleArrowRightRounded';
-import Logo from '../../../resources/images/logo.svg?react';
+import BrandLogo, { BrandSymbol } from '../brand/BrandLogo';
 import { useTranslation } from '../LocalizationProvider';
 import useNavItems from './navItems';
-import BrandMark from './BrandMark';
 import { useShell } from './ShellContext';
 
 const useStyles = makeStyles()((theme, { collapsed }) => ({
@@ -24,8 +22,10 @@ const useStyles = makeStyles()((theme, { collapsed }) => ({
     width: collapsed ? theme.dimensions.railWidthCollapsed : theme.dimensions.railWidth,
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: theme.palette.background.paper,
-    borderInlineEnd: `1px solid ${theme.palette.surface.border}`,
+    // Navy navigation with an aqua active item (brand book page 14), in both modes.
+    backgroundColor: theme.palette.chrome.background,
+    color: theme.palette.chrome.text,
+    borderInlineEnd: `1px solid ${theme.palette.chrome.border}`,
     transition: theme.transitions.create('width', {
       duration: 220,
       easing: theme.tokens.motion.easing.emphasized,
@@ -42,14 +42,7 @@ const useStyles = makeStyles()((theme, { collapsed }) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: collapsed ? 'center' : 'flex-start',
-    paddingInline: collapsed ? 0 : theme.spacing(2.25),
-    borderBottom: `1px solid ${theme.palette.surface.border}`,
-  },
-  logo: {
-    height: 30,
-    width: 'auto',
-    color: theme.palette.primary.main,
-    flexShrink: 0,
+    paddingInline: collapsed ? 0 : theme.spacing(2.5),
   },
   logoImage: {
     maxHeight: 30,
@@ -68,10 +61,25 @@ const useStyles = makeStyles()((theme, { collapsed }) => ({
     marginInline: theme.spacing(1),
     paddingInline: collapsed ? 0 : theme.spacing(1.5),
     justifyContent: collapsed ? 'center' : 'flex-start',
-    borderRadius: theme.tokens.radius.lg,
-    color: theme.palette.text.secondary,
+    borderRadius: theme.tokens.radius.md,
+    color: theme.palette.chrome.text,
+    '&:hover': {
+      backgroundColor: theme.palette.chrome.backgroundHover,
+      color: theme.palette.chrome.textStrong,
+    },
+    '&.Mui-selected, &.Mui-selected:hover': {
+      backgroundColor: theme.palette.chrome.activeBackground,
+      color: theme.palette.chrome.activeText,
+      '& .MuiListItemIcon-root': {
+        color: theme.palette.chrome.activeText,
+      },
+    },
     '&.Mui-selected::before': {
-      display: collapsed ? 'none' : 'block',
+      display: 'none',
+    },
+    '&.Mui-focusVisible': {
+      outline: `2px solid ${theme.palette.chrome.activeBackground}`,
+      outlineOffset: 2,
     },
   },
   itemIcon: {
@@ -89,21 +97,21 @@ const useStyles = makeStyles()((theme, { collapsed }) => ({
     width: collapsed ? 0 : 'auto',
     transition: 'opacity 160ms ease',
     '& .MuiListItemText-primary': {
-      fontSize: '0.9rem',
-      fontWeight: 600,
+      fontSize: '0.9375rem',
+      fontWeight: 500,
     },
   },
   footer: {
     padding: theme.spacing(1, 1, 1.5),
     display: 'flex',
     justifyContent: collapsed ? 'center' : 'flex-end',
-    borderTop: `1px solid ${theme.palette.surface.border}`,
+    borderTop: `1px solid ${theme.palette.chrome.border}`,
   },
   collapse: {
-    color: theme.palette.text.secondary,
+    color: theme.palette.chrome.text,
     '&:hover': {
-      backgroundColor: alpha(theme.palette.primary.main, 0.08),
-      color: theme.palette.primary.main,
+      backgroundColor: theme.palette.chrome.backgroundHover,
+      color: theme.palette.chrome.textStrong,
     },
   },
 }));
@@ -127,11 +135,11 @@ const NavRail = () => {
     <nav className={`${classes.root} app-rail`} aria-label={t('shellNavigation')}>
       <div className={classes.brand}>
         {collapsed ? (
-          <BrandMark size={30} />
+          <BrandSymbol size={30} color={theme.palette.brand.aqua} title="viper fleet" />
         ) : logo ? (
           <img className={classes.logoImage} src={logo} alt="" />
         ) : (
-          <Logo className={classes.logo} />
+          <BrandLogo variant="reverse" height={34} />
         )}
       </div>
       <List className={classes.list} disablePadding>

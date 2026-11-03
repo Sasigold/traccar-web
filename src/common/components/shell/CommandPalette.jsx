@@ -26,13 +26,13 @@ import { useDeviceReadonly, useRestriction } from '../../util/permissions';
 import useFeatures from '../../util/useFeatures';
 import useLogout from '../../util/useLogout';
 import useThemeMode from '../../theme/useThemeMode';
-import { mapIconKey, mapIcons } from '../../../map/core/preloadImages';
 import { useSettingsSectionItems } from '../../../settings/components/settingsSections';
 import {
   buildReportLink,
   useReportsSectionItems,
 } from '../../../reports/components/reportsSections';
-import { glass, statusColor } from '../../theme/surfaces';
+import { glass } from '../../theme/surfaces';
+import DeviceTile from '../brand/DeviceTile';
 import useNavItems from './navItems';
 import { useShell } from './ShellContext';
 
@@ -98,19 +98,6 @@ const useStyles = makeStyles()((theme) => ({
       display: 'none',
     },
   },
-  deviceIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    '& img': {
-      width: 18,
-      height: 18,
-      filter: 'brightness(0) invert(1)',
-    },
-  },
   empty: {
     padding: theme.spacing(5, 2),
     textAlign: 'center',
@@ -133,7 +120,7 @@ const useStyles = makeStyles()((theme) => ({
 const normalize = (value) => (value || '').toString().toLowerCase();
 
 const CommandPalette = ({ open, onClose }) => {
-  const { classes, cx, theme } = useStyles();
+  const { classes, cx } = useStyles();
   const t = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -361,12 +348,7 @@ const CommandPalette = ({ open, onClose }) => {
                   >
                     <ListItemIcon>
                       {device ? (
-                        <span
-                          className={classes.deviceIcon}
-                          style={{ backgroundColor: statusColor(theme, device.status) }}
-                        >
-                          <img src={mapIcons[mapIconKey(device.category)]} alt="" />
-                        </span>
+                        <DeviceTile category={device.category} status={device.status} size={32} />
                       ) : (
                         Icon && <Icon fontSize="small" />
                       )}

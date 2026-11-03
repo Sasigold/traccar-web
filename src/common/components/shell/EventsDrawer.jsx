@@ -48,7 +48,7 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
-    fontWeight: 800,
+    fontWeight: 600,
   },
   list: {
     flex: 1,

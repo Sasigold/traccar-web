@@ -38,10 +38,15 @@ Apache License, Version 2.0. See [LICENSE.txt](https://github.com/traccar/tracca
 
 ## Custom Hebrew / RTL fork
 
-This fork ships a complete SaaS-style redesign: an electric indigo/cyan design system (light by
-default with a dark mode toggle), a persistent navigation rail with a top bar and command palette
-(Ctrl+K), a settings hub with grouped sections, data tables, section-card forms, a redesigned login
-screen, Hebrew as the default language and full RTL. Deploy with `sh deploy/deploy.sh`,
+This fork is branded as **viper fleet** (SYNC POINT / MIDNIGHT AQUA): midnight navy, aqua, ice,
+paper and ink, Sora + Assistant type, the Sync Point logo and app icons (light by default with a dark
+mode toggle). It adds a navy navigation rail with a top bar and command palette (Ctrl+K), a settings
+hub with grouped sections, data tables, section-card forms, a brand login screen, Hebrew as the
+default language and full RTL.
+
+**Brand rules are binding:** read [BRAND.md](BRAND.md) before changing anything visual. The brand book
+and every source asset live in [`brand/`](brand/). `npm run lint` blocks raw colors outside the design
+tokens in `src/common/theme/tokens.js`. Deploy with `sh deploy/deploy.sh`,
 which builds and uploads `build/` into the Traccar container's web directory on the VPS
 (see `deploy/docker-compose.override.example.yml`).
 

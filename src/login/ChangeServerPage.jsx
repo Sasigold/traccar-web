@@ -67,7 +67,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   title: {
     marginTop: theme.spacing(2),
-    fontWeight: 800,
+    fontWeight: 600,
   },
   field: {
     margin: theme.spacing(3, 0),

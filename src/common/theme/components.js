@@ -1,7 +1,21 @@
 import { alpha } from '@mui/material/styles';
-import { indigo, radius, shadows, slate } from './tokens';
+import { brandColors, navy, radius, shadows } from './tokens';
+import { focusRing } from './surfaces';
+import { assistantFace } from './fonts';
 
 const tokenShadows = (theme) => shadows[theme.palette.mode];
+
+// True when the server has not overridden the brand primary color.
+const brandPrimary = (theme) =>
+  [brandColors.navy, brandColors.aqua].includes(theme.palette.primary.main);
+
+const ctaStyles = (theme) => ({
+  backgroundColor: theme.palette.cta.main,
+  color: theme.palette.cta.contrastText,
+  '&:hover': {
+    backgroundColor: theme.palette.cta.hover,
+  },
+});
 
 export default {
   MuiUseMediaQuery: {
@@ -11,6 +25,7 @@ export default {
   },
   MuiCssBaseline: {
     styleOverrides: (theme) => ({
+      '@font-face': assistantFace,
       html: {
         colorScheme: theme.palette.mode,
       },
@@ -36,7 +51,7 @@ export default {
       },
       '*::-webkit-scrollbar-track': { background: 'transparent' },
       '::selection': {
-        backgroundColor: alpha(theme.palette.primary.main, 0.25),
+        backgroundColor: alpha(brandColors.aqua, 0.35),
       },
       'html.theme-switching *': {
         transition: 'background-color 200ms ease, color 200ms ease, border-color 200ms ease',
@@ -49,7 +64,7 @@ export default {
         },
       },
       '@media print': {
-        body: { backgroundColor: '#ffffff' },
+        body: { backgroundColor: brandColors.white },
       },
     }),
   },
@@ -85,7 +100,7 @@ export default {
   MuiBackdrop: {
     styleOverrides: {
       root: {
-        backgroundColor: alpha(slate[900], 0.45),
+        backgroundColor: alpha(brandColors.ink, 0.5),
         backdropFilter: 'blur(6px)',
         '&.MuiBackdrop-invisible': {
           backgroundColor: 'transparent',
@@ -131,7 +146,7 @@ export default {
           borderColor: alpha(theme.palette.primary.main, 0.5),
         },
         '&.Mui-focused': {
-          boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.18)}`,
+          boxShadow: focusRing(theme),
         },
         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
           borderWidth: 1,
@@ -193,15 +208,8 @@ export default {
         height: 48,
         fontSize: '0.9375rem',
       },
-      containedPrimary: ({ theme }) => ({
-        ...(theme.palette.mode === 'dark' && {
-          backgroundColor: indigo[500],
-          color: '#ffffff',
-          '&:hover': {
-            backgroundColor: indigo[600],
-          },
-        }),
-      }),
+      // Main actions are aqua with ink type in both modes (brand book page 06/17).
+      containedPrimary: ({ theme }) => (brandPrimary(theme) ? ctaStyles(theme) : {}),
       containedSecondary: ({ theme }) => ({
         color: theme.palette.secondary.contrastText,
       }),
@@ -234,13 +242,8 @@ export default {
   MuiFab: {
     styleOverrides: {
       root: ({ theme }) => ({
-        color: '#ffffff',
-        backgroundImage: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-        boxShadow: tokenShadows(theme).glowPrimary,
-        '&:hover': {
-          backgroundImage: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-          filter: 'brightness(1.06)',
-        },
+        ...ctaStyles(theme),
+        boxShadow: tokenShadows(theme).lg,
       }),
     },
   },
@@ -257,7 +260,7 @@ export default {
           backgroundColor: alpha(theme.palette.text.primary, 0.05),
         },
         '&.Mui-selected': {
-          backgroundColor: alpha(theme.palette.primary.main, 0.1),
+          backgroundColor: theme.palette.surface.tint,
           color: theme.palette.primary.main,
           '& .MuiListItemIcon-root': {
             color: theme.palette.primary.main,
@@ -276,7 +279,7 @@ export default {
             backgroundColor: theme.palette.primary.main,
           },
           '&:hover': {
-            backgroundColor: alpha(theme.palette.primary.main, 0.16),
+            backgroundColor: theme.palette.surface.tint,
           },
         },
       }),
@@ -343,9 +346,9 @@ export default {
   MuiAvatar: {
     styleOverrides: {
       root: ({ theme }) => ({
-        backgroundImage: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-        color: '#ffffff',
-        fontWeight: 700,
+        backgroundColor: theme.palette.mode === 'dark' ? brandColors.aqua : brandColors.navy,
+        color: theme.palette.mode === 'dark' ? brandColors.ink : brandColors.aqua,
+        fontWeight: 600,
         borderRadius: radius.md,
       }),
     },
@@ -454,8 +457,20 @@ export default {
         opacity: 1,
       }),
       thumb: {
-        boxShadow: '0 1px 2px rgba(15, 23, 42, 0.2)',
+        boxShadow: `0 1px 2px ${alpha(brandColors.ink, 0.2)}`,
       },
+      switchBase: ({ theme }) =>
+        brandPrimary(theme)
+          ? {
+              '&.Mui-checked': {
+                color: brandColors.white,
+              },
+              '&.Mui-checked + .MuiSwitch-track': {
+                backgroundColor: theme.palette.cta.main,
+                opacity: 1,
+              },
+            }
+          : {},
     },
   },
   MuiCheckbox: {
@@ -502,14 +517,14 @@ export default {
     },
     styleOverrides: {
       tooltip: ({ theme }) => ({
-        backgroundColor: theme.palette.mode === 'dark' ? slate[700] : slate[900],
+        backgroundColor: theme.palette.mode === 'dark' ? navy[700] : brandColors.ink,
         borderRadius: radius.sm,
         fontSize: '0.75rem',
         fontWeight: 500,
         padding: theme.spacing(0.75, 1.25),
       }),
       arrow: ({ theme }) => ({
-        color: theme.palette.mode === 'dark' ? slate[700] : slate[900],
+        color: theme.palette.mode === 'dark' ? navy[700] : brandColors.ink,
       }),
     },
   },
@@ -544,9 +559,9 @@ export default {
         minHeight: 36,
         fontSize: '0.875rem',
         '&.Mui-selected': {
-          backgroundColor: alpha(theme.palette.primary.main, 0.1),
+          backgroundColor: theme.palette.surface.tint,
           '&:hover': {
-            backgroundColor: alpha(theme.palette.primary.main, 0.16),
+            backgroundColor: theme.palette.surface.tint,
           },
         },
       }),

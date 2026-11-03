@@ -1,5 +1,5 @@
 import { loadImage, prepareIcon } from './mapUtil';
-import { indigo, slate, status } from '../../common/theme/tokens';
+import { brandColors, slate, status } from '../../common/theme/tokens';
 
 import directionSvg from '../../resources/images/direction.svg';
 import backgroundSvg from '../../resources/images/background.svg';
@@ -111,12 +111,13 @@ export const eventIconKey = (type) => (eventIcons.hasOwnProperty(type) ? type : 
 
 export const mapImages = {};
 
-// Marker tint per device status (online → success, offline → error, unknown → neutral).
+// Glyph tint on the navy marker disc, per device status: online vehicles are
+// aqua on navy (brand book page 14), offline red, unknown slate, info ice.
 const markerColors = {
-  info: indigo[500],
-  success: status.light.success,
-  error: status.light.error,
-  neutral: slate[500],
+  info: brandColors.ice,
+  success: brandColors.aqua,
+  error: status.dark.error,
+  neutral: slate[300],
 };
 
 export default async () => {

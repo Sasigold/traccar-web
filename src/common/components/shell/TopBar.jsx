@@ -4,8 +4,9 @@ import { alpha, useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import Logo from '../../../resources/images/logo.svg?react';
+import BrandLogo from '../brand/BrandLogo';
 import useFeatures from '../../util/useFeatures';
+import { focusRing } from '../../theme/surfaces';
 import { useTranslation } from '../LocalizationProvider';
 import { useShell } from './ShellContext';
 import SocketStatusPill from './SocketStatusPill';
@@ -22,9 +23,7 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: 'center',
     gap: theme.spacing(0.75),
     paddingInline: theme.spacing(2),
-    backgroundColor: alpha(theme.palette.background.paper, 0.88),
-    backdropFilter: 'blur(16px) saturate(160%)',
-    WebkitBackdropFilter: 'blur(16px) saturate(160%)',
+    backgroundColor: theme.palette.background.paper,
     borderBottom: `1px solid ${theme.palette.surface.border}`,
     zIndex: theme.layers.topBar,
     [theme.breakpoints.down('md')]: {
@@ -36,9 +35,6 @@ const useStyles = makeStyles()((theme) => ({
     },
   },
   logo: {
-    height: 24,
-    width: 'auto',
-    color: theme.palette.primary.main,
     marginInlineStart: theme.spacing(0.5),
   },
   logoImage: {
@@ -65,7 +61,7 @@ const useStyles = makeStyles()((theme) => ({
       backgroundColor: theme.palette.background.paper,
     },
     '&:focus-visible': {
-      boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.18)}`,
+      boxShadow: focusRing(theme),
     },
   },
   triggerText: {
@@ -119,7 +115,11 @@ const TopBar = ({ onOpenDrawer }) => {
         (logo ? (
           <img className={classes.logoImage} src={logo} alt="" />
         ) : (
-          <Logo className={classes.logo} />
+          <BrandLogo
+            className={classes.logo}
+            variant={theme.palette.mode === 'dark' ? 'reverse' : 'primary'}
+            height={26}
+          />
         ))}
       {desktop ? (
         <ButtonBase className={classes.trigger} onClick={openPalette}>

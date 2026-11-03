@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
-import { alpha } from '@mui/material/styles';
 import { InputAdornment, List, ListItemButton, ListItemText, TextField } from '@mui/material';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import HexagonRoundedIcon from '@mui/icons-material/HexagonRounded';
@@ -40,8 +39,8 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: theme.palette.secondary.main,
-    backgroundColor: alpha(theme.palette.secondary.main, 0.14),
+    color: theme.palette.primary.main,
+    backgroundColor: theme.palette.surface.tint,
   },
 }));
 

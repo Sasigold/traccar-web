@@ -26,7 +26,7 @@ import ViewListRoundedIcon from '@mui/icons-material/ViewListRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import { glass, accentGradient } from '../common/theme/surfaces';
+import { glass, ctaFill } from '../common/theme/surfaces';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import { useDeviceReadonly } from '../common/util/permissions';
 import DeviceRow from './DeviceRow';
@@ -60,19 +60,10 @@ const useStyles = makeStyles()((theme) => ({
     height: 40,
     flexShrink: 0,
     borderRadius: theme.tokens.radius.lg,
-    color: '#ffffff',
-    background: accentGradient(theme),
-    boxShadow: `0 8px 20px ${alpha(theme.palette.primary.main, 0.35)}, inset 0 1px 0 ${alpha('#ffffff', 0.25)}`,
-    transition: 'transform 160ms ease, box-shadow 160ms ease, filter 160ms ease',
-    '&:hover': {
-      background: accentGradient(theme),
-      filter: 'brightness(1.08)',
-      transform: 'translateY(-1px)',
-      boxShadow: `0 10px 26px ${alpha(theme.palette.primary.main, 0.45)}, inset 0 1px 0 ${alpha('#ffffff', 0.25)}`,
-    },
+    ...ctaFill(theme),
+    transition: 'background-color 160ms ease',
     '&.Mui-disabled': {
-      background: theme.palette.action.disabledBackground,
-      boxShadow: 'none',
+      backgroundColor: theme.palette.action.disabledBackground,
       color: theme.palette.action.disabled,
     },
   },

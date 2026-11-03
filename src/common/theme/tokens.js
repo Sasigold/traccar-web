@@ -1,125 +1,174 @@
-// Design tokens: the single source of truth for colors, surfaces, radii,
-// shadows, motion and typography. Everything else in the theme derives from here.
+// VIPER FLEET / SYNC POINT / MIDNIGHT AQUA
+//
+// Design tokens: the single source of truth for every color, surface, radius,
+// shadow, motion value and font in the app. Everything else in the theme (and
+// every component) derives from here. See BRAND.md before adding or changing a
+// value: the brand palette below is fixed by the brand book and must not be
+// extended with new hues.
 
-export const indigo = {
-  50: '#eef2ff',
-  100: '#e0e7ff',
-  200: '#c7d2fe',
-  300: '#a5b4fc',
-  400: '#818cf8',
-  500: '#6366f1',
-  600: '#4f46e5',
-  700: '#4338ca',
-  800: '#3730a3',
-  900: '#312e81',
+// ─── Brand palette (brand book page 06 / brand-tokens.json) ──────────────────
+export const brandColors = {
+  navy: '#102C54', // Midnight navy: leading color, symbol and dark surfaces
+  aqua: '#35D7D6', // Aqua: accents, symbol on dark, main actions
+  ice: '#E1F5F7', // Ice: light surfaces and supporting layers
+  paper: '#F8FCFD', // Paper: light working background
+  ink: '#0A1C30', // Ink: dark text and monochrome logo
+  slate: '#567286', // Slate: secondary text
+  white: '#FFFFFF',
 };
 
-export const cyan = {
-  50: '#ecfeff',
-  100: '#cffafe',
-  200: '#a5f3fc',
-  300: '#67e8f9',
-  400: '#22d3ee',
-  500: '#06b6d4',
-  600: '#0891b2',
-  700: '#0e7490',
+// Tonal steps derived from the brand colors, for hover/pressed states and dark
+// mode surfaces only. They are tints and shades of navy/aqua, not new hues.
+export const navy = {
+  950: '#081627',
+  900: brandColors.ink,
+  850: '#0E2440',
+  800: brandColors.navy,
+  700: '#173A6B',
+  600: '#1F4A85',
+  500: '#2E5E9C',
+  300: '#7EA9E0',
+};
+
+export const aqua = {
+  200: '#A8EEED',
+  300: '#7FE6E5',
+  400: '#5DDFDE',
+  500: brandColors.aqua,
+  600: '#22BDBC',
+  700: '#1A9897',
+  800: '#0B7F7E', // Aqua tone that passes 4.5:1 as text on white/paper
 };
 
 export const slate = {
-  50: '#f8fafc',
-  100: '#f1f5f9',
-  200: '#e2e8f0',
-  300: '#cbd5e1',
-  400: '#94a3b8',
-  500: '#64748b',
-  600: '#475569',
-  700: '#334155',
-  800: '#1e293b',
-  900: '#0f172a',
-  950: '#020617',
+  200: '#C9D6DF',
+  300: '#9DB3C4',
+  400: '#7E95A6',
+  500: brandColors.slate,
+  600: '#425B6E',
 };
 
-export const violet = {
-  400: '#a78bfa',
-  500: '#7c3aed',
-};
-
-export const brand = {
-  primaryLight: indigo[600],
-  primaryDark: indigo[400],
-  secondaryLight: cyan[500],
-  secondaryDark: cyan[400],
-  gradientStops: [indigo[600], cyan[500]],
-};
-
+// Operational status colors (brand book page 08: "the product map uses separate
+// operational markers"). "Online" is the aqua family: every vehicle, in sync.
 export const status = {
   light: {
-    success: '#16a34a',
-    warning: '#d97706',
-    error: '#dc2626',
-    info: '#0284c7',
+    success: aqua[800],
+    warning: '#C27803',
+    error: '#D63A42',
+    info: navy[600],
     neutral: slate[400],
   },
   dark: {
-    success: '#4ade80',
-    warning: '#fbbf24',
-    error: '#f87171',
-    info: '#38bdf8',
-    neutral: slate[500],
+    success: brandColors.aqua,
+    warning: '#F6B94A',
+    error: '#FF7A7F',
+    info: navy[300],
+    neutral: slate[300],
   },
 };
 
 export const surfaces = {
   light: {
-    canvas: '#f4f6fb',
-    paper: '#ffffff',
-    raised: '#ffffff',
-    sunken: slate[100],
-    overlay: 'rgba(255, 255, 255, 0.8)',
-    border: 'rgba(15, 23, 42, 0.08)',
-    borderStrong: 'rgba(15, 23, 42, 0.14)',
-    textPrimary: slate[900],
-    textSecondary: slate[600],
-    textDisabled: slate[400],
+    canvas: brandColors.paper,
+    paper: brandColors.white,
+    raised: brandColors.white,
+    sunken: brandColors.ice,
+    tint: brandColors.ice,
+    overlay: 'rgba(255, 255, 255, 0.92)',
+    border: 'rgba(16, 44, 84, 0.10)',
+    borderStrong: 'rgba(16, 44, 84, 0.18)',
+    textPrimary: brandColors.ink,
+    textSecondary: brandColors.slate,
+    textDisabled: slate[300],
   },
   dark: {
-    canvas: '#0b1020',
-    paper: '#111827',
-    raised: '#161e31',
-    sunken: '#0d1326',
-    overlay: 'rgba(17, 24, 39, 0.78)',
-    border: 'rgba(148, 163, 184, 0.14)',
-    borderStrong: 'rgba(148, 163, 184, 0.24)',
-    textPrimary: '#e5e9f2',
-    textSecondary: '#9aa6ba',
-    textDisabled: '#5b6678',
+    canvas: brandColors.ink,
+    paper: navy[850],
+    raised: '#122C4E',
+    sunken: navy[950],
+    tint: '#14345C',
+    overlay: 'rgba(14, 36, 64, 0.92)',
+    border: 'rgba(225, 245, 247, 0.10)',
+    borderStrong: 'rgba(225, 245, 247, 0.18)',
+    textPrimary: brandColors.ice,
+    textSecondary: slate[300],
+    textDisabled: slate[500],
   },
 };
 
+// The navigation rail and brand panels stay navy in both modes (brand book
+// page 14: navy navigation, aqua active item, white type).
+export const chrome = {
+  background: brandColors.navy,
+  backgroundHover: 'rgba(225, 245, 247, 0.08)',
+  border: 'rgba(225, 245, 247, 0.10)',
+  text: 'rgba(248, 252, 253, 0.78)',
+  textStrong: brandColors.paper,
+  activeBackground: brandColors.aqua,
+  activeText: brandColors.ink,
+};
+
+// Map geometry (routes, geofences, accuracy) and marker tints.
+export const mapColors = {
+  geometryLight: aqua[600],
+  geometryDark: brandColors.aqua,
+  markerDisc: brandColors.navy,
+  markerRing: brandColors.white,
+  direction: brandColors.navy,
+  draw: {
+    inactive: aqua[600],
+    active: brandColors.navy,
+    vertex: brandColors.white,
+    static: slate[500],
+  },
+};
+
+// Categorical chart series, brand colors first.
+export const chartColors = {
+  light: [
+    brandColors.navy,
+    aqua[600],
+    brandColors.slate,
+    navy[500],
+    status.light.warning,
+    aqua[800],
+    status.light.error,
+  ],
+  dark: [
+    brandColors.aqua,
+    navy[300],
+    slate[300],
+    brandColors.ice,
+    status.dark.warning,
+    aqua[300],
+    status.dark.error,
+  ],
+};
+
+// Radii echo the quarter-circle corners of the Sync Point symbol.
 export const radius = {
   xs: 4,
   sm: 8,
-  md: 10,
-  lg: 14,
-  xl: 18,
-  xxl: 24,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 28,
   pill: 999,
 };
 
+// The brand is flat: shadows are soft, navy-tinted and only lift floating UI.
 export const shadows = {
   light: {
-    sm: '0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04)',
-    md: '0 4px 12px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.05)',
-    lg: '0 12px 32px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.06)',
-    xl: '0 24px 60px rgba(15, 23, 42, 0.16), 0 2px 6px rgba(15, 23, 42, 0.06)',
-    glowPrimary: '0 8px 24px rgba(79, 70, 229, 0.35)',
+    sm: '0 1px 2px rgba(10, 28, 48, 0.06)',
+    md: '0 4px 14px rgba(10, 28, 48, 0.07)',
+    lg: '0 12px 32px rgba(10, 28, 48, 0.10)',
+    xl: '0 24px 56px rgba(10, 28, 48, 0.14)',
   },
   dark: {
-    sm: '0 1px 2px rgba(0, 0, 0, 0.4)',
-    md: '0 4px 12px rgba(0, 0, 0, 0.45)',
-    lg: '0 12px 32px rgba(0, 0, 0, 0.5)',
-    xl: '0 24px 60px rgba(0, 0, 0, 0.6)',
-    glowPrimary: '0 8px 24px rgba(129, 140, 248, 0.35)',
+    sm: '0 1px 2px rgba(0, 0, 0, 0.35)',
+    md: '0 4px 14px rgba(0, 0, 0, 0.40)',
+    lg: '0 12px 32px rgba(0, 0, 0, 0.45)',
+    xl: '0 24px 56px rgba(0, 0, 0, 0.55)',
   },
 };
 
@@ -138,23 +187,27 @@ export const motion = {
   },
 };
 
+// Sora for Latin text and numbers, Assistant for Hebrew. Sora carries no Hebrew
+// glyphs, so the browser falls through to Assistant per character.
 export const type = {
-  fontFamily: '"Heebo Variable", Heebo, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  fontFamily: '"Sora Variable", Sora, "Assistant Brand", Assistant, "Segoe UI", Arial, sans-serif',
+  hebrew: '"Assistant Brand", Assistant, "Segoe UI", Arial, sans-serif',
   mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+  // Brand weights are 400 / 500 / 600 / 700 only.
   // [fontSize, fontWeight, lineHeight]
   scale: {
-    h1: ['2rem', 800, 1.15],
-    h2: ['1.625rem', 800, 1.2],
-    h3: ['1.375rem', 700, 1.25],
-    h4: ['1.25rem', 700, 1.3],
-    h5: ['1.125rem', 700, 1.35],
-    h6: ['1rem', 700, 1.4],
+    h1: ['2rem', 600, 1.15],
+    h2: ['1.625rem', 600, 1.2],
+    h3: ['1.375rem', 600, 1.25],
+    h4: ['1.25rem', 600, 1.3],
+    h5: ['1.125rem', 600, 1.35],
+    h6: ['1rem', 600, 1.4],
     subtitle1: ['0.9375rem', 600, 1.5],
     subtitle2: ['0.8125rem', 600, 1.5],
     body1: ['0.9375rem', 400, 1.6],
     body2: ['0.8125rem', 400, 1.55],
     caption: ['0.75rem', 500, 1.5],
-    overline: ['0.6875rem', 700, 1.5],
+    overline: ['0.6875rem', 600, 1.5],
     button: ['0.875rem', 600, 1.5],
   },
 };

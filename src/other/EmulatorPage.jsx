@@ -53,7 +53,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   title: {
     flexGrow: 1,
-    fontWeight: 800,
+    fontWeight: 600,
   },
   form: {
     padding: theme.spacing(2),

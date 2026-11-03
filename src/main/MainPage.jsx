@@ -62,16 +62,6 @@ const useStyles = makeStyles()((theme) => ({
       position: 'relative',
       borderRadius: theme.tokens.radius.xxl,
       overflow: 'hidden',
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        insetInline: 28,
-        top: 0,
-        height: 2,
-        borderRadius: 2,
-        background: `linear-gradient(90deg, transparent, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 70%, transparent)`,
-        zIndex: 1,
-      },
     },
   },
   header: {
@@ -86,7 +76,7 @@ const useStyles = makeStyles()((theme) => ({
   divider: {
     height: 1,
     marginInline: theme.spacing(2),
-    background: `linear-gradient(90deg, transparent, ${theme.palette.surface.borderStrong} 20%, ${theme.palette.surface.borderStrong} 80%, transparent)`,
+    backgroundColor: theme.palette.surface.border,
   },
   middle: {
     flex: 1,

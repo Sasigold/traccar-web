@@ -15,8 +15,7 @@ import CountryFlag from 'react-country-flag';
 import { makeStyles } from 'tss-react/mui';
 import VpnLockIcon from '@mui/icons-material/VpnLock';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
-import { alpha } from '@mui/material/styles';
-import { accentGradient } from '../common/theme/surfaces';
+import { ctaFill } from '../common/theme/surfaces';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { sessionActions } from '../store';
@@ -73,7 +72,7 @@ const useStyles = makeStyles()((theme) => ({
     marginBottom: theme.spacing(1),
   },
   title: {
-    fontWeight: 800,
+    fontWeight: 600,
     letterSpacing: '-0.02em',
   },
   subtitle: {
@@ -82,17 +81,7 @@ const useStyles = makeStyles()((theme) => ({
   cta: {
     height: 48,
     fontSize: '0.9375rem',
-    backgroundImage: accentGradient(theme),
-    color: '#ffffff',
-    boxShadow: `0 10px 24px ${alpha(theme.palette.primary.main, 0.35)}`,
-    '&:hover': {
-      backgroundImage: accentGradient(theme),
-      filter: 'brightness(1.06)',
-    },
-    '&.Mui-disabled': {
-      backgroundImage: 'none',
-      boxShadow: 'none',
-    },
+    ...ctaFill(theme),
   },
 }));
 

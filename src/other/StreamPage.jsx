@@ -24,8 +24,8 @@ const useStyles = makeStyles()((theme) => ({
     justifyContent: 'center',
     margin: theme.spacing(0, 3, 3),
     borderRadius: theme.tokens.radius.xl,
-    backgroundColor: '#0b1020',
-    color: '#ffffff',
+    backgroundColor: theme.palette.brand.ink,
+    color: theme.palette.brand.paper,
     overflow: 'hidden',
     [theme.breakpoints.down('md')]: {
       margin: theme.spacing(0, 0, 2),
