@@ -10,6 +10,7 @@ import {
   Alert,
   IconButton,
   Tooltip,
+  Typography,
 } from '@mui/material';
 import CountryFlag from 'react-country-flag';
 import { makeStyles } from 'tss-react/mui';
@@ -62,6 +63,15 @@ const useStyles = makeStyles()((theme) => ({
   },
   flag: {
     marginRight: theme.spacing(1),
+  },
+  heading: {
+    marginBottom: theme.spacing(1),
+  },
+  title: {
+    fontWeight: 800,
+  },
+  subtitle: {
+    color: theme.palette.text.secondary,
   },
 }));
 
@@ -203,6 +213,16 @@ const LoginPage = () => {
       <div className={classes.container}>
         {useMediaQuery(theme.breakpoints.down('lg')) && (
           <LogoImage color={theme.palette.primary.main} />
+        )}
+        {!useMediaQuery(theme.breakpoints.down('lg')) && (
+          <div className={classes.heading}>
+            <Typography variant="h5" className={classes.title}>
+              {t('loginTitle')}
+            </Typography>
+            <Typography variant="body2" className={classes.subtitle}>
+              הזינו את פרטי המשתמש כדי להיכנס למערכת
+            </Typography>
+          </div>
         )}
         {!!announcement && !announcementShown && (
           <Alert severity="info" onClose={() => setAnnouncementShown(true)}>

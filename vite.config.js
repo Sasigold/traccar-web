@@ -4,6 +4,14 @@ import svgr from 'vite-plugin-svgr';
 import { VitePWA } from 'vite-plugin-pwa';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
+// Brand values baked into index.html and the PWA manifest at build time,
+// so the UI looks right whether Traccar or a plain static server serves it.
+const brand = {
+  title: 'ניהול צי',
+  description: 'מרכז שליטה ובקרה לצי הרכב',
+  colorPrimary: '#0b5e5a',
+};
+
 export default defineConfig(() => ({
   base: './',
   server: {
@@ -18,6 +26,14 @@ export default defineConfig(() => ({
     chunkSizeWarningLimit: 1100,
   },
   plugins: [
+    {
+      name: 'brand-placeholders',
+      transformIndexHtml: (html) =>
+        html
+          .replaceAll('${title}', brand.title)
+          .replaceAll('${description}', brand.description)
+          .replaceAll('${colorPrimary}', brand.colorPrimary),
+    },
     svgr(),
     react(),
     VitePWA({
@@ -28,9 +44,12 @@ export default defineConfig(() => ({
         globPatterns: ['**/*.{js,css,html,woff,woff2,mp3}'],
       },
       manifest: {
-        short_name: '${title}',
-        name: '${description}',
-        theme_color: '${colorPrimary}',
+        short_name: brand.title,
+        name: brand.description,
+        theme_color: brand.colorPrimary,
+        background_color: '#f2f5f7',
+        lang: 'he',
+        dir: 'rtl',
         icons: [
           {
             src: 'pwa-64x64.png',

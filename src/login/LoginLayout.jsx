@@ -5,7 +5,6 @@ import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import LogoImage from './LogoImage';
-import { useTranslation } from '../common/components/LocalizationProvider';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -115,20 +114,11 @@ const useStyles = makeStyles()((theme) => ({
       border: 'none',
     },
   },
-  title: {
-    fontWeight: 800,
-    marginBottom: theme.spacing(0.5),
-  },
-  subtitle: {
-    color: theme.palette.text.secondary,
-    marginBottom: theme.spacing(3),
-  },
 }));
 
 const LoginLayout = ({ children }) => {
   const { classes } = useStyles();
   const theme = useTheme();
-  const t = useTranslation();
 
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
 
@@ -166,12 +156,6 @@ const LoginLayout = ({ children }) => {
       )}
       <div className={classes.formSide}>
         <Paper className={classes.card} elevation={0}>
-          <Typography variant="h5" className={classes.title}>
-            {t('loginTitle')}
-          </Typography>
-          <Typography variant="body2" className={classes.subtitle}>
-            הזינו את פרטי המשתמש כדי להיכנס למערכת
-          </Typography>
           <form>{children}</form>
         </Paper>
       </div>
