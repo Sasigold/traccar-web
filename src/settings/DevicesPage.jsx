@@ -222,7 +222,7 @@ const DevicesPage = () => {
                     {formatStatus(item.status, t)}
                     {item.lastUpdate && (
                       <Typography variant="caption" className={classes.muted}>
-                        · {formatTime(item.lastUpdate, 'minutes')}
+                        · <bdi>{formatTime(item.lastUpdate, 'minutes')}</bdi>
                       </Typography>
                     )}
                   </span>

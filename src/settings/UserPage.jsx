@@ -193,7 +193,7 @@ const UserPage = () => {
               <InputLabel>{t('mapDefault')}</InputLabel>
               <Select
                 label={t('mapDefault')}
-                value={item.map || 'openFreeMap'}
+                value={item.map || 'viper'}
                 onChange={(e) => setItem({ ...item, map: e.target.value })}
               >
                 {mapStyles

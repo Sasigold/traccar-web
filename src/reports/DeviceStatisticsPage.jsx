@@ -10,6 +10,7 @@ import { useCatchCallback } from '../reactHelper';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
 import DataTable from '../common/components/table/DataTable';
+import ReportEmptyState from './components/ReportEmptyState';
 import SelectField from '../common/components/SelectField';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 
@@ -57,7 +58,11 @@ const DeviceStatisticsPage = () => {
           </div>
         </ReportFilter>
       </div>
-      <DataTable variant="flush">
+      <DataTable
+        variant="flush"
+        empty={!loading && !items.length}
+        emptyContent={<ReportEmptyState />}
+      >
         <TableHead>
           <TableRow>
             {deviceColumns.map(([key, label]) => (

@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Avatar, Badge, BottomNavigation, BottomNavigationAction } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { useTranslation } from '../LocalizationProvider';
-import useNavItems from './navItems';
+import useNavItems, { activeNavKey } from './navItems';
 import { UserMenuPopover, userInitial } from './UserMenu';
 
 const useStyles = makeStyles()((theme) => ({
@@ -43,14 +43,16 @@ const MobileTabs = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const t = useTranslation();
-  const items = useNavItems();
+  const allItems = useNavItems();
+  const items = allItems.filter((item) => item.tab);
 
   const user = useSelector((state) => state.session.user);
   const socket = useSelector((state) => state.session.socket);
 
   const [anchorEl, setAnchorEl] = useState(null);
 
-  const current = items.find((item) => item.match(location.pathname))?.key ?? null;
+  const active = activeNavKey(allItems, location.pathname);
+  const current = items.some((item) => item.key === active) ? active : null;
 
   return (
     <>

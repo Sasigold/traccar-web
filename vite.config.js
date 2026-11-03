@@ -7,9 +7,9 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 // Brand values baked into index.html and the PWA manifest at build time,
 // so the UI looks right whether Traccar or a plain static server serves it.
 const brand = {
-  title: 'ניהול צי',
-  description: 'מרכז שליטה ובקרה לצי הרכב',
-  colorPrimary: '#4f46e5',
+  title: 'VIPER',
+  description: 'VIPER · טכנולוגיה פורצת דרך לניהול צי',
+  colorPrimary: '#1d4271',
 };
 
 export default defineConfig(() => ({
@@ -47,7 +47,7 @@ export default defineConfig(() => ({
         short_name: brand.title,
         name: brand.description,
         theme_color: brand.colorPrimary,
-        background_color: '#f4f6fb',
+        background_color: '#f2f5f9',
         lang: 'he',
         dir: 'rtl',
         icons: [
@@ -65,7 +65,13 @@ export default defineConfig(() => ({
             src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable',
+            purpose: 'any',
+          },
+          {
+            src: 'maskable-icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
           },
         ],
       },

@@ -35,6 +35,7 @@ import { useCatch, useCatchCallback } from '../reactHelper';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
 import DataTable from '../common/components/table/DataTable';
+import ReportEmptyState from './components/ReportEmptyState';
 import scheduleReport from './common/scheduleReport';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import exportExcel from '../common/util/exportExcel';
@@ -215,7 +216,11 @@ const SummaryReportPage = () => {
         </ReportFilter>
       </div>
       {!loading && <ReportKpis items={kpis} />}
-      <DataTable variant="flush">
+      <DataTable
+        variant="flush"
+        empty={!loading && !items.length}
+        emptyContent={<ReportEmptyState />}
+      >
         <TableHead>
           <TableRow>
             <TableCell>{t('sharedDevice')}</TableCell>

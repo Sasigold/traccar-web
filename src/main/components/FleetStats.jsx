@@ -76,7 +76,7 @@ const statuses = ['online', 'offline', 'unknown'];
 const labelKeys = {
   online: 'deviceStatusOnline',
   offline: 'deviceStatusOffline',
-  unknown: 'deviceStatusUnknown',
+  unknown: 'fleetStatsUnknown',
 };
 
 const FleetStats = ({ filter, setFilter }) => {

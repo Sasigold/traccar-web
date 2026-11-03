@@ -1,9 +1,0 @@
-<svg width="240" height="64" viewBox="0 0 240 64" direction="rtl" xmlns="http://www.w3.org/2000/svg">
-  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M208 58C208 58 188 40 188 25a20 20 0 0 1 40 0c0 15-20 33-20 33z"/>
-    <circle cx="208" cy="25" r="7" fill="currentColor" stroke="none"/>
-    <path d="M176 14c-14 0-14 20-28 20s-14-20-28-20" opacity="0.55"/>
-  </g>
-  <text x="176" y="44" text-anchor="start" fill="currentColor" font-family="Heebo Variable, Heebo, Segoe UI, Arial, sans-serif" font-size="27" font-weight="800">ניהול צי</text>
-  <text x="176" y="60" text-anchor="start" fill="currentColor" opacity="0.7" font-family="Heebo Variable, Heebo, Segoe UI, Arial, sans-serif" font-size="12" font-weight="500">מרכז שליטה ובקרה</text>
-</svg>

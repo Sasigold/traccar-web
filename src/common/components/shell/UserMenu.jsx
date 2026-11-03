@@ -52,7 +52,7 @@ const useStyles = makeStyles()((theme) => ({
 export const userInitial = (user) =>
   (user?.name || user?.email || '?').trim().charAt(0).toUpperCase();
 
-export const UserMenuPopover = ({ anchorEl, open, onClose }) => {
+export const UserMenuPopover = ({ anchorEl, open, onClose, up = false }) => {
   const { classes } = useStyles();
   const navigate = useNavigate();
   const t = useTranslation();
@@ -72,8 +72,8 @@ export const UserMenuPopover = ({ anchorEl, open, onClose }) => {
       anchorEl={anchorEl}
       open={open}
       onClose={onClose}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+      anchorOrigin={{ vertical: up ? 'top' : 'bottom', horizontal: 'center' }}
+      transformOrigin={{ vertical: up ? 'bottom' : 'top', horizontal: 'center' }}
     >
       <div className={classes.header}>
         <Typography variant="subtitle2" noWrap>

@@ -77,6 +77,10 @@ const useStyles = makeStyles()((theme) => ({
     backgroundImage: accentGradient(theme),
     boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.25)}, inset 0 1px 0 ${alpha('#ffffff', 0.3)}`,
   },
+  avatarMoving: {
+    backgroundImage: `linear-gradient(135deg, ${theme.palette.success.main}, ${alpha(theme.palette.secondary.main, 0.9)})`,
+    boxShadow: `0 6px 16px ${alpha(theme.palette.success.main, 0.3)}, inset 0 1px 0 ${alpha('#ffffff', 0.3)}`,
+  },
   avatarOffline: {
     backgroundImage: 'none',
     backgroundColor: alpha(theme.palette.error.main, 0.8),
@@ -134,17 +138,33 @@ const useStyles = makeStyles()((theme) => ({
     whiteSpace: 'nowrap',
     flexShrink: 0,
   },
-  indicators: {
+  trailing: {
     display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
     gap: 4,
     flexShrink: 0,
   },
+  time: {
+    fontSize: '0.6875rem',
+    color: theme.palette.text.secondary,
+    whiteSpace: 'nowrap',
+    fontVariantNumeric: 'tabular-nums',
+  },
+  indicators: {
+    display: 'flex',
+    gap: 2,
+    flexShrink: 0,
+  },
   indicator: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
-    border: `1px solid ${theme.palette.surface.border}`,
+    width: 24,
+    height: 24,
+    borderRadius: 7,
+    padding: 0,
     backgroundColor: theme.palette.surface.sunken,
+    '& svg': {
+      fontSize: 16,
+    },
   },
   icon: {
     width: '22px',
@@ -162,6 +182,9 @@ const useStyles = makeStyles()((theme) => ({
   },
   neutral: {
     color: theme.palette.neutral.main,
+  },
+  info: {
+    color: theme.palette.info.main,
   },
   selected: {
     '&&': {
@@ -208,16 +231,17 @@ const DeviceRow = ({ devices, index, style }) => {
 
   const secondaryText = () => {
     let status;
-    if (item.status === 'online' || !item.lastUpdate) {
-      status = formatStatus(item.status, t);
+    let statusClass;
+    if (item.status === 'online' && position) {
+      status = moving ? t('dashboardStateMoving') : t('dashboardStateStopped');
+      statusClass = moving ? classes.success : classes.info;
     } else {
-      status = dayjs(item.lastUpdate).fromNow();
+      status = formatStatus(item.status, t);
+      statusClass = classes[getStatusColor(item.status)];
     }
     return (
       <>
-        <span className={cx(classes.secondaryValue, classes[getStatusColor(item.status)])}>
-          {status}
-        </span>
+        <span className={cx(classes.secondaryValue, statusClass)}>{status}</span>
         {secondaryValue && (
           <>
             <span>·</span>
@@ -233,7 +257,7 @@ const DeviceRow = ({ devices, index, style }) => {
 
   const avatarClass =
     item.status === 'online'
-      ? classes.avatar
+      ? cx(classes.avatar, moving && classes.avatarMoving)
       : cx(
           classes.avatar,
           item.status === 'offline' ? classes.avatarOffline : classes.avatarUnknown,
@@ -279,55 +303,60 @@ const DeviceRow = ({ devices, index, style }) => {
             secondary: { component: 'span', className: classes.secondaryText },
           }}
         />
-        {position && (
-          <span className={classes.indicators}>
-            {position.attributes.hasOwnProperty('alarm') && (
-              <Tooltip title={`${t('eventAlarm')}: ${formatAlarm(position.attributes.alarm, t)}`}>
-                <IconButton size="small" className={classes.indicator}>
-                  <ErrorRoundedIcon fontSize="small" className={classes.error} />
-                </IconButton>
-              </Tooltip>
-            )}
-            {position.attributes.hasOwnProperty('ignition') && (
-              <Tooltip
-                title={`${t('positionIgnition')}: ${formatBoolean(position.attributes.ignition, t)}`}
-              >
-                <IconButton size="small" className={classes.indicator}>
-                  {position.attributes.ignition ? (
-                    <EngineIcon width={18} height={18} className={classes.success} />
-                  ) : (
-                    <EngineIcon width={18} height={18} className={classes.neutral} />
-                  )}
-                </IconButton>
-              </Tooltip>
-            )}
-            {position.attributes.hasOwnProperty('batteryLevel') && (
-              <Tooltip
-                title={`${t('positionBatteryLevel')}: ${formatPercentage(position.attributes.batteryLevel)}`}
-              >
-                <IconButton size="small" className={classes.indicator}>
-                  {(position.attributes.batteryLevel > 70 &&
-                    (position.attributes.charge ? (
-                      <BatteryChargingFullIcon fontSize="small" className={classes.success} />
+        <span className={classes.trailing}>
+          {item.lastUpdate && (
+            <span className={classes.time}>{dayjs(item.lastUpdate).fromNow(true)}</span>
+          )}
+          {position && (
+            <span className={classes.indicators}>
+              {position.attributes.hasOwnProperty('alarm') && (
+                <Tooltip title={`${t('eventAlarm')}: ${formatAlarm(position.attributes.alarm, t)}`}>
+                  <IconButton size="small" className={classes.indicator}>
+                    <ErrorRoundedIcon fontSize="small" className={classes.error} />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {position.attributes.hasOwnProperty('ignition') && (
+                <Tooltip
+                  title={`${t('positionIgnition')}: ${formatBoolean(position.attributes.ignition, t)}`}
+                >
+                  <IconButton size="small" className={classes.indicator}>
+                    {position.attributes.ignition ? (
+                      <EngineIcon width={15} height={15} className={classes.success} />
                     ) : (
-                      <BatteryFullIcon fontSize="small" className={classes.success} />
-                    ))) ||
-                    (position.attributes.batteryLevel > 30 &&
+                      <EngineIcon width={15} height={15} className={classes.neutral} />
+                    )}
+                  </IconButton>
+                </Tooltip>
+              )}
+              {position.attributes.hasOwnProperty('batteryLevel') && (
+                <Tooltip
+                  title={`${t('positionBatteryLevel')}: ${formatPercentage(position.attributes.batteryLevel)}`}
+                >
+                  <IconButton size="small" className={classes.indicator}>
+                    {(position.attributes.batteryLevel > 70 &&
                       (position.attributes.charge ? (
-                        <BatteryCharging60Icon fontSize="small" className={classes.warning} />
+                        <BatteryChargingFullIcon fontSize="small" className={classes.success} />
                       ) : (
-                        <Battery60Icon fontSize="small" className={classes.warning} />
+                        <BatteryFullIcon fontSize="small" className={classes.success} />
                       ))) ||
-                    (position.attributes.charge ? (
-                      <BatteryCharging20Icon fontSize="small" className={classes.error} />
-                    ) : (
-                      <Battery20Icon fontSize="small" className={classes.error} />
-                    ))}
-                </IconButton>
-              </Tooltip>
-            )}
-          </span>
-        )}
+                      (position.attributes.batteryLevel > 30 &&
+                        (position.attributes.charge ? (
+                          <BatteryCharging60Icon fontSize="small" className={classes.warning} />
+                        ) : (
+                          <Battery60Icon fontSize="small" className={classes.warning} />
+                        ))) ||
+                      (position.attributes.charge ? (
+                        <BatteryCharging20Icon fontSize="small" className={classes.error} />
+                      ) : (
+                        <Battery20Icon fontSize="small" className={classes.error} />
+                      ))}
+                  </IconButton>
+                </Tooltip>
+              )}
+            </span>
+          )}
+        </span>
       </ListItemButton>
     </div>
   );

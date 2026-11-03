@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
+import { useTheme } from '@mui/material/styles';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import { useAttributePreference } from '../../common/util/preferences';
 
@@ -32,6 +33,7 @@ const styleCustom = ({ tiles, minZoom, maxZoom, attribution, scheme }) => {
 
 export default () => {
   const t = useTranslation();
+  const darkMode = useTheme().palette.mode === 'dark';
 
   const googleKey = useAttributePreference('googleKey');
   const mapTilerKey = useAttributePreference('mapTilerKey');
@@ -47,6 +49,13 @@ export default () => {
 
   return useMemo(
     () => [
+      {
+        // VIPER adaptive basemap: a calm, low-noise style that follows the light / dark theme.
+        id: 'viper',
+        title: t('mapViperAdaptive'),
+        style: `https://tiles.openfreemap.org/styles/${darkMode ? 'dark' : 'positron'}`,
+        available: true,
+      },
       {
         id: 'openFreeMap',
         title: t('mapOpenFreeMap'),
@@ -351,6 +360,7 @@ export default () => {
     ],
     [
       t,
+      darkMode,
       mapTilerKey,
       locationIqKey,
       bingMapsKey,

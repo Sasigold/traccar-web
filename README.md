@@ -38,10 +38,12 @@ Apache License, Version 2.0. See [LICENSE.txt](https://github.com/traccar/tracca
 
 ## Custom Hebrew / RTL fork
 
-This fork ships a complete SaaS-style redesign: an electric indigo/cyan design system (light by
-default with a dark mode toggle), a persistent navigation rail with a top bar and command palette
-(Ctrl+K), a settings hub with grouped sections, data tables, section-card forms, a redesigned login
-screen, Hebrew as the default language and full RTL. Deploy with `sh deploy/deploy.sh`,
+This fork ships the **VIPER** fleet console: a navy + signal-cyan design system taken from the VIPER
+logo (light and dark), the logo rebuilt as vector components (`src/common/components/brand`), a deep-navy
+navigation rail grouped into operations / insights / fleet, a live fleet dashboard (`/dashboard`), a
+fleet-pulse readout and command palette (Ctrl+K) in the top bar, an adaptive basemap that follows the
+theme, a settings hub with grouped sections, data tables, section-card forms, a radar-style login screen,
+Hebrew as the default language and full RTL. Deploy with `sh deploy/deploy.sh`,
 which builds and uploads `build/` into the Traccar container's web directory on the VPS
 (see `deploy/docker-compose.override.example.yml`).
 

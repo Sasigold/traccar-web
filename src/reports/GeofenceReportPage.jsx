@@ -14,6 +14,7 @@ import { useCatch, useCatchCallback } from '../reactHelper';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
 import DataTable from '../common/components/table/DataTable';
+import ReportEmptyState from './components/ReportEmptyState';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import SelectField from '../common/components/SelectField';
 import exportExcel from '../common/util/exportExcel';
@@ -122,7 +123,11 @@ const GeofenceReportPage = () => {
           <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
         </ReportFilter>
       </div>
-      <DataTable variant="flush">
+      <DataTable
+        variant="flush"
+        empty={!loading && !items.length}
+        emptyContent={<ReportEmptyState />}
+      >
         <TableHead>
           <TableRow>
             <TableCell>{t('sharedDevice')}</TableCell>

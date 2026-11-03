@@ -1,5 +1,5 @@
 import { alpha } from '@mui/material/styles';
-import { cyan, indigo, violet, shadows } from './tokens';
+import { navy, signal, shadows } from './tokens';
 
 const tokenShadows = (theme) => shadows[theme.palette.mode];
 
@@ -47,7 +47,7 @@ export const glass = (theme, opacity = 0.78) => {
   };
 };
 
-// Brand accent gradient: primary blending into secondary (indigo → cyan).
+// Brand accent gradient: VIPER navy blending into the signal cyan.
 export const accentGradient = (theme, angle = 135) =>
   `linear-gradient(${angle}deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`;
 
@@ -71,12 +71,38 @@ export const statusColor = (theme, status) => {
   }
 };
 
-// Deep indigo mesh used by the login brand panel.
+// Deep navy mesh with a faint telemetry grid, used by the login brand panel.
 export const meshBackground = () => ({
-  backgroundColor: indigo[900],
+  backgroundColor: navy[950],
   backgroundImage: [
-    `radial-gradient(at 18% 22%, ${alpha(indigo[600], 0.95)} 0px, transparent 55%)`,
-    `radial-gradient(at 82% 28%, ${alpha(cyan[500], 0.5)} 0px, transparent 45%)`,
-    `radial-gradient(at 48% 92%, ${alpha(violet[500], 0.6)} 0px, transparent 50%)`,
+    `radial-gradient(at 20% 18%, ${alpha(navy[600], 0.9)} 0px, transparent 55%)`,
+    `radial-gradient(at 85% 30%, ${alpha(signal[500], 0.35)} 0px, transparent 45%)`,
+    `radial-gradient(at 45% 95%, ${alpha(navy[500], 0.55)} 0px, transparent 50%)`,
   ].join(', '),
+});
+
+// Engineering grid overlay for "command center" surfaces.
+export const gridPattern = (color, size = 32) => ({
+  backgroundImage: [
+    `linear-gradient(${color} 1px, transparent 1px)`,
+    `linear-gradient(90deg, ${color} 1px, transparent 1px)`,
+  ].join(', '),
+  backgroundSize: `${size}px ${size}px`,
+});
+
+// Hairline gradient border (works on any background) via a masked pseudo element.
+export const gradientBorder = (theme, radius, angle = 135) => ({
+  position: 'relative',
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    inset: 0,
+    borderRadius: radius,
+    padding: 1,
+    background: `linear-gradient(${angle}deg, ${alpha(theme.palette.secondary.main, 0.6)}, ${alpha(theme.palette.primary.main, 0.15)} 40%, transparent 70%)`,
+    WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+    WebkitMaskComposite: 'xor',
+    maskComposite: 'exclude',
+    pointerEvents: 'none',
+  },
 });

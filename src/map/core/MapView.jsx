@@ -13,6 +13,18 @@ import { mapImages } from './preloadImages';
 import useMapStyles from './useMapStyles';
 import { useAsyncTask } from '../../reactHelper';
 
+// One-time move to the adaptive VIPER basemap for people still on the previous default.
+try {
+  if (!window.localStorage.getItem('viperBasemap')) {
+    if (JSON.parse(window.localStorage.getItem('selectedMapStyle')) === 'openFreeMap') {
+      window.localStorage.removeItem('selectedMapStyle');
+    }
+    window.localStorage.setItem('viperBasemap', '1');
+  }
+} catch {
+  // storage unavailable
+}
+
 const element = document.createElement('div');
 element.style.width = '100%';
 element.style.height = '100%';
@@ -79,11 +91,11 @@ const MapView = ({ children }) => {
   const mapStyles = useMapStyles();
   const activeMapStyles = useAttributePreference(
     'activeMapStyles',
-    'openFreeMap,locationIqStreets,locationIqDark',
+    'viper,openFreeMap,locationIqStreets,locationIqDark',
   );
   const [selectedStyleId, setSelectedStyleId] = usePersistedState(
     'selectedMapStyle',
-    usePreference('map', 'openFreeMap'),
+    usePreference('map', 'viper'),
   );
   const maxZoom = useAttributePreference('web.maxZoom');
 

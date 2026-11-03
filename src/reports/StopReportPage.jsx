@@ -31,6 +31,7 @@ import MapCamera from '../map/MapCamera';
 import AddressValue from '../common/components/AddressValue';
 import TableShimmer from '../common/components/TableShimmer';
 import DataTable from '../common/components/table/DataTable';
+import ReportEmptyState from './components/ReportEmptyState';
 import MapGeofence from '../map/MapGeofence';
 import { mapIconKey } from '../map/core/preloadImages';
 import scheduleReport from './common/scheduleReport';
@@ -201,7 +202,11 @@ const StopReportPage = () => {
             </ReportFilter>
           </div>
           {!loading && <ReportKpis items={kpis} />}
-          <DataTable variant="flush">
+          <DataTable
+            variant="flush"
+            empty={!loading && !items.length}
+            emptyContent={<ReportEmptyState />}
+          >
             <TableHead>
               <TableRow>
                 <TableCell className={classes.columnAction} />

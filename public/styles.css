@@ -5,11 +5,11 @@ html, body {
 body {
   margin: 0;
   padding: 0;
-  background: #f4f6fb;
+  background: #f2f5f9;
 }
 
 html.dark body {
-  background: #0b1020;
+  background: #050b16;
 }
 
 .root {

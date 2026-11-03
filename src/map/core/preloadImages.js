@@ -1,5 +1,5 @@
 import { loadImage, prepareIcon } from './mapUtil';
-import { indigo, slate, status } from '../../common/theme/tokens';
+import { navy, slate, status } from '../../common/theme/tokens';
 
 import directionSvg from '../../resources/images/direction.svg';
 import backgroundSvg from '../../resources/images/background.svg';
@@ -113,7 +113,7 @@ export const mapImages = {};
 
 // Marker tint per device status (online → success, offline → error, unknown → neutral).
 const markerColors = {
-  info: indigo[500],
+  info: navy[500],
   success: status.light.success,
   error: status.light.error,
   neutral: slate[500],

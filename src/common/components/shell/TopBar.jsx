@@ -4,7 +4,7 @@ import { alpha, useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import Logo from '../../../resources/images/logo.svg?react';
+import ViperLogo from '../brand/ViperLogo';
 import useFeatures from '../../util/useFeatures';
 import { useTranslation } from '../LocalizationProvider';
 import { useShell } from './ShellContext';
@@ -13,6 +13,7 @@ import NotificationsButton from './NotificationsButton';
 import ThemeToggle from './ThemeToggle';
 import LanguageMenu from './LanguageMenu';
 import UserMenu from './UserMenu';
+import FleetPulse from './FleetPulse';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -20,7 +21,7 @@ const useStyles = makeStyles()((theme) => ({
     flexShrink: 0,
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(0.75),
+    gap: theme.spacing(1.5),
     paddingInline: theme.spacing(2),
     backgroundColor: alpha(theme.palette.background.paper, 0.88),
     backdropFilter: 'blur(16px) saturate(160%)',
@@ -36,10 +37,8 @@ const useStyles = makeStyles()((theme) => ({
     },
   },
   logo: {
-    height: 24,
-    width: 'auto',
-    color: theme.palette.primary.main,
     marginInlineStart: theme.spacing(0.5),
+    flexShrink: 0,
   },
   logoImage: {
     maxHeight: 24,
@@ -119,7 +118,7 @@ const TopBar = ({ onOpenDrawer }) => {
         (logo ? (
           <img className={classes.logoImage} src={logo} alt="" />
         ) : (
-          <Logo className={classes.logo} />
+          <ViperLogo height={26} className={classes.logo} />
         ))}
       {desktop ? (
         <ButtonBase className={classes.trigger} onClick={openPalette}>
@@ -130,6 +129,7 @@ const TopBar = ({ onOpenDrawer }) => {
       ) : (
         <div className={classes.spacer} />
       )}
+      {desktop && <FleetPulse />}
       {desktop && <div className={classes.spacer} />}
       <div className={classes.actions}>
         {!desktop && (
@@ -143,7 +143,7 @@ const TopBar = ({ onOpenDrawer }) => {
         {!features.disableEvents && <NotificationsButton />}
         <ThemeToggle />
         {desktop && <LanguageMenu />}
-        {desktop && <UserMenu />}
+        {desktop && !chromeVisible && <UserMenu />}
       </div>
     </header>
   );

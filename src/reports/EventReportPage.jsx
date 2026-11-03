@@ -18,6 +18,7 @@ import { useCatch, useCatchCallback, useAsyncTask } from '../reactHelper';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
 import DataTable from '../common/components/table/DataTable';
+import ReportEmptyState from './components/ReportEmptyState';
 import { useAttributePreference, usePreference } from '../common/util/preferences';
 import MapView from '../map/core/MapView';
 import MapGeofence from '../map/MapGeofence';
@@ -296,7 +297,11 @@ const EventReportPage = () => {
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
             </ReportFilter>
           </div>
-          <DataTable variant="flush">
+          <DataTable
+            variant="flush"
+            empty={!loading && !items.length}
+            emptyContent={<ReportEmptyState />}
+          >
             <TableHead>
               <TableRow>
                 <TableCell className={classes.columnAction} />

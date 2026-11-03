@@ -2,8 +2,8 @@
 services:
   traccar:
     environment:
-      - WEB_TITLE=ניהול צי
-      - WEB_DESCRIPTION=מרכז שליטה ובקרה לצי הרכב
-      - WEB_COLORPRIMARY=#4f46e5
+      - WEB_TITLE=VIPER
+      - WEB_DESCRIPTION=VIPER · טכנולוגיה פורצת דרך לניהול צי
+      - WEB_COLORPRIMARY=#1d4271
     volumes:
       - ./web:/opt/traccar/web:ro

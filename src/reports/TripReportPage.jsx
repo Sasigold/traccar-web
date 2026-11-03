@@ -35,6 +35,7 @@ import MapRoutePath from '../map/MapRoutePath';
 import AddressValue from '../common/components/AddressValue';
 import TableShimmer from '../common/components/TableShimmer';
 import DataTable from '../common/components/table/DataTable';
+import ReportEmptyState from './components/ReportEmptyState';
 import MapMarkers from '../map/MapMarkers';
 import MapCamera from '../map/MapCamera';
 import MapGeofence from '../map/MapGeofence';
@@ -314,7 +315,11 @@ const TripReportPage = () => {
             </ReportFilter>
           </div>
           {!loading && <ReportKpis items={kpis} />}
-          <DataTable variant="flush">
+          <DataTable
+            variant="flush"
+            empty={!loading && !items.length}
+            emptyContent={<ReportEmptyState />}
+          >
             <TableHead>
               <TableRow>
                 <TableCell className={classes.columnAction} />

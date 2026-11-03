@@ -7,7 +7,6 @@ import SearchOffRoundedIcon from '@mui/icons-material/SearchOffRounded';
 import PageLayout from '../common/components/PageLayout';
 import EmptyState from '../common/components/table/EmptyState';
 import { useTranslation } from '../common/components/LocalizationProvider';
-import SettingsMenu from './components/SettingsMenu';
 import SettingsCard from './components/SettingsCard';
 import { useSettingsSections } from './components/settingsSections';
 
@@ -76,11 +75,7 @@ const SettingsHubPage = () => {
   }, [sections, query, t]);
 
   return (
-    <PageLayout
-      menu={<SettingsMenu />}
-      breadcrumbs={['settingsTitle']}
-      description={t('settingsHubDescription')}
-    >
+    <PageLayout breadcrumbs={['settingsTitle']} description={t('settingsHubDescription')}>
       <div className={classes.root}>
         <TextField
           className={classes.search}

@@ -1,42 +1,45 @@
 // Design tokens: the single source of truth for colors, surfaces, radii,
 // shadows, motion and typography. Everything else in the theme derives from here.
 
-export const indigo = {
-  50: '#eef2ff',
-  100: '#e0e7ff',
-  200: '#c7d2fe',
-  300: '#a5b4fc',
-  400: '#818cf8',
-  500: '#6366f1',
-  600: '#4f46e5',
-  700: '#4338ca',
-  800: '#3730a3',
-  900: '#312e81',
+// VIPER brand navy, sampled from the logo (#1d4271 core, #2f6597 highlight).
+export const navy = {
+  50: '#eef4fb',
+  100: '#d9e6f6',
+  200: '#b5cdec',
+  300: '#86acdc',
+  400: '#5a92dd',
+  500: '#3a72c0',
+  600: '#24528f',
+  700: '#1d4271',
+  800: '#183559',
+  900: '#122844',
+  950: '#08142a',
 };
 
-export const cyan = {
-  50: '#ecfeff',
-  100: '#cffafe',
-  200: '#a5f3fc',
-  300: '#67e8f9',
-  400: '#22d3ee',
-  500: '#06b6d4',
-  600: '#0891b2',
-  700: '#0e7490',
+// Signal: the electric accent used for live data, glows and highlights.
+export const signal = {
+  50: '#ecfbff',
+  100: '#cdf4fd',
+  200: '#9ee9fb',
+  300: '#62daf5',
+  400: '#2cc6ec',
+  500: '#0eaad3',
+  600: '#0a87ab',
+  700: '#0d6c89',
 };
 
 export const slate = {
-  50: '#f8fafc',
-  100: '#f1f5f9',
-  200: '#e2e8f0',
-  300: '#cbd5e1',
-  400: '#94a3b8',
-  500: '#64748b',
-  600: '#475569',
-  700: '#334155',
-  800: '#1e293b',
-  900: '#0f172a',
-  950: '#020617',
+  50: '#f7f9fc',
+  100: '#eef2f7',
+  200: '#e1e7ef',
+  300: '#c9d2de',
+  400: '#94a1b5',
+  500: '#64728a',
+  600: '#4a5870',
+  700: '#33405a',
+  800: '#1c2840',
+  900: '#0d1a2e',
+  950: '#050b17',
 };
 
 export const violet = {
@@ -44,24 +47,30 @@ export const violet = {
   500: '#7c3aed',
 };
 
+// Wordmark ink of the VIPER logo.
+export const ink = '#2b2a30';
+
 export const brand = {
-  primaryLight: indigo[600],
-  primaryDark: indigo[400],
-  secondaryLight: cyan[500],
-  secondaryDark: cyan[400],
-  gradientStops: [indigo[600], cyan[500]],
+  navy: navy[700],
+  highlight: '#2f6597',
+  ink,
+  primaryLight: navy[600],
+  primaryDark: navy[400],
+  secondaryLight: signal[500],
+  secondaryDark: signal[400],
+  gradientStops: [navy[600], signal[500]],
 };
 
 export const status = {
   light: {
-    success: '#16a34a',
-    warning: '#d97706',
-    error: '#dc2626',
-    info: '#0284c7',
+    success: '#10a36a',
+    warning: '#d98a04',
+    error: '#dc3545',
+    info: '#0b86c9',
     neutral: slate[400],
   },
   dark: {
-    success: '#4ade80',
+    success: '#34d399',
     warning: '#fbbf24',
     error: '#f87171',
     info: '#38bdf8',
@@ -71,28 +80,28 @@ export const status = {
 
 export const surfaces = {
   light: {
-    canvas: '#f4f6fb',
+    canvas: '#f2f5f9',
     paper: '#ffffff',
     raised: '#ffffff',
     sunken: slate[100],
-    overlay: 'rgba(255, 255, 255, 0.8)',
-    border: 'rgba(15, 23, 42, 0.08)',
-    borderStrong: 'rgba(15, 23, 42, 0.14)',
+    overlay: 'rgba(255, 255, 255, 0.82)',
+    border: 'rgba(13, 26, 46, 0.08)',
+    borderStrong: 'rgba(13, 26, 46, 0.14)',
     textPrimary: slate[900],
     textSecondary: slate[600],
     textDisabled: slate[400],
   },
   dark: {
-    canvas: '#0b1020',
-    paper: '#111827',
-    raised: '#161e31',
-    sunken: '#0d1326',
-    overlay: 'rgba(17, 24, 39, 0.78)',
-    border: 'rgba(148, 163, 184, 0.14)',
-    borderStrong: 'rgba(148, 163, 184, 0.24)',
-    textPrimary: '#e5e9f2',
-    textSecondary: '#9aa6ba',
-    textDisabled: '#5b6678',
+    canvas: '#050b16',
+    paper: '#0a1424',
+    raised: '#0f1b30',
+    sunken: '#07101e',
+    overlay: 'rgba(10, 20, 36, 0.78)',
+    border: 'rgba(140, 175, 225, 0.12)',
+    borderStrong: 'rgba(140, 175, 225, 0.22)',
+    textPrimary: '#e6edf7',
+    textSecondary: '#93a3bb',
+    textDisabled: '#56647a',
   },
 };
 
@@ -108,18 +117,20 @@ export const radius = {
 
 export const shadows = {
   light: {
-    sm: '0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04)',
-    md: '0 4px 12px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.05)',
-    lg: '0 12px 32px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.06)',
-    xl: '0 24px 60px rgba(15, 23, 42, 0.16), 0 2px 6px rgba(15, 23, 42, 0.06)',
-    glowPrimary: '0 8px 24px rgba(79, 70, 229, 0.35)',
+    sm: '0 1px 2px rgba(13, 26, 46, 0.06), 0 1px 3px rgba(13, 26, 46, 0.04)',
+    md: '0 6px 16px -4px rgba(13, 26, 46, 0.1), 0 1px 3px rgba(13, 26, 46, 0.05)',
+    lg: '0 16px 36px -8px rgba(13, 26, 46, 0.16), 0 2px 6px rgba(13, 26, 46, 0.06)',
+    xl: '0 28px 64px -12px rgba(13, 26, 46, 0.24), 0 2px 6px rgba(13, 26, 46, 0.06)',
+    glowPrimary: '0 8px 24px rgba(36, 82, 143, 0.32)',
+    glowSignal: '0 0 0 1px rgba(14, 170, 211, 0.25), 0 8px 28px rgba(14, 170, 211, 0.25)',
   },
   dark: {
-    sm: '0 1px 2px rgba(0, 0, 0, 0.4)',
-    md: '0 4px 12px rgba(0, 0, 0, 0.45)',
-    lg: '0 12px 32px rgba(0, 0, 0, 0.5)',
-    xl: '0 24px 60px rgba(0, 0, 0, 0.6)',
-    glowPrimary: '0 8px 24px rgba(129, 140, 248, 0.35)',
+    sm: '0 1px 2px rgba(0, 0, 0, 0.45)',
+    md: '0 6px 16px -4px rgba(0, 0, 0, 0.55)',
+    lg: '0 16px 36px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(140, 175, 225, 0.04)',
+    xl: '0 28px 64px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(140, 175, 225, 0.05)',
+    glowPrimary: '0 8px 28px rgba(90, 146, 221, 0.35)',
+    glowSignal: '0 0 0 1px rgba(44, 198, 236, 0.3), 0 8px 32px rgba(44, 198, 236, 0.28)',
   },
 };
 

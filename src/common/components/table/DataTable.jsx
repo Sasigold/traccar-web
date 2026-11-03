@@ -39,6 +39,12 @@ const useStyles = makeStyles()((theme) => ({
     '& .MuiTableCell-head': {
       paddingBlock: theme.spacing(1.25),
     },
+    '& .MuiTableCell-body': {
+      maxWidth: 320,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    },
   },
   flush: {
     '& .MuiTableCell-root:first-of-type': {
@@ -57,6 +63,7 @@ const DataTable = ({
   children,
   empty = false,
   emptyState,
+  emptyContent,
   variant = 'card',
   stickyHeader = true,
   minWidth,
@@ -71,7 +78,7 @@ const DataTable = ({
       {...(card && { elevation: 0 })}
     >
       {toolbar}
-      <TableContainer className={classes.container}>
+      <TableContainer className={classes.container} style={empty ? { flex: 'none' } : undefined}>
         <Table
           stickyHeader={stickyHeader}
           size="small"
@@ -81,7 +88,7 @@ const DataTable = ({
           {children}
         </Table>
       </TableContainer>
-      {empty && <EmptyState compact {...emptyState} />}
+      {empty && (emptyContent || <EmptyState compact {...emptyState} />)}
     </Root>
   );
 };

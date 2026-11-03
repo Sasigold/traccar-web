@@ -23,17 +23,25 @@
     <!--${customHead}-->
     <style>
       .loader {
-        position: fixed; inset: 0; margin: auto;
-        width: 44px; aspect-ratio: 1; box-sizing: content-box; animation: ll 0.9s infinite linear;
-        border-radius: 50%; border: 4px solid rgba(79, 70, 229, 0.18); border-right-color: #4f46e5;
+        position: fixed; inset: 0; margin: auto; width: 56px; height: 92px;
+        display: flex; align-items: center; justify-content: center;
       }
-      @keyframes ll {to{transform: rotate(1turn)}}
+      .loader svg { width: 56px; height: 92px; animation: lp 1.4s ease-in-out infinite; transform-origin: 50% 85%; }
+      .loader::after {
+        content: ''; position: absolute; left: 50%; bottom: 2px; width: 72px; height: 22px; margin-left: -36px;
+        border-radius: 50%; border: 2px solid #2f6597; opacity: 0; animation: lr 1.4s ease-out infinite;
+      }
+      html.dark .loader svg path:first-child { fill: #5a92dd; }
+      html.dark .loader svg path:last-child { stroke: #5a92dd; }
+      html.dark .loader::after { border-color: #2cc6ec; }
+      @keyframes lp { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+      @keyframes lr { 0% { transform: scale(0.4); opacity: 0.8; } 100% { transform: scale(1.5); opacity: 0; } }
     </style>
   </head>
   <body>
     <noscript>Enable JavaScript to use <a href="https://www.traccar.org/">Traccar GPS Tracking System</a>.</noscript>
     <div id="root" class="root"></div>
-    <div class="loader"></div>
+    <div class="loader"><svg viewBox="140 17 364 602" aria-hidden="true"><path d="M322 505L465.2 291.6A172.5 172.5 0 1 0 178.8 291.6ZM322 403L421.8 270.8A125 125 0 1 0 222.2 270.8ZM322 338L390.5 249.4A86.5 86.5 0 1 0 253.5 249.4ZM322 296L370.8 236.4A63 63 0 1 0 273.2 236.4ZM322 182a22 22 0 1 0 0.01 0Z" fill="#1d4271" fill-rule="evenodd"/><path d="M213.5 431.2A166 97.5 0 1 0 430.5 431.2" fill="none" stroke="#1d4271" stroke-width="20.5"/></svg></div>
     <script type="module" src="src/index.jsx" onerror="alert('Loading error.')"></script>
   </body>
 </html>

@@ -1,5 +1,5 @@
 import { alpha } from '@mui/material/styles';
-import { indigo, radius, shadows, slate } from './tokens';
+import { navy, radius, shadows, slate } from './tokens';
 
 const tokenShadows = (theme) => shadows[theme.palette.mode];
 
@@ -85,7 +85,7 @@ export default {
   MuiBackdrop: {
     styleOverrides: {
       root: {
-        backgroundColor: alpha(slate[900], 0.45),
+        backgroundColor: alpha(slate[950], 0.5),
         backdropFilter: 'blur(6px)',
         '&.MuiBackdrop-invisible': {
           backgroundColor: 'transparent',
@@ -195,10 +195,17 @@ export default {
       },
       containedPrimary: ({ theme }) => ({
         ...(theme.palette.mode === 'dark' && {
-          backgroundColor: indigo[500],
+          backgroundColor: navy[500],
           color: '#ffffff',
           '&:hover': {
-            backgroundColor: indigo[600],
+            backgroundColor: navy[400],
+          },
+        }),
+        ...(theme.palette.mode === 'light' && {
+          backgroundImage: `linear-gradient(180deg, ${alpha('#ffffff', 0.12)}, ${alpha('#ffffff', 0)})`,
+          boxShadow: `inset 0 1px 0 ${alpha('#ffffff', 0.18)}, 0 1px 2px ${alpha(navy[900], 0.25)}`,
+          '&:hover': {
+            backgroundColor: navy[700],
           },
         }),
       }),
@@ -426,9 +433,16 @@ export default {
   },
   MuiTableCell: {
     styleOverrides: {
-      root: ({ theme }) => ({
+      root: ({ theme, ownerState }) => ({
         borderBottomColor: theme.palette.surface.border,
         fontSize: '0.875rem',
+        // Mixed Hebrew / Latin data (IDs, dates, addresses): resolve each cell's direction from
+        // its own content so "demo-1" or "11/03/2026, 15:10" never render scrambled in RTL.
+        ...(ownerState?.variant !== 'head' &&
+          (!ownerState?.align || ownerState.align === 'inherit') && {
+            unicodeBidi: 'plaintext',
+            textAlign: 'left',
+          }),
         '@media print': {
           color: theme.palette.alwaysDark.main,
         },
@@ -502,14 +516,14 @@ export default {
     },
     styleOverrides: {
       tooltip: ({ theme }) => ({
-        backgroundColor: theme.palette.mode === 'dark' ? slate[700] : slate[900],
+        backgroundColor: theme.palette.mode === 'dark' ? slate[700] : navy[950],
         borderRadius: radius.sm,
         fontSize: '0.75rem',
         fontWeight: 500,
         padding: theme.spacing(0.75, 1.25),
       }),
       arrow: ({ theme }) => ({
-        color: theme.palette.mode === 'dark' ? slate[700] : slate[900],
+        color: theme.palette.mode === 'dark' ? slate[700] : navy[950],
       }),
     },
   },
