@@ -19,6 +19,95 @@ html.dark body {
   height: 100%;
 }
 
+/*
+ * Brand loader: the app icon (aqua Sync Point on a midnight navy tile).
+ * Each cycle the two brackets slide in along the diagonal and lock onto the
+ * point ("every vehicle. in sync."), the point pulses and an aqua signal ring
+ * goes out. The point never moves and nothing rotates or mirrors, so the
+ * resting frame (40%-70%) is the exact logo geometry. This is the only
+ * approved animation of the symbol (BRAND.md, section 7).
+ * Used by index.html (startup and every <Loader />) and by <BrandLoader />.
+ */
+.vf-loader {
+  display: block;
+  width: 72px;
+  height: 72px;
+  overflow: visible;
+}
+
+/* Full-screen instance in index.html, shown and hidden by <Loader />. */
+.loader.vf-loader {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+}
+
+.vf-loader__tile {
+  fill: #102C54;
+}
+
+.vf-loader__mark {
+  fill: #35D7D6;
+}
+
+.vf-loader__ring {
+  fill: none;
+  stroke: #35D7D6;
+  stroke-width: 2.4;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: vf-loader-ring 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+.vf-loader__top {
+  animation: vf-loader-top 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+.vf-loader__bottom {
+  animation: vf-loader-bottom 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+.vf-loader__dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: vf-loader-dot 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes vf-loader-top {
+  0%, 100% { transform: translate(10px, -10px); opacity: 0.45; }
+  40%, 70% { transform: translate(0, 0); opacity: 1; }
+}
+
+@keyframes vf-loader-bottom {
+  0%, 100% { transform: translate(-10px, 10px); opacity: 0.45; }
+  40%, 70% { transform: translate(0, 0); opacity: 1; }
+}
+
+@keyframes vf-loader-dot {
+  0%, 100% { transform: scale(0.7); }
+  40% { transform: scale(1.22); }
+  52%, 70% { transform: scale(1); }
+}
+
+@keyframes vf-loader-ring {
+  0%, 40% { transform: scale(1); opacity: 0; }
+  42% { transform: scale(1); opacity: 0.85; }
+  90%, 100% { transform: scale(3.4); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vf-loader__top,
+  .vf-loader__bottom,
+  .vf-loader__dot {
+    animation: none;
+  }
+
+  .vf-loader__ring {
+    display: none;
+  }
+}
+
 @media print {
   * {
     height: auto !important;

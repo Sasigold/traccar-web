@@ -27,6 +27,9 @@ The rules you will need most often:
 - **Logo**: use only `BrandLogo`, `BrandSymbol` and `BrandAppIcon` from
   `src/common/components/brand/BrandLogo.jsx`, in the variants listed in BRAND.md. Never stretch,
   recolor, retype or mirror the logo. It does not flip in RTL.
+- **Loading**: full-screen loading goes through `<Loader />` (the brand icon animation in `index.html`);
+  area loading uses `<BrandLoader />`. Both are styled once in `public/styles.css` (`.vf-loader`). Do not
+  create any other animation of the logo or symbol.
 - **RTL**: use logical properties. The emotion RTL plugin flips `left`/`right`/`direction` inside
   `makeStyles`, so anything that must not flip gets an inline `style` or `dir="ltr"`.
 - **Strings**: add every new string to both `src/resources/l10n/he.json` and `en.json`.

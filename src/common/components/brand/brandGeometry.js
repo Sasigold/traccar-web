@@ -7,6 +7,12 @@
 export const SYMBOL_PATH =
   'M44 8 H68 C81.255 8 92 18.745 92 32 V56 H73 V33 C73 29.686 70.314 27 67 27 H44 Z M56 92 H32 C18.745 92 8 81.255 8 68 V44 H27 V67 C27 70.314 29.686 73 33 73 H56 Z';
 
+// The two brackets on their own, for the loading animation (BrandLoader).
+export const SYMBOL_BRACKET_TOP =
+  'M44 8 H68 C81.255 8 92 18.745 92 32 V56 H73 V33 C73 29.686 70.314 27 67 27 H44 Z';
+export const SYMBOL_BRACKET_BOTTOM =
+  'M56 92 H32 C18.745 92 8 81.255 8 68 V44 H27 V67 C27 70.314 29.686 73 33 73 H56 Z';
+
 export const SYMBOL_DOT = { cx: 50, cy: 50, r: 9 };
 
 // Horizontal lockup: symbol at the origin, wordmark translated by WORDMARK_OFFSET.
