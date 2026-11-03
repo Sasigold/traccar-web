@@ -10,7 +10,14 @@ const brandColorMessage =
 
 export default [
   {
-    ignores: ['build/**', 'switcher.js', 'theme.js', 'vite.config.js'],
+    ignores: [
+      'build/**',
+      'switcher.js',
+      'theme.js',
+      'vite.config.js',
+      'test-results/**',
+      'playwright-report/**',
+    ],
   },
   js.configs.recommended,
   eslintReact.configs.recommended,
