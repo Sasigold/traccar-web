@@ -171,6 +171,7 @@ const MapGeofenceEdit = ({ selectedGeofenceId }) => {
       placement={theme.direction === 'rtl' ? 'left' : 'right'}
       arrow
       disableInteractive
+      describeChild
       slotProps={{ popper: { anchorEl: hintAnchor } }}
     >
       <span />
