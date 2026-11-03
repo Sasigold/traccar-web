@@ -82,7 +82,11 @@ const RegisterPage = () => {
       <div className={classes.container}>
         <div className={classes.header}>
           {!server.newServer && (
-            <IconButton color="primary" onClick={() => navigate('/login')}>
+            <IconButton
+              aria-label={t('a11yBack')}
+              color="primary"
+              onClick={() => navigate('/login')}
+            >
               <BackIcon />
             </IconButton>
           )}

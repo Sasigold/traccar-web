@@ -148,7 +148,7 @@ const EventsDrawer = ({ open, onClose }) => {
             </IconButton>
           </Tooltip>
         )}
-        <IconButton size="small" onClick={onClose}>
+        <IconButton aria-label={t('a11yClose')} size="small" onClick={onClose}>
           <CloseRoundedIcon fontSize="small" />
         </IconButton>
       </div>
@@ -183,6 +183,7 @@ const EventsDrawer = ({ open, onClose }) => {
                 slotProps={{ primary: { noWrap: true, fontWeight: 600 } }}
               />
               <IconButton
+                aria-label={t('sharedRemove')}
                 size="small"
                 className={cx(classes.delete, 'delete')}
                 onClick={(e) => {

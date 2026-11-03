@@ -120,6 +120,7 @@ const MapRuler = ({ positions, onActiveChange }) => {
     const toggle = () => {
       active = !active;
       button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
       onActiveChangeRef.current(active);
       if (active) {
         map.on('click', onClick);
@@ -139,6 +140,8 @@ const MapRuler = ({ positions, onActiveChange }) => {
         button = document.createElement('button');
         button.type = 'button';
         button.title = t('sharedDistance');
+        button.setAttribute('aria-label', t('sharedDistance'));
+        button.setAttribute('aria-pressed', 'false');
         button.className = cx('maplibregl-ctrl-icon', classes.button);
         button.onclick = toggle;
         container.appendChild(button);

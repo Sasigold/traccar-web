@@ -49,7 +49,7 @@ const LanguageMenu = () => {
             }}
           >
             <ListItemIcon>
-              <CountryFlag countryCode={it.country} svg />
+              <CountryFlag countryCode={it.country} svg alt="" aria-hidden="true" />
             </ListItemIcon>
             <ListItemText>{it.name}</ListItemText>
           </MenuItem>

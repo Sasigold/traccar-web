@@ -117,8 +117,9 @@ const CalendarPage = () => {
               label={t('sharedName')}
             />
             <FormControl>
-              <InputLabel>{t('sharedType')}</InputLabel>
+              <InputLabel id="calendar-page-shared-type-label">{t('sharedType')}</InputLabel>
               <Select
+                labelId="calendar-page-shared-type-label"
                 label={t('sharedType')}
                 value={simple ? 'simple' : 'custom'}
                 onChange={(e) =>
@@ -153,8 +154,11 @@ const CalendarPage = () => {
                   }}
                 />
                 <FormControl>
-                  <InputLabel>{t('calendarRecurrence')}</InputLabel>
+                  <InputLabel id="calendar-page-calendar-recurrence-label">
+                    {t('calendarRecurrence')}
+                  </InputLabel>
                   <Select
+                    labelId="calendar-page-calendar-recurrence-label"
                     label={t('calendarRecurrence')}
                     value={rule.frequency}
                     onChange={(e) =>
@@ -173,8 +177,11 @@ const CalendarPage = () => {
                 </FormControl>
                 {['WEEKLY', 'MONTHLY'].includes(rule.frequency) && (
                   <FormControl>
-                    <InputLabel>{t('calendarDays')}</InputLabel>
+                    <InputLabel id="calendar-page-calendar-days-label">
+                      {t('calendarDays')}
+                    </InputLabel>
                     <Select
+                      labelId="calendar-page-calendar-days-label"
                       multiple
                       label={t('calendarDays')}
                       value={rule.by}

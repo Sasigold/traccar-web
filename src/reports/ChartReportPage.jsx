@@ -142,8 +142,11 @@ const ChartReportPage = () => {
           <ReportFilter onShow={onShow} onExport={() => {}} deviceType="single" formats={[]}>
             <div className={classes.filterItem}>
               <FormControl fullWidth>
-                <InputLabel>{t('reportChartType')}</InputLabel>
+                <InputLabel id="chart-report-page-report-chart-type-label">
+                  {t('reportChartType')}
+                </InputLabel>
                 <Select
+                  labelId="chart-report-page-report-chart-type-label"
                   label={t('reportChartType')}
                   value={selectedTypes}
                   onChange={(e) => setSelectedTypes(e.target.value)}
@@ -160,8 +163,11 @@ const ChartReportPage = () => {
             </div>
             <div className={classes.filterItem}>
               <FormControl fullWidth>
-                <InputLabel>{t('reportTimeType')}</InputLabel>
+                <InputLabel id="chart-report-page-report-time-type-label">
+                  {t('reportTimeType')}
+                </InputLabel>
                 <Select
+                  labelId="chart-report-page-report-time-type-label"
                   label={t('reportTimeType')}
                   value={timeType}
                   onChange={(e) => setTimeType(e.target.value)}

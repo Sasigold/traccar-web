@@ -12,8 +12,14 @@ const ReportsMenu = () => {
   return sections.map((section) => (
     <List
       key={section.id}
+      component="nav"
+      aria-label={t(section.titleKey)}
       dense
-      subheader={<ListSubheader disableSticky>{t(section.titleKey)}</ListSubheader>}
+      subheader={
+        <ListSubheader component="div" disableSticky>
+          {t(section.titleKey)}
+        </ListSubheader>
+      }
     >
       {section.items.map((item) => {
         const Icon = item.icon;

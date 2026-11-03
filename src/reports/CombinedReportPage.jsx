@@ -173,11 +173,19 @@ const CombinedReportPage = () => {
                       <TableCell className={classes.columnAction} padding="none">
                         {(event.positionId &&
                           (selected?.event === event ? (
-                            <IconButton size="small" onClick={() => setSelected(null)}>
+                            <IconButton
+                              aria-label={t('a11yHideOnMap')}
+                              size="small"
+                              onClick={() => setSelected(null)}
+                            >
                               <GpsFixedIcon fontSize="small" />
                             </IconButton>
                           ) : (
-                            <IconButton size="small" onClick={() => setSelected({ item, event })}>
+                            <IconButton
+                              aria-label={t('a11yShowOnMap')}
+                              size="small"
+                              onClick={() => setSelected({ item, event })}
+                            >
                               <LocationSearchingIcon fontSize="small" />
                             </IconButton>
                           ))) ||

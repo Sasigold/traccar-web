@@ -248,8 +248,9 @@ const PreferencesPage = () => {
           icon={<MapRoundedIcon />}
         >
           <FormControl>
-            <InputLabel>{t('mapActive')}</InputLabel>
+            <InputLabel id="preferences-page-map-active-label">{t('mapActive')}</InputLabel>
             <Select
+              labelId="preferences-page-map-active-label"
               label={t('mapActive')}
               value={
                 attributes.activeMapStyles?.split(',') || [
@@ -279,8 +280,9 @@ const PreferencesPage = () => {
             </Select>
           </FormControl>
           <FormControl>
-            <InputLabel>{t('mapOverlay')}</InputLabel>
+            <InputLabel id="preferences-page-map-overlay-label">{t('mapOverlay')}</InputLabel>
             <Select
+              labelId="preferences-page-map-overlay-label"
               label={t('mapOverlay')}
               value={attributes.selectedMapOverlay?.split(',') || []}
               onChange={(e, child) => {
@@ -350,8 +352,11 @@ const PreferencesPage = () => {
             renderInput={(params) => <TextField {...params} label={t('attributePopupInfo')} />}
           />
           <FormControl>
-            <InputLabel>{t('mapLiveRoutes')}</InputLabel>
+            <InputLabel id="preferences-page-map-live-routes-label">
+              {t('mapLiveRoutes')}
+            </InputLabel>
             <Select
+              labelId="preferences-page-map-live-routes-label"
               label={t('mapLiveRoutes')}
               value={attributes.mapLiveRoutes || 'none'}
               onChange={(e) => setAttributes({ ...attributes, mapLiveRoutes: e.target.value })}
@@ -362,8 +367,9 @@ const PreferencesPage = () => {
             </Select>
           </FormControl>
           <FormControl>
-            <InputLabel>{t('mapDirection')}</InputLabel>
+            <InputLabel id="preferences-page-map-direction-label">{t('mapDirection')}</InputLabel>
             <Select
+              labelId="preferences-page-map-direction-label"
               label={t('mapDirection')}
               value={attributes.mapDirection || 'selected'}
               onChange={(e) => setAttributes({ ...attributes, mapDirection: e.target.value })}
@@ -448,13 +454,15 @@ const PreferencesPage = () => {
               readOnly
               type="text"
               value={token || ''}
+              slotProps={{ input: { 'aria-label': t('userToken') } }}
               className={classes.tokenField}
               endAdornment={
                 <InputAdornment position="end">
                   <div className={classes.verticalActions}>
-                    <Tooltip title={t('sharedAdd')}>
+                    <Tooltip title={t('sharedAdd')} describeChild>
                       <span>
                         <IconButton
+                          aria-label={t('sharedAdd')}
                           size="small"
                           edge="end"
                           onClick={generateToken}
@@ -464,9 +472,10 @@ const PreferencesPage = () => {
                         </IconButton>
                       </span>
                     </Tooltip>
-                    <Tooltip title={t('sharedCopy')}>
+                    <Tooltip title={t('sharedCopy')} describeChild>
                       <span>
                         <IconButton
+                          aria-label={t('sharedCopy')}
                           size="small"
                           edge="end"
                           onClick={() => navigator.clipboard.writeText(token)}

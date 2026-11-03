@@ -25,6 +25,7 @@ const useStyles = makeStyles()((theme) => ({
     border: '1px solid',
   },
   label: {
+    color: theme.palette.text.primary,
     [theme.breakpoints.down('md')]: {
       display: 'none',
     },
@@ -63,6 +64,7 @@ const SocketStatusPill = () => {
     <Tooltip title={label}>
       <Typography
         component="span"
+        role="status"
         className={cx(classes.root, classes.compact)}
         style={{
           color,

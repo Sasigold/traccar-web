@@ -101,6 +101,9 @@ const MapGeocoder = () => {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = cx('maplibregl-ctrl-icon', classes.button);
+        button.title = t('sharedSearch');
+        button.setAttribute('aria-label', t('sharedSearch'));
+        button.setAttribute('aria-haspopup', 'true');
         button.onclick = () => setAnchorEl(button);
         element.appendChild(button);
         iconRoot = createRoot(button);
@@ -114,7 +117,7 @@ const MapGeocoder = () => {
     };
     map.addControl(control, theme.direction === 'rtl' ? 'top-left' : 'top-right');
     return () => map.removeControl(control);
-  }, [theme.direction, classes.button, cx]);
+  }, [theme.direction, classes.button, cx, t]);
 
   const onSelect = (feature) => {
     const [minX, minY, maxX, maxY] = feature.bbox;

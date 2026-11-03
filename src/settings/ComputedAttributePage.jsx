@@ -133,8 +133,11 @@ const ComputedAttributePage = () => {
               rows={4}
             />
             <FormControl disabled={item.attribute in positionAttributes}>
-              <InputLabel>{t('sharedType')}</InputLabel>
+              <InputLabel id="computed-attribute-page-shared-type-label">
+                {t('sharedType')}
+              </InputLabel>
               <Select
+                labelId="computed-attribute-page-shared-type-label"
                 label={t('sharedType')}
                 value={item.type || ''}
                 onChange={(e) => setItem({ ...item, type: e.target.value })}

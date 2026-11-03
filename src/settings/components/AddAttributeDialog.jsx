@@ -84,8 +84,9 @@ const AddAttributeDialog = ({ open, onResult, definitions }) => {
           renderInput={(params) => <TextField {...params} label={t('sharedAttribute')} />}
         />
         <FormControl fullWidth disabled={key in definitions}>
-          <InputLabel>{t('sharedType')}</InputLabel>
+          <InputLabel id="add-attribute-dialog-shared-type-label">{t('sharedType')}</InputLabel>
           <Select
+            labelId="add-attribute-dialog-shared-type-label"
             label={t('sharedType')}
             value={type || 'string'}
             onChange={(e) => setType(e.target.value)}

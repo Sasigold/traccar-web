@@ -331,15 +331,27 @@ const TripReportPage = () => {
                     <TableCell className={classes.columnAction} padding="none">
                       <div className={classes.columnActionContainer}>
                         {selectedItem === item ? (
-                          <IconButton size="small" onClick={() => setSelectedItem(null)}>
+                          <IconButton
+                            aria-label={t('a11yHideOnMap')}
+                            size="small"
+                            onClick={() => setSelectedItem(null)}
+                          >
                             <GpsFixedIcon fontSize="small" />
                           </IconButton>
                         ) : (
-                          <IconButton size="small" onClick={() => setSelectedItem(item)}>
+                          <IconButton
+                            aria-label={t('a11yShowOnMap')}
+                            size="small"
+                            onClick={() => setSelectedItem(item)}
+                          >
                             <LocationSearchingIcon fontSize="small" />
                           </IconButton>
                         )}
-                        <IconButton size="small" onClick={() => navigateToReplay(item)}>
+                        <IconButton
+                          aria-label={t('reportReplay')}
+                          size="small"
+                          onClick={() => navigateToReplay(item)}
+                        >
                           <RouteIcon fontSize="small" />
                         </IconButton>
                       </div>

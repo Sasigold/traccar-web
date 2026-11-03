@@ -55,6 +55,8 @@ const MobileTabs = () => {
   return (
     <>
       <BottomNavigation
+        component="nav"
+        aria-label={t('shellNavigation')}
         className={`${classes.root} app-tabs`}
         value={current}
         onChange={(event, value) => {

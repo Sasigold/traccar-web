@@ -212,8 +212,9 @@ const EditAttributesAccordion = ({
         }
         return (
           <FormControl key={key}>
-            <InputLabel>{getAttributeName(key, dataType)}</InputLabel>
+            <InputLabel htmlFor={`attribute-${key}`}>{getAttributeName(key, dataType)}</InputLabel>
             <OutlinedInput
+              id={`attribute-${key}`}
               label={getAttributeName(key, dataType)}
               type={type === 'number' ? 'number' : 'text'}
               value={getDisplayValue(value, dataType)}
@@ -221,7 +222,12 @@ const EditAttributesAccordion = ({
               autoFocus={focusAttribute === key}
               endAdornment={
                 <InputAdornment position="end">
-                  <IconButton size="small" edge="end" onClick={() => deleteAttribute(key)}>
+                  <IconButton
+                    aria-label={t('sharedRemove')}
+                    size="small"
+                    edge="end"
+                    onClick={() => deleteAttribute(key)}
+                  >
                     <CloseRoundedIcon fontSize="small" />
                   </IconButton>
                 </InputAdornment>

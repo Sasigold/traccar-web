@@ -3,7 +3,6 @@ import { makeStyles } from 'tss-react/mui';
 import { keyframes } from 'tss-react';
 import { alpha } from '@mui/material/styles';
 import {
-  IconButton,
   Tooltip,
   Avatar,
   ListItemAvatar,
@@ -135,6 +134,9 @@ const useStyles = makeStyles()((theme) => ({
     flexShrink: 0,
   },
   indicator: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     width: 30,
     height: 30,
     borderRadius: 9,
@@ -236,12 +238,13 @@ const DeviceRow = ({ devices, index, style }) => {
   const iconUrl = `url("${mapIcons[mapIconKey(item.category)]}")`;
 
   return (
-    <div style={style}>
+    <div style={style} role="listitem">
       <ListItemButton
         key={item.id}
         onClick={() => dispatch(devicesActions.selectId(item.id))}
         disabled={!admin && item.disabled}
         selected={selectedDeviceId === item.id}
+        aria-pressed={selectedDeviceId === item.id}
         className={cx(classes.row, selectedDeviceId === item.id && classes.selected)}
       >
         <ListItemAvatar className={classes.avatarWrapper}>
@@ -282,29 +285,29 @@ const DeviceRow = ({ devices, index, style }) => {
           <span className={classes.indicators}>
             {position.attributes.hasOwnProperty('alarm') && (
               <Tooltip title={`${t('eventAlarm')}: ${formatAlarm(position.attributes.alarm, t)}`}>
-                <IconButton size="small" className={classes.indicator}>
+                <span role="img" className={classes.indicator}>
                   <ErrorRoundedIcon fontSize="small" className={classes.error} />
-                </IconButton>
+                </span>
               </Tooltip>
             )}
             {position.attributes.hasOwnProperty('ignition') && (
               <Tooltip
                 title={`${t('positionIgnition')}: ${formatBoolean(position.attributes.ignition, t)}`}
               >
-                <IconButton size="small" className={classes.indicator}>
+                <span role="img" className={classes.indicator}>
                   {position.attributes.ignition ? (
                     <EngineIcon width={18} height={18} className={classes.success} />
                   ) : (
                     <EngineIcon width={18} height={18} className={classes.neutral} />
                   )}
-                </IconButton>
+                </span>
               </Tooltip>
             )}
             {position.attributes.hasOwnProperty('batteryLevel') && (
               <Tooltip
                 title={`${t('positionBatteryLevel')}: ${formatPercentage(position.attributes.batteryLevel)}`}
               >
-                <IconButton size="small" className={classes.indicator}>
+                <span role="img" className={classes.indicator}>
                   {(position.attributes.batteryLevel > 70 &&
                     (position.attributes.charge ? (
                       <BatteryChargingFullIcon fontSize="small" className={classes.success} />
@@ -322,7 +325,7 @@ const DeviceRow = ({ devices, index, style }) => {
                     ) : (
                       <Battery20Icon fontSize="small" className={classes.error} />
                     ))}
-                </IconButton>
+                </span>
               </Tooltip>
             )}
           </span>

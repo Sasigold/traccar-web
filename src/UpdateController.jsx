@@ -62,6 +62,7 @@ const UpdateController = () => {
         variant="filled"
         action={
           <IconButton
+            aria-label={t('a11yReload')}
             size="small"
             color="inherit"
             onClick={() => waitingWorker.messageSkipWaiting()}

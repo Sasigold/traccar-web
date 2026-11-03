@@ -79,7 +79,7 @@ const PageHeader = ({ breadcrumbs, title, description, actions, onOpenMenu, back
   return (
     <header className={classes.root}>
       {(!desktop || back) && (
-        <IconButton edge="start" onClick={() => navigate(backTo ?? -1)} aria-label="back">
+        <IconButton edge="start" onClick={() => navigate(backTo ?? -1)} aria-label={t('a11yBack')}>
           <BackIcon />
         </IconButton>
       )}
@@ -117,7 +117,7 @@ const PageHeader = ({ breadcrumbs, title, description, actions, onOpenMenu, back
       {actions && <div className={classes.actions}>{actions}</div>}
       {!desktop && onOpenMenu && (
         <Tooltip title={t('shellOpenMenu')}>
-          <IconButton edge="end" onClick={onOpenMenu}>
+          <IconButton edge="end" onClick={onOpenMenu} aria-label={t('shellOpenMenu')}>
             <MenuOpenRoundedIcon />
           </IconButton>
         </Tooltip>

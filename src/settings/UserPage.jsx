@@ -159,21 +159,28 @@ const UserPage = () => {
             )}
             {totpEnable && (
               <FormControl>
-                <InputLabel>{t('loginTotpKey')}</InputLabel>
+                <InputLabel htmlFor="user-totp-key">{t('loginTotpKey')}</InputLabel>
                 <OutlinedInput
+                  id="user-totp-key"
                   readOnly
                   label={t('loginTotpKey')}
                   value={item.totpKey || ''}
                   endAdornment={
                     <InputAdornment position="end">
                       <TotpQrCodeButton email={item.email} totpKey={item.totpKey} />
-                      <IconButton size="small" edge="end" onClick={handleGenerateTotp}>
+                      <IconButton
+                        size="small"
+                        edge="end"
+                        onClick={handleGenerateTotp}
+                        aria-label={t('a11yGenerate')}
+                      >
                         <CachedIcon fontSize="small" />
                       </IconButton>
                       <IconButton
                         size="small"
                         edge="end"
                         onClick={() => setItem({ ...item, totpKey: null })}
+                        aria-label={t('a11yClear')}
                       >
                         <CloseIcon fontSize="small" />
                       </IconButton>
@@ -190,8 +197,9 @@ const UserPage = () => {
               label={t('sharedPhone')}
             />
             <FormControl>
-              <InputLabel>{t('mapDefault')}</InputLabel>
+              <InputLabel id="user-page-map-default-label">{t('mapDefault')}</InputLabel>
               <Select
+                labelId="user-page-map-default-label"
                 label={t('mapDefault')}
                 value={item.map || 'openFreeMap'}
                 onChange={(e) => setItem({ ...item, map: e.target.value })}
@@ -206,8 +214,11 @@ const UserPage = () => {
               </Select>
             </FormControl>
             <FormControl>
-              <InputLabel>{t('settingsCoordinateFormat')}</InputLabel>
+              <InputLabel id="user-page-settings-coordinate-format-label">
+                {t('settingsCoordinateFormat')}
+              </InputLabel>
               <Select
+                labelId="user-page-settings-coordinate-format-label"
                 label={t('settingsCoordinateFormat')}
                 value={item.coordinateFormat || 'dd'}
                 onChange={(e) => setItem({ ...item, coordinateFormat: e.target.value })}
@@ -218,8 +229,11 @@ const UserPage = () => {
               </Select>
             </FormControl>
             <FormControl>
-              <InputLabel>{t('settingsSpeedUnit')}</InputLabel>
+              <InputLabel id="user-page-settings-speed-unit-label">
+                {t('settingsSpeedUnit')}
+              </InputLabel>
               <Select
+                labelId="user-page-settings-speed-unit-label"
                 label={t('settingsSpeedUnit')}
                 value={(item.attributes && item.attributes.speedUnit) || 'kmh'}
                 onChange={(e) =>
@@ -235,8 +249,11 @@ const UserPage = () => {
               </Select>
             </FormControl>
             <FormControl>
-              <InputLabel>{t('settingsDistanceUnit')}</InputLabel>
+              <InputLabel id="user-page-settings-distance-unit-label">
+                {t('settingsDistanceUnit')}
+              </InputLabel>
               <Select
+                labelId="user-page-settings-distance-unit-label"
                 label={t('settingsDistanceUnit')}
                 value={(item.attributes && item.attributes.distanceUnit) || 'km'}
                 onChange={(e) =>
@@ -252,8 +269,11 @@ const UserPage = () => {
               </Select>
             </FormControl>
             <FormControl>
-              <InputLabel>{t('settingsAltitudeUnit')}</InputLabel>
+              <InputLabel id="user-page-settings-altitude-unit-label">
+                {t('settingsAltitudeUnit')}
+              </InputLabel>
               <Select
+                labelId="user-page-settings-altitude-unit-label"
                 label={t('settingsAltitudeUnit')}
                 value={(item.attributes && item.attributes.altitudeUnit) || 'm'}
                 onChange={(e) =>
@@ -268,8 +288,11 @@ const UserPage = () => {
               </Select>
             </FormControl>
             <FormControl>
-              <InputLabel>{t('settingsVolumeUnit')}</InputLabel>
+              <InputLabel id="user-page-settings-volume-unit-label">
+                {t('settingsVolumeUnit')}
+              </InputLabel>
               <Select
+                labelId="user-page-settings-volume-unit-label"
                 label={t('settingsVolumeUnit')}
                 value={(item.attributes && item.attributes.volumeUnit) || 'ltr'}
                 onChange={(e) =>

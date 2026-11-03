@@ -196,8 +196,9 @@ const SummaryReportPage = () => {
         >
           <div className={classes.filterItem}>
             <FormControl fullWidth>
-              <InputLabel>{t('sharedType')}</InputLabel>
+              <InputLabel id="summary-report-page-shared-type-label">{t('sharedType')}</InputLabel>
               <Select
+                labelId="summary-report-page-shared-type-label"
                 label={t('sharedType')}
                 value={daily}
                 onChange={(e) =>

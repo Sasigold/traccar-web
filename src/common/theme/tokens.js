@@ -79,6 +79,8 @@ export const surfaces = {
     borderStrong: 'rgba(16, 44, 84, 0.18)',
     textPrimary: brandColors.ink,
     textSecondary: brandColors.slate,
+    // Slate on ice is 4.48:1, just under WCAG AA; secondary text on tinted tiles uses this shade.
+    textSecondaryOnTint: slate[600],
     textDisabled: slate[300],
   },
   dark: {
@@ -92,6 +94,7 @@ export const surfaces = {
     borderStrong: 'rgba(225, 245, 247, 0.18)',
     textPrimary: brandColors.ice,
     textSecondary: slate[300],
+    textSecondaryOnTint: slate[300],
     textDisabled: slate[500],
   },
 };

@@ -108,7 +108,7 @@ const GeofencesPage = () => {
       <div className={classes.content}>
         <div className={classes.drawer}>
           <div className={classes.header}>
-            <IconButton edge="start" onClick={() => navigate(-1)}>
+            <IconButton aria-label={t('a11yBack')} edge="start" onClick={() => navigate(-1)}>
               <BackIcon />
             </IconButton>
             <Typography variant="h6" className={classes.title}>
