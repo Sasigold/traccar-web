@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
-import { IconButton, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import { IconButton, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
 import RouteIcon from '@mui/icons-material/Route';
@@ -21,6 +21,11 @@ import PageLayout from '../common/components/PageLayout';
 import SelectField from '../common/components/SelectField';
 import ReportsMenu from './components/ReportsMenu';
 import ColumnSelect from './components/ColumnSelect';
+import ReportKpis from './components/ReportKpis';
+import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
+import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded';
+import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
+import PlayCircleRoundedIcon from '@mui/icons-material/PlayCircleRounded';
 import ResizeHandle from './components/ResizeHandle';
 import usePersistedState from '../common/util/usePersistedState';
 import { useCatch, useCatchCallback, useAsyncTask } from '../reactHelper';
@@ -29,6 +34,7 @@ import MapView from '../map/core/MapView';
 import MapRoutePath from '../map/MapRoutePath';
 import AddressValue from '../common/components/AddressValue';
 import TableShimmer from '../common/components/TableShimmer';
+import DataTable from '../common/components/table/DataTable';
 import MapMarkers from '../map/MapMarkers';
 import MapCamera from '../map/MapCamera';
 import MapGeofence from '../map/MapGeofence';
@@ -186,6 +192,40 @@ const TripReportPage = () => {
     });
   };
 
+  const kpis = useMemo(() => {
+    if (!filteredItems.length) {
+      return [];
+    }
+    const sum = (key) => filteredItems.reduce((total, item) => total + (item[key] || 0), 0);
+    const maxSpeed = Math.max(0, ...filteredItems.map((item) => item.maxSpeed || 0));
+    return [
+      {
+        key: 'count',
+        label: t('reportTrips'),
+        value: filteredItems.length,
+        icon: <PlayCircleRoundedIcon />,
+      },
+      {
+        key: 'distance',
+        label: `${t('sharedTotal')} · ${t('sharedDistance')}`,
+        value: formatDistance(sum('distance'), distanceUnit, t),
+        icon: <RouteRoundedIcon />,
+      },
+      {
+        key: 'duration',
+        label: `${t('sharedTotal')} · ${t('reportDuration')}`,
+        value: formatNumericHours(sum('duration'), t),
+        icon: <TimerRoundedIcon />,
+      },
+      {
+        key: 'maxSpeed',
+        label: t('reportMaximumSpeed'),
+        value: maxSpeed > 0 ? formatSpeed(maxSpeed, speedUnit, t) : null,
+        icon: <SpeedRoundedIcon />,
+      },
+    ];
+  }, [filteredItems, distanceUnit, speedUnit, t]);
+
   const formatValue = (item, key) => {
     const value = item[key];
     switch (key) {
@@ -273,7 +313,8 @@ const TripReportPage = () => {
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
             </ReportFilter>
           </div>
-          <Table>
+          {!loading && <ReportKpis items={kpis} />}
+          <DataTable variant="flush">
             <TableHead>
               <TableRow>
                 <TableCell className={classes.columnAction} />
@@ -313,7 +354,7 @@ const TripReportPage = () => {
                 <TableShimmer columns={columns.length + 2} startAction />
               )}
             </TableBody>
-          </Table>
+          </DataTable>
         </div>
       </div>
     </PageLayout>

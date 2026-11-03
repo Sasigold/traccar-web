@@ -336,8 +336,8 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
         {Object.keys(options).length === 1 ? (
           <Button
             fullWidth
-            variant="outlined"
-            color="secondary"
+            variant="contained"
+            color="primary"
             disabled={disabled}
             onClick={onClick}
           >
@@ -348,8 +348,8 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
         ) : (
           <SplitButton
             fullWidth
-            variant="outlined"
-            color="secondary"
+            variant="contained"
+            color="primary"
             disabled={disabled}
             onClick={onClick}
             selected={selectedOption}

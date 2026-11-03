@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
-import { IconButton, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import { IconButton, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
 import {
@@ -18,6 +18,9 @@ import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import ReportsMenu from './components/ReportsMenu';
 import ColumnSelect from './components/ColumnSelect';
+import ReportKpis from './components/ReportKpis';
+import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
+import PauseCircleRoundedIcon from '@mui/icons-material/PauseCircleRounded';
 import ResizeHandle from './components/ResizeHandle';
 import usePersistedState from '../common/util/usePersistedState';
 import { useCatch, useCatchCallback } from '../reactHelper';
@@ -27,6 +30,7 @@ import MapView from '../map/core/MapView';
 import MapCamera from '../map/MapCamera';
 import AddressValue from '../common/components/AddressValue';
 import TableShimmer from '../common/components/TableShimmer';
+import DataTable from '../common/components/table/DataTable';
 import MapGeofence from '../map/MapGeofence';
 import { mapIconKey } from '../map/core/preloadImages';
 import scheduleReport from './common/scheduleReport';
@@ -110,6 +114,27 @@ const StopReportPage = () => {
     navigate('/reports/scheduled');
   });
 
+  const kpis = useMemo(() => {
+    if (!items.length) {
+      return [];
+    }
+    const duration = items.reduce((total, item) => total + (item.duration || 0), 0);
+    return [
+      {
+        key: 'count',
+        label: t('reportStops'),
+        value: items.length,
+        icon: <PauseCircleRoundedIcon />,
+      },
+      {
+        key: 'duration',
+        label: `${t('sharedTotal')} · ${t('reportDuration')}`,
+        value: formatNumericHours(duration, t),
+        icon: <TimerRoundedIcon />,
+      },
+    ];
+  }, [items, t]);
+
   const formatValue = (item, key) => {
     const value = item[key];
     switch (key) {
@@ -175,7 +200,8 @@ const StopReportPage = () => {
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
             </ReportFilter>
           </div>
-          <Table>
+          {!loading && <ReportKpis items={kpis} />}
+          <DataTable variant="flush">
             <TableHead>
               <TableRow>
                 <TableCell className={classes.columnAction} />
@@ -210,7 +236,7 @@ const StopReportPage = () => {
                 <TableShimmer columns={columns.length + 2} startAction />
               )}
             </TableBody>
-          </Table>
+          </DataTable>
         </div>
       </div>
     </PageLayout>

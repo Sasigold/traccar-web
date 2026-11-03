@@ -1,26 +1,16 @@
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
-
-import {
-  Typography,
-  Container,
-  Paper,
-  AppBar,
-  Toolbar,
-  IconButton,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-} from '@mui/material';
+import { useParams } from 'react-router-dom';
+import { TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import { useNavigate, useParams } from 'react-router-dom';
 import { useAsyncTask } from '../reactHelper';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PositionValue from '../common/components/PositionValue';
+import PageHeader from '../common/components/shell/PageHeader';
+import DataTable from '../common/components/table/DataTable';
+import TableShimmer from '../common/components/TableShimmer';
 import usePositionAttributes from '../common/attributes/usePositionAttributes';
-import BackIcon from '../common/components/BackIcon';
+import { formatTime } from '../common/util/formatter';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 
 const useStyles = makeStyles()((theme) => ({
@@ -30,15 +20,27 @@ const useStyles = makeStyles()((theme) => ({
     flexDirection: 'column',
   },
   content: {
+    flex: 1,
+    minHeight: 0,
     overflow: 'auto',
-    paddingTop: theme.spacing(2),
-    paddingBottom: theme.spacing(2),
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  table: {
+    maxWidth: 960,
+    width: '100%',
+    marginInline: 'auto',
+    flex: 'none',
+  },
+  mono: {
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+    fontSize: '0.8125rem',
+    color: theme.palette.text.secondary,
   },
 }));
 
 const PositionPage = () => {
   const { classes } = useStyles();
-  const navigate = useNavigate();
   const t = useTranslation();
 
   const positionAttributes = usePositionAttributes(t);
@@ -70,58 +72,54 @@ const PositionPage = () => {
     return null;
   });
 
+  const rows = item
+    ? [
+        ...Object.getOwnPropertyNames(item)
+          .filter((it) => it !== 'attributes')
+          .map((property) => ({ key: property, property })),
+        ...Object.getOwnPropertyNames(item.attributes).map((attribute) => ({
+          key: `attr-${attribute}`,
+          attribute,
+        })),
+      ]
+    : [];
+
   return (
     <div className={classes.root}>
-      <AppBar position="sticky" color="inherit">
-        <Toolbar>
-          <IconButton color="inherit" edge="start" sx={{ mr: 2 }} onClick={() => navigate(-1)}>
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6">{deviceName}</Typography>
-        </Toolbar>
-      </AppBar>
+      <PageHeader
+        back
+        title={deviceName || t('sharedShowDetails')}
+        description={item ? formatTime(item.fixTime, 'seconds') : undefined}
+      />
       <div className={classes.content}>
-        <Container maxWidth="sm">
-          <Paper>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>{t('stateName')}</TableCell>
-                  <TableCell>{t('sharedName')}</TableCell>
-                  <TableCell>{t('stateValue')}</TableCell>
+        <DataTable className={classes.table}>
+          <TableHead>
+            <TableRow>
+              <TableCell>{t('stateName')}</TableCell>
+              <TableCell>{t('sharedName')}</TableCell>
+              <TableCell>{t('stateValue')}</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {item ? (
+              rows.map(({ key, property, attribute }) => (
+                <TableRow key={key} hover>
+                  <TableCell className={classes.mono}>{property || attribute}</TableCell>
+                  <TableCell>
+                    <Typography variant="body2" fontWeight={600}>
+                      {positionAttributes[property || attribute]?.name}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <PositionValue position={item} property={property} attribute={attribute} />
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {item &&
-                  Object.getOwnPropertyNames(item)
-                    .filter((it) => it !== 'attributes')
-                    .map((property) => (
-                      <TableRow key={property}>
-                        <TableCell>{property}</TableCell>
-                        <TableCell>
-                          <strong>{positionAttributes[property]?.name}</strong>
-                        </TableCell>
-                        <TableCell>
-                          <PositionValue position={item} property={property} />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                {item &&
-                  Object.getOwnPropertyNames(item.attributes).map((attribute) => (
-                    <TableRow key={attribute}>
-                      <TableCell>{attribute}</TableCell>
-                      <TableCell>
-                        <strong>{positionAttributes[attribute]?.name}</strong>
-                      </TableCell>
-                      <TableCell>
-                        <PositionValue position={item} attribute={attribute} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </Paper>
-        </Container>
+              ))
+            ) : (
+              <TableShimmer columns={3} />
+            )}
+          </TableBody>
+        </DataTable>
       </div>
     </div>
   );

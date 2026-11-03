@@ -118,15 +118,7 @@ const ChartReportPage = () => {
     [positionAttributes, units],
   );
 
-  const colorPalette = [
-    theme.palette.primary.main,
-    theme.palette.secondary.main,
-    theme.palette.error.main,
-    theme.palette.warning.main,
-    theme.palette.info.main,
-    theme.palette.success.main,
-    theme.palette.text.secondary,
-  ];
+  const colorPalette = theme.palette.chart;
 
   return (
     <PageLayout menu={<ReportsMenu />} breadcrumbs={['reportTitle', 'reportChart']}>
@@ -196,7 +188,9 @@ const ChartReportPage = () => {
                   }}
                 >
                   <XAxis
-                    stroke={theme.palette.text.primary}
+                    stroke={theme.palette.text.secondary}
+                    tickLine={false}
+                    axisLine={false}
                     dataKey={timeType}
                     type="number"
                     tickFormatter={(value) => formatTime(value, 'time')}
@@ -205,7 +199,9 @@ const ChartReportPage = () => {
                   />
                   <YAxis
                     width="auto"
-                    stroke={theme.palette.text.primary}
+                    stroke={theme.palette.text.secondary}
+                    tickLine={false}
+                    axisLine={false}
                     type="number"
                     tickFormatter={(value) => parseFloat(value.toFixed(2))}
                     domain={[minValue - valueRange / 5, maxValue + valueRange / 5]}
@@ -220,8 +216,11 @@ const ChartReportPage = () => {
                   )}
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: theme.palette.background.default,
+                      backgroundColor: theme.palette.background.paper,
                       color: theme.palette.text.primary,
+                      border: `1px solid ${theme.palette.surface.border}`,
+                      borderRadius: 12,
+                      boxShadow: theme.shadows[3],
                     }}
                     formatter={(value, key) => [value, positionAttributes[key]?.name || key]}
                     labelFormatter={(value) => formatTime(value, 'seconds')}
@@ -239,6 +238,7 @@ const ChartReportPage = () => {
                       type="monotone"
                       dataKey={type}
                       stroke={colorPalette[index % colorPalette.length]}
+                      strokeWidth={2}
                       dot={false}
                       connectNulls
                     />

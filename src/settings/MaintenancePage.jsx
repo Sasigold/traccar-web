@@ -1,17 +1,6 @@
 import { useState } from 'react';
 import dayjs from 'dayjs';
-import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
-  TextField,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-} from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { TextField, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import EditItemView from './components/EditItemView';
 import EditAttributesAccordion from './components/EditAttributesAccordion';
 import useAttributeUnits from '../common/util/useAttributeUnits';
@@ -23,10 +12,9 @@ import {
 import { useTranslation } from '../common/components/LocalizationProvider';
 import usePositionAttributes from '../common/attributes/usePositionAttributes';
 import SettingsMenu from './components/SettingsMenu';
-import useSettingsStyles from './common/useSettingsStyles';
+import FormSection from './components/FormSection';
 
 const MaintenancePage = () => {
-  const { classes } = useSettingsStyles();
   const t = useTranslation();
 
   const positionAttributes = usePositionAttributes(t);
@@ -85,52 +73,45 @@ const MaintenancePage = () => {
     >
       {item && (
         <>
-          <Accordion defaultExpanded>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1">{t('sharedRequired')}</Typography>
-            </AccordionSummary>
-            <AccordionDetails className={classes.details}>
-              <TextField
-                value={item.name || ''}
-                onChange={(e) => setItem({ ...item, name: e.target.value })}
-                label={t('sharedName')}
-              />
-              <FormControl>
-                <InputLabel>{t('sharedType')}</InputLabel>
-                <Select
-                  label={t('sharedType')}
-                  value={item.type || ''}
-                  onChange={(e) => setItem({ ...item, type: e.target.value, start: 0, period: 0 })}
-                >
-                  {convertToList(positionAttributes).map(({ key, name }) => (
-                    <MenuItem key={key} value={key}>
-                      {name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <TextField
-                type={item.type?.endsWith('Time') ? 'date' : 'number'}
-                value={rawToValue(true, item.start) || ''}
-                onChange={(e) => setItem({ ...item, start: valueToRaw(true, e.target.value) })}
-                label={
-                  labels.start
-                    ? `${t('maintenanceStart')} (${labels.start})`
-                    : t('maintenanceStart')
-                }
-              />
-              <TextField
-                type="number"
-                value={rawToValue(false, item.period) || ''}
-                onChange={(e) => setItem({ ...item, period: valueToRaw(false, e.target.value) })}
-                label={
-                  labels.period
-                    ? `${t('maintenancePeriod')} (${labels.period})`
-                    : t('maintenancePeriod')
-                }
-              />
-            </AccordionDetails>
-          </Accordion>
+          <FormSection title={t('sharedRequired')}>
+            <TextField
+              value={item.name || ''}
+              onChange={(e) => setItem({ ...item, name: e.target.value })}
+              label={t('sharedName')}
+            />
+            <FormControl>
+              <InputLabel>{t('sharedType')}</InputLabel>
+              <Select
+                label={t('sharedType')}
+                value={item.type || ''}
+                onChange={(e) => setItem({ ...item, type: e.target.value, start: 0, period: 0 })}
+              >
+                {convertToList(positionAttributes).map(({ key, name }) => (
+                  <MenuItem key={key} value={key}>
+                    {name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              type={item.type?.endsWith('Time') ? 'date' : 'number'}
+              value={rawToValue(true, item.start) || ''}
+              onChange={(e) => setItem({ ...item, start: valueToRaw(true, e.target.value) })}
+              label={
+                labels.start ? `${t('maintenanceStart')} (${labels.start})` : t('maintenanceStart')
+              }
+            />
+            <TextField
+              type="number"
+              value={rawToValue(false, item.period) || ''}
+              onChange={(e) => setItem({ ...item, period: valueToRaw(false, e.target.value) })}
+              label={
+                labels.period
+                  ? `${t('maintenancePeriod')} (${labels.period})`
+                  : t('maintenancePeriod')
+              }
+            />
+          </FormSection>
           <EditAttributesAccordion
             attributes={item.attributes}
             setAttributes={(attributes) => setItem({ ...item, attributes })}

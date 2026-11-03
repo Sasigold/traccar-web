@@ -5,12 +5,11 @@ html, body {
 body {
   margin: 0;
   padding: 0;
+  background: #f4f6fb;
 }
 
-@media (prefers-color-scheme: dark) {
-  body {
-    background: black;
-  }
+html.dark body {
+  background: #0b1020;
 }
 
 .root {
@@ -23,5 +22,12 @@ body {
   * {
     height: auto !important;
     overflow: visible !important;
+  }
+
+  .app-rail,
+  .app-topbar,
+  .app-tabs,
+  .app-section-nav {
+    display: none !important;
   }
 }

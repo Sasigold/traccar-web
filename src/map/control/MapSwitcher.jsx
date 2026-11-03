@@ -106,8 +106,14 @@ const MapSwitcher = ({ styles, selectedId, onSelect }) => {
       anchorEl={anchorEl}
       open={Boolean(anchorEl)}
       onClose={() => setAnchorEl(null)}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: theme.direction === 'rtl' ? 'left' : 'right',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: theme.direction === 'rtl' ? 'left' : 'right',
+      }}
     >
       {styles.map((style) => (
         <MenuItem

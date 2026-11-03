@@ -1,28 +1,20 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
-  Container,
-  Button,
-} from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+
 import { useTranslation } from '../common/components/LocalizationProvider';
 import BaseCommandView from './components/BaseCommandView';
-import PageLayout from '../common/components/PageLayout';
 import SettingsMenu from './components/SettingsMenu';
 import { useCatch } from '../reactHelper';
-import useSettingsStyles from './common/useSettingsStyles';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import { messagesActions } from '../store';
+import FormSection from './components/FormSection';
+import FormPage from './components/FormPage';
+import SaveBar from './components/SaveBar';
 
 const CommandDevicePage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { classes } = useSettingsStyles();
   const t = useTranslation();
 
   const { id } = useParams();
@@ -58,39 +50,29 @@ const CommandDevicePage = () => {
   const validate = () => savedId || (item && item.type);
 
   return (
-    <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'deviceCommand']}>
-      <Container maxWidth="xs" className={classes.container}>
-        <Accordion defaultExpanded>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle1">{t('sharedRequired')}</Typography>
-          </AccordionSummary>
-          <AccordionDetails className={classes.details}>
-            <BaseCommandView
-              deviceId={id}
-              item={item}
-              setItem={setItem}
-              includeSaved
-              savedId={savedId}
-              setSavedId={setSavedId}
-            />
-          </AccordionDetails>
-        </Accordion>
-        <div className={classes.buttons}>
-          <Button type="button" color="primary" variant="outlined" onClick={() => navigate(-1)}>
-            {t('sharedCancel')}
-          </Button>
-          <Button
-            type="button"
-            color="primary"
-            variant="contained"
-            onClick={handleSend}
-            disabled={!validate()}
-          >
-            {t('commandSend')}
-          </Button>
-        </div>
-      </Container>
-    </PageLayout>
+    <FormPage
+      menu={<SettingsMenu />}
+      breadcrumbs={['settingsTitle', 'deviceCommand']}
+      footer={
+        <SaveBar
+          onCancel={() => navigate(-1)}
+          onSave={handleSend}
+          disabled={!validate()}
+          saveLabel={t('commandSend')}
+        />
+      }
+    >
+      <FormSection title={t('sharedRequired')}>
+        <BaseCommandView
+          deviceId={id}
+          item={item}
+          setItem={setItem}
+          includeSaved
+          savedId={savedId}
+          setSavedId={setSavedId}
+        />
+      </FormSection>
+    </FormPage>
   );
 };
 

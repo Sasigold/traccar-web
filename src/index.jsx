@@ -22,7 +22,7 @@ root.render(
       <LocalizationProvider>
         <StyledEngineProvider injectFirst>
           <AppThemeProvider>
-            <CssBaseline />
+            <CssBaseline enableColorScheme />
             <ServerProvider>
               <BrowserRouter basename={new URL(document.baseURI).pathname}>
                 <Navigation />

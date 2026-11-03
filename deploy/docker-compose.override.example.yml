@@ -4,6 +4,6 @@ services:
     environment:
       - WEB_TITLE=ניהול צי
       - WEB_DESCRIPTION=מרכז שליטה ובקרה לצי הרכב
-      - WEB_COLORPRIMARY=#0b5e5a
+      - WEB_COLORPRIMARY=#4f46e5
     volumes:
       - ./web:/opt/traccar/web:ro

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { IconButton, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import { IconButton, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
 import ReportFilter from './components/ReportFilter';
@@ -12,6 +12,7 @@ import { useCatchCallback } from '../reactHelper';
 import MapView from '../map/core/MapView';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
+import DataTable from '../common/components/table/DataTable';
 import MapCamera from '../map/MapCamera';
 import MapGeofence from '../map/MapGeofence';
 import { formatTime } from '../common/util/formatter';
@@ -154,7 +155,7 @@ const CombinedReportPage = () => {
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
             </ReportFilter>
           </div>
-          <Table>
+          <DataTable variant="flush">
             <TableHead>
               <TableRow>
                 <TableCell className={classes.columnAction} />
@@ -193,7 +194,7 @@ const CombinedReportPage = () => {
                 <TableShimmer columns={columns.length + 2} />
               )}
             </TableBody>
-          </Table>
+          </DataTable>
         </div>
       </div>
     </PageLayout>

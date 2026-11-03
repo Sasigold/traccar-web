@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button, TextField, Typography, IconButton, InputAdornment } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
+import { alpha } from '@mui/material/styles';
+import { accentGradient } from '../common/theme/surfaces';
 import { useNavigate } from 'react-router-dom';
 import LoginLayout from './LoginLayout';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -23,10 +25,24 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: 'center',
   },
   title: {
-    fontSize: theme.spacing(3),
-    fontWeight: 500,
-    marginLeft: theme.spacing(1),
-    textTransform: 'uppercase',
+    fontWeight: 800,
+    letterSpacing: '-0.02em',
+    marginInlineStart: theme.spacing(0.5),
+  },
+  cta: {
+    height: 48,
+    fontSize: '0.9375rem',
+    backgroundImage: accentGradient(theme),
+    color: '#ffffff',
+    boxShadow: `0 10px 24px ${alpha(theme.palette.primary.main, 0.35)}`,
+    '&:hover': {
+      backgroundImage: accentGradient(theme),
+      filter: 'brightness(1.06)',
+    },
+    '&.Mui-disabled': {
+      backgroundImage: 'none',
+      boxShadow: 'none',
+    },
   },
 }));
 
@@ -81,7 +97,7 @@ const RegisterPage = () => {
               <BackIcon />
             </IconButton>
           )}
-          <Typography className={classes.title} color="primary">
+          <Typography variant="h4" className={classes.title}>
             {t('loginRegister')}
           </Typography>
         </div>
@@ -131,7 +147,9 @@ const RegisterPage = () => {
         )}
         <Button
           variant="contained"
-          color="secondary"
+          color="primary"
+          className={classes.cta}
+          loading={submitting}
           onClick={handleSubmit}
           type="submit"
           disabled={

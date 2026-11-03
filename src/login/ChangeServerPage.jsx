@@ -2,15 +2,18 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import VpnLockIcon from '@mui/icons-material/VpnLock';
 import { makeStyles } from 'tss-react/mui';
+import { alpha } from '@mui/material/styles';
+import { glass } from '../common/theme/surfaces';
 import {
   Autocomplete,
   Button,
-  Container,
   createFilterOptions,
   Dialog,
   DialogActions,
   DialogContent,
+  Paper,
   TextField,
+  Typography,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { Scanner } from '@yudiel/react-qr-scanner';
@@ -32,14 +35,39 @@ const officialServers = [
 ].filter((value, index, self) => self.indexOf(value) === index);
 
 const useStyles = makeStyles()((theme) => ({
-  icon: {
-    textAlign: 'center',
-    fontSize: '10rem',
-    color: theme.palette.neutral.main,
+  root: {
+    minHeight: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: theme.spacing(3),
+    backgroundColor: theme.palette.background.default,
   },
-  container: {
+  card: {
+    width: '100%',
+    maxWidth: 440,
+    padding: theme.spacing(4),
+    borderRadius: theme.tokens.radius.xxl,
+    ...glass(theme, 0.9),
     textAlign: 'center',
-    padding: theme.spacing(5, 3),
+  },
+  iconTile: {
+    width: 64,
+    height: 64,
+    marginInline: 'auto',
+    borderRadius: 20,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+    color: theme.palette.primary.main,
+    '& svg': {
+      fontSize: 32,
+    },
+  },
+  title: {
+    marginTop: theme.spacing(2),
+    fontWeight: 800,
   },
   field: {
     margin: theme.spacing(3, 0),
@@ -110,47 +138,54 @@ const ChangeServerPage = () => {
 
   return (
     <>
-      <Container maxWidth="xs" className={classes.container}>
-        <VpnLockIcon className={classes.icon} />
-        <Autocomplete
-          freeSolo
-          className={classes.field}
-          options={officialServers}
-          renderInput={(params) => (
-            <TextField {...params} label={t('settingsServer')} error={invalid} />
-          )}
-          value={currentServer}
-          onChange={(_, value) =>
-            value && validateUrl(value) ? handleSubmit(value) : setInvalid(true)
-          }
-          inputValue={inputValue}
-          onInputChange={(_, value) => {
-            setInputValue(value);
-            setInvalid(false);
-          }}
-          filterOptions={filter}
-        />
-        <div className={classes.buttons}>
-          <Button color="primary" variant="outlined" onClick={() => navigate(-1)}>
-            {t('sharedCancel')}
-          </Button>
-          {Boolean(navigator?.mediaDevices?.getUserMedia) && (
-            <Button color="primary" variant="outlined" onClick={() => setScannerOpen(true)}>
-              {t('sharedQrCode')}
-            </Button>
-          )}
-          <Button
-            color="primary"
-            variant="contained"
-            onClick={() =>
-              inputValue && validateUrl(inputValue) ? handleSubmit(inputValue) : setInvalid(true)
+      <div className={classes.root}>
+        <Paper elevation={0} className={classes.card}>
+          <span className={classes.iconTile}>
+            <VpnLockIcon />
+          </span>
+          <Typography variant="h5" className={classes.title}>
+            {t('settingsServer')}
+          </Typography>
+          <Autocomplete
+            freeSolo
+            className={classes.field}
+            options={officialServers}
+            renderInput={(params) => (
+              <TextField {...params} label={t('settingsServer')} error={invalid} />
+            )}
+            value={currentServer}
+            onChange={(_, value) =>
+              value && validateUrl(value) ? handleSubmit(value) : setInvalid(true)
             }
-            disabled={!inputValue || invalid}
-          >
-            {t('sharedSave')}
-          </Button>
-        </div>
-      </Container>
+            inputValue={inputValue}
+            onInputChange={(_, value) => {
+              setInputValue(value);
+              setInvalid(false);
+            }}
+            filterOptions={filter}
+          />
+          <div className={classes.buttons}>
+            <Button color="primary" variant="outlined" onClick={() => navigate(-1)}>
+              {t('sharedCancel')}
+            </Button>
+            {Boolean(navigator?.mediaDevices?.getUserMedia) && (
+              <Button color="primary" variant="outlined" onClick={() => setScannerOpen(true)}>
+                {t('sharedQrCode')}
+              </Button>
+            )}
+            <Button
+              color="primary"
+              variant="contained"
+              onClick={() =>
+                inputValue && validateUrl(inputValue) ? handleSubmit(inputValue) : setInvalid(true)
+              }
+              disabled={!inputValue || invalid}
+            >
+              {t('sharedSave')}
+            </Button>
+          </div>
+        </Paper>
+      </div>
 
       <Dialog fullWidth maxWidth="sm" open={scannerOpen} onClose={() => setScannerOpen(false)}>
         <DialogContent>

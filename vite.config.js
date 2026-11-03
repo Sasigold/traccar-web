@@ -9,7 +9,7 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 const brand = {
   title: 'ניהול צי',
   description: 'מרכז שליטה ובקרה לצי הרכב',
-  colorPrimary: '#0b5e5a',
+  colorPrimary: '#4f46e5',
 };
 
 export default defineConfig(() => ({
@@ -47,7 +47,7 @@ export default defineConfig(() => ({
         short_name: brand.title,
         name: brand.description,
         theme_color: brand.colorPrimary,
-        background_color: '#f2f5f7',
+        background_color: '#f4f6fb',
         lang: 'he',
         dir: 'rtl',
         icons: [

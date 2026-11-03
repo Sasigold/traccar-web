@@ -4,7 +4,7 @@ import { ButtonBase, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import { useTranslation } from '../../common/components/LocalizationProvider';
-import { accentGradient, statusColor } from '../../common/theme/glass';
+import { accentGradient, statusColor } from '../../common/theme/surfaces';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -12,6 +12,9 @@ const useStyles = makeStyles()((theme) => ({
     gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
     gap: theme.spacing(0.75),
     padding: theme.spacing(0, 2, 1.5),
+    [theme.breakpoints.down('md')]: {
+      padding: theme.spacing(0, 1.5, 1.25),
+    },
   },
   tile: {
     position: 'relative',
@@ -21,10 +24,10 @@ const useStyles = makeStyles()((theme) => ({
     textAlign: 'start',
     gap: 2,
     padding: theme.spacing(1, 1.25, 1.25),
-    borderRadius: 12,
+    borderRadius: theme.tokens.radius.lg,
     overflow: 'hidden',
-    border: `1px solid ${theme.palette.divider}`,
-    backgroundColor: alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.03 : 0.02),
+    border: `1px solid ${theme.palette.surface.border}`,
+    backgroundColor: theme.palette.surface.sunken,
     transition: 'border-color 160ms ease, background-color 160ms ease, transform 160ms ease',
     '&:hover': {
       borderColor: alpha(theme.palette.primary.main, 0.4),
@@ -62,8 +65,8 @@ const useStyles = makeStyles()((theme) => ({
     position: 'absolute',
     insetInlineStart: 0,
     bottom: 0,
-    height: 2,
-    borderRadius: 2,
+    height: 3,
+    borderRadius: 3,
     transition: 'width 400ms ease',
   },
 }));
@@ -103,7 +106,7 @@ const FleetStats = ({ filter, setFilter }) => {
       ? {
           borderColor: alpha(color, 0.55),
           backgroundColor: alpha(color, 0.1),
-          boxShadow: `0 0 0 1px ${alpha(color, 0.25)}, 0 6px 18px ${alpha(color, 0.18)}`,
+          boxShadow: `0 0 0 1px ${alpha(color, 0.25)}`,
         }
       : undefined;
 

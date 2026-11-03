@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { IconButton, Paper, Slider, Toolbar, Typography } from '@mui/material';
+import { Chip, IconButton, Slider, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import TuneIcon from '@mui/icons-material/Tune';
-import DownloadIcon from '@mui/icons-material/Download';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import PauseIcon from '@mui/icons-material/Pause';
-import FastForwardIcon from '@mui/icons-material/FastForward';
-import FastRewindIcon from '@mui/icons-material/FastRewind';
+import { alpha, useTheme } from '@mui/material/styles';
+import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
+import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
+import PauseRoundedIcon from '@mui/icons-material/PauseRounded';
+import FastForwardRoundedIcon from '@mui/icons-material/FastForwardRounded';
+import FastRewindRoundedIcon from '@mui/icons-material/FastRewindRounded';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import MapView from '../map/core/MapView';
@@ -21,64 +22,120 @@ import MapCamera from '../map/MapCamera';
 import MapGeofence from '../map/MapGeofence';
 import StatusCard from '../common/components/StatusCard';
 import MapScale from '../map/MapScale';
+import MapPadding from '../map/MapPadding';
 import BackIcon from '../common/components/BackIcon';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import MapOverlay from '../map/overlay/MapOverlay';
+import { accentGradient, glass } from '../common/theme/surfaces';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
+    position: 'relative',
     height: '100%',
+    overflow: 'hidden',
   },
   sidebar: {
     display: 'flex',
     flexDirection: 'column',
-    position: 'fixed',
-    zIndex: 3,
-    left: 0,
-    top: 0,
-    margin: theme.spacing(1.5),
-    width: theme.dimensions.drawerWidthDesktop,
+    position: 'absolute',
+    zIndex: theme.layers.panel,
+    insetInlineStart: theme.dimensions.panelGap,
+    top: theme.dimensions.panelGap,
+    width: theme.dimensions.devicePanelWidth,
+    maxHeight: `calc(100% - ${theme.dimensions.panelGap * 2}px)`,
+    ...glass(theme, 0.92),
+    borderRadius: theme.tokens.radius.xxl,
+    overflow: 'hidden',
     [theme.breakpoints.down('md')]: {
+      insetInline: 0,
+      top: 0,
       width: '100%',
-      margin: 0,
+      maxHeight: '70%',
+      borderRadius: '0 0 20px 20px',
     },
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    padding: theme.spacing(1.5, 1.5, 1.5, 2),
+    borderBottom: `1px solid ${theme.palette.surface.border}`,
   },
   title: {
     flexGrow: 1,
+    fontWeight: 800,
+  },
+  content: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(2),
+    overflowY: 'auto',
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: theme.palette.background.paper,
+    },
+  },
+  filterGrid: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1.5),
+    '& > div': {
+      flexBasis: 'auto !important',
+    },
+  },
+  deviceRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing(1),
+  },
+  deviceName: {
+    fontWeight: 700,
   },
   slider: {
-    width: '100%',
+    marginInline: theme.spacing(1),
+    width: 'auto',
   },
   controls: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: theme.spacing(1),
   },
-  formControlLabel: {
-    height: '100%',
-    width: '100%',
-    paddingRight: theme.spacing(1),
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  content: {
+  transport: {
     display: 'flex',
-    flexDirection: 'column',
-    padding: theme.spacing(2),
-    [theme.breakpoints.down('md')]: {
-      margin: theme.spacing(1),
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+  },
+  play: {
+    width: 48,
+    height: 48,
+    color: '#ffffff',
+    background: accentGradient(theme),
+    boxShadow: `0 8px 20px ${alpha(theme.palette.primary.main, 0.35)}`,
+    '&:hover': {
+      background: accentGradient(theme),
+      filter: 'brightness(1.08)',
     },
-    [theme.breakpoints.up('md')]: {
-      marginTop: theme.spacing(1),
+    '&.Mui-disabled': {
+      background: theme.palette.action.disabledBackground,
+      boxShadow: 'none',
     },
+  },
+  time: {
+    fontVariantNumeric: 'tabular-nums',
+    fontWeight: 600,
   },
 }));
 
 const ReplayPage = () => {
   const t = useTranslation();
   const { classes } = useStyles();
+  const theme = useTheme();
   const navigate = useNavigate();
   const timerRef = useRef();
+
+  const desktop = useMediaQuery(theme.breakpoints.up('md'));
 
   const [searchParams] = useSearchParams();
 
@@ -189,33 +246,49 @@ const ReplayPage = () => {
       </MapView>
       <MapScale />
       <MapCamera positions={positions} />
+      {desktop && (
+        <MapPadding start={theme.dimensions.devicePanelWidth + 2 * theme.dimensions.panelGap} />
+      )}
       <div className={classes.sidebar}>
-        <Paper elevation={3} square>
-          <Toolbar>
-            <IconButton edge="start" sx={{ mr: 2 }} onClick={() => navigate(-1)}>
-              <BackIcon />
-            </IconButton>
-            <Typography variant="h6" className={classes.title}>
-              {t('reportReplay')}
-            </Typography>
-            {loaded && (
-              <>
+        <div className={classes.header}>
+          <IconButton edge="start" onClick={() => navigate(-1)}>
+            <BackIcon />
+          </IconButton>
+          <Typography variant="h6" className={classes.title}>
+            {t('reportReplay')}
+          </Typography>
+          {loaded && (
+            <>
+              <Tooltip title={t('reportExport')}>
                 <IconButton onClick={handleDownload}>
-                  <DownloadIcon />
+                  <DownloadRoundedIcon />
                 </IconButton>
-                <IconButton edge="end" onClick={() => setFilterOpen((open) => !open)}>
-                  <TuneIcon />
+              </Tooltip>
+              <Tooltip title={t('sharedFilter')}>
+                <IconButton
+                  edge="end"
+                  color={filterOpen ? 'primary' : 'default'}
+                  onClick={() => setFilterOpen((open) => !open)}
+                >
+                  <TuneRoundedIcon />
                 </IconButton>
-              </>
-            )}
-          </Toolbar>
-        </Paper>
-        <Paper className={classes.content} square>
+              </Tooltip>
+            </>
+          )}
+        </div>
+        <div className={classes.content}>
           {loaded && !filterOpen && (
             <>
-              <Typography variant="subtitle1" align="center">
-                {deviceName}
-              </Typography>
+              <div className={classes.deviceRow}>
+                <Typography variant="subtitle1" className={classes.deviceName} noWrap>
+                  {deviceName}
+                </Typography>
+                <Chip
+                  size="small"
+                  label={`${index + 1} / ${positions.length}`}
+                  variant="outlined"
+                />
+              </div>
               <Slider
                 className={classes.slider}
                 max={positions.length - 1}
@@ -225,35 +298,43 @@ const ReplayPage = () => {
                 onChange={(_, index) => setIndex(index)}
               />
               <div className={classes.controls}>
-                <Typography variant="caption">{`${index + 1}/${positions.length}`}</Typography>
-                <IconButton
-                  onClick={() => setIndex((index) => index - 1)}
-                  disabled={playing || index <= 0}
-                >
-                  <FastRewindIcon />
-                </IconButton>
-                <IconButton
-                  onClick={() => setPlaying(!playing)}
-                  disabled={index >= positions.length - 1}
-                >
-                  {playing ? <PauseIcon /> : <PlayArrowIcon />}
-                </IconButton>
-                <IconButton
-                  onClick={() => setIndex((index) => index + 1)}
-                  disabled={playing || index >= positions.length - 1}
-                >
-                  <FastForwardIcon />
-                </IconButton>
-                <Typography variant="caption">
+                <Typography variant="caption" className={classes.time}>
+                  {formatTime(positions[0].fixTime, 'time')}
+                </Typography>
+                <div className={classes.transport}>
+                  <IconButton
+                    onClick={() => setIndex((index) => index - 1)}
+                    disabled={playing || index <= 0}
+                  >
+                    <FastRewindRoundedIcon />
+                  </IconButton>
+                  <IconButton
+                    className={classes.play}
+                    onClick={() => setPlaying(!playing)}
+                    disabled={index >= positions.length - 1}
+                  >
+                    {playing ? <PauseRoundedIcon /> : <PlayArrowRoundedIcon />}
+                  </IconButton>
+                  <IconButton
+                    onClick={() => setIndex((index) => index + 1)}
+                    disabled={playing || index >= positions.length - 1}
+                  >
+                    <FastForwardRoundedIcon />
+                  </IconButton>
+                </div>
+                <Typography variant="caption" className={classes.time}>
                   {formatTime(positions[index].fixTime, 'seconds')}
                 </Typography>
               </div>
             </>
           )}
-          <div style={{ display: loaded && !filterOpen ? 'none' : 'block' }}>
+          <div
+            className={classes.filterGrid}
+            style={{ display: loaded && !filterOpen ? 'none' : 'flex' }}
+          >
             <ReportFilter onShow={onShow} deviceType="single" loading={loading} />
           </div>
-        </Paper>
+        </div>
       </div>
       {showCard && index < positions.length && (
         <StatusCard

@@ -1,5 +1,5 @@
 import { useCallback, useReducer, useState } from 'react';
-import { Table, TableRow, TableCell, TableHead, TableBody } from '@mui/material';
+import { TableRow, TableCell, TableHead, TableBody } from '@mui/material';
 import { useAsyncTask, useScrollToLoad, pageSize } from '../reactHelper';
 import { prefixString } from '../common/util/stringUtils';
 import { formatBoolean } from '../common/util/formatter';
@@ -9,7 +9,8 @@ import SettingsMenu from './components/SettingsMenu';
 import AddFab from './components/AddFab';
 import CollectionActions from './components/CollectionActions';
 import TableShimmer from '../common/components/TableShimmer';
-import SearchHeader from './components/SearchHeader';
+import DataTable from '../common/components/table/DataTable';
+import TableToolbar from '../common/components/table/TableToolbar';
 import useSettingsStyles from './common/useSettingsStyles';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 
@@ -60,8 +61,19 @@ const NotificationsPage = () => {
 
   return (
     <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'sharedNotifications']}>
-      <SearchHeader keyword={searchKeyword} setKeyword={setSearchKeyword} />
-      <Table className={classes.table}>
+      <DataTable
+        toolbar={
+          <TableToolbar
+            search={{ value: searchKeyword, onChange: setSearchKeyword }}
+            addPath="/settings/notification"
+          />
+        }
+        empty={!hasMore && items.length === 0}
+        emptyState={{
+          title: t(searchKeyword ? 'tableNoMatches' : 'tableEmptyTitle'),
+          description: searchKeyword ? undefined : t('tableEmptyDescription'),
+        }}
+      >
         <TableHead>
           <TableRow>
             <TableCell>{t('sharedDescription')}</TableCell>
@@ -94,7 +106,7 @@ const NotificationsPage = () => {
             <TableShimmer ref={items.length > 0 ? sentinelRef : null} columns={5} endAction />
           )}
         </TableBody>
-      </Table>
+      </DataTable>
       <AddFab editPath="/settings/notification" />
     </PageLayout>
   );

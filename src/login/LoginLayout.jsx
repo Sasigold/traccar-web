@@ -1,16 +1,35 @@
-import { useMediaQuery, Paper, Typography } from '@mui/material';
+import { Paper, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import { useTheme, alpha } from '@mui/material/styles';
-import GpsFixedIcon from '@mui/icons-material/GpsFixed';
-import TimelineIcon from '@mui/icons-material/Timeline';
-import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
+import { keyframes } from 'tss-react';
+import { alpha } from '@mui/material/styles';
+import GpsFixedRoundedIcon from '@mui/icons-material/GpsFixedRounded';
+import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
+import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
 import LogoImage from './LogoImage';
+import { useTranslation } from '../common/components/LocalizationProvider';
+import { glass, meshBackground } from '../common/theme/surfaces';
+import { cyan, indigo, violet } from '../common/theme/tokens';
+
+const drift = keyframes`
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-6%, 8%, 0) scale(1.08); }
+  100% { transform: translate3d(5%, -6%, 0) scale(0.96); }
+`;
+
+const noise =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E\")";
 
 const useStyles = makeStyles()((theme) => ({
   root: {
-    display: 'flex',
+    display: 'grid',
+    gridTemplateColumns: 'minmax(0, 46%) minmax(0, 1fr)',
     height: '100%',
-    background: theme.palette.background.default,
+    backgroundColor: theme.palette.background.default,
+    [theme.breakpoints.down('md')]: {
+      gridTemplateColumns: 'minmax(0, 1fr)',
+      gridTemplateRows: 'auto minmax(0, 1fr)',
+      overflow: 'auto',
+    },
   },
   brand: {
     position: 'relative',
@@ -18,47 +37,66 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    gap: theme.spacing(4),
     padding: theme.spacing(8),
-    width: '46%',
     color: '#ffffff',
-    background: `linear-gradient(160deg, #06302e 0%, #0b5e5a 55%, #0f766e 100%)`,
+    ...meshBackground(),
     [theme.breakpoints.down('lg')]: {
-      width: '40%',
       padding: theme.spacing(5),
     },
     [theme.breakpoints.down('md')]: {
       display: 'none',
     },
   },
-  glow: {
+  blob: {
     position: 'absolute',
     borderRadius: '50%',
-    filter: 'blur(60px)',
-    opacity: 0.55,
+    filter: 'blur(70px)',
     pointerEvents: 'none',
+    opacity: 0.7,
+    '@media (prefers-reduced-motion: reduce)': {
+      animation: 'none',
+    },
   },
-  glowOne: {
-    width: 420,
-    height: 420,
-    top: -120,
-    insetInlineEnd: -140,
-    background: '#e8732a',
+  blobOne: {
+    width: 520,
+    height: 520,
+    top: -180,
+    insetInlineEnd: -160,
+    background: indigo[500],
+    animation: `${drift} 22s ease-in-out infinite alternate`,
   },
-  glowTwo: {
+  blobTwo: {
+    width: 440,
+    height: 440,
+    bottom: -180,
+    insetInlineStart: -140,
+    background: cyan[500],
+    opacity: 0.55,
+    animation: `${drift} 26s ease-in-out infinite alternate-reverse`,
+  },
+  blobThree: {
     width: 360,
     height: 360,
-    bottom: -140,
-    insetInlineStart: -100,
-    background: '#6ee7d8',
+    top: '38%',
+    insetInlineStart: '36%',
+    background: violet[500],
+    opacity: 0.45,
+    animation: `${drift} 30s ease-in-out infinite alternate`,
   },
   grid: {
     position: 'absolute',
     inset: 0,
-    backgroundImage:
-      'linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)',
-    backgroundSize: '48px 48px',
-    maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)',
+    backgroundImage: `radial-gradient(${alpha('#ffffff', 0.18)} 1px, transparent 1px)`,
+    backgroundSize: '28px 28px',
+    maskImage: 'radial-gradient(ellipse at center, black 20%, transparent 70%)',
+    pointerEvents: 'none',
+  },
+  noise: {
+    position: 'absolute',
+    inset: 0,
+    backgroundImage: noise,
+    opacity: 0.08,
+    mixBlendMode: 'overlay',
     pointerEvents: 'none',
   },
   brandContent: {
@@ -67,94 +105,140 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(3),
-    maxWidth: 480,
+    maxWidth: 520,
   },
   headline: {
     fontWeight: 800,
-    lineHeight: 1.15,
-    letterSpacing: '-0.01em',
+    lineHeight: 1.12,
+    letterSpacing: '-0.02em',
+    fontSize: 'clamp(2rem, 3vw, 2.75rem)',
   },
   tagline: {
-    opacity: 0.85,
+    opacity: 0.86,
     lineHeight: 1.7,
+    fontSize: '1.0625rem',
   },
   features: {
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing(1.5),
-    marginTop: theme.spacing(2),
+    gap: theme.spacing(1.25),
+    marginTop: theme.spacing(1),
   },
   feature: {
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1.5),
-    padding: theme.spacing(1.25, 2),
-    borderRadius: 12,
-    background: 'rgba(255,255,255,0.08)',
-    border: '1px solid rgba(255,255,255,0.14)',
-    backdropFilter: 'blur(6px)',
+    padding: theme.spacing(1.25, 1.75),
+    borderRadius: theme.tokens.radius.lg,
+    background: alpha('#ffffff', 0.08),
+    border: `1px solid ${alpha('#ffffff', 0.14)}`,
+    backdropFilter: 'blur(8px)',
+  },
+  featureIcon: {
+    width: 36,
+    height: 36,
+    flexShrink: 0,
+    borderRadius: 11,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: alpha('#ffffff', 0.14),
+    '& svg': {
+      fontSize: 20,
+    },
+  },
+  mobileBrand: {
+    display: 'none',
+    [theme.breakpoints.down('md')]: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 150,
+      padding: theme.spacing(3),
+      color: '#ffffff',
+      position: 'relative',
+      overflow: 'hidden',
+      ...meshBackground(),
+    },
   },
   formSide: {
-    flex: 1,
+    position: 'relative',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     padding: theme.spacing(3),
+    overflow: 'auto',
+    [theme.breakpoints.down('sm')]: {
+      padding: theme.spacing(2),
+      alignItems: 'flex-start',
+    },
+  },
+  formGlow: {
+    position: 'absolute',
+    width: 640,
+    height: 640,
+    top: -260,
+    insetInlineEnd: -220,
+    borderRadius: '50%',
+    background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.14)} 0%, transparent 65%)`,
+    pointerEvents: 'none',
   },
   card: {
+    position: 'relative',
     width: '100%',
     maxWidth: 440,
     padding: theme.spacing(5),
-    borderRadius: 20,
-    boxShadow: `0 20px 60px ${alpha('#06302e', 0.14)}`,
+    borderRadius: theme.tokens.radius.xxl,
+    ...glass(theme, 0.86),
     [theme.breakpoints.down('sm')]: {
       padding: theme.spacing(3),
-      boxShadow: 'none',
-      background: 'transparent',
-      border: 'none',
+      maxWidth: 'none',
     },
   },
 }));
 
 const LoginLayout = ({ children }) => {
-  const { classes } = useStyles();
-  const theme = useTheme();
+  const { classes, cx } = useStyles();
+  const t = useTranslation();
 
-  const desktop = useMediaQuery(theme.breakpoints.up('md'));
+  const features = [
+    { key: 'live', icon: <GpsFixedRoundedIcon />, text: t('loginFeatureLive') },
+    { key: 'history', icon: <HistoryRoundedIcon />, text: t('loginFeatureHistory') },
+    { key: 'alerts', icon: <NotificationsActiveRoundedIcon />, text: t('loginFeatureAlerts') },
+  ];
 
   return (
     <main className={classes.root}>
-      {desktop && (
-        <section className={classes.brand}>
-          <div className={`${classes.glow} ${classes.glowOne}`} />
-          <div className={`${classes.glow} ${classes.glowTwo}`} />
-          <div className={classes.grid} />
-          <div className={classes.brandContent}>
-            <LogoImage color="#ffffff" />
-            <Typography variant="h3" className={classes.headline}>
-              מרכז השליטה של הצי שלך
-            </Typography>
-            <Typography variant="body1" className={classes.tagline}>
-              מיקום בזמן אמת, היסטוריית נסיעות, דוחות והתראות – הכל במקום אחד, בעברית מלאה.
-            </Typography>
-            <div className={classes.features}>
-              <div className={classes.feature}>
-                <GpsFixedIcon fontSize="small" />
-                <Typography variant="body2">מעקב חי אחרי כל רכב ומכשיר</Typography>
+      <section className={classes.brand}>
+        <div className={cx(classes.blob, classes.blobOne)} />
+        <div className={cx(classes.blob, classes.blobTwo)} />
+        <div className={cx(classes.blob, classes.blobThree)} />
+        <div className={classes.grid} />
+        <div className={classes.noise} />
+        <div className={classes.brandContent}>
+          <LogoImage color="#ffffff" />
+          <Typography variant="h2" className={classes.headline}>
+            {t('loginHeadline')}
+          </Typography>
+          <Typography variant="body1" className={classes.tagline}>
+            {t('loginTagline')}
+          </Typography>
+          <div className={classes.features}>
+            {features.map((feature) => (
+              <div key={feature.key} className={classes.feature}>
+                <span className={classes.featureIcon}>{feature.icon}</span>
+                <Typography variant="body2">{feature.text}</Typography>
               </div>
-              <div className={classes.feature}>
-                <TimelineIcon fontSize="small" />
-                <Typography variant="body2">נגן מסלול והיסטוריה מלאה</Typography>
-              </div>
-              <div className={classes.feature}>
-                <NotificationsActiveIcon fontSize="small" />
-                <Typography variant="body2">התראות על מהירות, גיאופנסים והצתה</Typography>
-              </div>
-            </div>
+            ))}
           </div>
-        </section>
-      )}
+        </div>
+      </section>
+      <div className={classes.mobileBrand}>
+        <div className={cx(classes.blob, classes.blobOne)} />
+        <LogoImage color="#ffffff" />
+      </div>
       <div className={classes.formSide}>
+        <div className={classes.formGlow} />
         <Paper className={classes.card} elevation={0}>
           <form>{children}</form>
         </Paper>

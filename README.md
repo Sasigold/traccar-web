@@ -38,10 +38,15 @@ Apache License, Version 2.0. See [LICENSE.txt](https://github.com/traccar/tracca
 
 ## Custom Hebrew / RTL fork
 
-This fork ships a custom theme (teal/amber brand, Heebo font, rounded panels), a redesigned
-login screen, Hebrew as the default language and full RTL. Deploy with `sh deploy/deploy.sh`,
+This fork ships a complete SaaS-style redesign: an electric indigo/cyan design system (light by
+default with a dark mode toggle), a persistent navigation rail with a top bar and command palette
+(Ctrl+K), a settings hub with grouped sections, data tables, section-card forms, a redesigned login
+screen, Hebrew as the default language and full RTL. Deploy with `sh deploy/deploy.sh`,
 which builds and uploads `build/` into the Traccar container's web directory on the VPS
 (see `deploy/docker-compose.override.example.yml`).
+
+Custom UI strings live in `src/resources/l10n/en.json` and `he.json`. Do not run the
+`translation.yml` workflow: it force-pulls `he.json` from Transifex and would drop them.
 
 ### נתוני דמו לשרת האמיתי
 

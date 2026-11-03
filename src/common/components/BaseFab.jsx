@@ -4,10 +4,11 @@ import { makeStyles } from 'tss-react/mui';
 const useStyles = makeStyles()((theme) => ({
   fab: {
     position: 'fixed',
-    bottom: theme.spacing(2),
-    right: theme.spacing(2),
-    [theme.breakpoints.down('md')]: {
-      bottom: `calc(${theme.dimensions.bottomBarHeight}px + ${theme.spacing(2)})`,
+    bottom: 'calc(16px + var(--shell-bottom, 0px))',
+    insetInlineEnd: theme.spacing(2),
+    zIndex: theme.layers.floating,
+    '@media print': {
+      display: 'none',
     },
   },
 }));

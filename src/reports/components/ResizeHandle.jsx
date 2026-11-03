@@ -2,10 +2,26 @@ import { makeStyles } from 'tss-react/mui';
 
 const useStyles = makeStyles()((theme) => ({
   handle: {
-    height: theme.spacing(1),
+    height: 14,
     cursor: 'ns-resize',
-    backgroundColor: theme.palette.divider,
     flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    touchAction: 'none',
+    '&:hover $pill, &:active $pill': {
+      backgroundColor: theme.palette.primary.main,
+    },
+    '@media print': {
+      display: 'none',
+    },
+  },
+  pill: {
+    width: 44,
+    height: 4,
+    borderRadius: 4,
+    backgroundColor: theme.palette.surface.borderStrong,
+    transition: 'background-color 140ms ease',
   },
 }));
 
@@ -29,7 +45,11 @@ const ResizeHandle = () => {
     window.addEventListener('pointerup', onUp);
   };
 
-  return <div className={classes.handle} onPointerDown={onPointerDown} />;
+  return (
+    <div className={classes.handle} onPointerDown={onPointerDown}>
+      <span className={classes.pill} />
+    </div>
+  );
 };
 
 export default ResizeHandle;

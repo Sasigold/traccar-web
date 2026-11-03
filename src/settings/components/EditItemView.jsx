@@ -1,20 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Container,
-  Button,
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Skeleton,
-  Typography,
-  TextField,
-} from '@mui/material';
+import { Skeleton } from '@mui/material';
 import { useCatch, useAsyncTask } from '../../reactHelper';
-import { useTranslation } from '../../common/components/LocalizationProvider';
-import PageLayout from '../../common/components/PageLayout';
-import useSettingsStyles from '../common/useSettingsStyles';
 import fetchOrThrow from '../../common/util/fetchOrThrow';
+import FormPage from './FormPage';
+import FormSection from './FormSection';
+import SaveBar from './SaveBar';
 
 const EditItemView = ({
   children,
@@ -26,10 +17,10 @@ const EditItemView = ({
   onItemSaved,
   menu,
   breadcrumbs,
+  title,
+  description,
 }) => {
   const navigate = useNavigate();
-  const { classes } = useSettingsStyles();
-  const t = useTranslation();
 
   const { id } = useParams();
   const [saving, setSaving] = useState(false);
@@ -72,41 +63,30 @@ const EditItemView = ({
   });
 
   return (
-    <PageLayout menu={menu} breadcrumbs={breadcrumbs}>
-      <Container maxWidth="xs" className={classes.container}>
-        {item ? (
-          children
-        ) : (
-          <Accordion defaultExpanded>
-            <AccordionSummary>
-              <Typography variant="subtitle1">
-                <Skeleton width="10em" />
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              {[...Array(3)].map((_, i) => (
-                <Skeleton key={-i} width="100%">
-                  <TextField />
-                </Skeleton>
-              ))}
-            </AccordionDetails>
-          </Accordion>
-        )}
-        <div className={classes.buttons}>
-          <Button color="primary" variant="outlined" onClick={() => navigate(-1)} disabled={!item}>
-            {t('sharedCancel')}
-          </Button>
-          <Button
-            color="primary"
-            variant="contained"
-            onClick={handleSave}
-            disabled={saving || !item || !validate()}
-          >
-            {t('sharedSave')}
-          </Button>
-        </div>
-      </Container>
-    </PageLayout>
+    <FormPage
+      menu={menu}
+      breadcrumbs={breadcrumbs}
+      title={title}
+      description={description}
+      footer={
+        <SaveBar
+          onCancel={() => navigate(-1)}
+          onSave={handleSave}
+          saving={saving}
+          disabled={!item || !validate()}
+        />
+      }
+    >
+      {item ? (
+        children
+      ) : (
+        <FormSection title={<Skeleton width="10em" />}>
+          {[...Array(3)].map((_, i) => (
+            <Skeleton key={-i} variant="rounded" height={40} />
+          ))}
+        </FormSection>
+      )}
+    </FormPage>
   );
 };
 

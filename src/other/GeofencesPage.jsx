@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { Divider, Typography, IconButton, Toolbar, Paper } from '@mui/material';
-import Tooltip from '@mui/material/Tooltip';
+import { Typography, IconButton, Tooltip } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
 import { useNavigate } from 'react-router-dom';
 import MapView from '../map/core/MapView';
 import MapCurrentLocation from '../map/MapCurrentLocation';
@@ -34,18 +33,32 @@ const useStyles = makeStyles()((theme) => ({
   drawer: {
     display: 'flex',
     flexDirection: 'column',
+    backgroundColor: theme.palette.background.paper,
+    borderInlineEnd: `1px solid ${theme.palette.surface.border}`,
     [theme.breakpoints.up('sm')]: {
-      width: theme.dimensions.drawerWidthDesktop,
+      width: theme.dimensions.devicePanelWidth,
+      flexShrink: 0,
     },
     [theme.breakpoints.down('sm')]: {
       height: theme.dimensions.drawerHeightPhone,
+      borderInlineEnd: 'none',
+      borderTop: `1px solid ${theme.palette.surface.border}`,
     },
   },
-  mapContainer: {
-    flexGrow: 1,
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    padding: theme.spacing(1.5, 1.5, 1.5, 2),
+    borderBottom: `1px solid ${theme.palette.surface.border}`,
   },
   title: {
     flexGrow: 1,
+    fontWeight: 800,
+  },
+  mapContainer: {
+    flexGrow: 1,
+    position: 'relative',
   },
   fileInput: {
     display: 'none',
@@ -93,9 +106,9 @@ const GeofencesPage = () => {
   return (
     <div className={classes.root}>
       <div className={classes.content}>
-        <Paper square className={classes.drawer}>
-          <Toolbar>
-            <IconButton edge="start" sx={{ mr: 2 }} onClick={() => navigate(-1)}>
+        <div className={classes.drawer}>
+          <div className={classes.header}>
+            <IconButton edge="start" onClick={() => navigate(-1)}>
               <BackIcon />
             </IconButton>
             <Typography variant="h6" className={classes.title}>
@@ -109,16 +122,18 @@ const GeofencesPage = () => {
                 className={classes.fileInput}
                 onChange={handleFile}
               />
-              <IconButton edge="end" component="span" onClick={() => {}}>
-                <Tooltip title={t('sharedUpload')}>
-                  <UploadFileIcon />
-                </Tooltip>
-              </IconButton>
+              <Tooltip title={t('sharedUpload')}>
+                <IconButton edge="end" component="span" onClick={() => {}}>
+                  <UploadFileRoundedIcon />
+                </IconButton>
+              </Tooltip>
             </label>
-          </Toolbar>
-          <Divider />
-          <GeofencesList onGeofenceSelected={setSelectedGeofenceId} />
-        </Paper>
+          </div>
+          <GeofencesList
+            onGeofenceSelected={setSelectedGeofenceId}
+            selectedId={selectedGeofenceId}
+          />
+        </div>
         <div className={classes.mapContainer}>
           <MapView>
             <MapGeofenceEdit selectedGeofenceId={selectedGeofenceId} />

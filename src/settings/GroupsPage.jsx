@@ -1,7 +1,7 @@
 import { useCallback, useReducer, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Table, TableRow, TableCell, TableHead, TableBody } from '@mui/material';
+import { TableRow, TableCell, TableHead, TableBody } from '@mui/material';
 import LinkIcon from '@mui/icons-material/Link';
 import PublishIcon from '@mui/icons-material/Publish';
 import ShareIcon from '@mui/icons-material/Share';
@@ -12,7 +12,8 @@ import SettingsMenu from './components/SettingsMenu';
 import AddFab from './components/AddFab';
 import CollectionActions from './components/CollectionActions';
 import TableShimmer from '../common/components/TableShimmer';
-import SearchHeader from './components/SearchHeader';
+import DataTable from '../common/components/table/DataTable';
+import TableToolbar from '../common/components/table/TableToolbar';
 import { useRestriction } from '../common/util/permissions';
 import useSettingsStyles from './common/useSettingsStyles';
 import fetchOrThrow from '../common/util/fetchOrThrow';
@@ -79,8 +80,19 @@ const GroupsPage = () => {
 
   return (
     <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'settingsGroups']}>
-      <SearchHeader keyword={searchKeyword} setKeyword={setSearchKeyword} />
-      <Table className={classes.table}>
+      <DataTable
+        toolbar={
+          <TableToolbar
+            search={{ value: searchKeyword, onChange: setSearchKeyword }}
+            addPath="/settings/group"
+          />
+        }
+        empty={!hasMore && items.length === 0}
+        emptyState={{
+          title: t(searchKeyword ? 'tableNoMatches' : 'tableEmptyTitle'),
+          description: searchKeyword ? undefined : t('tableEmptyDescription'),
+        }}
+      >
         <TableHead>
           <TableRow>
             <TableCell>{t('sharedName')}</TableCell>
@@ -110,7 +122,7 @@ const GroupsPage = () => {
             <TableShimmer ref={items.length > 0 ? sentinelRef : null} columns={2} endAction />
           )}
         </TableBody>
-      </Table>
+      </DataTable>
       <AddFab editPath="/settings/group" />
     </PageLayout>
   );

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Table, TableHead, TableRow, TableCell, TableBody, IconButton } from '@mui/material';
+import { TableHead, TableRow, TableCell, TableBody, IconButton } from '@mui/material';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
 import { useSelector } from 'react-redux';
@@ -17,6 +17,7 @@ import ResizeHandle from './components/ResizeHandle';
 import { useCatch, useCatchCallback, useAsyncTask } from '../reactHelper';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
+import DataTable from '../common/components/table/DataTable';
 import { useAttributePreference, usePreference } from '../common/util/preferences';
 import MapView from '../map/core/MapView';
 import MapGeofence from '../map/MapGeofence';
@@ -295,7 +296,7 @@ const EventReportPage = () => {
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
             </ReportFilter>
           </div>
-          <Table>
+          <DataTable variant="flush">
             <TableHead>
               <TableRow>
                 <TableCell className={classes.columnAction} />
@@ -332,7 +333,7 @@ const EventReportPage = () => {
                 <TableShimmer columns={columns.length + 2} />
               )}
             </TableBody>
-          </Table>
+          </DataTable>
         </div>
       </div>
     </PageLayout>

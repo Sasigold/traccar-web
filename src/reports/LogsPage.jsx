@@ -1,21 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  Table,
-  TableRow,
-  TableCell,
-  TableHead,
-  TableBody,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
+import { TableRow, TableCell, TableHead, TableBody, IconButton, Tooltip } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutlined';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
+import DataTable from '../common/components/table/DataTable';
 import BaseFab from '../common/components/BaseFab';
 import ReportsMenu from './components/ReportsMenu';
 import { sessionActions } from '../store';
@@ -55,7 +48,7 @@ const LogsPage = () => {
 
   return (
     <PageLayout menu={<ReportsMenu />} breadcrumbs={['reportTitle', 'sharedLogs']}>
-      <Table>
+      <DataTable variant="flush">
         <TableHead>
           <TableRow>
             <TableCell className={classes.columnAction} />
@@ -90,7 +83,7 @@ const LogsPage = () => {
             </TableRow>
           ))}
         </TableBody>
-      </Table>
+      </DataTable>
       <div ref={bottomRef} />
       <BaseFab
         color={autoScroll ? 'primary' : 'default'}

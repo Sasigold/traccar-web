@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Typography, IconButton, Toolbar, Paper, TextField } from '@mui/material';
+import { Typography, Button, TextField } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { default as Hls, Events } from 'hls.js';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import StopIcon from '@mui/icons-material/Stop';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
+import StopRoundedIcon from '@mui/icons-material/StopRounded';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import { useCatchCallback } from '../reactHelper';
-import BackIcon from '../common/components/BackIcon';
+import PageHeader from '../common/components/shell/PageHeader';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 
 const useStyles = makeStyles()((theme) => ({
@@ -22,22 +22,27 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    margin: theme.spacing(0, 3, 3),
+    borderRadius: theme.tokens.radius.xl,
+    backgroundColor: '#0b1020',
+    color: '#ffffff',
+    overflow: 'hidden',
+    [theme.breakpoints.down('md')]: {
+      margin: theme.spacing(0, 0, 2),
+      borderRadius: 0,
+    },
   },
   player: {
     maxWidth: '100%',
     maxHeight: '100%',
   },
-  title: {
-    flexGrow: 1,
-  },
   channel: {
-    marginInline: theme.spacing(1),
+    width: 110,
   },
 }));
 
 const StreamPage = () => {
   const { classes } = useStyles();
-  const navigate = useNavigate();
   const t = useTranslation();
 
   const videoRef = useRef(null);
@@ -83,35 +88,35 @@ const StreamPage = () => {
 
   return (
     <div className={classes.root}>
-      <Paper square>
-        <Toolbar>
-          <IconButton edge="start" sx={{ mr: 2 }} onClick={() => navigate(-1)}>
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6" className={classes.title}>
-            {device?.name || t('linkLiveVideo')}
-          </Typography>
-          <TextField
-            size="small"
-            type="number"
-            value={channel}
-            onChange={(event) => setChannel(Number(event.target.value) || 1)}
-            label={t('commandIndex')}
-            disabled={playing}
-            className={classes.channel}
-          />
-          <IconButton
-            edge="end"
-            color={playing ? 'error' : 'primary'}
-            onClick={() => {
-              setError(false);
-              setActiveChannel(playing ? null : channel);
-            }}
-          >
-            {playing ? <StopIcon /> : <PlayArrowIcon />}
-          </IconButton>
-        </Toolbar>
-      </Paper>
+      <PageHeader
+        back
+        title={device?.name || t('linkLiveVideo')}
+        description={t('linkLiveVideo')}
+        actions={
+          <>
+            <TextField
+              size="small"
+              type="number"
+              value={channel}
+              onChange={(event) => setChannel(Number(event.target.value) || 1)}
+              label={t('commandIndex')}
+              disabled={playing}
+              className={classes.channel}
+            />
+            <Button
+              variant="contained"
+              color={playing ? 'error' : 'primary'}
+              startIcon={playing ? <StopRoundedIcon /> : <PlayArrowRoundedIcon />}
+              onClick={() => {
+                setError(false);
+                setActiveChannel(playing ? null : channel);
+              }}
+            >
+              {playing ? t('sharedStop') : t('sharedPlay')}
+            </Button>
+          </>
+        }
+      />
       <div className={classes.video}>
         {error && <Typography>{t('errorConnection')}</Typography>}
         {playing && !error && (

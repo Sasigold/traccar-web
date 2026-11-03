@@ -12,8 +12,8 @@ export default [
       ['!=', 'mode', 'static'],
     ],
     paint: {
-      'fill-color': '#3bb2d0',
-      'fill-outline-color': '#3bb2d0',
+      'fill-color': '#06b6d4',
+      'fill-outline-color': '#06b6d4',
       'fill-opacity': 0.1,
     },
   },
@@ -22,8 +22,8 @@ export default [
     type: 'fill',
     filter: ['all', ['==', 'active', 'true'], ['==', '$type', 'Polygon']],
     paint: {
-      'fill-color': '#fbb03b',
-      'fill-outline-color': '#fbb03b',
+      'fill-color': '#f59e0b',
+      'fill-outline-color': '#f59e0b',
       'fill-opacity': 0.1,
     },
   },
@@ -33,7 +33,7 @@ export default [
     filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'midpoint']],
     paint: {
       'circle-radius': 3,
-      'circle-color': '#fbb03b',
+      'circle-color': '#f59e0b',
     },
   },
   {
@@ -50,7 +50,7 @@ export default [
       'line-join': 'round',
     },
     paint: {
-      'line-color': '#3bb2d0',
+      'line-color': '#06b6d4',
       'line-width': 2,
     },
   },
@@ -63,7 +63,7 @@ export default [
       'line-join': 'round',
     },
     paint: {
-      'line-color': '#fbb03b',
+      'line-color': '#f59e0b',
       'line-dasharray': [0.2, 2],
       'line-width': 2,
     },
@@ -82,7 +82,7 @@ export default [
       'line-join': 'round',
     },
     paint: {
-      'line-color': '#3bb2d0',
+      'line-color': '#06b6d4',
       'line-width': 2,
     },
   },
@@ -95,7 +95,7 @@ export default [
       'line-join': 'round',
     },
     paint: {
-      'line-color': '#fbb03b',
+      'line-color': '#f59e0b',
       'line-dasharray': [0.2, 2],
       'line-width': 2,
     },
@@ -115,7 +115,7 @@ export default [
     filter: ['all', ['==', 'meta', 'vertex'], ['==', '$type', 'Point'], ['!=', 'mode', 'static']],
     paint: {
       'circle-radius': 3,
-      'circle-color': '#fbb03b',
+      'circle-color': '#f59e0b',
     },
   },
   {
@@ -164,7 +164,7 @@ export default [
     filter: ['all', ['==', '$type', 'Point'], ['!=', 'meta', 'midpoint'], ['==', 'active', 'true']],
     paint: {
       'circle-radius': 5,
-      'circle-color': '#fbb03b',
+      'circle-color': '#f59e0b',
     },
   },
   {

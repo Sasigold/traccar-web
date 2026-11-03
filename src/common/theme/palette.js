@@ -1,48 +1,70 @@
-import { grey } from '@mui/material/colors';
+import { brand, cyan, indigo, slate, status, surfaces, violet } from './tokens';
 
 const validatedColor = (color) => (/^#([0-9A-Fa-f]{3}){1,2}$/.test(color) ? color : null);
 
-// Brand palette: deep teal primary, warm amber secondary.
-// Server attributes colorPrimary / colorSecondary still override these.
-export const brand = {
-  primaryLight: '#0b5e5a',
-  primaryDark: '#6ee7d8',
-  secondaryLight: '#e8732a',
-  secondaryDark: '#ffb787',
-};
+export { brand };
 
-export default (server, darkMode) => ({
-  mode: darkMode ? 'dark' : 'light',
-  background: {
-    default: darkMode ? '#0b1220' : '#f2f5f7',
-    paper: darkMode ? '#121b2c' : '#ffffff',
-  },
-  primary: {
-    main:
-      validatedColor(server?.attributes?.colorPrimary) ||
-      (darkMode ? brand.primaryDark : brand.primaryLight),
-  },
-  secondary: {
-    main:
-      validatedColor(server?.attributes?.colorSecondary) ||
-      (darkMode ? brand.secondaryDark : brand.secondaryLight),
-  },
-  success: { main: darkMode ? '#4ade80' : '#15803d' },
-  warning: { main: darkMode ? '#fbbf24' : '#d97706' },
-  error: { main: darkMode ? '#f87171' : '#dc2626' },
-  info: { main: darkMode ? '#7dd3fc' : '#0369a1' },
-  text: {
-    primary: darkMode ? '#e6edf5' : '#111827',
-    secondary: darkMode ? '#9fb0c3' : '#5b6675',
-  },
-  divider: darkMode ? 'rgba(148, 163, 184, 0.16)' : 'rgba(17, 24, 39, 0.08)',
-  neutral: {
-    main: grey[500],
-  },
-  geometry: {
-    main: '#3bb2d0',
-  },
-  alwaysDark: {
-    main: grey[900],
-  },
-});
+// Server attributes colorPrimary / colorSecondary still override the brand.
+export default (server, darkMode) => {
+  const mode = darkMode ? 'dark' : 'light';
+  const surface = surfaces[mode];
+  const colors = status[mode];
+
+  const primaryOverride = validatedColor(server?.attributes?.colorPrimary);
+  const secondaryOverride = validatedColor(server?.attributes?.colorSecondary);
+
+  const primary = primaryOverride
+    ? { main: primaryOverride }
+    : darkMode
+      ? { main: indigo[400], light: indigo[300], dark: indigo[500], contrastText: '#0b1020' }
+      : { main: indigo[600], light: indigo[400], dark: indigo[700], contrastText: '#ffffff' };
+
+  const secondary = secondaryOverride
+    ? { main: secondaryOverride }
+    : darkMode
+      ? { main: cyan[400], light: cyan[300], dark: cyan[500], contrastText: '#0b1020' }
+      : { main: cyan[500], light: cyan[400], dark: cyan[600], contrastText: '#ffffff' };
+
+  return {
+    mode,
+    background: {
+      default: surface.canvas,
+      paper: surface.paper,
+    },
+    primary,
+    secondary,
+    success: { main: colors.success },
+    warning: { main: colors.warning },
+    error: { main: colors.error },
+    info: { main: colors.info },
+    text: {
+      primary: surface.textPrimary,
+      secondary: surface.textSecondary,
+      disabled: surface.textDisabled,
+    },
+    divider: surface.border,
+    neutral: {
+      main: colors.neutral,
+    },
+    geometry: {
+      main: cyan[500],
+    },
+    alwaysDark: {
+      main: slate[900],
+    },
+    surface,
+    gradient: {
+      start: primary.main,
+      end: secondary.main,
+    },
+    chart: [
+      primary.main,
+      secondary.main,
+      darkMode ? violet[400] : violet[500],
+      colors.warning,
+      colors.success,
+      colors.error,
+      surface.textSecondary,
+    ],
+  };
+};

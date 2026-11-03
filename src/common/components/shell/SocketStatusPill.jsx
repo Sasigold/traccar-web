@@ -1,10 +1,9 @@
 import { useSelector } from 'react-redux';
-import { Typography } from '@mui/material';
+import { Tooltip, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import { keyframes } from 'tss-react';
-import Logo from '../../resources/images/logo.svg?react';
-import { useTranslation } from '../../common/components/LocalizationProvider';
+import { useTranslation } from '../LocalizationProvider';
 
 const pulse = keyframes`
   0% { box-shadow: 0 0 0 0 currentColor; }
@@ -14,32 +13,26 @@ const pulse = keyframes`
 
 const useStyles = makeStyles()((theme) => ({
   root: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: theme.spacing(1),
-    padding: theme.spacing(2, 2, 0.5),
-  },
-  logo: {
-    height: 34,
-    width: 'auto',
-    color: theme.palette.primary.main,
-    flexShrink: 0,
-  },
-  logoImage: {
-    maxHeight: 34,
-    maxWidth: 160,
-  },
-  status: {
     display: 'inline-flex',
     alignItems: 'center',
     gap: theme.spacing(0.75),
-    padding: theme.spacing(0.5, 1.25),
-    borderRadius: 999,
+    height: 30,
+    padding: theme.spacing(0, 1.25),
+    borderRadius: theme.tokens.radius.pill,
     fontSize: '0.75rem',
     fontWeight: 600,
     whiteSpace: 'nowrap',
     border: '1px solid',
+  },
+  label: {
+    [theme.breakpoints.down('md')]: {
+      display: 'none',
+    },
+  },
+  compact: {
+    [theme.breakpoints.down('md')]: {
+      paddingInline: theme.spacing(0.875),
+    },
   },
   dot: {
     width: 7,
@@ -52,26 +45,25 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const MainHeader = () => {
+const SocketStatusPill = () => {
   const { classes, cx, theme } = useStyles();
   const t = useTranslation();
 
   const socket = useSelector((state) => state.session.socket);
-  const logo = useSelector((state) => state.session.server.attributes?.logo);
+
+  if (socket == null) {
+    return null;
+  }
 
   const live = socket === true;
   const color = live ? theme.palette.success.main : theme.palette.warning.main;
+  const label = live ? t('mapLive') : t('mapReconnecting');
 
   return (
-    <div className={classes.root}>
-      {logo ? (
-        <img className={classes.logoImage} src={logo} alt="" />
-      ) : (
-        <Logo className={classes.logo} />
-      )}
+    <Tooltip title={label}>
       <Typography
         component="span"
-        className={classes.status}
+        className={cx(classes.root, classes.compact)}
         style={{
           color,
           backgroundColor: alpha(color, 0.1),
@@ -79,10 +71,10 @@ const MainHeader = () => {
         }}
       >
         <span className={cx(classes.dot, live && classes.dotLive)} />
-        {live ? t('mapLive') : t('mapReconnecting')}
+        <span className={classes.label}>{label}</span>
       </Typography>
-    </div>
+    </Tooltip>
   );
 };
 
-export default MainHeader;
+export default SocketStatusPill;

@@ -1,16 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  Divider,
-  Typography,
-  IconButton,
-  useMediaQuery,
-  Toolbar,
-  List,
-  ListItem,
-} from '@mui/material';
+import { Typography, IconButton } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import { useTheme } from '@mui/material/styles';
-import Drawer from '@mui/material/Drawer';
 import { useNavigate } from 'react-router-dom';
 import MapView from '../map/core/MapView';
 import MapCurrentLocation from '../map/MapCurrentLocation';
@@ -41,33 +31,50 @@ const useStyles = makeStyles()((theme) => ({
     },
   },
   drawer: {
-    zIndex: 1,
-  },
-  drawerPaper: {
-    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: theme.palette.background.paper,
+    borderInlineEnd: `1px solid ${theme.palette.surface.border}`,
     [theme.breakpoints.up('sm')]: {
-      width: theme.dimensions.drawerWidthDesktop,
+      width: theme.dimensions.devicePanelWidth,
+      flexShrink: 0,
     },
     [theme.breakpoints.down('sm')]: {
-      height: theme.dimensions.drawerHeightPhone,
+      borderInlineEnd: 'none',
+      borderTop: `1px solid ${theme.palette.surface.border}`,
     },
   },
-  mapContainer: {
-    flexGrow: 1,
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    padding: theme.spacing(1.5, 1.5, 1.5, 2),
+    borderBottom: `1px solid ${theme.palette.surface.border}`,
   },
   title: {
     flexGrow: 1,
+    fontWeight: 800,
+  },
+  form: {
+    padding: theme.spacing(2),
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+  },
+  hint: {
+    color: theme.palette.text.secondary,
+  },
+  mapContainer: {
+    flexGrow: 1,
+    position: 'relative',
   },
 }));
 
 const EmulatorPage = () => {
-  const theme = useTheme();
   const { classes } = useStyles();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const t = useTranslation();
-
-  const isPhone = useMediaQuery(theme.breakpoints.down('sm'));
 
   const devices = useSelector(
     (state) => state.devices.items,
@@ -106,33 +113,28 @@ const EmulatorPage = () => {
   return (
     <div className={classes.root}>
       <div className={classes.content}>
-        <Drawer
-          className={classes.drawer}
-          anchor={isPhone ? 'top' : 'left'}
-          variant="permanent"
-          slotProps={{ paper: { className: classes.drawerPaper } }}
-        >
-          <Toolbar>
-            <IconButton edge="start" sx={{ mr: 2 }} onClick={() => navigate(-1)}>
+        <div className={classes.drawer}>
+          <div className={classes.header}>
+            <IconButton edge="start" onClick={() => navigate(-1)}>
               <BackIcon />
             </IconButton>
             <Typography variant="h6" className={classes.title}>
               {t('sharedEmulator')}
             </Typography>
-          </Toolbar>
-          <Divider />
-          <List>
-            <ListItem>
-              <SelectField
-                label={t('reportDevice')}
-                data={Object.values(devices).sort((a, b) => a.name.localeCompare(b.name))}
-                value={deviceId}
-                onChange={(e) => dispatch(devicesActions.selectId(e.target.value))}
-                fullWidth
-              />
-            </ListItem>
-          </List>
-        </Drawer>
+          </div>
+          <div className={classes.form}>
+            <SelectField
+              label={t('reportDevice')}
+              data={Object.values(devices).sort((a, b) => a.name.localeCompare(b.name))}
+              value={deviceId}
+              onChange={(e) => dispatch(devicesActions.selectId(e.target.value))}
+              fullWidth
+            />
+            <Typography variant="caption" className={classes.hint}>
+              {t('sharedEmulator')}
+            </Typography>
+          </div>
+        </div>
         <div className={classes.mapContainer}>
           <MapView>
             <MapPositionMarkers

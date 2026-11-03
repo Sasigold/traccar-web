@@ -16,7 +16,7 @@ export default defineConfig((env) => {
           html
             .replaceAll('${title}', 'Traccar Demo')
             .replaceAll('${description}', 'Traccar Demo')
-            .replaceAll('${colorPrimary}', '#1a237e'),
+            .replaceAll('${colorPrimary}', '#4f46e5'),
       },
     ],
   };

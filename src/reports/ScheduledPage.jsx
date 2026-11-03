@@ -1,13 +1,14 @@
 import { useReducer, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Table, TableRow, TableCell, TableHead, TableBody, IconButton } from '@mui/material';
+import { TableRow, TableCell, TableHead, TableBody, IconButton } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import DeleteIcon from '@mui/icons-material/Delete';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import { useAsyncTask } from '../reactHelper';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import ReportsMenu from './components/ReportsMenu';
 import TableShimmer from '../common/components/TableShimmer';
+import DataTable from '../common/components/table/DataTable';
 import RemoveDialog from '../common/components/RemoveDialog';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 
@@ -62,7 +63,7 @@ const ScheduledPage = () => {
 
   return (
     <PageLayout menu={<ReportsMenu />} breadcrumbs={['reportTitle', 'reportScheduled']}>
-      <Table>
+      <DataTable variant="flush">
         <TableHead>
           <TableRow>
             <TableCell>{t('sharedType')}</TableCell>
@@ -80,7 +81,7 @@ const ScheduledPage = () => {
                 <TableCell>{calendars[item.calendarId].name}</TableCell>
                 <TableCell className={classes.columnAction} padding="none">
                   <IconButton size="small" onClick={() => setRemovingId(item.id)}>
-                    <DeleteIcon fontSize="small" />
+                    <DeleteOutlineRoundedIcon fontSize="small" />
                   </IconButton>
                 </TableCell>
               </TableRow>
@@ -89,7 +90,7 @@ const ScheduledPage = () => {
             <TableShimmer columns={4} endAction />
           )}
         </TableBody>
-      </Table>
+      </DataTable>
       <RemoveDialog
         style={{ transform: 'none' }}
         open={!!removingId}
