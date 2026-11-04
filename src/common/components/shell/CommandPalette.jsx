@@ -22,7 +22,7 @@ import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import SmartToyRoundedIcon from '@mui/icons-material/SmartToyRounded';
 import { devicesActions } from '../../../store';
 import { useTranslation } from '../LocalizationProvider';
-import { useDeviceReadonly, useRestriction } from '../../util/permissions';
+import { useAdministrator, useDeviceReadonly, useRestriction } from '../../util/permissions';
 import useFeatures from '../../util/useFeatures';
 import useLogout from '../../util/useLogout';
 import useThemeMode from '../../theme/useThemeMode';
@@ -34,6 +34,7 @@ import {
 import { glass } from '../../theme/surfaces';
 import DeviceTile from '../brand/DeviceTile';
 import useNavItems from './navItems';
+import { adminSections } from '../../../admin/components/adminSections';
 import { useShell } from './ShellContext';
 
 const useStyles = makeStyles()((theme) => ({
@@ -137,6 +138,7 @@ const CommandPalette = ({ open, onClose }) => {
   const navItems = useNavItems();
   const settingsItems = useSettingsSectionItems();
   const reportItems = useReportsSectionItems();
+  const admin = useAdministrator();
 
   const [query, setQuery] = useState('');
   const [highlighted, setHighlighted] = useState(0);
@@ -187,6 +189,19 @@ const CommandPalette = ({ open, onClose }) => {
           }
         },
       })),
+      ...(admin
+        ? adminSections.flatMap((section) =>
+            section.items
+              .filter((item) => item.id !== 'overview')
+              .map((item) => ({
+                id: `admin-${item.id}`,
+                title: t(item.titleKey),
+                subtitle: `${t('adminTitle')} · ${t(section.titleKey)}`,
+                icon: item.icon,
+                onSelect: () => navigate(item.path),
+              })),
+          )
+        : []),
       ...reportItems.map((item) => ({
         id: `report-${item.id}`,
         title: t(item.titleKey),
@@ -257,6 +272,7 @@ const CommandPalette = ({ open, onClose }) => {
     navItems,
     settingsItems,
     reportItems,
+    admin,
     readonly,
     forced,
     dark,

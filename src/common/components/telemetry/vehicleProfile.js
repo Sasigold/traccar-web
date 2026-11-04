@@ -57,10 +57,13 @@ export const compactProfile = (profile) => {
       })
       .filter(([, value]) => Object.keys(value).length),
   );
+  // `sensors` is the list made in the super admin device setup (src/admin/sensors.js).
+  const sensors = Array.isArray(profile.sensors) && profile.sensors.length ? profile.sensors : null;
   return clean({
     fuel: Object.keys(fuel).length ? fuel : null,
     tires: Object.keys(tires).length ? tires : null,
     params: Object.keys(params).length ? params : null,
+    sensors,
   });
 };
 

@@ -35,4 +35,54 @@ Schema and migrations live on the VPS in `/docker/viper-fleet/migrations/`; the 
 `documents` bucket. Row Level Security decides everything through `has_permission('<key>')`.
 
 Permission keys: `users.read`, `users.manage`, `vehicles.read/write`, `drivers.read/write`,
-`assignments.write`, `documents.read/write`, `reports.read`, `audit.read`.
+`assignments.write`, `documents.read/write`, `reports.read`, `audit.read`, and for the super admin area `customers.read/manage`, `billing.read/manage`.
+
+## Super admin area (`/admin`)
+
+A separate area for Traccar administrators (shield item in the navigation rail; the route redirects
+everyone else). Traccar still owns users and devices; the fleet database adds customers, the device
+registry and billing.
+
+| Page | What it does |
+|------|--------------|
+| `/admin` | KPIs (devices, online, customers, devices without a customer, users, monthly recurring revenue, open and overdue balance), devices waiting for a customer, silent devices, overdue bills |
+| `/admin/customers`, `/admin/customer/:id` | Customers with tabs: details, devices (assign / unassign, billable switch), users (link an existing Traccar user, create a new one, sync access), billing (plan, price overrides, discount, cycle, payment terms, the customer's bills) |
+| `/admin/devices` | Every device (`api/devices?all=true`) with its customer, status, model and SIM; filter by customer / status; bulk assign to a customer |
+| `/admin/device/:id`, `/admin/device` | Device setup in five steps: device (name, IMEI, model with the server port hint), SIM, customer and installation, vehicle (speed limit in km/h, odometer), sensors |
+| `/admin/users` | Every user with its customer and role; assign to a customer, log in as, disable / enable |
+| `/admin/billing` | Bills with filters and Excel export; monthly generation for all active subscriptions; draft → issued → paid / cancelled |
+| `/admin/plans` | Price lists (per device per month, base fee, setup fee, cycle) |
+
+**Ownership.** Assigning a device to a customer writes `device_registry.customer_id` and links the device
+(`api/permissions`) to every Traccar user of that customer, removing the links of the previous customer's
+users. Linking a user to a customer links all of the customer's devices to it. "Sync access" re-creates
+all links of a customer.
+
+**Sensors** (`src/admin/sensors.js`, unit-tested). A person picks what is wired and to which input, and
+sees the live value from the latest position next to each sensor. The choices are written as:
+
+- the `web.vehicle` display profile (`sensors` list, parameter labels, fuel source, scale for raw fuel
+  calibrated from empty / full readings, tire display) that the telemetry dashboard already reads, plus
+  `fuelCapacity` and `speedLimit` (knots) device attributes;
+- Traccar computed attributes for wired inputs: `ignition ← inN`, `door ← inN`, `alarm = inN ? "sos" : null`.
+  They carry a `[vf:<deviceId>]` description prefix, are linked to that device only, and are created,
+  updated or removed to match the sensor list on every save.
+
+**Billing** (`src/admin/billing.js`, unit-tested). Monthly amount = (base fee + price per device × billable
+devices) × (1 − discount). Quarterly and yearly cycles bill calendar quarters / years. Bills are payment
+requests for internal tracking, not tax invoices. Totals and VAT (default 18%) are recomputed by the
+database from the lines, and a customer can be billed only once per period (cancelled bills excepted).
+
+**Database.** `supabase/migrations/20261104120000_super_admin.sql` adds `customers`, `customer_users`,
+`device_registry`, `device_assignment_history`, `billing_plans`, `billing_subscriptions`,
+`billing_invoices`, `billing_invoice_lines`, the views `billing_invoices_view` and
+`customer_device_counts`, RLS policies and the permission keys `customers.read`, `customers.manage`,
+`billing.read`, `billing.manage` (granted to `owner` and `admin`, `customers.read` to `manager`). It is
+idempotent. The deploy workflow applies every file in `supabase/migrations/` once
+(`deploy/migrate.sh`: finds the `supabase/postgres` container over SSH, records applied files in
+`vf_meta.ui_migrations`, reloads the PostgREST schema). To run it by hand: `sh deploy/migrate.sh`.
+After the first run press "Reconnect" in the admin area (or log in again) so the new permissions reach
+the session.
+
+Without the migration, or with the fleet database disabled, the device, sensor and user pages still work;
+the customer and billing parts show why they are unavailable.

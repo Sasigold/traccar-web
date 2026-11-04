@@ -1,7 +1,8 @@
 name: Deploy to VPS
 
 # Every push to main builds the custom UI and syncs build/ into the Traccar
-# container's web directory on the Hostinger VPS (see deploy/deploy.sh).
+# container's web directory on the Hostinger VPS (see deploy/deploy.sh), then
+# applies new supabase/migrations to the Viper Fleet database (deploy/migrate.sh).
 
 on:
   push:
@@ -49,6 +50,11 @@ jobs:
           sleep 30
         done
         echo "Upload failed after 4 attempts"; exit 1
+
+    - name: Apply database migrations
+      # After the upload, so a failed migration never blocks the UI: without
+      # it the admin area shows what is missing instead of breaking.
+      run: sh deploy/migrate.sh
 
     - name: Verify site
       run: |

@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux';
 import MainPage from './main/MainPage';
 import App from './App';
 import Loader from './common/components/Loader';
+import AdminRoute from './admin/AdminRoute';
 import { useAsyncTask } from './reactHelper';
 import { devicesActions } from './store';
 import { generateLoginToken } from './common/components/NativeInterface';
@@ -68,6 +69,14 @@ const EmulatorPage = lazy(() => import('./other/EmulatorPage'));
 const StreamPage = lazy(() => import('./other/StreamPage'));
 const AuditPage = lazy(() => import('./reports/AuditPage'));
 const SettingsHubPage = lazy(() => import('./settings/SettingsHubPage'));
+const AdminOverviewPage = lazy(() => import('./admin/AdminOverviewPage'));
+const CustomersPage = lazy(() => import('./admin/CustomersPage'));
+const CustomerPage = lazy(() => import('./admin/CustomerPage'));
+const AdminDevicesPage = lazy(() => import('./admin/AdminDevicesPage'));
+const DeviceSetupPage = lazy(() => import('./admin/DeviceSetupPage'));
+const AdminUsersPage = lazy(() => import('./admin/AdminUsersPage'));
+const BillingPage = lazy(() => import('./admin/BillingPage'));
+const PlansPage = lazy(() => import('./admin/PlansPage'));
 
 const Navigation = () => {
   const dispatch = useDispatch();
@@ -187,6 +196,19 @@ const Navigation = () => {
             <Route path="user/:id/connections" element={<UserConnectionsPage />} />
             <Route path="user/:id" element={<UserPage />} />
             <Route path="user" element={<UserPage />} />
+          </Route>
+
+          <Route path="admin" element={<AdminRoute />}>
+            <Route index element={<AdminOverviewPage />} />
+            <Route path="customers" element={<CustomersPage />} />
+            <Route path="customer/:id" element={<CustomerPage />} />
+            <Route path="customer" element={<CustomerPage />} />
+            <Route path="devices" element={<AdminDevicesPage />} />
+            <Route path="device/:id" element={<DeviceSetupPage />} />
+            <Route path="device" element={<DeviceSetupPage />} />
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="billing" element={<BillingPage />} />
+            <Route path="plans" element={<PlansPage />} />
           </Route>
 
           <Route path="reports">
