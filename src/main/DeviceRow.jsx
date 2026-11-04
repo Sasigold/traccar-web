@@ -29,7 +29,7 @@ import {
   getStatusColor,
 } from '../common/util/formatter';
 import { useTranslation } from '../common/components/LocalizationProvider';
-import { mapIconKey, mapIcons } from '../map/core/preloadImages';
+import { deviceIconKey, isDeviceMoving, mapIcons } from '../map/core/preloadImages';
 import { useAdministrator } from '../common/util/permissions';
 import EngineIcon from '../resources/images/data/engine.svg?react';
 import { useAttributePreference } from '../common/util/preferences';
@@ -235,7 +235,7 @@ const DeviceRow = ({ devices, index, style }) => {
   };
 
   const avatarClass = cx(classes.avatar, item.status !== 'online' && classes.avatarIdle);
-  const iconUrl = `url("${mapIcons[mapIconKey(item.category)]}")`;
+  const iconUrl = `url("${mapIcons[deviceIconKey(item.category, isDeviceMoving(item, position))]}")`;
 
   return (
     <div style={style} role="listitem">

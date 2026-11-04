@@ -25,6 +25,8 @@ import trainSvg from '@material-symbols/svg-600/outlined/train.svg';
 import tramSvg from '@material-symbols/svg-600/outlined/tram.svg';
 import truckSvg from '@material-symbols/svg-600/outlined/local_shipping.svg';
 import vanSvg from '@material-symbols/svg-600/outlined/airport_shuttle.svg';
+import truckMovingSvg from '@material-symbols/svg-600/outlined/delivery_truck_speed.svg';
+import carMovingSvg from '../../resources/images/car-moving.svg';
 
 import warningSvg from '@material-symbols/svg-600/outlined/warning.svg';
 import taskAltSvg from '@material-symbols/svg-600/outlined/task_alt.svg';
@@ -66,6 +68,8 @@ export const mapIcons = {
   tram: tramSvg,
   truck: truckSvg,
   van: vanSvg,
+  carMoving: carMovingSvg,
+  truckMoving: truckMovingSvg,
 };
 
 export const mapIconKey = (category) => {
@@ -78,6 +82,18 @@ export const mapIconKey = (category) => {
     default:
       return mapIcons.hasOwnProperty(category) ? category : 'default';
   }
+};
+
+// A device counts as driving while it is online and its latest position reports motion
+// (Traccar's `motion` attribute) or a speed above 1 knot.
+export const isDeviceMoving = (device, position) =>
+  device?.status === 'online' &&
+  Boolean(position && (position.attributes?.motion || position.speed > 1));
+
+// Icon key for a device, switching to the driving variant when one exists for its category.
+export const deviceIconKey = (category, moving) => {
+  const key = mapIconKey(category);
+  return moving && mapIcons.hasOwnProperty(`${key}Moving`) ? `${key}Moving` : key;
 };
 
 export const eventIcons = {

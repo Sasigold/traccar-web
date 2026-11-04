@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { map } from './core/MapView';
 import MapMarkers from './MapMarkers';
 import { formatTime, getStatusColor } from '../common/util/formatter';
-import { mapIconKey } from './core/preloadImages';
+import { deviceIconKey, isDeviceMoving } from './core/preloadImages';
 import { useAttributePreference } from '../common/util/preferences';
 import { fromMapCoordinates } from './core/mapUtil';
 
@@ -60,7 +60,7 @@ const MapPositionMarkers = ({
       deviceId: position.deviceId,
       latitude: position.latitude,
       longitude: position.longitude,
-      image: `${mapIconKey(device.category)}-${color}`,
+      image: `${deviceIconKey(device.category, showStatus && isDeviceMoving(device, position))}-${color}`,
       title: titles[titleField || 'name'],
       rotation: position.course,
       direction: showDirection,

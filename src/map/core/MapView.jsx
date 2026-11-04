@@ -2,7 +2,6 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import './mapControls.css';
 import * as maplibregl from 'maplibre-gl';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
-import { googleProtocol } from 'maplibre-google-maps';
 import { Protocol } from 'pmtiles';
 import { useRef, useLayoutEffect, useEffect, useState, useMemo } from 'react';
 import { useTheme, alpha } from '@mui/material';
@@ -11,6 +10,7 @@ import { useAttributePreference, usePreference } from '../../common/util/prefere
 import usePersistedState from '../../common/util/usePersistedState';
 import { mapImages } from './preloadImages';
 import useMapStyles from './useMapStyles';
+import { googleProtocol } from './googleProtocol';
 import { useAsyncTask } from '../../reactHelper';
 
 const element = document.createElement('div');

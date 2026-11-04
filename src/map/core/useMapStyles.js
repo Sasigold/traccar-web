@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { useTranslation } from '../../common/components/LocalizationProvider';
+import { useLocalization, useTranslation } from '../../common/components/LocalizationProvider';
+import { googleLanguage, googleSessionQuery } from './googleProtocol';
 import { useAttributePreference } from '../../common/util/preferences';
 
 const styleCustom = ({ tiles, minZoom, maxZoom, attribution, scheme }) => {
@@ -32,6 +33,9 @@ const styleCustom = ({ tiles, minZoom, maxZoom, attribution, scheme }) => {
 
 export default () => {
   const t = useTranslation();
+  const { language } = useLocalization();
+  const hl = googleLanguage(language);
+  const sessionQuery = googleSessionQuery(language);
 
   const googleKey = useAttributePreference('googleKey');
   const mapTilerKey = useAttributePreference('mapTilerKey');
@@ -90,9 +94,9 @@ export default () => {
         title: t('mapGoogleRoad'),
         style: styleCustom({
           tiles: googleKey
-            ? [`google://roadmap/{z}/{x}/{y}?key=${googleKey}`]
+            ? [`google://roadmap/{z}/{x}/{y}?key=${googleKey}&${sessionQuery}`]
             : [0, 1, 2, 3].map(
-                (i) => `https://mt${i}.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga`,
+                (i) => `https://mt${i}.google.com/vt/lyrs=m&hl=${hl}&gl=il&x={x}&y={y}&z={z}&s=Ga`,
               ),
           maxZoom: 20,
           attribution: '© Google',
@@ -105,9 +109,9 @@ export default () => {
         title: t('mapGoogleSatellite'),
         style: styleCustom({
           tiles: googleKey
-            ? [`google://satellite/{z}/{x}/{y}?key=${googleKey}`]
+            ? [`google://satellite/{z}/{x}/{y}?key=${googleKey}&${sessionQuery}`]
             : [0, 1, 2, 3].map(
-                (i) => `https://mt${i}.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}&s=Ga`,
+                (i) => `https://mt${i}.google.com/vt/lyrs=s&hl=${hl}&gl=il&x={x}&y={y}&z={z}&s=Ga`,
               ),
           maxZoom: 20,
           attribution: '© Google',
@@ -120,9 +124,11 @@ export default () => {
         title: t('mapGoogleHybrid'),
         style: styleCustom({
           tiles: googleKey
-            ? [`google://satellite/{z}/{x}/{y}?key=${googleKey}&layerType=layerRoadmap`]
+            ? [
+                `google://satellite/{z}/{x}/{y}?key=${googleKey}&${sessionQuery}&layerType=layerRoadmap`,
+              ]
             : [0, 1, 2, 3].map(
-                (i) => `https://mt${i}.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}&s=Ga`,
+                (i) => `https://mt${i}.google.com/vt/lyrs=y&hl=${hl}&gl=il&x={x}&y={y}&z={z}&s=Ga`,
               ),
           maxZoom: 20,
           attribution: '© Google',
@@ -360,6 +366,8 @@ export default () => {
       ordnanceSurveyKey,
       customMapUrl,
       googleKey,
+      hl,
+      sessionQuery,
     ],
   );
 };
