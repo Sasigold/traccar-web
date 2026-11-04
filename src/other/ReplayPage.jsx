@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Chip, IconButton, Slider, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { useTheme } from '@mui/material/styles';
@@ -13,7 +13,7 @@ import { useSelector } from 'react-redux';
 import MapView from '../map/core/MapView';
 import MapRoutePath from '../map/MapRoutePath';
 import MapRoutePoints from '../map/MapRoutePoints';
-import MapPositionMarkers from '../map/MapPositionMarkers';
+import MapReplayMarker from '../map/MapReplayMarker';
 import { formatTime } from '../common/util/formatter';
 import ReportFilter from '../reports/components/ReportFilter';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -126,7 +126,6 @@ const ReplayPage = () => {
   const { classes } = useStyles();
   const theme = useTheme();
   const navigate = useNavigate();
-  const timerRef = useRef();
 
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
 
@@ -163,20 +162,7 @@ const ReplayPage = () => {
   }, [from, to, setPositions]);
 
   useEffect(() => {
-    if (playing && positions.length > 0) {
-      timerRef.current = setInterval(() => {
-        setIndex((index) => index + 1);
-      }, 500);
-    } else {
-      clearInterval(timerRef.current);
-    }
-
-    return () => clearInterval(timerRef.current);
-  }, [playing, positions]);
-
-  useEffect(() => {
     if (index >= positions.length - 1) {
-      clearInterval(timerRef.current);
       setPlaying(false);
     }
   }, [index, positions]);
@@ -230,10 +216,12 @@ const ReplayPage = () => {
         <MapRoutePath positions={positions} />
         <MapRoutePoints positions={positions} onClick={onPointClick} showSpeedControl />
         {index < positions.length && (
-          <MapPositionMarkers
-            positions={[positions[index]]}
+          <MapReplayMarker
+            positions={positions}
+            index={index}
+            playing={playing}
+            onIndexChange={setIndex}
             onMarkerClick={onMarkerClick}
-            titleField="fixTime"
           />
         )}
       </MapView>
