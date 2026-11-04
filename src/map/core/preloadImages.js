@@ -1,4 +1,5 @@
-import { loadImage, prepareIcon } from './mapUtil';
+import { canvasTintImage, loadImage, prepareIcon } from './mapUtil';
+import { createMovingImage } from './movingIcon';
 import { brandColors, slate, status } from '../../common/theme/tokens';
 
 import directionSvg from '../../resources/images/direction.svg';
@@ -68,6 +69,26 @@ export const mapIcons = {
   van: vanSvg,
 };
 
+// Categories that get the animated driving marker (see movingIcon.js). People, animals,
+// aircraft and the generic pin keep their plain marker.
+export const movingCategories = new Set([
+  'bicycle',
+  'boat',
+  'bus',
+  'camper',
+  'car',
+  'crane',
+  'motorcycle',
+  'scooter',
+  'ship',
+  'tractor',
+  'trailer',
+  'train',
+  'tram',
+  'truck',
+  'van',
+]);
+
 export const mapIconKey = (category) => {
   switch (category) {
     case 'offroad':
@@ -78,6 +99,18 @@ export const mapIconKey = (category) => {
     default:
       return mapIcons.hasOwnProperty(category) ? category : 'default';
   }
+};
+
+// A device counts as driving while it is online and its latest position reports motion
+// (Traccar's `motion` attribute) or a speed above 1 knot.
+export const isDeviceMoving = (device, position) =>
+  device?.status === 'online' &&
+  Boolean(position && (position.attributes?.motion || position.speed > 1));
+
+// Map image key prefix for a device: the animated driving variant when it is moving.
+export const deviceIconKey = (category, moving) => {
+  const key = mapIconKey(category);
+  return moving && movingCategories.has(key) ? `${key}Moving` : key;
 };
 
 export const eventIcons = {
@@ -131,6 +164,14 @@ export default async () => {
         results.push(
           loadImage(mapIcons[key]).then((icon) => {
             mapImages[`${key}-${color}`] = prepareIcon(background, icon, markerColors[color]);
+            if (movingCategories.has(key)) {
+              mapImages[`${key}Moving-${color}`] = createMovingImage({
+                background,
+                glyph: canvasTintImage(icon, markerColors[color]),
+                color: markerColors[color],
+                pixelRatio: devicePixelRatio,
+              });
+            }
           }),
         );
       });

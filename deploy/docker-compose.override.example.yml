@@ -5,5 +5,9 @@ services:
       - WEB_TITLE=viper fleet
       - WEB_DESCRIPTION=כל רכב. כל רגע. בתמונה אחת.
       - WEB_COLORPRIMARY=#102C54
+      # Reverse-geocoded addresses ("הצג כתובת") in Hebrew. Env vars map to traccar.xml keys
+      # (geocoder.language -> GEOCODER_LANGUAGE) once CONFIG_USE_ENVIRONMENT_VARIABLES is on.
+      - CONFIG_USE_ENVIRONMENT_VARIABLES=true
+      - GEOCODER_LANGUAGE=he
     volumes:
       - ./web:/opt/traccar/web:ro

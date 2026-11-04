@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { useTranslation } from '../../common/components/LocalizationProvider';
+import { useLocalization, useTranslation } from '../../common/components/LocalizationProvider';
+import { googleSessionQuery } from '../core/googleProtocol';
 import { useAttributePreference } from '../../common/util/preferences';
 
 const sourceCustom = (urls, maxZoom) => {
@@ -19,6 +20,7 @@ const sourceOpenWeather = (style, key) =>
 
 export default () => {
   const t = useTranslation();
+  const { language } = useLocalization();
 
   const googleKey = useAttributePreference('googleKey');
   const openWeatherKey = useAttributePreference('openWeatherKey');
@@ -32,7 +34,9 @@ export default () => {
         id: 'googleTraffic',
         title: t('mapGoogleTraffic'),
         source: sourceCustom(
-          [`google://satellite/{z}/{x}/{y}?key=${googleKey}&layerType=layerTraffic&overlay=true`],
+          [
+            `google://satellite/{z}/{x}/{y}?key=${googleKey}&${googleSessionQuery(language)}&layerType=layerTraffic&overlay=true`,
+          ],
           20,
         ),
         available: Boolean(googleKey),
@@ -140,6 +144,6 @@ export default () => {
         available: Boolean(customMapOverlay),
       },
     ],
-    [t, googleKey, openWeatherKey, tomTomKey, hereKey, customMapOverlay],
+    [t, language, googleKey, openWeatherKey, tomTomKey, hereKey, customMapOverlay],
   );
 };
