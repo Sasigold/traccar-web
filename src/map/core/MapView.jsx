@@ -10,6 +10,8 @@ import { useAttributePreference, usePreference } from '../../common/util/prefere
 import usePersistedState from '../../common/util/usePersistedState';
 import { mapImages } from './preloadImages';
 import useMapStyles from './useMapStyles';
+import { localizeStyle } from './mapLanguage';
+import { useLocalization } from '../../common/components/LocalizationProvider';
 import { googleProtocol } from './googleProtocol';
 import { useAsyncTask } from '../../reactHelper';
 
@@ -75,6 +77,7 @@ const MapView = ({ children }) => {
   const containerRef = useRef(null);
 
   const mapReady = useMapReady();
+  const { language } = useLocalization();
 
   const mapStyles = useMapStyles();
   const activeMapStyles = useAttributePreference(
@@ -123,7 +126,10 @@ const MapView = ({ children }) => {
     }
     updateReadyValue(false);
     map.coordinateSystem = style.coordinateSystem;
-    map.setStyle(style.style, { diff: false });
+    map.setStyle(style.style, {
+      diff: false,
+      transformStyle: (_, nextStyle) => localizeStyle(nextStyle, language),
+    });
     map.setTransformRequest(style.transformRequest);
     let timeoutId;
     const waiting = () => {
@@ -136,7 +142,7 @@ const MapView = ({ children }) => {
     };
     map.once('styledata', waiting);
     return () => clearTimeout(timeoutId);
-  }, [styles, selectedStyleId, setSelectedStyleId]);
+  }, [styles, selectedStyleId, setSelectedStyleId, language]);
 
   useLayoutEffect(() => {
     const currentEl = containerRef.current;
