@@ -1,4 +1,5 @@
-import { loadImage, prepareIcon } from './mapUtil';
+import { canvasTintImage, loadImage, prepareIcon } from './mapUtil';
+import { createMovingImage } from './movingIcon';
 import { brandColors, slate, status } from '../../common/theme/tokens';
 
 import directionSvg from '../../resources/images/direction.svg';
@@ -25,8 +26,6 @@ import trainSvg from '@material-symbols/svg-600/outlined/train.svg';
 import tramSvg from '@material-symbols/svg-600/outlined/tram.svg';
 import truckSvg from '@material-symbols/svg-600/outlined/local_shipping.svg';
 import vanSvg from '@material-symbols/svg-600/outlined/airport_shuttle.svg';
-import truckMovingSvg from '@material-symbols/svg-600/outlined/delivery_truck_speed.svg';
-import carMovingSvg from '../../resources/images/car-moving.svg';
 
 import warningSvg from '@material-symbols/svg-600/outlined/warning.svg';
 import taskAltSvg from '@material-symbols/svg-600/outlined/task_alt.svg';
@@ -68,9 +67,27 @@ export const mapIcons = {
   tram: tramSvg,
   truck: truckSvg,
   van: vanSvg,
-  carMoving: carMovingSvg,
-  truckMoving: truckMovingSvg,
 };
+
+// Categories that get the animated driving marker (see movingIcon.js). People, animals,
+// aircraft and the generic pin keep their plain marker.
+export const movingCategories = new Set([
+  'bicycle',
+  'boat',
+  'bus',
+  'camper',
+  'car',
+  'crane',
+  'motorcycle',
+  'scooter',
+  'ship',
+  'tractor',
+  'trailer',
+  'train',
+  'tram',
+  'truck',
+  'van',
+]);
 
 export const mapIconKey = (category) => {
   switch (category) {
@@ -90,10 +107,10 @@ export const isDeviceMoving = (device, position) =>
   device?.status === 'online' &&
   Boolean(position && (position.attributes?.motion || position.speed > 1));
 
-// Icon key for a device, switching to the driving variant when one exists for its category.
+// Map image key prefix for a device: the animated driving variant when it is moving.
 export const deviceIconKey = (category, moving) => {
   const key = mapIconKey(category);
-  return moving && mapIcons.hasOwnProperty(`${key}Moving`) ? `${key}Moving` : key;
+  return moving && movingCategories.has(key) ? `${key}Moving` : key;
 };
 
 export const eventIcons = {
@@ -147,6 +164,14 @@ export default async () => {
         results.push(
           loadImage(mapIcons[key]).then((icon) => {
             mapImages[`${key}-${color}`] = prepareIcon(background, icon, markerColors[color]);
+            if (movingCategories.has(key)) {
+              mapImages[`${key}Moving-${color}`] = createMovingImage({
+                background,
+                glyph: canvasTintImage(icon, markerColors[color]),
+                color: markerColors[color],
+                pixelRatio: devicePixelRatio,
+              });
+            }
           }),
         );
       });

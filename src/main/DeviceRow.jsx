@@ -29,7 +29,10 @@ import {
   getStatusColor,
 } from '../common/util/formatter';
 import { useTranslation } from '../common/components/LocalizationProvider';
-import { deviceIconKey, isDeviceMoving, mapIcons } from '../map/core/preloadImages';
+import { isDeviceMoving, mapIconKey, mapIcons, movingCategories } from '../map/core/preloadImages';
+import { GLYPH_BOX, prefersReducedMotion } from '../map/core/movingIcon';
+import speedLinesSvg from '../resources/images/speed-lines.svg';
+import speedLinesStaticSvg from '../resources/images/speed-lines-static.svg';
 import { useAdministrator } from '../common/util/permissions';
 import EngineIcon from '../resources/images/data/engine.svg?react';
 import { useAttributePreference } from '../common/util/preferences';
@@ -154,6 +157,11 @@ const useStyles = makeStyles()((theme) => ({
     WebkitMaskRepeat: 'no-repeat',
     WebkitMaskPosition: 'center',
   },
+  iconBox: {
+    position: 'relative',
+    width: 24,
+    height: 24,
+  },
   success: {
     color: theme.palette.success.main,
   },
@@ -235,7 +243,10 @@ const DeviceRow = ({ devices, index, style }) => {
   };
 
   const avatarClass = cx(classes.avatar, item.status !== 'online' && classes.avatarIdle);
-  const iconUrl = `url("${mapIcons[deviceIconKey(item.category, isDeviceMoving(item, position))]}")`;
+  const iconKey = mapIconKey(item.category);
+  const iconUrl = `url("${mapIcons[iconKey]}")`;
+  const driving = movingCategories.has(iconKey) && isDeviceMoving(item, position);
+  const linesUrl = `url("${prefersReducedMotion() ? speedLinesStaticSvg : speedLinesSvg}")`;
 
   return (
     <div style={style} role="listitem">
@@ -250,10 +261,41 @@ const DeviceRow = ({ devices, index, style }) => {
         <ListItemAvatar className={classes.avatarWrapper}>
           <span className={classes.avatarBox}>
             <Avatar className={avatarClass}>
-              <span
-                className={classes.icon}
-                style={{ maskImage: iconUrl, WebkitMaskImage: iconUrl }}
-              />
+              {driving ? (
+                // Inline geometry (not makeStyles) so the RTL plugin keeps the streaks behind
+                // the vehicle; same layout as the animated map marker.
+                <span className={classes.iconBox}>
+                  <span
+                    className={classes.icon}
+                    style={{
+                      position: 'absolute',
+                      left: `${GLYPH_BOX.x * 100}%`,
+                      top: `${GLYPH_BOX.y * 100}%`,
+                      width: `${GLYPH_BOX.size * 100}%`,
+                      height: `${GLYPH_BOX.size * 100}%`,
+                      maskImage: iconUrl,
+                      WebkitMaskImage: iconUrl,
+                    }}
+                  />
+                  <span
+                    className={classes.icon}
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      width: '100%',
+                      height: '100%',
+                      maskImage: linesUrl,
+                      WebkitMaskImage: linesUrl,
+                    }}
+                  />
+                </span>
+              ) : (
+                <span
+                  className={classes.icon}
+                  style={{ maskImage: iconUrl, WebkitMaskImage: iconUrl }}
+                />
+              )}
             </Avatar>
             <span
               className={classes.statusDot}
