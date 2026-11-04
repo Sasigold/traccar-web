@@ -28,6 +28,8 @@ import fetchOrThrow from '../common/util/fetchOrThrow';
 import MapOverlay from '../map/overlay/MapOverlay';
 import { ctaFill, glass } from '../common/theme/surfaces';
 
+const SPEEDS = [1, 2, 4, 8];
+
 const useStyles = makeStyles()((theme) => ({
   root: {
     position: 'relative',
@@ -119,6 +121,11 @@ const useStyles = makeStyles()((theme) => ({
     fontVariantNumeric: 'tabular-nums',
     fontWeight: 600,
   },
+  speed: {
+    minWidth: 44,
+    fontVariantNumeric: 'tabular-nums',
+    fontWeight: 600,
+  },
 }));
 
 const ReplayPage = () => {
@@ -140,6 +147,7 @@ const ReplayPage = () => {
   const from = searchParams.get('from');
   const to = searchParams.get('to');
   const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(1);
   const [loading, setLoading] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
 
@@ -220,6 +228,7 @@ const ReplayPage = () => {
             positions={positions}
             index={index}
             playing={playing}
+            speed={speed}
             onIndexChange={setIndex}
             onMarkerClick={onMarkerClick}
           />
@@ -269,6 +278,19 @@ const ReplayPage = () => {
                   label={`${index + 1} / ${positions.length}`}
                   variant="outlined"
                 />
+                <Tooltip title={t('replaySpeed')}>
+                  <Chip
+                    size="small"
+                    dir="ltr"
+                    variant="outlined"
+                    className={classes.speed}
+                    label={`×${speed}`}
+                    aria-label={`${t('replaySpeed')}: ×${speed}`}
+                    onClick={() =>
+                      setSpeed((speed) => SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length])
+                    }
+                  />
+                </Tooltip>
               </div>
               <Slider
                 className={classes.slider}

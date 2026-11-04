@@ -8,13 +8,22 @@ import { toMapCoordinates } from './core/mapUtil';
 const FOLLOW_EASE = 600; // ms, the camera glides onto the vehicle when playback starts
 
 // The replay vehicle. While playing it drives along the route at a pace derived from the real
-// timestamps, and the camera follows it until the user moves the map by hand. `index` is the
-// point the vehicle has passed; the owner is told each time it reaches the next one.
-const MapReplayMarker = ({ positions, index, playing, onIndexChange, onMarkerClick }) => {
+// timestamps times `speed`, and the camera follows it until the user moves the map by hand.
+// `index` is the point the vehicle has passed; the owner is told each time it reaches the next one.
+const MapReplayMarker = ({
+  positions,
+  index,
+  playing,
+  speed = 1,
+  onIndexChange,
+  onMarkerClick,
+}) => {
   const progressRef = useRef(index);
   const followRef = useRef(true);
   const onIndexChangeRef = useRef(onIndexChange);
   onIndexChangeRef.current = onIndexChange;
+  const speedRef = useRef(speed);
+  speedRef.current = speed;
 
   const [shown, setShown] = useState(() => positions[index]);
 
@@ -56,19 +65,31 @@ const MapReplayMarker = ({ positions, index, playing, onIndexChange, onMarkerCli
     let last = performance.now();
     let frame;
     const step = (now) => {
-      const elapsed = now - last;
+      let remaining = now - last;
       last = now;
-      let current = Math.floor(progressRef.current);
-      if (current >= positions.length - 1) {
+      const started = Math.floor(progressRef.current);
+      if (started >= positions.length - 1) {
         return;
       }
-      const duration = replaySegmentDuration(positions[current], positions[current + 1]);
-      const progress = Math.min(progressRef.current + elapsed / duration, current + 1);
+      // Spend the frame's time along the route, crossing several points when the pace is fast.
+      let current = started;
+      let progress = progressRef.current;
+      while (remaining > 0 && current < positions.length - 1) {
+        const duration =
+          replaySegmentDuration(positions[current], positions[current + 1]) / speedRef.current;
+        const left = (current + 1 - progress) * duration;
+        if (remaining < left) {
+          progress += remaining / duration;
+          remaining = 0;
+        } else {
+          remaining -= left;
+          current += 1;
+          progress = current;
+        }
+      }
       progressRef.current = progress;
-      const reached = Math.floor(progress);
-      if (reached !== current) {
-        current = reached;
-        onIndexChangeRef.current?.(reached);
+      if (current !== started) {
+        onIndexChangeRef.current?.(current);
       }
       const from = positions[current];
       const to = positions[Math.min(current + 1, positions.length - 1)];

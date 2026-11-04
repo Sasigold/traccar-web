@@ -806,6 +806,7 @@
     "a11yPrevious": "Previous",
     "a11yNext": "Next",
     "a11yPlay": "Play",
+    "replaySpeed": "Playback speed",
     "a11yPause": "Pause",
     "a11yShowOnMap": "Show on map",
     "a11yHideOnMap": "Hide from map",
