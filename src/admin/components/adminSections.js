@@ -1,0 +1,64 @@
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import StoreRoundedIcon from '@mui/icons-material/StoreRounded';
+import DnsRoundedIcon from '@mui/icons-material/DnsRounded';
+import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
+import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
+import SellRoundedIcon from '@mui/icons-material/SellRounded';
+
+// Sections of the super admin area: the section menu and the command palette.
+export const adminSections = [
+  {
+    id: 'main',
+    titleKey: 'adminGroupMain',
+    items: [
+      {
+        id: 'overview',
+        titleKey: 'adminOverview',
+        icon: DashboardRoundedIcon,
+        path: '/admin',
+        match: (pathname) => pathname === '/admin',
+      },
+      {
+        id: 'customers',
+        titleKey: 'adminCustomers',
+        icon: StoreRoundedIcon,
+        path: '/admin/customers',
+        match: (pathname) => pathname.startsWith('/admin/customer'),
+      },
+      {
+        id: 'devices',
+        titleKey: 'adminDevices',
+        icon: DnsRoundedIcon,
+        path: '/admin/devices',
+        match: (pathname) => pathname.startsWith('/admin/device'),
+      },
+      {
+        id: 'users',
+        titleKey: 'adminUsers',
+        icon: PeopleRoundedIcon,
+        path: '/admin/users',
+        match: (pathname) => pathname.startsWith('/admin/users'),
+      },
+    ],
+  },
+  {
+    id: 'billing',
+    titleKey: 'adminGroupBilling',
+    items: [
+      {
+        id: 'invoices',
+        titleKey: 'adminInvoices',
+        icon: ReceiptLongRoundedIcon,
+        path: '/admin/billing',
+        match: (pathname) => pathname.startsWith('/admin/billing'),
+      },
+      {
+        id: 'plans',
+        titleKey: 'adminPlans',
+        icon: SellRoundedIcon,
+        path: '/admin/plans',
+        match: (pathname) => pathname.startsWith('/admin/plans'),
+      },
+    ],
+  },
+];

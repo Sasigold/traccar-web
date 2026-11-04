@@ -4,12 +4,14 @@ import MapRoundedIcon from '@mui/icons-material/MapRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import HexagonRoundedIcon from '@mui/icons-material/HexagonRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
-import { useRestriction } from '../../util/permissions';
+import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
+import { useAdministrator, useRestriction } from '../../util/permissions';
 
 // Primary destinations shown in the navigation rail and the mobile tabs.
 export default () => {
   const readonly = useRestriction('readonly');
   const disableReports = useRestriction('disableReports');
+  const admin = useAdministrator();
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
   const devices = useSelector((state) => state.devices.items);
 
@@ -53,6 +55,14 @@ export default () => {
         match: (pathname) =>
           pathname.startsWith('/settings') && !pathname.startsWith('/settings/geofence'),
       },
+      {
+        key: 'admin',
+        titleKey: 'adminTitle',
+        icon: AdminPanelSettingsRoundedIcon,
+        path: '/admin',
+        match: (pathname) => pathname.startsWith('/admin'),
+        hidden: !admin,
+      },
     ].filter((item) => !item.hidden);
-  }, [readonly, disableReports, selectedDeviceId, devices]);
+  }, [readonly, disableReports, admin, selectedDeviceId, devices]);
 };
