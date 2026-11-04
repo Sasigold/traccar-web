@@ -38,8 +38,17 @@ jobs:
         # Pinned host key of the VPS (ssh-keyscan -t ed25519 72.61.153.60)
         echo '72.61.153.60 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID5SogCUGVSqGkOEvyAJz8/h8e5bvMed6JOhA3oE23R9' >> ~/.ssh/known_hosts
 
-    - name: Build and upload
-      run: sh deploy/deploy.sh
+    - name: Build
+      run: npm run build
+
+    - name: Upload to VPS (retries on connection problems)
+      run: |
+        for attempt in 1 2 3 4; do
+          if SKIP_BUILD=1 sh deploy/deploy.sh; then exit 0; fi
+          echo "Upload attempt $attempt failed, retrying in 30s..."
+          sleep 30
+        done
+        echo "Upload failed after 4 attempts"; exit 1
 
     - name: Verify site
       run: |

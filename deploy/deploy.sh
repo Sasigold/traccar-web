@@ -9,9 +9,10 @@ HOST="${DEPLOY_HOST:-root@72.61.153.60}"
 REMOTE_DIR="${DEPLOY_DIR:-/docker/traccar-ovjj/web}"
 
 cd "$(dirname "$0")/.."
-npm run build
+# SKIP_BUILD=1 reuses an existing build/ (used by CI to retry only the upload).
+[ "${SKIP_BUILD:-0}" = 1 ] || npm run build
 
 echo "Uploading build/ to $HOST:$REMOTE_DIR"
-tar czf - -C build . | ssh "$HOST" "set -e; mkdir -p '$REMOTE_DIR' '$REMOTE_DIR.new'; tar xzf - -C '$REMOTE_DIR.new'; \
+tar czf - -C build . | ssh -o ConnectTimeout=30 "$HOST" "set -e; mkdir -p '$REMOTE_DIR' '$REMOTE_DIR.new'; tar xzf - -C '$REMOTE_DIR.new'; \
   rsync -a --delete '$REMOTE_DIR.new/' '$REMOTE_DIR/'; rm -rf '$REMOTE_DIR.new'"
 echo "Deployed."
