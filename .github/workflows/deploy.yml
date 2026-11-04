@@ -44,4 +44,4 @@ jobs:
     - name: Verify site
       run: |
         sleep 3
-        curl -fsS --max-time 30 "$SITE_URL/" | grep -q '<div id="root">' && echo "Site responds with the app shell."
+        curl -fsS --max-time 30 "$SITE_URL/" | grep -q '<div id="root"' && echo "Site responds with the app shell."
