@@ -1,4 +1,4 @@
-import { Typography } from '@mui/material';
+import { Button, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { alpha } from '@mui/material/styles';
 import LocalGasStationRoundedIcon from '@mui/icons-material/LocalGasStationRounded';
@@ -21,6 +21,8 @@ import {
 } from '../../util/converter';
 import { formatAlarm, formatCourse } from '../../util/formatter';
 import ArcGauge from './ArcGauge';
+import TirePressure from './TirePressure';
+import { adjustValue, fuelReading, isNumber, parseProfile, tireReading } from './vehicleProfile';
 import {
   AnimatedValue,
   BatteryGlyph,
@@ -45,28 +47,7 @@ const speedScale = { kmh: 180, mph: 120, kn: 100 };
 
 const niceMax = (value, base, step) => Math.max(base, Math.ceil((value * 1.1) / step) * step);
 
-export const isNumber = (value) => typeof value === 'number' && Number.isFinite(value);
-
-// Fuel as a 0..1 ratio. Traccar reports `fuel` in liters for most devices and
-// as a percentage for some; a tank capacity on the device (fuelCapacity, in
-// liters) turns liters into a level. Without it, values up to 100 are read as
-// a percentage.
-export const fuelReading = (position, device) => {
-  const { attributes } = position;
-  const capacity = Number(device?.attributes?.fuelCapacity);
-  if (isNumber(attributes.fuelLevel) && attributes.fuelLevel <= 100) {
-    return { ratio: attributes.fuelLevel / 100, liters: null };
-  }
-  if (isNumber(attributes.fuel)) {
-    if (capacity > 0) {
-      return { ratio: attributes.fuel / capacity, liters: attributes.fuel };
-    }
-    if (attributes.fuel <= 100) {
-      return { ratio: attributes.fuel / 100, liters: null };
-    }
-  }
-  return null;
-};
+export { fuelReading, isNumber };
 
 const signalRatio = (rssi) => {
   if (rssi < 0) return (rssi + 113) / 62; // dBm, -113..-51
@@ -139,6 +120,12 @@ const useStyles = makeStyles()((theme) => ({
     fontWeight: 500,
     color: theme.palette.text.secondary,
     textAlign: 'center',
+  },
+  gaugeAction: {
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    paddingBlock: 2,
+    minHeight: 0,
   },
   facts: {
     display: 'flex',
@@ -322,7 +309,8 @@ const RpmGauge = ({ rpm, size = 220 }) => {
 // Every value on a position, routed into the dashboard: gauges first, then
 // boolean states, then a section per subject, and a final section for anything
 // the catalog does not know. Nothing on the position is left out.
-const buildTelemetryModel = (position) => {
+const buildTelemetryModel = (position, profile, skip) => {
+  const params = profile.params || {};
   const keys = [
     ...Object.keys(position)
       .filter((key) => key !== 'attributes')
@@ -330,7 +318,26 @@ const buildTelemetryModel = (position) => {
     ...Object.keys(position.attributes || {})
       .filter((key) => !Object.hasOwn(position, key))
       .map((key) => ({ key, property: false, value: position.attributes[key] })),
-  ].filter(({ key, value }) => !consumed.has(key) && value != null && value !== '');
+  ]
+    .filter(
+      ({ key, value }) =>
+        !consumed.has(key) &&
+        !skip.has(key) &&
+        !params[key]?.hidden &&
+        value != null &&
+        value !== '',
+    )
+    .map((item) => {
+      const config = params[item.key];
+      if (!config) return item;
+      return {
+        ...item,
+        value: adjustValue(item.value, config),
+        label: config.label,
+        unit: config.unit,
+        adjusted: isNumber(item.value) && (config.factor != null || config.offset != null),
+      };
+    });
 
   const chips = [];
   const grouped = Object.fromEntries(sections.map((section) => [section.key, []]));
@@ -350,26 +357,45 @@ const buildTelemetryModel = (position) => {
   return { chips, grouped };
 };
 
-const MetricValue = ({ position, item }) => (
-  <PositionValue
-    position={position}
-    property={item.property ? item.key : null}
-    attribute={item.property ? null : item.key}
-  />
-);
+const formatCustom = (value, unit) => `${Number(value.toFixed(2)).toLocaleString()} ${unit}`;
 
-const Metric = ({ position, item, index }) => {
+const MetricValue = ({ position, item }) => {
+  if (item.unit && isNumber(item.value)) {
+    return <AnimatedValue value={item.value} format={(v) => formatCustom(v, item.unit)} />;
+  }
+  const adjusted = item.adjusted
+    ? item.property
+      ? { ...position, [item.key]: item.value }
+      : { ...position, attributes: { ...position.attributes, [item.key]: item.value } }
+    : position;
+  return (
+    <PositionValue
+      position={adjusted}
+      property={item.property ? item.key : null}
+      attribute={item.property ? null : item.key}
+    />
+  );
+};
+
+const Metric = ({ position, item, index, onEdit }) => {
   const { classes, theme } = useStyles();
   const t = useTranslation();
   const levelColor = useLevelColor();
   const positionAttributes = usePositionAttributes(t);
   const distanceUnit = useAttributePreference('distanceUnit');
   const config = metrics[item.key] || {};
-  const label = positionAttributes[item.key]?.name || item.key;
+  const label = item.label || positionAttributes[item.key]?.name || item.key;
   const icon = config.icon || genericIcon(item.value);
   const value = item.value;
   const numeric = isNumber(value);
-  const common = { icon, label, index, small: config.small };
+  const common = {
+    icon,
+    label,
+    index,
+    small: config.small,
+    onClick: onEdit ? () => onEdit(item.key) : undefined,
+  };
+  const custom = item.unit ? <MetricValue position={position} item={item} /> : null;
 
   if (numeric) {
     switch (config.kind) {
@@ -382,7 +408,7 @@ const Metric = ({ position, item, index }) => {
         return (
           <MetricTile
             {...common}
-            value={<AnimatedValue value={value} format={(v) => `${Math.round(v)}%`} />}
+            value={custom || <AnimatedValue value={value} format={(v) => `${Math.round(v)}%`} />}
             footer={<LevelBar ratio={ratio} color={color} />}
           />
         );
@@ -395,7 +421,7 @@ const Metric = ({ position, item, index }) => {
           <MetricTile
             {...common}
             tone={tone}
-            value={<AnimatedValue value={value} format={(v) => `${Math.round(v)}%`} />}
+            value={custom || <AnimatedValue value={value} format={(v) => `${Math.round(v)}%`} />}
             visual={
               <BatteryGlyph ratio={ratio} color={color} charging={position.attributes.charge} />
             }
@@ -425,7 +451,7 @@ const Metric = ({ position, item, index }) => {
           <MetricTile
             {...common}
             tone={tone}
-            value={<AnimatedValue value={value} format={(v) => `${v.toFixed(1)}°C`} />}
+            value={custom || <AnimatedValue value={value} format={(v) => `${v.toFixed(1)}°C`} />}
             footer={<LevelBar ratio={(value + 20) / 150} color={color} />}
           />
         );
@@ -435,7 +461,7 @@ const Metric = ({ position, item, index }) => {
           <MetricTile
             {...common}
             tone={value < 4 ? 'warning' : undefined}
-            value={<AnimatedValue value={value} format={(v) => Math.round(v)} />}
+            value={custom || <AnimatedValue value={value} format={(v) => Math.round(v)} />}
             visual={
               <SignalBars
                 ratio={value / 12}
@@ -453,6 +479,7 @@ const Metric = ({ position, item, index }) => {
           />
         );
       case 'odometer':
+        if (custom) break;
         return (
           <MetricTile
             {...common}
@@ -465,7 +492,7 @@ const Metric = ({ position, item, index }) => {
     }
   }
 
-  if (item.key === 'course' && numeric) {
+  if (item.key === 'course' && numeric && !custom) {
     return (
       <MetricTile
         {...common}
@@ -495,15 +522,26 @@ const Metric = ({ position, item, index }) => {
   );
 };
 
-const TelemetryDashboard = ({ position, device }) => {
+// `onConfigure(tab)` opens the vehicle settings and `onEditParameter(key)` a
+// single parameter's settings; without them the dashboard is read-only.
+const TelemetryDashboard = ({ position, device, onConfigure, onEditParameter }) => {
   const { classes } = useStyles();
   const t = useTranslation();
   const positionAttributes = usePositionAttributes(t);
   const volumeUnit = useAttributePreference('volumeUnit');
-  const { chips, grouped } = buildTelemetryModel(position);
+  const profile = parseProfile(device);
 
-  const fuel = fuelReading(position, device);
-  const rpm = position.attributes.rpm;
+  const fuel = fuelReading(position, device, profile);
+  const tires = tireReading(position, device, profile);
+  const skip = new Set([
+    ...(fuel ? [fuel.key] : []),
+    ...(tires ? Object.values(tires.wheels).map((wheel) => wheel.key) : []),
+  ]);
+  const { chips, grouped } = buildTelemetryModel(position, profile, skip);
+  const fuelHidden = fuel && profile.params?.[fuel.key]?.hidden;
+  const rpm = profile.params?.rpm?.hidden
+    ? null
+    : adjustValue(position.attributes.rpm, profile.params?.rpm);
   const alarm = position.attributes.alarm;
   const speedLimit = Number(device?.attributes?.speedLimit || position.attributes.speedLimit);
 
@@ -537,18 +575,30 @@ const TelemetryDashboard = ({ position, device }) => {
               </span>
             )}
           </div>
-          {fuel && (
+          {fuel && !fuelHidden && (
             <div className={classes.gauge}>
               <span className={classes.gaugeLabel}>
                 <LocalGasStationRoundedIcon />
-                {positionAttributes.fuel?.name}
+                {profile.params?.[fuel.key]?.label || positionAttributes.fuel?.name}
               </span>
               <FuelGauge reading={fuel} />
-              <span className={classes.gaugeCaption}>
-                {fuel.liters != null
-                  ? `${volumeFromLiters(fuel.liters, volumeUnit).toFixed(1)} ${volumeUnitString(volumeUnit, t)}`
-                  : t('telemetryFuelHint')}
-              </span>
+              {fuel.liters != null ? (
+                <span className={classes.gaugeCaption}>
+                  {`${volumeFromLiters(fuel.liters, volumeUnit).toFixed(1)} ${volumeUnitString(volumeUnit, t)}`}
+                  {fuel.capacity != null &&
+                    ` ${t('vehicleOf')} ${volumeFromLiters(fuel.capacity, volumeUnit).toFixed(0)}`}
+                </span>
+              ) : onConfigure ? (
+                <Button
+                  size="small"
+                  className={classes.gaugeAction}
+                  onClick={() => onConfigure('fuel')}
+                >
+                  {t('telemetryFuelSetup')}
+                </Button>
+              ) : (
+                <span className={classes.gaugeCaption}>{t('telemetryFuelHint')}</span>
+              )}
             </div>
           )}
           {isNumber(rpm) && (
@@ -594,6 +644,13 @@ const TelemetryDashboard = ({ position, device }) => {
         </div>
       </section>
 
+      {tires && (
+        <TirePressure
+          reading={tires}
+          onConfigure={onConfigure ? () => onConfigure('tires') : undefined}
+        />
+      )}
+
       {chips.length > 0 && (
         <section className={classes.section}>
           <Typography variant="h6" component="h2" className={classes.sectionTitle}>
@@ -611,10 +668,11 @@ const TelemetryDashboard = ({ position, device }) => {
                   key={item.key}
                   index={index}
                   icon={config.icon || defaultStateIcon}
-                  label={positionAttributes[item.key]?.name || item.key}
+                  label={item.label || positionAttributes[item.key]?.name || item.key}
                   state={on ? t('telemetryOn') : t('telemetryOff')}
                   on={on}
                   alert={alert}
+                  onClick={onEditParameter ? () => onEditParameter(item.key) : undefined}
                 />
               );
             })}
@@ -640,6 +698,7 @@ const TelemetryDashboard = ({ position, device }) => {
                     position={position}
                     item={item}
                     index={Math.min(tileIndex, 20)}
+                    onEdit={onEditParameter}
                   />
                 );
               })}

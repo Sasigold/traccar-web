@@ -1,14 +1,16 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button, Typography } from '@mui/material';
+import { Button, IconButton, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { keyframes } from 'tss-react';
 import { alpha } from '@mui/material/styles';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
+import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageHeader from '../common/components/shell/PageHeader';
 import BrandLoader from '../common/components/brand/BrandLoader';
 import TelemetryDashboard from '../common/components/telemetry/TelemetryDashboard';
+import { useVehicleSettings } from '../common/components/telemetry/VehicleSettingsDialog';
 import { formatStatus, formatTime } from '../common/util/formatter';
 import { statusColor } from '../common/theme/surfaces';
 import { devicesActions } from '../store';
@@ -97,6 +99,8 @@ const TelemetryPage = () => {
   const device = useSelector((state) => state.devices.items[deviceId]);
   const position = useSelector((state) => state.session.positions[deviceId]);
   const devicesLoaded = useSelector((state) => Object.keys(state.devices.items).length > 0);
+  const settings = useVehicleSettings(device, position);
+  const phone = useMediaQuery(theme.breakpoints.down('sm'));
 
   const showOnMap = () => {
     dispatch(devicesActions.selectId(Number(deviceId)));
@@ -135,6 +139,25 @@ const TelemetryPage = () => {
                   LIVE
                 </span>
               )}
+              {settings.canEdit &&
+                (phone ? (
+                  <Tooltip title={t('vehicleSettings')}>
+                    <IconButton
+                      onClick={() => settings.openSettings('fuel')}
+                      aria-label={t('vehicleSettings')}
+                    >
+                      <TuneRoundedIcon />
+                    </IconButton>
+                  </Tooltip>
+                ) : (
+                  <Button
+                    variant="outlined"
+                    startIcon={<TuneRoundedIcon />}
+                    onClick={() => settings.openSettings('fuel')}
+                  >
+                    {t('vehicleSettings')}
+                  </Button>
+                ))}
               <Button variant="outlined" startIcon={<MapRoundedIcon />} onClick={showOnMap}>
                 {t('telemetryShowOnMap')}
               </Button>
@@ -145,7 +168,12 @@ const TelemetryPage = () => {
       <div className={classes.content}>
         <div className={classes.inner}>
           {position ? (
-            <TelemetryDashboard position={position} device={device} />
+            <TelemetryDashboard
+              position={position}
+              device={device}
+              onConfigure={settings.openSettings}
+              onEditParameter={settings.openParameter}
+            />
           ) : devicesLoaded ? (
             <Typography className={classes.empty} color="textSecondary">
               {t('telemetryNoData')}
@@ -157,6 +185,7 @@ const TelemetryPage = () => {
           )}
         </div>
       </div>
+      {settings.element}
     </div>
   );
 };

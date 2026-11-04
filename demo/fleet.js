@@ -55,6 +55,11 @@ export const createFleet = (now = Date.now()) => {
       vin: '4V4NC9EH5GN123456',
       event: 239,
       axleWeight: 7400,
+      // Tire pressure in kPa, the way TPMS sensors usually report it.
+      tirePressure1: 241 + 3 * wave(25),
+      tirePressure2: 238 + 3 * wave(27, 1),
+      tirePressure3: 196 - 2 * wave(31),
+      tirePressure4: 244 + 3 * wave(29, 2),
     };
   };
   let lastTick = -1;

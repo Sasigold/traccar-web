@@ -13,6 +13,7 @@ import DataTable from '../common/components/table/DataTable';
 import TableShimmer from '../common/components/TableShimmer';
 import usePositionAttributes from '../common/attributes/usePositionAttributes';
 import TelemetryDashboard from '../common/components/telemetry/TelemetryDashboard';
+import { useVehicleSettings } from '../common/components/telemetry/VehicleSettingsDialog';
 import BrandLoader from '../common/components/brand/BrandLoader';
 import { formatTime } from '../common/util/formatter';
 import fetchOrThrow from '../common/util/fetchOrThrow';
@@ -93,6 +94,7 @@ const PositionPage = () => {
 
   const device = useSelector((state) => (item ? state.devices.items[item.deviceId] : null));
   const deviceName = device?.name;
+  const settings = useVehicleSettings(device, item);
 
   const rows = item
     ? [
@@ -131,7 +133,12 @@ const PositionPage = () => {
         {view === 'visual' && (
           <div className={classes.dashboard}>
             {item ? (
-              <TelemetryDashboard position={item} device={device} />
+              <TelemetryDashboard
+                position={item}
+                device={device}
+                onConfigure={settings.openSettings}
+                onEditParameter={settings.openParameter}
+              />
             ) : (
               <div className={classes.loader}>
                 <BrandLoader />
@@ -170,6 +177,7 @@ const PositionPage = () => {
           </DataTable>
         )}
       </div>
+      {settings.element}
     </div>
   );
 };
