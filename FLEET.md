@@ -78,13 +78,11 @@ database from the lines, and a customer can be billed only once per period (canc
 `billing_invoices`, `billing_invoice_lines`, the views `billing_invoices_view` and
 `customer_device_counts`, RLS policies and the permission keys `customers.read`, `customers.manage`,
 `billing.read`, `billing.manage` (granted to `owner` and `admin`, `customers.read` to `manager`). It is
-idempotent. Apply it on the VPS, then press "Reconnect" in the admin area (or log in again) so the new
-permissions reach the session:
-
-```shell
-docker exec -i <supabase-db-container> psql -U postgres -d postgres \
-  < supabase/migrations/20261104120000_super_admin.sql
-```
+idempotent. The deploy workflow applies every file in `supabase/migrations/` once
+(`deploy/migrate.sh`: finds the `supabase/postgres` container over SSH, records applied files in
+`vf_meta.ui_migrations`, reloads the PostgREST schema). To run it by hand: `sh deploy/migrate.sh`.
+After the first run press "Reconnect" in the admin area (or log in again) so the new permissions reach
+the session.
 
 Without the migration, or with the fleet database disabled, the device, sensor and user pages still work;
 the customer and billing parts show why they are unavailable.
