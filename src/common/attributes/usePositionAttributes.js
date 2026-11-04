@@ -423,6 +423,202 @@ export default (t) =>
         type: 'number',
         dataType: 'hours',
       },
+      faultCount: {
+        name: t('positionFaultCount'),
+        type: 'number',
+      },
+      milDistance: {
+        name: t('positionMilDistance'),
+        type: 'number',
+      },
+      hybridBatteryLevel: {
+        name: t('positionHybridBatteryLevel'),
+        type: 'number',
+      },
+      batteryCurrent: {
+        name: t('positionBatteryCurrent'),
+        type: 'number',
+      },
+      dataMode: {
+        name: t('positionDataMode'),
+        type: 'number',
+      },
+      sleepMode: {
+        name: t('positionSleepMode'),
+        type: 'number',
+      },
+      axisX: {
+        name: t('positionAxisX'),
+        type: 'number',
+      },
+      axisY: {
+        name: t('positionAxisY'),
+        type: 'number',
+      },
+      axisZ: {
+        name: t('positionAxisZ'),
+        type: 'number',
+      },
+      cid2g: {
+        name: t('positionCid2g'),
+        type: 'number',
+      },
+      cid4g: {
+        name: t('positionCid4g'),
+        type: 'number',
+      },
+      lac: {
+        name: t('positionLac'),
+        type: 'number',
+      },
+      shortFuelTrim: {
+        name: t('positionShortFuelTrim'),
+        type: 'number',
+      },
+      fuelPressure: {
+        name: t('positionFuelPressure'),
+        type: 'number',
+      },
+      intakeMap: {
+        name: t('positionIntakeMap'),
+        type: 'number',
+      },
+      timingAdvance: {
+        name: t('positionTimingAdvance'),
+        type: 'number',
+      },
+      intakeTemp: {
+        name: t('positionIntakeTemp'),
+        type: 'number',
+      },
+      maf: {
+        name: t('positionMaf'),
+        type: 'number',
+      },
+      engineRuntime: {
+        name: t('positionEngineRuntime'),
+        type: 'number',
+      },
+      relativeFuelRailPressure: {
+        name: t('positionRelativeFuelRailPressure'),
+        type: 'number',
+      },
+      directFuelRailPressure: {
+        name: t('positionDirectFuelRailPressure'),
+        type: 'number',
+      },
+      commandedEgr: {
+        name: t('positionCommandedEgr'),
+        type: 'number',
+      },
+      egrError: {
+        name: t('positionEgrError'),
+        type: 'number',
+      },
+      distanceSinceCodesCleared: {
+        name: t('positionDistanceSinceCodesCleared'),
+        type: 'number',
+      },
+      barometricPressure: {
+        name: t('positionBarometricPressure'),
+        type: 'number',
+      },
+      controlModuleVoltage: {
+        name: t('positionControlModuleVoltage'),
+        type: 'number',
+      },
+      absoluteLoad: {
+        name: t('positionAbsoluteLoad'),
+        type: 'number',
+      },
+      ambientTemp: {
+        name: t('positionAmbientTemp'),
+        type: 'number',
+      },
+      milTime: {
+        name: t('positionMilTime'),
+        type: 'number',
+      },
+      timeSinceCodesCleared: {
+        name: t('positionTimeSinceCodesCleared'),
+        type: 'number',
+      },
+      absoluteFuelRailPressure: {
+        name: t('positionAbsoluteFuelRailPressure'),
+        type: 'number',
+      },
+      oilTemp: {
+        name: t('positionOilTemp'),
+        type: 'number',
+      },
+      fuelInjectionTiming: {
+        name: t('positionFuelInjectionTiming'),
+        type: 'number',
+      },
+      fuelRate: {
+        name: t('positionFuelRate'),
+        type: 'number',
+      },
+      equivalenceRatio: {
+        name: t('positionEquivalenceRatio'),
+        type: 'number',
+      },
+      intakeMap2: {
+        name: t('positionIntakeMap2'),
+        type: 'number',
+      },
+      hybridSystemVoltage: {
+        name: t('positionHybridSystemVoltage'),
+        type: 'number',
+      },
+      hybridSystemCurrent: {
+        name: t('positionHybridSystemCurrent'),
+        type: 'number',
+      },
+      fuelType: {
+        name: t('positionFuelType'),
+        type: 'number',
+      },
+      gnssStatus: {
+        name: t('positionGnssStatus'),
+        type: 'number',
+      },
+      networkType: {
+        name: t('positionNetworkType'),
+        type: 'number',
+      },
+      instantMovement: {
+        name: t('positionInstantMovement'),
+        type: 'boolean',
+      },
+      axlCalibration: {
+        name: t('positionAxlCalibration'),
+        type: 'number',
+      },
+      ignitionCount: {
+        name: t('positionIgnitionCount'),
+        type: 'number',
+      },
+      ecoScore: {
+        name: t('positionEcoScore'),
+        type: 'number',
+      },
+      greenDrivingValue: {
+        name: t('positionGreenDrivingValue'),
+        type: 'number',
+      },
+      greenDrivingDuration: {
+        name: t('positionGreenDrivingDuration'),
+        type: 'number',
+      },
+      overspeedSpeed: {
+        name: t('positionOverspeedSpeed'),
+        type: 'number',
+      },
+      gnssJamming: {
+        name: t('positionGnssJamming'),
+        type: 'number',
+      },
       color: {
         name: t('attributeColor'),
         type: 'string',
