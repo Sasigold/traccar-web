@@ -33,6 +33,7 @@ const SummaryReportPage = lazy(() => import('./reports/SummaryReportPage'));
 const ChartReportPage = lazy(() => import('./reports/ChartReportPage'));
 const DriversPage = lazy(() => import('./settings/DriversPage'));
 const DriverPage = lazy(() => import('./settings/DriverPage'));
+const FleetDocumentsPage = lazy(() => import('./settings/FleetDocumentsPage'));
 const ProtocolsPage = lazy(() => import('./settings/ProtocolsPage'));
 const CalendarsPage = lazy(() => import('./settings/CalendarsPage'));
 const CalendarPage = lazy(() => import('./settings/CalendarPage'));
@@ -166,6 +167,7 @@ const Navigation = () => {
             <Route path="drivers" element={<DriversPage />} />
             <Route path="driver/:id" element={<DriverPage />} />
             <Route path="driver" element={<DriverPage />} />
+            <Route path="fleet-documents" element={<FleetDocumentsPage />} />
             <Route path="geofence/:id" element={<GeofencePage />} />
             <Route path="geofence" element={<GeofencePage />} />
             <Route path="groups" element={<GroupsPage />} />

@@ -2,6 +2,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import SocketController from './SocketController';
 import CachingController from './CachingController';
+import FleetController from './FleetController';
 import { useCatch, useAsyncTask } from './reactHelper';
 import { sessionActions } from './store';
 import UpdateController from './UpdateController';
@@ -55,6 +56,7 @@ const App = () => {
     <>
       <SocketController />
       <CachingController />
+      <FleetController />
       <UpdateController />
       <MotionController />
       <AppShell>

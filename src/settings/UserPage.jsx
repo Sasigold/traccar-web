@@ -24,6 +24,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch, useSelector } from 'react-redux';
 import EditItemView from './components/EditItemView';
 import EditAttributesAccordion from './components/EditAttributesAccordion';
+import FleetRoleSection from './components/FleetRoleSection';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import useUserAttributes from '../common/attributes/useUserAttributes';
 import { sessionActions } from '../store';
@@ -460,6 +461,7 @@ const UserPage = () => {
               />
             </FormGroup>
           </FormSection>
+          <FleetRoleSection traccarUserId={item.id} />
           <EditAttributesAccordion
             attribute={attribute}
             attributes={item.attributes}

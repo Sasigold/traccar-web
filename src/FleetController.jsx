@@ -1,0 +1,54 @@
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fleetActions } from './store';
+import { isFleetConfigured } from './common/fleet/config';
+import { clearFleetSession, ensureFleetSession } from './common/fleet/session';
+
+const REFRESH_INTERVAL_MS = 30 * 60 * 1000;
+
+// Keeps a Viper Fleet session alive for the logged-in Traccar user.
+// ensureFleetSession is a no-op while the current JWT is still fresh.
+const FleetController = () => {
+  const dispatch = useDispatch();
+  const userId = useSelector((state) => state.session.user?.id);
+
+  useEffect(() => {
+    if (!isFleetConfigured()) {
+      dispatch(fleetActions.disabled());
+      return undefined;
+    }
+    if (!userId) {
+      clearFleetSession();
+      dispatch(fleetActions.reset());
+      return undefined;
+    }
+
+    let cancelled = false;
+    const connect = async () => {
+      try {
+        const session = await ensureFleetSession(userId);
+        if (!cancelled) {
+          dispatch(
+            fleetActions.ready({ profile: session.profile, permissions: session.permissions }),
+          );
+        }
+      } catch (error) {
+        if (!cancelled) {
+          dispatch(fleetActions.failed(error.message));
+        }
+      }
+    };
+
+    dispatch(fleetActions.loading());
+    connect();
+    const interval = setInterval(connect, REFRESH_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [userId, dispatch]);
+
+  return null;
+};
+
+export default FleetController;

@@ -15,6 +15,7 @@ import { useCatch } from '../reactHelper';
 import ServerQrCodeDialog from '../common/components/ServerQrCodeDialog';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import FormSection from './components/FormSection';
+import FleetDocumentsSection from './components/FleetDocumentsSection';
 
 const DevicePage = () => {
   const t = useTranslation();
@@ -147,6 +148,12 @@ const DevicePage = () => {
               />
             </FormSection>
           )}
+          <FleetDocumentsSection
+            entity="vehicle"
+            traccarId={item.id}
+            name={item.name}
+            identifier={item.uniqueId}
+          />
           <EditAttributesAccordion
             attributes={item.attributes}
             setAttributes={(attributes) => setItem({ ...item, attributes })}

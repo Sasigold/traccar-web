@@ -6,6 +6,7 @@ import EditAttributesAccordion from './components/EditAttributesAccordion';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import SettingsMenu from './components/SettingsMenu';
 import FormSection from './components/FormSection';
+import FleetDocumentsSection from './components/FleetDocumentsSection';
 
 const DriverPage = () => {
   const t = useTranslation();
@@ -37,6 +38,12 @@ const DriverPage = () => {
               label={t('deviceIdentifier')}
             />
           </FormSection>
+          <FleetDocumentsSection
+            entity="driver"
+            traccarId={item.id}
+            name={item.name}
+            identifier={item.uniqueId}
+          />
           <EditAttributesAccordion
             attributes={item.attributes}
             setAttributes={(attributes) => setItem({ ...item, attributes })}

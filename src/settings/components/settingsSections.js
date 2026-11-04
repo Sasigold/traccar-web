@@ -17,8 +17,10 @@ import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
 import RouterRoundedIcon from '@mui/icons-material/RouterRounded';
 import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
+import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import { useAdministrator, useManager, useRestriction } from '../../common/util/permissions';
 import useFeatures from '../../common/util/useFeatures';
+import { useFleetPermission } from '../../common/fleet/useFleet';
 
 // Single source of truth for the settings area: drives the settings menu,
 // the settings hub cards and the command palette.
@@ -30,6 +32,7 @@ export const useSettingsSections = () => {
   const userId = useSelector((state) => state.session.user.id);
   const supportLink = useSelector((state) => state.session.server.attributes.support);
   const billingLink = useSelector((state) => state.session.user.attributes.billingLink);
+  const fleetDocuments = useFleetPermission('documents.read');
 
   return useMemo(() => {
     const profilePath = `/settings/user/${userId}`;
@@ -114,6 +117,15 @@ export const useSettingsSections = () => {
             path: '/settings/maintenances',
             match: (pathname) => pathname.startsWith('/settings/maintenance'),
             visible: !features.disableMaintenance,
+          },
+          {
+            id: 'fleetDocuments',
+            titleKey: 'fleetDocumentsPage',
+            descriptionKey: 'fleetDocumentsPageDescription',
+            icon: DescriptionRoundedIcon,
+            path: '/settings/fleet-documents',
+            match: (pathname) => pathname.startsWith('/settings/fleet-documents'),
+            visible: fleetDocuments,
           },
         ],
       },
@@ -219,7 +231,7 @@ export const useSettingsSections = () => {
       .filter((group) => group.visible !== false)
       .map((group) => ({ ...group, items: group.items.filter((item) => item.visible !== false) }))
       .filter((group) => group.items.length > 0);
-  }, [readonly, admin, manager, features, userId, supportLink, billingLink]);
+  }, [readonly, admin, manager, features, userId, supportLink, billingLink, fleetDocuments]);
 };
 
 export const useSettingsSectionItems = () => {
