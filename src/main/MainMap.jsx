@@ -49,6 +49,7 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
           onMarkerClick={onMarkerClick}
           selectedPosition={selectedPosition}
           showStatus
+          smooth
           disabled={rulerActive}
         />
         <MapDefaultCamera filteredPositions={filteredPositions} />

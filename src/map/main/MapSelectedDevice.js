@@ -6,6 +6,8 @@ import { map } from '../core/MapView';
 import { usePrevious } from '../../reactHelper';
 import { useAttributePreference } from '../../common/util/preferences';
 import { toMapCoordinates } from '../core/mapUtil';
+import { liveTransitionDuration } from '../core/motion';
+import { prefersReducedMotion } from '../core/movingIcon';
 
 const MapSelectedDevice = () => {
   const features = useFeatures();
@@ -34,10 +36,17 @@ const MapSelectedDevice = () => {
         (mapFollow && positionChanged)) &&
       position
     ) {
+      // When following, pan in step with the marker's glide (see useSmoothPositions) so the
+      // vehicle stays put on screen and the map slides under it.
+      const glide =
+        currentId === previousId && currentTime === previousTime && !prefersReducedMotion()
+          ? liveTransitionDuration(previousPosition, position)
+          : 0;
       map.easeTo({
         center: toMapCoordinates(position.longitude, position.latitude),
         zoom: Math.max(map.getZoom(), selectZoom),
         offset: [0, features.disableStatusCard ? 0 : -dimensions.popupMapOffset / 2],
+        ...(glide ? { duration: glide, easing: (t) => t } : {}),
       });
     }
   }, [

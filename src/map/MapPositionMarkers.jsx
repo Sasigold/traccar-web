@@ -6,6 +6,7 @@ import { formatTime, getStatusColor } from '../common/util/formatter';
 import { deviceIconKey, isDeviceMoving } from './core/preloadImages';
 import { useAttributePreference } from '../common/util/preferences';
 import { fromMapCoordinates } from './core/mapUtil';
+import useSmoothPositions from './core/useSmoothPositions';
 
 const MapPositionMarkers = ({
   positions,
@@ -15,12 +16,15 @@ const MapPositionMarkers = ({
   selectedPosition,
   titleField,
   disabled,
+  smooth,
 }) => {
   const devices = useSelector((state) => state.devices.items);
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
 
   const mapCluster = useAttributePreference('mapCluster', true);
   const directionType = useAttributePreference('mapDirection', 'selected');
+
+  const shownPositions = useSmoothPositions(positions, Boolean(smooth));
 
   const onMapClickCallback = useCallback(
     (event) => {
@@ -67,7 +71,9 @@ const MapPositionMarkers = ({
     };
   };
 
-  const markers = positions.filter((it) => devices.hasOwnProperty(it.deviceId)).map(buildMarker);
+  const markers = shownPositions
+    .filter((it) => devices.hasOwnProperty(it.deviceId))
+    .map(buildMarker);
 
   const onClick = useCallback(
     (properties) => onMarkerClick?.(properties.id, properties.deviceId),
