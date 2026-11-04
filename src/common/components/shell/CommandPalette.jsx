@@ -46,7 +46,7 @@ const useStyles = makeStyles()((theme) => ({
     margin: 0,
     marginTop: '10vh',
     [theme.breakpoints.down('sm')]: {
-      marginTop: theme.spacing(2),
+      marginTop: `calc(${theme.spacing(2)} + env(safe-area-inset-top, 0px))`,
     },
   },
   container: {

@@ -23,6 +23,10 @@ html.dark body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  /* Landscape iPhone: keep content clear of the notch / Dynamic Island. */
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  box-sizing: border-box;
 }
 
 /*

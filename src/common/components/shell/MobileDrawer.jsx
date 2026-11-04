@@ -47,6 +47,7 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: 'center',
     gap: theme.spacing(1.5),
     padding: theme.spacing(2),
+    paddingBottom: `calc(${theme.spacing(2)} + env(safe-area-inset-bottom, 0px))`,
   },
   userText: {
     minWidth: 0,

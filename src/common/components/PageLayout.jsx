@@ -52,7 +52,8 @@ const useStyles = makeStyles()((theme) => ({
   mobileDrawer: {
     width: 300,
     maxWidth: '85vw',
-    paddingBlock: theme.spacing(1),
+    paddingTop: `calc(${theme.spacing(1)} + env(safe-area-inset-top, 0px))`,
+    paddingBottom: `calc(${theme.spacing(1)} + env(safe-area-inset-bottom, 0px))`,
   },
 }));
 

@@ -121,7 +121,11 @@ const AppShell = ({ children }) => {
   const vars = {
     '--shell-rail': `${railWidth}px`,
     '--shell-top': `${desktop ? theme.dimensions.topBarHeight : theme.dimensions.topBarHeightMobile}px`,
-    '--shell-bottom': showTabs ? `${theme.dimensions.mobileTabsHeight}px` : '0px',
+    // Includes the iOS home-indicator inset, so everything anchored to the
+    // bottom (FABs, snackbars, status card) clears it.
+    '--shell-bottom': showTabs
+      ? `calc(${theme.dimensions.mobileTabsHeight}px + env(safe-area-inset-bottom, 0px))`
+      : 'env(safe-area-inset-bottom, 0px)',
   };
 
   return (
@@ -129,7 +133,12 @@ const AppShell = ({ children }) => {
       <div className={cx(classes.root, showRail && classes.withRail)} style={vars}>
         {showRail && <NavRail />}
         <TopBar onOpenDrawer={() => setDrawerOpen(true)} />
-        <main className={classes.content}>{children}</main>
+        <main
+          className={classes.content}
+          style={showTabs ? undefined : { paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        >
+          {children}
+        </main>
         {showTabs && <MobileTabs />}
         {!desktop && chromeVisible && (
           <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
