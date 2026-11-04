@@ -26,8 +26,10 @@ import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
 import HexagonRoundedIcon from '@mui/icons-material/HexagonRounded';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
+import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded';
 import { glass, statusColor } from '../theme/surfaces';
 import DeviceTile from './brand/DeviceTile';
+import TelemetryStrip from './telemetry/TelemetryStrip';
 import { useTranslation } from './LocalizationProvider';
 import RemoveDialog from './RemoveDialog';
 import PositionValue from './PositionValue';
@@ -266,6 +268,7 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
               ) : (
                 <div className="draggable-header">{header}</div>
               )}
+              {position && <TelemetryStrip position={position} device={device} />}
               {position && (
                 <div className={classes.content}>
                   {positionItems
@@ -309,6 +312,19 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                       disabled={!position}
                     >
                       <MoreHorizRoundedIcon />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title={t('telemetryTitle')} describeChild>
+                  <span>
+                    <IconButton
+                      aria-label={t('telemetryTitle')}
+                      size="small"
+                      className={classes.action}
+                      onClick={() => navigate(`/telemetry/${deviceId}`)}
+                      disabled={disableActions || !position}
+                    >
+                      <SpeedRoundedIcon />
                     </IconButton>
                   </span>
                 </Tooltip>

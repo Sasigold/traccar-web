@@ -16,6 +16,10 @@ export default (t) =>
         name: t('attributeDevicePassword'),
         type: 'string',
       },
+      fuelCapacity: {
+        name: t('attributeFuelCapacity'),
+        type: 'number',
+      },
       deviceImage: {
         name: t('attributeDeviceImage'),
         type: 'string',

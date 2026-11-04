@@ -22,6 +22,7 @@ const NotificationPage = lazy(() => import('./settings/NotificationPage'));
 const GroupsPage = lazy(() => import('./settings/GroupsPage'));
 const GroupPage = lazy(() => import('./settings/GroupPage'));
 const PositionPage = lazy(() => import('./other/PositionPage'));
+const TelemetryPage = lazy(() => import('./other/TelemetryPage'));
 const NetworkPage = lazy(() => import('./other/NetworkPage'));
 const EventReportPage = lazy(() => import('./reports/EventReportPage'));
 const GeofenceReportPage = lazy(() => import('./reports/GeofenceReportPage'));
@@ -134,6 +135,7 @@ const Navigation = () => {
           <Route index element={<MainPage />} />
 
           <Route path="position/:id" element={<PositionPage />} />
+          <Route path="telemetry/:deviceId" element={<TelemetryPage />} />
           <Route path="network/:positionId" element={<NetworkPage />} />
           <Route path="event/:id" element={<EventPage />} />
           <Route path="replay" element={<ReplayPage />} />
