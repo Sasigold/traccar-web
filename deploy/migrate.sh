@@ -10,7 +10,8 @@ cd "$(dirname "$0")/.."
 
 remote() { ssh -o ConnectTimeout=30 "$HOST" "$@"; }
 
-DB=$(remote "docker ps --format '{{.Names}} {{.Image}}'" | awk '$2 ~ /^supabase\/postgres/ { print $1; exit }')
+# Exactly the supabase/postgres image (not supabase/postgres-meta and friends).
+DB=$(remote "docker ps --format '{{.Names}} {{.Image}}'" | awk '$2 ~ /^supabase\/postgres(:|@|$)/ { print $1; exit }')
 if [ -z "$DB" ]; then
   echo "No running supabase/postgres container on $HOST"
   exit 1
