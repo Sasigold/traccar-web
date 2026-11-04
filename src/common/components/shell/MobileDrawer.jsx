@@ -31,7 +31,8 @@ const useStyles = makeStyles()((theme) => ({
     flexDirection: 'column',
   },
   brand: {
-    height: theme.dimensions.topBarHeightMobile,
+    height: `calc(${theme.dimensions.topBarHeightMobile}px + env(safe-area-inset-top, 0px))`,
+    paddingTop: 'env(safe-area-inset-top, 0px)',
     display: 'flex',
     alignItems: 'center',
     paddingInline: theme.spacing(2.5),
@@ -46,6 +47,7 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: 'center',
     gap: theme.spacing(1.5),
     padding: theme.spacing(2),
+    paddingBottom: `calc(${theme.spacing(2)} + env(safe-area-inset-bottom, 0px))`,
   },
   userText: {
     minWidth: 0,

@@ -18,6 +18,8 @@ const useStyles = makeStyles()((theme) => ({
       gridTemplateColumns: 'minmax(0, 1fr)',
       gridTemplateRows: 'auto minmax(0, 1fr)',
       overflow: 'auto',
+      paddingTop: 'env(safe-area-inset-top, 0px)',
+      paddingBottom: 'env(safe-area-inset-bottom, 0px)',
     },
   },
   brand: {

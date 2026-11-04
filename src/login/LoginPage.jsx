@@ -35,7 +35,7 @@ import PasswordField from '../common/components/PasswordField';
 const useStyles = makeStyles()((theme) => ({
   options: {
     position: 'fixed',
-    top: theme.spacing(2),
+    top: `calc(${theme.spacing(2)} + env(safe-area-inset-top, 0px))`,
     insetInlineEnd: theme.spacing(2),
     display: 'flex',
     flexDirection: 'row',
