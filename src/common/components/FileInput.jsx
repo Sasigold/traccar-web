@@ -3,8 +3,10 @@ import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import CloseIcon from '@mui/icons-material/Close';
+import { useTranslation } from './LocalizationProvider';
 
 const FileInput = ({ placeholder, value, onChange, slotProps }) => {
+  const t = useTranslation();
   const inputRef = useRef(null);
 
   const openPicker = () => inputRef.current?.click();
@@ -38,7 +40,12 @@ const FileInput = ({ placeholder, value, onChange, slotProps }) => {
             sx: { cursor: 'pointer' },
             endAdornment: value && (
               <InputAdornment position="end">
-                <IconButton size="small" edge="end" onClick={handleClear}>
+                <IconButton
+                  size="small"
+                  edge="end"
+                  onClick={handleClear}
+                  aria-label={t('a11yClear')}
+                >
                   <CloseIcon fontSize="small" />
                 </IconButton>
               </InputAdornment>

@@ -1,5 +1,9 @@
 // Copy of the original theme
 // https://github.com/mapbox/mapbox-gl-draw/blob/v1.4.0/src/lib/theme.js
+// recolored with the brand map tokens: aqua when idle, navy while editing.
+import { mapColors } from '../../common/theme/tokens';
+
+const { draw } = mapColors;
 
 export default [
   {
@@ -12,8 +16,8 @@ export default [
       ['!=', 'mode', 'static'],
     ],
     paint: {
-      'fill-color': '#3bb2d0',
-      'fill-outline-color': '#3bb2d0',
+      'fill-color': draw.inactive,
+      'fill-outline-color': draw.inactive,
       'fill-opacity': 0.1,
     },
   },
@@ -22,8 +26,8 @@ export default [
     type: 'fill',
     filter: ['all', ['==', 'active', 'true'], ['==', '$type', 'Polygon']],
     paint: {
-      'fill-color': '#fbb03b',
-      'fill-outline-color': '#fbb03b',
+      'fill-color': draw.active,
+      'fill-outline-color': draw.active,
       'fill-opacity': 0.1,
     },
   },
@@ -33,7 +37,7 @@ export default [
     filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'midpoint']],
     paint: {
       'circle-radius': 3,
-      'circle-color': '#fbb03b',
+      'circle-color': draw.active,
     },
   },
   {
@@ -50,7 +54,7 @@ export default [
       'line-join': 'round',
     },
     paint: {
-      'line-color': '#3bb2d0',
+      'line-color': draw.inactive,
       'line-width': 2,
     },
   },
@@ -63,7 +67,7 @@ export default [
       'line-join': 'round',
     },
     paint: {
-      'line-color': '#fbb03b',
+      'line-color': draw.active,
       'line-dasharray': [0.2, 2],
       'line-width': 2,
     },
@@ -82,7 +86,7 @@ export default [
       'line-join': 'round',
     },
     paint: {
-      'line-color': '#3bb2d0',
+      'line-color': draw.inactive,
       'line-width': 2,
     },
   },
@@ -95,7 +99,7 @@ export default [
       'line-join': 'round',
     },
     paint: {
-      'line-color': '#fbb03b',
+      'line-color': draw.active,
       'line-dasharray': [0.2, 2],
       'line-width': 2,
     },
@@ -106,7 +110,7 @@ export default [
     filter: ['all', ['==', 'meta', 'vertex'], ['==', '$type', 'Point'], ['!=', 'mode', 'static']],
     paint: {
       'circle-radius': 5,
-      'circle-color': '#fff',
+      'circle-color': draw.vertex,
     },
   },
   {
@@ -115,7 +119,7 @@ export default [
     filter: ['all', ['==', 'meta', 'vertex'], ['==', '$type', 'Point'], ['!=', 'mode', 'static']],
     paint: {
       'circle-radius': 3,
-      'circle-color': '#fbb03b',
+      'circle-color': draw.active,
     },
   },
   {
@@ -131,7 +135,7 @@ export default [
     paint: {
       'circle-radius': 5,
       'circle-opacity': 1,
-      'circle-color': '#fff',
+      'circle-color': draw.vertex,
     },
   },
   {
@@ -146,7 +150,7 @@ export default [
     ],
     paint: {
       'circle-radius': 3,
-      'circle-color': '#3bb2d0',
+      'circle-color': draw.inactive,
     },
   },
   {
@@ -155,7 +159,7 @@ export default [
     filter: ['all', ['==', '$type', 'Point'], ['==', 'active', 'true'], ['!=', 'meta', 'midpoint']],
     paint: {
       'circle-radius': 7,
-      'circle-color': '#fff',
+      'circle-color': draw.vertex,
     },
   },
   {
@@ -164,7 +168,7 @@ export default [
     filter: ['all', ['==', '$type', 'Point'], ['!=', 'meta', 'midpoint'], ['==', 'active', 'true']],
     paint: {
       'circle-radius': 5,
-      'circle-color': '#fbb03b',
+      'circle-color': draw.active,
     },
   },
   {
@@ -172,8 +176,8 @@ export default [
     type: 'fill',
     filter: ['all', ['==', 'mode', 'static'], ['==', '$type', 'Polygon']],
     paint: {
-      'fill-color': '#404040',
-      'fill-outline-color': '#404040',
+      'fill-color': draw.static,
+      'fill-outline-color': draw.static,
       'fill-opacity': 0.1,
     },
   },
@@ -186,7 +190,7 @@ export default [
       'line-join': 'round',
     },
     paint: {
-      'line-color': '#404040',
+      'line-color': draw.static,
       'line-width': 2,
     },
   },
@@ -199,7 +203,7 @@ export default [
       'line-join': 'round',
     },
     paint: {
-      'line-color': '#404040',
+      'line-color': draw.static,
       'line-width': 2,
     },
   },
@@ -209,7 +213,7 @@ export default [
     filter: ['all', ['==', 'mode', 'static'], ['==', '$type', 'Point']],
     paint: {
       'circle-radius': 5,
-      'circle-color': '#404040',
+      'circle-color': draw.static,
     },
   },
 ];

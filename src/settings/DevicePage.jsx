@@ -1,16 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
-  FormControlLabel,
-  Checkbox,
-  TextField,
-  Button,
-} from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { FormControlLabel, Checkbox, TextField, Button } from '@mui/material';
 import FileInput from '../common/components/FileInput';
 import EditItemView from './components/EditItemView';
 import EditAttributesAccordion from './components/EditAttributesAccordion';
@@ -22,12 +12,11 @@ import { useManager } from '../common/util/permissions';
 import SettingsMenu from './components/SettingsMenu';
 import useCommonDeviceAttributes from '../common/attributes/useCommonDeviceAttributes';
 import { useCatch } from '../reactHelper';
-import useSettingsStyles from './common/useSettingsStyles';
 import ServerQrCodeDialog from '../common/components/ServerQrCodeDialog';
 import fetchOrThrow from '../common/util/fetchOrThrow';
+import FormSection from './components/FormSection';
 
 const DevicePage = () => {
-  const { classes } = useSettingsStyles();
   const t = useTranslation();
 
   const manager = useManager();
@@ -70,108 +59,93 @@ const DevicePage = () => {
     >
       {item && (
         <>
-          <Accordion defaultExpanded>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1">{t('sharedRequired')}</Typography>
-            </AccordionSummary>
-            <AccordionDetails className={classes.details}>
-              <TextField
-                value={item.name || ''}
-                onChange={(event) => setItem({ ...item, name: event.target.value })}
-                label={t('sharedName')}
-              />
-              <TextField
-                value={item.uniqueId || ''}
-                onChange={(event) => setItem({ ...item, uniqueId: event.target.value })}
-                label={t('deviceIdentifier')}
-                helperText={t('deviceIdentifierHelp')}
-                disabled={Boolean(uniqueId)}
-              />
-            </AccordionDetails>
-          </Accordion>
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1">{t('sharedExtra')}</Typography>
-            </AccordionSummary>
-            <AccordionDetails className={classes.details}>
-              <SelectField
-                value={item.groupId}
-                onChange={(event) => setItem({ ...item, groupId: Number(event.target.value) })}
-                endpoint="api/groups"
-                label={t('groupParent')}
-              />
-              <TextField
-                value={item.phone || ''}
-                onChange={(event) => setItem({ ...item, phone: event.target.value })}
-                label={t('sharedPhone')}
-              />
-              <TextField
-                value={item.model || ''}
-                onChange={(event) => setItem({ ...item, model: event.target.value })}
-                label={t('deviceModel')}
-              />
-              <TextField
-                value={item.contact || ''}
-                onChange={(event) => setItem({ ...item, contact: event.target.value })}
-                label={t('deviceContact')}
-              />
-              <SelectField
-                value={item.category || 'default'}
-                onChange={(event) => setItem({ ...item, category: event.target.value })}
-                data={deviceCategories
-                  .map((category) => ({
-                    id: category,
-                    name: t(`category${category.replace(/^\w/, (c) => c.toUpperCase())}`),
-                  }))
-                  .sort((a, b) => a.name.localeCompare(b.name))}
-                label={t('deviceCategory')}
-              />
-              <SelectField
-                value={item.calendarId}
-                onChange={(event) => setItem({ ...item, calendarId: Number(event.target.value) })}
-                endpoint="api/calendars"
-                label={t('sharedCalendar')}
-              />
-              <TextField
-                label={t('userExpirationTime')}
-                type="date"
-                value={item.expirationTime ? item.expirationTime.split('T')[0] : '2099-01-01'}
-                onChange={(e) => {
-                  if (e.target.value) {
-                    setItem({ ...item, expirationTime: new Date(e.target.value).toISOString() });
-                  }
-                }}
-                disabled={!manager}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={item.disabled}
-                    onChange={(event) => setItem({ ...item, disabled: event.target.checked })}
-                  />
+          <FormSection title={t('sharedRequired')}>
+            <TextField
+              value={item.name || ''}
+              onChange={(event) => setItem({ ...item, name: event.target.value })}
+              label={t('sharedName')}
+            />
+            <TextField
+              value={item.uniqueId || ''}
+              onChange={(event) => setItem({ ...item, uniqueId: event.target.value })}
+              label={t('deviceIdentifier')}
+              helperText={t('deviceIdentifierHelp')}
+              disabled={Boolean(uniqueId)}
+            />
+          </FormSection>
+          <FormSection title={t('sharedExtra')}>
+            <SelectField
+              value={item.groupId}
+              onChange={(event) => setItem({ ...item, groupId: Number(event.target.value) })}
+              endpoint="api/groups"
+              label={t('groupParent')}
+            />
+            <TextField
+              value={item.phone || ''}
+              onChange={(event) => setItem({ ...item, phone: event.target.value })}
+              label={t('sharedPhone')}
+            />
+            <TextField
+              value={item.model || ''}
+              onChange={(event) => setItem({ ...item, model: event.target.value })}
+              label={t('deviceModel')}
+            />
+            <TextField
+              value={item.contact || ''}
+              onChange={(event) => setItem({ ...item, contact: event.target.value })}
+              label={t('deviceContact')}
+            />
+            <SelectField
+              value={item.category || 'default'}
+              onChange={(event) => setItem({ ...item, category: event.target.value })}
+              data={deviceCategories
+                .map((category) => ({
+                  id: category,
+                  name: t(`category${category.replace(/^\w/, (c) => c.toUpperCase())}`),
+                }))
+                .sort((a, b) => a.name.localeCompare(b.name))}
+              label={t('deviceCategory')}
+            />
+            <SelectField
+              value={item.calendarId}
+              onChange={(event) => setItem({ ...item, calendarId: Number(event.target.value) })}
+              endpoint="api/calendars"
+              label={t('sharedCalendar')}
+            />
+            <TextField
+              label={t('userExpirationTime')}
+              type="date"
+              value={item.expirationTime ? item.expirationTime.split('T')[0] : '2099-01-01'}
+              onChange={(e) => {
+                if (e.target.value) {
+                  setItem({ ...item, expirationTime: new Date(e.target.value).toISOString() });
                 }
-                label={t('sharedDisabled')}
-                disabled={!manager}
-              />
-              <Button variant="outlined" color="primary" onClick={() => setShowQr(true)}>
-                {t('sharedQrCode')}
-              </Button>
-            </AccordionDetails>
-          </Accordion>
-          {item.id && (
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="subtitle1">{t('attributeDeviceImage')}</Typography>
-              </AccordionSummary>
-              <AccordionDetails className={classes.details}>
-                <FileInput
-                  placeholder={t('attributeDeviceImage')}
-                  value={imageFile}
-                  onChange={handleFileInput}
-                  slotProps={{ htmlInput: { accept: 'image/*' } }}
+              }}
+              disabled={!manager}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={item.disabled}
+                  onChange={(event) => setItem({ ...item, disabled: event.target.checked })}
                 />
-              </AccordionDetails>
-            </Accordion>
+              }
+              label={t('sharedDisabled')}
+              disabled={!manager}
+            />
+            <Button variant="outlined" color="primary" onClick={() => setShowQr(true)}>
+              {t('sharedQrCode')}
+            </Button>
+          </FormSection>
+          {item.id && (
+            <FormSection title={t('attributeDeviceImage')}>
+              <FileInput
+                placeholder={t('attributeDeviceImage')}
+                value={imageFile}
+                onChange={handleFileInput}
+                slotProps={{ htmlInput: { accept: 'image/*' } }}
+              />
+            </FormSection>
           )}
           <EditAttributesAccordion
             attributes={item.attributes}

@@ -243,8 +243,11 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
         <>
           <div className={classes.filterItem} style={{ flexBasis: 220 }}>
             <FormControl fullWidth>
-              <InputLabel shrink>{t('reportPeriod')}</InputLabel>
+              <InputLabel id="report-filter-report-period-label" shrink>
+                {t('reportPeriod')}
+              </InputLabel>
               <Select
+                labelId="report-filter-report-period-label"
                 label={t('reportPeriod')}
                 value=""
                 displayEmpty
@@ -262,6 +265,7 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
                       size="small"
                       disabled={loading || !validRange}
                       onClick={() => shiftPeriod(-1)}
+                      aria-label={t('a11yPreviousPeriod')}
                     >
                       <ChevronLeftIcon />
                     </IconButton>
@@ -274,6 +278,7 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
                       size="small"
                       disabled={loading || !validRange}
                       onClick={() => shiftPeriod(1)}
+                      aria-label={t('a11yNextPeriod')}
                     >
                       <ChevronRightIcon />
                     </IconButton>
@@ -336,8 +341,8 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
         {Object.keys(options).length === 1 ? (
           <Button
             fullWidth
-            variant="outlined"
-            color="secondary"
+            variant="contained"
+            color="primary"
             disabled={disabled}
             onClick={onClick}
           >
@@ -348,8 +353,8 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
         ) : (
           <SplitButton
             fullWidth
-            variant="outlined"
-            color="secondary"
+            variant="contained"
+            color="primary"
             disabled={disabled}
             onClick={onClick}
             selected={selectedOption}

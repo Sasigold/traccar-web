@@ -86,16 +86,16 @@ export const formatCourse = (value) => {
 };
 
 export const formatDistance = (value, unit, t) =>
-  `${distanceFromMeters(value, unit).toFixed(2)} ${distanceUnitString(unit, t)}`;
+  `${distanceFromMeters(value, unit).toFixed(1)} ${distanceUnitString(unit, t)}`;
 
 export const formatAltitude = (value, unit, t) =>
-  `${altitudeFromMeters(value, unit).toFixed(2)} ${altitudeUnitString(unit, t)}`;
+  `${altitudeFromMeters(value, unit).toFixed(0)} ${altitudeUnitString(unit, t)}`;
 
 export const formatSpeed = (value, unit, t) =>
-  `${speedFromKnots(value, unit).toFixed(2)} ${speedUnitString(unit, t)}`;
+  `${speedFromKnots(value, unit).toFixed(0)} ${speedUnitString(unit, t)}`;
 
 export const formatVolume = (value, unit, t) =>
-  `${volumeFromLiters(value, unit).toFixed(2)} ${volumeUnitString(unit, t)}`;
+  `${volumeFromLiters(value, unit).toFixed(1)} ${volumeUnitString(unit, t)}`;
 
 export const formatNumericHours = (value, t) => {
   const hours = Math.floor(value / 3600000);

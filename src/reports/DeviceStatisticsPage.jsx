@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Table, TableRow, TableCell, TableHead, TableBody } from '@mui/material';
+import { TableRow, TableCell, TableHead, TableBody } from '@mui/material';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import ReportsMenu from './components/ReportsMenu';
@@ -9,6 +9,7 @@ import { StatisticsTypeSelect } from './StatisticsPage';
 import { useCatchCallback } from '../reactHelper';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
+import DataTable from '../common/components/table/DataTable';
 import SelectField from '../common/components/SelectField';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 
@@ -56,7 +57,7 @@ const DeviceStatisticsPage = () => {
           </div>
         </ReportFilter>
       </div>
-      <Table>
+      <DataTable variant="flush">
         <TableHead>
           <TableRow>
             {deviceColumns.map(([key, label]) => (
@@ -77,7 +78,7 @@ const DeviceStatisticsPage = () => {
             <TableShimmer columns={deviceColumns.length} />
           )}
         </TableBody>
-      </Table>
+      </DataTable>
     </PageLayout>
   );
 };

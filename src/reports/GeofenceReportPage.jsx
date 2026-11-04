@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
-import { Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import { TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import { formatNumericHours, formatTime } from '../common/util/formatter';
 import ReportFilter, { updateReportParams } from './components/ReportFilter';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -13,6 +13,7 @@ import usePersistedState from '../common/util/usePersistedState';
 import { useCatch, useCatchCallback } from '../reactHelper';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
+import DataTable from '../common/components/table/DataTable';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import SelectField from '../common/components/SelectField';
 import exportExcel from '../common/util/exportExcel';
@@ -121,7 +122,7 @@ const GeofenceReportPage = () => {
           <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
         </ReportFilter>
       </div>
-      <Table>
+      <DataTable variant="flush">
         <TableHead>
           <TableRow>
             <TableCell>{t('sharedDevice')}</TableCell>
@@ -146,7 +147,7 @@ const GeofenceReportPage = () => {
             <TableShimmer columns={columns.length + 1} />
           )}
         </TableBody>
-      </Table>
+      </DataTable>
     </PageLayout>
   );
 };

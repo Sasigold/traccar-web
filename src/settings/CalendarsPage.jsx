@@ -1,5 +1,5 @@
 import { useCallback, useReducer, useState } from 'react';
-import { Table, TableRow, TableCell, TableHead, TableBody } from '@mui/material';
+import { TableRow, TableCell, TableHead, TableBody } from '@mui/material';
 import { useAsyncTask, useScrollToLoad, pageSize } from '../reactHelper';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
@@ -7,7 +7,8 @@ import SettingsMenu from './components/SettingsMenu';
 import AddFab from './components/AddFab';
 import CollectionActions from './components/CollectionActions';
 import TableShimmer from '../common/components/TableShimmer';
-import SearchHeader from './components/SearchHeader';
+import DataTable from '../common/components/table/DataTable';
+import TableToolbar from '../common/components/table/TableToolbar';
 import useSettingsStyles from './common/useSettingsStyles';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 
@@ -47,8 +48,19 @@ const CalendarsPage = () => {
 
   return (
     <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'sharedCalendars']}>
-      <SearchHeader keyword={searchKeyword} setKeyword={setSearchKeyword} />
-      <Table className={classes.table}>
+      <DataTable
+        toolbar={
+          <TableToolbar
+            search={{ value: searchKeyword, onChange: setSearchKeyword }}
+            addPath="/settings/calendar"
+          />
+        }
+        empty={!hasMore && items.length === 0}
+        emptyState={{
+          title: t(searchKeyword ? 'tableNoMatches' : 'tableEmptyTitle'),
+          description: searchKeyword ? undefined : t('tableEmptyDescription'),
+        }}
+      >
         <TableHead>
           <TableRow>
             <TableCell>{t('sharedName')}</TableCell>
@@ -73,7 +85,7 @@ const CalendarsPage = () => {
             <TableShimmer ref={items.length > 0 ? sentinelRef : null} columns={2} endAction />
           )}
         </TableBody>
-      </Table>
+      </DataTable>
       <AddFab editPath="/settings/calendar" />
     </PageLayout>
   );

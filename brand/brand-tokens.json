@@ -1,0 +1,19 @@
+{
+  "brand": "VIPER FLEET",
+  "direction": "SYNC POINT / MIDNIGHT AQUA",
+  "colors": {
+    "navy": "#102C54",
+    "aqua": "#35D7D6",
+    "ink": "#0A1C30",
+    "ice": "#E1F5F7",
+    "paper": "#F8FCFD",
+    "muted": "#567286"
+  },
+  "fonts": {
+    "latin": "Sora",
+    "hebrew": "Assistant"
+  },
+  "clear_space": "18 units on a 100 unit symbol canvas",
+  "minimum_logo_width_px": 160,
+  "minimum_mark_width_px": 16
+}

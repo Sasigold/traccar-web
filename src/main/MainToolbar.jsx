@@ -1,8 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
-  Toolbar,
   IconButton,
   OutlinedInput,
   InputAdornment,
@@ -18,15 +17,16 @@ import {
   ListItemButton,
   ListItemText,
   Tooltip,
+  Typography,
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { useTheme, alpha } from '@mui/material/styles';
-import MapIcon from '@mui/icons-material/MapOutlined';
-import DnsIcon from '@mui/icons-material/ViewListRounded';
-import AddIcon from '@mui/icons-material/AddRounded';
-import TuneIcon from '@mui/icons-material/TuneRounded';
-import SearchIcon from '@mui/icons-material/SearchRounded';
-import { glass, accentGradient } from '../common/theme/glass';
+import MapOutlinedIcon from '@mui/icons-material/MapOutlined';
+import ViewListRoundedIcon from '@mui/icons-material/ViewListRounded';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import { glass, ctaFill } from '../common/theme/surfaces';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import { useDeviceReadonly } from '../common/util/permissions';
 import DeviceRow from './DeviceRow';
@@ -36,88 +36,54 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
-    minHeight: 'auto',
     padding: theme.spacing(1.5, 2),
-    [theme.breakpoints.up('sm')]: {
-      minHeight: 'auto',
-      padding: theme.spacing(1.5, 2),
+    [theme.breakpoints.down('md')]: {
+      padding: theme.spacing(1.25, 1.5),
     },
   },
   tonal: {
     width: 40,
     height: 40,
     flexShrink: 0,
-    borderRadius: 12,
+    borderRadius: theme.tokens.radius.lg,
     color: theme.palette.text.primary,
-    border: `1px solid ${theme.palette.divider}`,
-    backgroundColor: alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.04 : 0.02),
+    border: `1px solid ${theme.palette.surface.borderStrong}`,
+    backgroundColor: theme.palette.surface.sunken,
     '&:hover': {
       backgroundColor: alpha(theme.palette.primary.main, 0.1),
       borderColor: alpha(theme.palette.primary.main, 0.35),
+      color: theme.palette.primary.main,
     },
   },
   primary: {
     width: 40,
     height: 40,
     flexShrink: 0,
-    borderRadius: 12,
-    color: theme.palette.getContrastText(theme.palette.primary.main),
-    background: accentGradient(theme),
-    boxShadow: `0 8px 20px ${alpha(theme.palette.primary.main, 0.35)}, inset 0 1px 0 ${alpha('#ffffff', 0.25)}`,
-    transition: 'transform 160ms ease, box-shadow 160ms ease, filter 160ms ease',
-    '&:hover': {
-      background: accentGradient(theme),
-      filter: 'brightness(1.08)',
-      transform: 'translateY(-1px)',
-      boxShadow: `0 10px 26px ${alpha(theme.palette.primary.main, 0.45)}, inset 0 1px 0 ${alpha('#ffffff', 0.25)}`,
-    },
+    borderRadius: theme.tokens.radius.lg,
+    ...ctaFill(theme),
+    transition: 'background-color 160ms ease',
     '&.Mui-disabled': {
-      background: theme.palette.action.disabledBackground,
-      boxShadow: 'none',
+      backgroundColor: theme.palette.action.disabledBackground,
+      color: theme.palette.action.disabled,
     },
   },
   search: {
     height: 40,
-    borderRadius: 12,
-    backgroundColor: alpha(
-      theme.palette.text.primary,
-      theme.palette.mode === 'dark' ? 0.05 : 0.035,
-    ),
-    transition: 'box-shadow 160ms ease, background-color 160ms ease',
+    borderRadius: theme.tokens.radius.lg,
+    backgroundColor: theme.palette.surface.sunken,
     '& .MuiOutlinedInput-notchedOutline': {
-      borderColor: theme.palette.divider,
+      borderColor: theme.palette.surface.borderStrong,
     },
     '&.Mui-focused': {
       backgroundColor: theme.palette.background.paper,
-      boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.14)}`,
     },
   },
   searchIcon: {
     color: theme.palette.text.secondary,
   },
-  kbd: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 20,
-    height: 20,
-    padding: '0 6px',
-    marginInlineEnd: theme.spacing(0.5),
-    borderRadius: 6,
-    fontSize: '0.6875rem',
-    fontWeight: 700,
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-    color: theme.palette.text.secondary,
-    border: `1px solid ${theme.palette.divider}`,
-    borderBottomWidth: 2,
-    backgroundColor: theme.palette.background.paper,
-    [theme.breakpoints.down('md')]: {
-      display: 'none',
-    },
-  },
   popover: {
-    ...glass(theme, 0.9),
-    borderRadius: 16,
+    ...glass(theme, 0.94),
+    borderRadius: theme.tokens.radius.xl,
   },
   filterPanel: {
     display: 'flex',
@@ -125,6 +91,15 @@ const useStyles = makeStyles()((theme) => ({
     padding: theme.spacing(2),
     gap: theme.spacing(2),
     width: theme.dimensions.drawerWidthTablet,
+    maxWidth: 'calc(100vw - 32px)',
+  },
+  filterTitle: {
+    fontWeight: 700,
+  },
+  more: {
+    justifyContent: 'center',
+    borderRadius: theme.tokens.radius.md,
+    margin: theme.spacing(0.5, 1, 1),
   },
 }));
 
@@ -155,65 +130,52 @@ const MainToolbar = ({
 
   const toolbarRef = useRef();
   const inputRef = useRef();
-  const searchRef = useRef();
   const [filterAnchorEl, setFilterAnchorEl] = useState(null);
   const [devicesAnchorEl, setDevicesAnchorEl] = useState(null);
-  const [searchFocused, setSearchFocused] = useState(false);
-
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) return;
-      const target = event.target;
-      if (target.isContentEditable || /^(input|textarea|select)$/i.test(target.tagName)) return;
-      event.preventDefault();
-      searchRef.current?.focus();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   const deviceStatusCount = (status) =>
     Object.values(devices).filter((d) => d.status === status).length;
 
+  const filtersActive =
+    filter.statuses.length > 0 || filter.groups.length > 0 || filter.geofences.length > 0;
+
   return (
-    <Toolbar ref={toolbarRef} className={classes.toolbar}>
-      <IconButton className={classes.tonal} onClick={() => setDevicesOpen(!devicesOpen)}>
-        {devicesOpen ? <MapIcon fontSize="small" /> : <DnsIcon fontSize="small" />}
-      </IconButton>
+    <div ref={toolbarRef} className={classes.toolbar}>
+      <Tooltip title={devicesOpen ? t('mapTitle') : t('sharedDeviceList')}>
+        <IconButton className={classes.tonal} onClick={() => setDevicesOpen(!devicesOpen)}>
+          {devicesOpen ? (
+            <MapOutlinedIcon fontSize="small" />
+          ) : (
+            <ViewListRoundedIcon fontSize="small" />
+          )}
+        </IconButton>
+      </Tooltip>
       <OutlinedInput
         ref={inputRef}
-        inputRef={searchRef}
         className={classes.search}
         placeholder={t('sharedSearchDevices')}
         value={keyword}
         onChange={(e) => setKeyword(e.target.value)}
-        onFocus={() => {
-          setSearchFocused(true);
-          setDevicesAnchorEl(toolbarRef.current);
-        }}
-        onBlur={() => {
-          setSearchFocused(false);
-          setDevicesAnchorEl(null);
-        }}
+        onFocus={() => setDevicesAnchorEl(toolbarRef.current)}
+        onBlur={() => setDevicesAnchorEl(null)}
         startAdornment={
           <InputAdornment position="start">
-            <SearchIcon fontSize="small" className={classes.searchIcon} />
+            <SearchRoundedIcon fontSize="small" className={classes.searchIcon} />
           </InputAdornment>
         }
         endAdornment={
           <InputAdornment position="end">
-            {!searchFocused && !keyword && <span className={classes.kbd}>/</span>}
-            <IconButton size="small" edge="end" onClick={() => setFilterAnchorEl(inputRef.current)}>
-              <Badge
-                color="info"
-                variant="dot"
-                invisible={
-                  !filter.statuses.length && !filter.groups.length && !filter.geofences.length
-                }
+            <Tooltip title={t('sharedFilter')}>
+              <IconButton
+                size="small"
+                edge="end"
+                onClick={() => setFilterAnchorEl(inputRef.current)}
               >
-                <TuneIcon fontSize="small" />
-              </Badge>
-            </IconButton>
+                <Badge color="primary" variant="dot" invisible={!filtersActive}>
+                  <TuneRoundedIcon fontSize="small" />
+                </Badge>
+              </IconButton>
+            </Tooltip>
           </InputAdornment>
         }
         size="small"
@@ -242,8 +204,11 @@ const MainToolbar = ({
           <DeviceRow key={filteredDevices[index].id} devices={filteredDevices} index={index} />
         ))}
         {filteredDevices.length > 3 && (
-          <ListItemButton alignItems="center" onClick={() => setDevicesOpen(true)}>
-            <ListItemText primary={t('notificationAlways')} style={{ textAlign: 'center' }} />
+          <ListItemButton className={classes.more} onClick={() => setDevicesOpen(true)}>
+            <ListItemText
+              primary={t('notificationAlways')}
+              slotProps={{ primary: { align: 'center', fontWeight: 600 } }}
+            />
           </ListItemButton>
         )}
       </Popover>
@@ -253,14 +218,22 @@ const MainToolbar = ({
         onClose={() => setFilterAnchorEl(null)}
         anchorOrigin={{
           vertical: 'bottom',
-          horizontal: 'left',
+          horizontal: theme.direction === 'rtl' ? 'right' : 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: theme.direction === 'rtl' ? 'right' : 'left',
         }}
         slotProps={{ paper: { className: classes.popover } }}
       >
         <div className={classes.filterPanel}>
+          <Typography variant="subtitle2" className={classes.filterTitle}>
+            {t('sharedFilter')}
+          </Typography>
           <FormControl>
-            <InputLabel>{t('deviceStatus')}</InputLabel>
+            <InputLabel id="main-toolbar-device-status-label">{t('deviceStatus')}</InputLabel>
             <Select
+              labelId="main-toolbar-device-status-label"
               label={t('deviceStatus')}
               value={filter.statuses}
               onChange={(e) => setFilter({ ...filter, statuses: e.target.value })}
@@ -272,8 +245,9 @@ const MainToolbar = ({
             </Select>
           </FormControl>
           <FormControl>
-            <InputLabel>{t('settingsGroups')}</InputLabel>
+            <InputLabel id="main-toolbar-settings-groups-label">{t('settingsGroups')}</InputLabel>
             <Select
+              labelId="main-toolbar-settings-groups-label"
               label={t('settingsGroups')}
               value={filter.groups}
               onChange={(e) => setFilter({ ...filter, groups: e.target.value })}
@@ -289,8 +263,9 @@ const MainToolbar = ({
             </Select>
           </FormControl>
           <FormControl>
-            <InputLabel>{t('sharedGeofences')}</InputLabel>
+            <InputLabel id="main-toolbar-shared-geofences-label">{t('sharedGeofences')}</InputLabel>
             <Select
+              labelId="main-toolbar-shared-geofences-label"
               label={t('sharedGeofences')}
               value={filter.geofences}
               onChange={(e) => setFilter({ ...filter, geofences: e.target.value })}
@@ -306,13 +281,14 @@ const MainToolbar = ({
             </Select>
           </FormControl>
           <FormControl>
-            <InputLabel>{t('sharedSortBy')}</InputLabel>
+            <InputLabel id="main-toolbar-shared-sort-by-label">{t('sharedSortBy')}</InputLabel>
             <Select
+              labelId="main-toolbar-shared-sort-by-label"
               label={t('sharedSortBy')}
               value={filterSort}
               onChange={(e) => setFilterSort(e.target.value)}
             >
-              <MenuItem value="">{'\u00a0'}</MenuItem>
+              <MenuItem value="">{' '}</MenuItem>
               <MenuItem value="name">{t('sharedName')}</MenuItem>
               <MenuItem value="lastUpdate">{t('deviceLastUpdate')}</MenuItem>
             </Select>
@@ -327,20 +303,23 @@ const MainToolbar = ({
           </FormGroup>
         </div>
       </Popover>
-      <IconButton
-        className={classes.primary}
-        onClick={() => navigate('/settings/device')}
-        disabled={deviceReadonly}
+      <Tooltip
+        open={!deviceReadonly && devicesLoaded && Object.keys(devices).length === 0}
+        title={t('deviceRegisterFirst')}
+        arrow
       >
-        <Tooltip
-          open={!deviceReadonly && devicesLoaded && Object.keys(devices).length === 0}
-          title={t('deviceRegisterFirst')}
-          arrow
-        >
-          <AddIcon />
-        </Tooltip>
-      </IconButton>
-    </Toolbar>
+        <span>
+          <IconButton
+            className={classes.primary}
+            onClick={() => navigate('/settings/device')}
+            disabled={deviceReadonly}
+            aria-label={t('shellAddDevice')}
+          >
+            <AddRoundedIcon />
+          </IconButton>
+        </span>
+      </Tooltip>
+    </div>
   );
 };
 

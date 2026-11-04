@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Route, Routes, useSearchParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import MainPage from './main/MainPage';
 import App from './App';
@@ -10,6 +10,7 @@ import { generateLoginToken } from './common/components/NativeInterface';
 import { useLocalization } from './common/components/LocalizationProvider';
 import fetchOrThrow from './common/util/fetchOrThrow';
 
+const NotFoundPage = lazy(() => import('./other/NotFoundPage'));
 const CombinedReportPage = lazy(() => import('./reports/CombinedReportPage'));
 const PositionsReportPage = lazy(() => import('./reports/PositionsReportPage'));
 const ServerPage = lazy(() => import('./settings/ServerPage'));
@@ -64,6 +65,7 @@ const AnnouncementPage = lazy(() => import('./settings/AnnouncementPage'));
 const EmulatorPage = lazy(() => import('./other/EmulatorPage'));
 const StreamPage = lazy(() => import('./other/StreamPage'));
 const AuditPage = lazy(() => import('./reports/AuditPage'));
+const SettingsHubPage = lazy(() => import('./settings/SettingsHubPage'));
 
 const Navigation = () => {
   const dispatch = useDispatch();
@@ -140,6 +142,7 @@ const Navigation = () => {
           <Route path="stream" element={<StreamPage />} />
 
           <Route path="settings">
+            <Route index element={<SettingsHubPage />} />
             <Route path=":type/:id/share" element={<SharePage />} />
             <Route path="accumulators/:deviceId" element={<AccumulatorsPage />} />
             <Route path="announcement" element={<AnnouncementPage />} />
@@ -183,6 +186,7 @@ const Navigation = () => {
           </Route>
 
           <Route path="reports">
+            <Route index element={<Navigate to="combined" replace />} />
             <Route path="combined" element={<CombinedReportPage />} />
             <Route path="chart" element={<ChartReportPage />} />
             <Route path="events" element={<EventReportPage />} />
@@ -197,6 +201,8 @@ const Navigation = () => {
             <Route path="audit" element={<AuditPage />} />
             <Route path="logs" element={<LogsPage />} />
           </Route>
+
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </Suspense>

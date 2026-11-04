@@ -2,10 +2,6 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { messagesActions } from '../store';
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
   FormControl,
   InputLabel,
   MenuItem,
@@ -15,7 +11,6 @@ import {
   Autocomplete,
   Button,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import EditItemView from './components/EditItemView';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import usePositionAttributes from '../common/attributes/usePositionAttributes';
@@ -23,8 +18,8 @@ import SettingsMenu from './components/SettingsMenu';
 import SelectField from '../common/components/SelectField';
 import { useCatch } from '../reactHelper';
 import { snackBarDurationLongMs } from '../common/util/duration';
-import useSettingsStyles from './common/useSettingsStyles';
 import fetchOrThrow from '../common/util/fetchOrThrow';
+import FormSection from './components/FormSection';
 
 const allowedProperties = [
   'valid',
@@ -38,7 +33,6 @@ const allowedProperties = [
 ];
 
 const ComputedAttributePage = () => {
-  const { classes } = useSettingsStyles();
   const t = useTranslation();
   const dispatch = useDispatch();
 
@@ -92,104 +86,87 @@ const ComputedAttributePage = () => {
     >
       {item && (
         <>
-          <Accordion defaultExpanded>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1">{t('sharedRequired')}</Typography>
-            </AccordionSummary>
-            <AccordionDetails className={classes.details}>
-              <TextField
-                value={item.description || ''}
-                onChange={(e) => setItem({ ...item, description: e.target.value })}
-                label={t('sharedDescription')}
-              />
-              <Autocomplete
-                freeSolo
-                value={
-                  options.find((option) => option.key === item.attribute) || item.attribute || null
+          <FormSection title={t('sharedRequired')}>
+            <TextField
+              value={item.description || ''}
+              onChange={(e) => setItem({ ...item, description: e.target.value })}
+              label={t('sharedDescription')}
+            />
+            <Autocomplete
+              freeSolo
+              value={
+                options.find((option) => option.key === item.attribute) || item.attribute || null
+              }
+              onChange={(_, option) => {
+                const attribute = option ? option.key || option.inputValue || option : null;
+                if (option && (option.type || option.inputValue)) {
+                  setItem({ ...item, attribute, type: option.type });
+                } else {
+                  setItem({ ...item, attribute });
                 }
-                onChange={(_, option) => {
-                  const attribute = option ? option.key || option.inputValue || option : null;
-                  if (option && (option.type || option.inputValue)) {
-                    setItem({ ...item, attribute, type: option.type });
-                  } else {
-                    setItem({ ...item, attribute });
-                  }
-                }}
-                filterOptions={(options, params) => {
-                  const filtered = filter(options, params);
-                  if (
-                    params.inputValue &&
-                    !options.some((x) => (typeof x === 'object' ? x.key : x) === params.inputValue)
-                  ) {
-                    filtered.push({
-                      inputValue: params.inputValue,
-                      name: `${t('sharedAdd')} "${params.inputValue}"`,
-                    });
-                  }
-                  return filtered;
-                }}
-                options={options}
-                getOptionLabel={(option) =>
-                  typeof option === 'object' ? option.inputValue || option.name : option
+              }}
+              filterOptions={(options, params) => {
+                const filtered = filter(options, params);
+                if (
+                  params.inputValue &&
+                  !options.some((x) => (typeof x === 'object' ? x.key : x) === params.inputValue)
+                ) {
+                  filtered.push({
+                    inputValue: params.inputValue,
+                    name: `${t('sharedAdd')} "${params.inputValue}"`,
+                  });
                 }
-                renderOption={(props, option) => <li {...props}>{option.name || option}</li>}
-                renderInput={(params) => <TextField {...params} label={t('sharedAttribute')} />}
-              />
-              <TextField
-                value={item.expression || ''}
-                onChange={(e) => setItem({ ...item, expression: e.target.value })}
-                label={t('sharedExpression')}
-                multiline
-                rows={4}
-              />
-              <FormControl disabled={item.attribute in positionAttributes}>
-                <InputLabel>{t('sharedType')}</InputLabel>
-                <Select
-                  label={t('sharedType')}
-                  value={item.type || ''}
-                  onChange={(e) => setItem({ ...item, type: e.target.value })}
-                >
-                  <MenuItem value="string">{t('sharedTypeString')}</MenuItem>
-                  <MenuItem value="number">{t('sharedTypeNumber')}</MenuItem>
-                  <MenuItem value="boolean">{t('sharedTypeBoolean')}</MenuItem>
-                </Select>
-              </FormControl>
-            </AccordionDetails>
-          </Accordion>
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1">{t('sharedExtra')}</Typography>
-            </AccordionSummary>
-            <AccordionDetails className={classes.details}>
-              <TextField
-                type="number"
-                value={item.priority || 0}
-                onChange={(e) => setItem({ ...item, priority: Number(e.target.value) })}
-                label={t('sharedPriority')}
-              />
-            </AccordionDetails>
-          </Accordion>
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1">{t('sharedTest')}</Typography>
-            </AccordionSummary>
-            <AccordionDetails className={classes.details}>
-              <SelectField
-                value={deviceId}
-                onChange={(e) => setDeviceId(Number(e.target.value))}
-                endpoint="api/devices"
-                label={t('sharedDevice')}
-              />
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={testAttribute}
-                disabled={!deviceId}
+                return filtered;
+              }}
+              options={options}
+              getOptionLabel={(option) =>
+                typeof option === 'object' ? option.inputValue || option.name : option
+              }
+              renderOption={(props, option) => <li {...props}>{option.name || option}</li>}
+              renderInput={(params) => <TextField {...params} label={t('sharedAttribute')} />}
+            />
+            <TextField
+              value={item.expression || ''}
+              onChange={(e) => setItem({ ...item, expression: e.target.value })}
+              label={t('sharedExpression')}
+              multiline
+              rows={4}
+            />
+            <FormControl disabled={item.attribute in positionAttributes}>
+              <InputLabel id="computed-attribute-page-shared-type-label">
+                {t('sharedType')}
+              </InputLabel>
+              <Select
+                labelId="computed-attribute-page-shared-type-label"
+                label={t('sharedType')}
+                value={item.type || ''}
+                onChange={(e) => setItem({ ...item, type: e.target.value })}
               >
-                {t('sharedTestExpression')}
-              </Button>
-            </AccordionDetails>
-          </Accordion>
+                <MenuItem value="string">{t('sharedTypeString')}</MenuItem>
+                <MenuItem value="number">{t('sharedTypeNumber')}</MenuItem>
+                <MenuItem value="boolean">{t('sharedTypeBoolean')}</MenuItem>
+              </Select>
+            </FormControl>
+          </FormSection>
+          <FormSection title={t('sharedExtra')}>
+            <TextField
+              type="number"
+              value={item.priority || 0}
+              onChange={(e) => setItem({ ...item, priority: Number(e.target.value) })}
+              label={t('sharedPriority')}
+            />
+          </FormSection>
+          <FormSection title={t('sharedTest')}>
+            <SelectField
+              value={deviceId}
+              onChange={(e) => setDeviceId(Number(e.target.value))}
+              endpoint="api/devices"
+              label={t('sharedDevice')}
+            />
+            <Button variant="outlined" color="primary" onClick={testAttribute} disabled={!deviceId}>
+              {t('sharedTestExpression')}
+            </Button>
+          </FormSection>
         </>
       )}
     </EditItemView>

@@ -1,27 +1,28 @@
 import { useCallback, useReducer, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Table,
   TableRow,
   TableCell,
   TableHead,
   TableBody,
   Switch,
-  TableFooter,
   FormControlLabel,
+  Chip,
 } from '@mui/material';
-import LoginIcon from '@mui/icons-material/Login';
-import LinkIcon from '@mui/icons-material/Link';
+import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
+import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
+import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
 import { useCatch, useAsyncTask, useScrollToLoad, pageSize } from '../reactHelper';
-import { formatBoolean, formatTime } from '../common/util/formatter';
+import { formatTime } from '../common/util/formatter';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import SettingsMenu from './components/SettingsMenu';
 import AddFab from './components/AddFab';
 import CollectionActions from './components/CollectionActions';
 import TableShimmer from '../common/components/TableShimmer';
+import DataTable from '../common/components/table/DataTable';
+import TableToolbar from '../common/components/table/TableToolbar';
 import { useManager } from '../common/util/permissions';
-import SearchHeader from './components/SearchHeader';
 import useSettingsStyles from './common/useSettingsStyles';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import UserDevicesValue from './components/UserDevicesValue';
@@ -47,14 +48,14 @@ const UsersPage = () => {
   const actionLogin = {
     key: 'login',
     title: t('loginLogin'),
-    icon: <LoginIcon fontSize="small" />,
+    icon: <LoginRoundedIcon fontSize="small" />,
     handler: handleLogin,
   };
 
   const actionConnections = {
     key: 'connections',
     title: t('sharedConnections'),
-    icon: <LinkIcon fontSize="small" />,
+    icon: <LinkRoundedIcon fontSize="small" />,
     handler: (userId) => navigate(`/settings/user/${userId}/connections`),
   };
 
@@ -83,10 +84,40 @@ const UsersPage = () => {
     [reloadKey, loadItems],
   );
 
+  const visible = items.filter((u) => temporary || !u.temporary);
+
   return (
-    <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'settingsUsers']}>
-      <SearchHeader keyword={searchKeyword} setKeyword={setSearchKeyword} />
-      <Table className={classes.table}>
+    <PageLayout
+      menu={<SettingsMenu />}
+      breadcrumbs={['settingsTitle', 'settingsUsers']}
+      description={t('settingsUsersDescription')}
+    >
+      <DataTable
+        toolbar={
+          <TableToolbar
+            search={{ value: searchKeyword, onChange: setSearchKeyword }}
+            count={visible.length}
+            addPath="/settings/user"
+            actions={
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={temporary}
+                    onChange={(e) => setTemporary(e.target.checked)}
+                    size="small"
+                  />
+                }
+                label={t('userTemporary')}
+              />
+            }
+          />
+        }
+        empty={!hasMore && visible.length === 0}
+        emptyState={{
+          icon: <PeopleRoundedIcon />,
+          title: t(searchKeyword ? 'tableNoMatches' : 'tableEmptyTitle'),
+        }}
+      >
         <TableHead>
           <TableRow>
             <TableCell>{t('sharedName')}</TableCell>
@@ -99,51 +130,38 @@ const UsersPage = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {items
-            .filter((u) => temporary || !u.temporary)
-            .map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.name}</TableCell>
-                <TableCell>{item.email}</TableCell>
-                <TableCell>{formatBoolean(item.administrator, t)}</TableCell>
-                <TableCell>{formatBoolean(item.disabled, t)}</TableCell>
-                <TableCell>{formatTime(item.expirationTime, 'date')}</TableCell>
-                <TableCell>
-                  <UserDevicesValue userId={item.id} />
-                </TableCell>
-                <TableCell className={classes.columnAction} padding="none">
-                  <CollectionActions
-                    itemId={item.id}
-                    editPath="/settings/user"
-                    endpoint="users"
-                    onReload={reload}
-                    customActions={manager ? [actionLogin, actionConnections] : [actionConnections]}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
+          {visible.map((item) => (
+            <TableRow key={item.id} hover>
+              <TableCell>{item.name}</TableCell>
+              <TableCell>{item.email}</TableCell>
+              <TableCell>
+                {item.administrator && (
+                  <Chip size="small" color="primary" variant="outlined" label={t('userAdmin')} />
+                )}
+              </TableCell>
+              <TableCell>
+                {item.disabled && <Chip size="small" color="default" label={t('sharedDisabled')} />}
+              </TableCell>
+              <TableCell>{formatTime(item.expirationTime, 'date')}</TableCell>
+              <TableCell>
+                <UserDevicesValue userId={item.id} />
+              </TableCell>
+              <TableCell className={classes.columnAction} padding="none">
+                <CollectionActions
+                  itemId={item.id}
+                  editPath="/settings/user"
+                  endpoint="users"
+                  onReload={reload}
+                  customActions={manager ? [actionLogin, actionConnections] : [actionConnections]}
+                />
+              </TableCell>
+            </TableRow>
+          ))}
           {hasMore && (
             <TableShimmer ref={items.length > 0 ? sentinelRef : null} columns={7} endAction />
           )}
         </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TableCell colSpan={7} align="right">
-              <FormControlLabel
-                control={
-                  <Switch
-                    value={temporary}
-                    onChange={(e) => setTemporary(e.target.checked)}
-                    size="small"
-                  />
-                }
-                label={t('userTemporary')}
-                labelPlacement="start"
-              />
-            </TableCell>
-          </TableRow>
-        </TableFooter>
-      </Table>
+      </DataTable>
       <AddFab editPath="/settings/user" />
     </PageLayout>
   );

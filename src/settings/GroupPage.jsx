@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import TextField from '@mui/material/TextField';
 
-import { Accordion, AccordionSummary, AccordionDetails, Typography } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import EditItemView from './components/EditItemView';
 import EditAttributesAccordion from './components/EditAttributesAccordion';
 import SelectField from '../common/components/SelectField';
@@ -13,11 +11,10 @@ import useCommonDeviceAttributes from '../common/attributes/useCommonDeviceAttri
 import useGroupAttributes from '../common/attributes/useGroupAttributes';
 import { useCatch } from '../reactHelper';
 import { groupsActions } from '../store';
-import useSettingsStyles from './common/useSettingsStyles';
 import fetchOrThrow from '../common/util/fetchOrThrow';
+import FormSection from './components/FormSection';
 
 const GroupPage = () => {
-  const { classes } = useSettingsStyles();
   const dispatch = useDispatch();
   const t = useTranslation();
 
@@ -45,31 +42,21 @@ const GroupPage = () => {
     >
       {item && (
         <>
-          <Accordion defaultExpanded>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1">{t('sharedRequired')}</Typography>
-            </AccordionSummary>
-            <AccordionDetails className={classes.details}>
-              <TextField
-                value={item.name || ''}
-                onChange={(event) => setItem({ ...item, name: event.target.value })}
-                label={t('sharedName')}
-              />
-            </AccordionDetails>
-          </Accordion>
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1">{t('sharedExtra')}</Typography>
-            </AccordionSummary>
-            <AccordionDetails className={classes.details}>
-              <SelectField
-                value={item.groupId}
-                onChange={(event) => setItem({ ...item, groupId: Number(event.target.value) })}
-                endpoint="api/groups"
-                label={t('groupParent')}
-              />
-            </AccordionDetails>
-          </Accordion>
+          <FormSection title={t('sharedRequired')}>
+            <TextField
+              value={item.name || ''}
+              onChange={(event) => setItem({ ...item, name: event.target.value })}
+              label={t('sharedName')}
+            />
+          </FormSection>
+          <FormSection title={t('sharedExtra')}>
+            <SelectField
+              value={item.groupId}
+              onChange={(event) => setItem({ ...item, groupId: Number(event.target.value) })}
+              endpoint="api/groups"
+              label={t('groupParent')}
+            />
+          </FormSection>
           <EditAttributesAccordion
             attributes={item.attributes}
             setAttributes={(attributes) => setItem({ ...item, attributes })}

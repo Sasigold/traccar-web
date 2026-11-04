@@ -1,115 +1,82 @@
-import { lazy, Suspense, useState, useCallback, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { makeStyles } from 'tss-react/mui';
-import { useTheme, alpha } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useDispatch, useSelector } from 'react-redux';
+import { Button } from '@mui/material';
+import DnsRoundedIcon from '@mui/icons-material/DnsRounded';
+import { useNavigate } from 'react-router-dom';
 import DeviceList from './DeviceList';
-import BottomMenu from '../common/components/BottomMenu';
 import StatusCard from '../common/components/StatusCard';
+import EmptyState from '../common/components/table/EmptyState';
 import { devicesActions } from '../store';
 import usePersistedState from '../common/util/usePersistedState';
-import EventsDrawer from './EventsDrawer';
 import useFilter from './useFilter';
 import MainToolbar from './MainToolbar';
 import { useAttributePreference } from '../common/util/preferences';
+import { useDeviceReadonly } from '../common/util/permissions';
 import useFeatures from '../common/util/useFeatures';
-import { glass } from '../common/theme/glass';
-import MainHeader from './components/MainHeader';
+import { glass } from '../common/theme/surfaces';
+import { useTranslation } from '../common/components/LocalizationProvider';
 import FleetStats from './components/FleetStats';
 
 const MainMap = lazy(() => import('./MainMap'));
 
 const useStyles = makeStyles()((theme) => ({
   root: {
+    position: 'relative',
     height: '100%',
+    minHeight: 0,
+    overflow: 'hidden',
   },
   sidebar: {
     pointerEvents: 'none',
     display: 'flex',
     flexDirection: 'column',
     [theme.breakpoints.up('md')]: {
-      position: 'fixed',
-      left: 0,
-      top: 0,
-      height: `calc(100% - ${theme.spacing(4)})`,
-      width: theme.dimensions.drawerWidthDesktop,
-      margin: theme.spacing(2),
-      gap: theme.spacing(1.5),
-      zIndex: 3,
+      position: 'absolute',
+      insetInlineStart: theme.dimensions.panelGap,
+      top: theme.dimensions.panelGap,
+      bottom: theme.dimensions.panelGap,
+      width: theme.dimensions.devicePanelWidth,
+      zIndex: theme.layers.panel,
     },
     [theme.breakpoints.down('md')]: {
       height: '100%',
       width: '100%',
     },
   },
+  sidebarCollapsed: {
+    [theme.breakpoints.up('md')]: {
+      bottom: 'auto',
+    },
+  },
   panel: {
     display: 'flex',
     flexDirection: 'column',
     minHeight: 0,
+    flex: 1,
     [theme.breakpoints.up('md')]: {
-      ...glass(theme),
+      ...glass(theme, 0.9),
       pointerEvents: 'auto',
       position: 'relative',
-      borderRadius: 22,
+      borderRadius: theme.tokens.radius.xxl,
       overflow: 'hidden',
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        insetInline: 24,
-        top: 0,
-        height: 2,
-        borderRadius: 2,
-        background: `linear-gradient(90deg, transparent, ${theme.palette.primary.main} 30%, ${theme.palette.info.main} 70%, transparent)`,
-        zIndex: 1,
-      },
     },
-    [theme.breakpoints.down('md')]: {
-      flex: 1,
-    },
-  },
-  panelOpen: {
-    flex: 1,
   },
   header: {
     pointerEvents: 'auto',
     zIndex: 6,
     position: 'relative',
     [theme.breakpoints.down('md')]: {
-      ...glass(theme, 0.92),
-      borderRadius: 0,
-      borderWidth: '0 0 1px 0',
+      backgroundColor: theme.palette.background.paper,
+      borderBottom: `1px solid ${theme.palette.surface.border}`,
     },
   },
   divider: {
     height: 1,
     marginInline: theme.spacing(2),
-    background: `linear-gradient(90deg, transparent, ${theme.palette.divider} 20%, ${theme.palette.divider} 80%, transparent)`,
-  },
-  footer: {
-    ...glass(theme),
-    pointerEvents: 'auto',
-    zIndex: 5,
-    borderRadius: 22,
-    overflow: 'hidden',
-    padding: theme.spacing(0.75),
-    '& .MuiPaper-root, & .MuiBottomNavigation-root': {
-      backgroundColor: 'transparent',
-      boxShadow: 'none',
-      border: 'none',
-    },
-    '& .MuiBottomNavigationAction-root': {
-      borderRadius: 16,
-      transition: 'background-color 160ms ease, color 160ms ease',
-      '&:hover': {
-        backgroundColor: alpha(theme.palette.primary.main, 0.06),
-      },
-    },
-    '& .MuiBottomNavigationAction-root.Mui-selected': {
-      backgroundColor: alpha(theme.palette.primary.main, 0.12),
-    },
-  },
-  footerSpacer: {
-    marginTop: 'auto',
+    backgroundColor: theme.palette.surface.border,
   },
   middle: {
     flex: 1,
@@ -130,19 +97,26 @@ const useStyles = makeStyles()((theme) => ({
     gridArea: '1 / 1',
     zIndex: 4,
     display: 'flex',
+    flexDirection: 'column',
     minHeight: 0,
     [theme.breakpoints.down('md')]: {
       backgroundColor: theme.palette.background.paper,
     },
+  },
+  empty: {
+    flex: 1,
   },
 }));
 
 const MainPage = () => {
   const { classes, cx } = useStyles();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const theme = useTheme();
+  const t = useTranslation();
 
   const features = useFeatures();
+  const deviceReadonly = useDeviceReadonly();
 
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
 
@@ -150,6 +124,8 @@ const MainPage = () => {
 
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
   const positions = useSelector((state) => state.session.positions);
+  const devicesLoaded = useSelector((state) => state.devices.loaded);
+  const deviceCount = useSelector((state) => Object.keys(state.devices.items).length);
   const [filteredPositions, setFilteredPositions] = useState([]);
   const selectedPosition = filteredPositions.find(
     (position) => selectedDeviceId && position.deviceId === selectedDeviceId,
@@ -167,9 +143,6 @@ const MainPage = () => {
   const [filterMap, setFilterMap] = usePersistedState('filterMap', false);
 
   const [devicesOpen, setDevicesOpen] = useState(desktop);
-  const [eventsOpen, setEventsOpen] = useState(false);
-
-  const onEventsClick = useCallback(() => setEventsOpen(true), [setEventsOpen]);
 
   useEffect(() => {
     if (!desktop && mapOnSelect && selectedDeviceId) {
@@ -187,23 +160,24 @@ const MainPage = () => {
     setFilteredPositions,
   );
 
+  const panelOffset = features.disableDeviceList
+    ? '0px'
+    : `${theme.dimensions.devicePanelWidth + 2 * theme.dimensions.panelGap}px`;
+
+  const showEmpty = devicesLoaded && deviceCount === 0;
+
   return (
     <div className={classes.root}>
       {desktop && (
         <Suspense fallback={null}>
-          <MainMap
-            filteredPositions={filteredPositions}
-            selectedPosition={selectedPosition}
-            onEventsClick={onEventsClick}
-          />
+          <MainMap filteredPositions={filteredPositions} selectedPosition={selectedPosition} />
         </Suspense>
       )}
-      <div className={classes.sidebar}>
+      <div className={cx(classes.sidebar, desktop && !devicesOpen && classes.sidebarCollapsed)}>
         {(!desktop || !features.disableDeviceList) && (
-          <div className={cx(classes.panel, devicesOpen && classes.panelOpen)}>
+          <div className={classes.panel}>
             {!features.disableDeviceList && (
               <div className={classes.header}>
-                {desktop && <MainHeader />}
                 <MainToolbar
                   filteredDevices={filteredDevices}
                   devicesOpen={devicesOpen}
@@ -217,7 +191,7 @@ const MainPage = () => {
                   filterMap={filterMap}
                   setFilterMap={setFilterMap}
                 />
-                {devicesOpen && <FleetStats filter={filter} setFilter={setFilter} />}
+                {devicesOpen && !showEmpty && <FleetStats filter={filter} setFilter={setFilter} />}
                 {devicesOpen && desktop && <div className={classes.divider} />}
               </div>
             )}
@@ -228,7 +202,6 @@ const MainPage = () => {
                     <MainMap
                       filteredPositions={filteredPositions}
                       selectedPosition={selectedPosition}
-                      onEventsClick={onEventsClick}
                     />
                   </Suspense>
                 </div>
@@ -238,30 +211,35 @@ const MainPage = () => {
                   className={classes.contentList}
                   style={devicesOpen ? {} : { visibility: 'hidden' }}
                 >
-                  <DeviceList devices={filteredDevices} />
+                  {showEmpty ? (
+                    <EmptyState
+                      className={classes.empty}
+                      icon={<DnsRoundedIcon />}
+                      title={t('deviceRegisterFirst')}
+                      description={t('settingsDevicesDescription')}
+                      action={
+                        !deviceReadonly && (
+                          <Button variant="contained" onClick={() => navigate('/settings/device')}>
+                            {t('shellAddDevice')}
+                          </Button>
+                        )
+                      }
+                    />
+                  ) : (
+                    <DeviceList devices={filteredDevices} />
+                  )}
                 </div>
               )}
             </div>
           </div>
         )}
-        {desktop && !features.disableTabs && (
-          <div
-            className={cx(
-              classes.footer,
-              (!devicesOpen || features.disableDeviceList) && classes.footerSpacer,
-            )}
-          >
-            <BottomMenu />
-          </div>
-        )}
       </div>
-      <EventsDrawer open={eventsOpen} onClose={() => setEventsOpen(false)} />
       {selectedDeviceId && !features.disableStatusCard && (
         <StatusCard
           deviceId={selectedDeviceId}
           position={selectedPosition}
           onClose={() => dispatch(devicesActions.selectId(null))}
-          desktopPadding={features.disableDeviceList ? 0 : theme.dimensions.drawerWidthDesktop}
+          desktopPadding={panelOffset}
         />
       )}
     </div>

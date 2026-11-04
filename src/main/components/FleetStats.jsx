@@ -4,7 +4,7 @@ import { ButtonBase, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import { useTranslation } from '../../common/components/LocalizationProvider';
-import { accentGradient, statusColor } from '../../common/theme/glass';
+import { statusColor } from '../../common/theme/surfaces';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -12,6 +12,9 @@ const useStyles = makeStyles()((theme) => ({
     gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
     gap: theme.spacing(0.75),
     padding: theme.spacing(0, 2, 1.5),
+    [theme.breakpoints.down('md')]: {
+      padding: theme.spacing(0, 1.5, 1.25),
+    },
   },
   tile: {
     position: 'relative',
@@ -20,11 +23,11 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: 'stretch',
     textAlign: 'start',
     gap: 2,
-    padding: theme.spacing(1, 1.25, 1.25),
-    borderRadius: 12,
+    padding: theme.spacing(1, 1, 1.25),
+    borderRadius: theme.tokens.radius.lg,
     overflow: 'hidden',
-    border: `1px solid ${theme.palette.divider}`,
-    backgroundColor: alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.03 : 0.02),
+    border: '1px solid transparent',
+    backgroundColor: theme.palette.surface.tint,
     transition: 'border-color 160ms ease, background-color 160ms ease, transform 160ms ease',
     '&:hover': {
       borderColor: alpha(theme.palette.primary.main, 0.4),
@@ -34,10 +37,10 @@ const useStyles = makeStyles()((theme) => ({
   label: {
     display: 'flex',
     alignItems: 'center',
-    gap: 5,
+    gap: 4,
     fontSize: '0.6875rem',
     fontWeight: 600,
-    color: theme.palette.text.secondary,
+    color: theme.palette.surface.textSecondaryOnTint,
     minWidth: 0,
   },
   labelText: {
@@ -53,17 +56,18 @@ const useStyles = makeStyles()((theme) => ({
   },
   value: {
     fontSize: '1.25rem',
-    fontWeight: 800,
+    fontWeight: 600,
     lineHeight: 1.2,
-    letterSpacing: '-0.02em',
+    letterSpacing: '-0.01em',
+    color: theme.palette.text.primary,
     fontVariantNumeric: 'tabular-nums',
   },
   bar: {
     position: 'absolute',
     insetInlineStart: 0,
     bottom: 0,
-    height: 2,
-    borderRadius: 2,
+    height: 3,
+    borderRadius: 3,
     transition: 'width 400ms ease',
   },
 }));
@@ -73,7 +77,7 @@ const statuses = ['online', 'offline', 'unknown'];
 const labelKeys = {
   online: 'deviceStatusOnline',
   offline: 'deviceStatusOffline',
-  unknown: 'deviceStatusUnknown',
+  unknown: 'fleetStatsUnknown',
 };
 
 const FleetStats = ({ filter, setFilter }) => {
@@ -101,9 +105,8 @@ const FleetStats = ({ filter, setFilter }) => {
   const tileStyle = (active, color) =>
     active
       ? {
-          borderColor: alpha(color, 0.55),
-          backgroundColor: alpha(color, 0.1),
-          boxShadow: `0 0 0 1px ${alpha(color, 0.25)}, 0 6px 18px ${alpha(color, 0.18)}`,
+          borderColor: alpha(color, 0.6),
+          backgroundColor: theme.palette.background.paper,
         }
       : undefined;
 
@@ -115,9 +118,10 @@ const FleetStats = ({ filter, setFilter }) => {
         className={classes.tile}
         style={tileStyle(allActive, theme.palette.primary.main)}
         onClick={() => setFilter({ ...filter, statuses: [] })}
+        aria-pressed={allActive}
       >
         <span className={classes.label}>
-          <span className={classes.dot} style={{ background: accentGradient(theme) }} />
+          <span className={classes.dot} style={{ backgroundColor: theme.palette.primary.main }} />
           <span className={classes.labelText}>{t('deviceTitle')}</span>
         </span>
         <Typography component="span" className={classes.value}>
@@ -125,7 +129,7 @@ const FleetStats = ({ filter, setFilter }) => {
         </Typography>
         <span
           className={classes.bar}
-          style={{ width: '100%', background: accentGradient(theme, 90) }}
+          style={{ width: '100%', backgroundColor: theme.palette.primary.main }}
         />
       </ButtonBase>
       {statuses.map((status) => {
@@ -138,12 +142,10 @@ const FleetStats = ({ filter, setFilter }) => {
             style={tileStyle(filter.statuses.includes(status), color)}
             onClick={() => toggle(status)}
             title={t(labelKeys[status])}
+            aria-pressed={filter.statuses.includes(status)}
           >
             <span className={classes.label}>
-              <span
-                className={classes.dot}
-                style={{ backgroundColor: color, boxShadow: `0 0 8px ${alpha(color, 0.7)}` }}
-              />
+              <span className={classes.dot} style={{ backgroundColor: color }} />
               <span className={classes.labelText}>{t(labelKeys[status])}</span>
             </span>
             <Typography component="span" className={classes.value}>

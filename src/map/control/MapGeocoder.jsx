@@ -9,10 +9,13 @@ import {
   ListItemText,
   Skeleton,
   Box,
+  InputAdornment,
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { createRoot } from 'react-dom/client';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import { glass } from '../../common/theme/surfaces';
 import { map } from '../core/MapView';
 import { toMapCoordinates } from '../core/mapUtil';
 import { messagesActions } from '../../store';
@@ -27,17 +30,26 @@ const useStyles = makeStyles()((theme) => ({
       color: theme.palette.text.primary,
     },
   },
+  paper: {
+    ...glass(theme, 0.94),
+    borderRadius: theme.tokens.radius.xl,
+  },
   panel: {
-    width: theme.spacing(40),
+    width: theme.spacing(42),
+    maxWidth: 'calc(100vw - 32px)',
     maxHeight: theme.spacing(50),
     display: 'flex',
     flexDirection: 'column',
   },
   input: {
-    padding: theme.spacing(1),
+    padding: theme.spacing(1.5),
   },
   results: {
     overflowY: 'auto',
+    paddingBottom: theme.spacing(1),
+    '& .MuiListItemButton-root': {
+      borderRadius: theme.tokens.radius.md,
+    },
   },
 }));
 
@@ -89,6 +101,9 @@ const MapGeocoder = () => {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = cx('maplibregl-ctrl-icon', classes.button);
+        button.title = t('sharedSearch');
+        button.setAttribute('aria-label', t('sharedSearch'));
+        button.setAttribute('aria-haspopup', 'true');
         button.onclick = () => setAnchorEl(button);
         element.appendChild(button);
         iconRoot = createRoot(button);
@@ -102,7 +117,7 @@ const MapGeocoder = () => {
     };
     map.addControl(control, theme.direction === 'rtl' ? 'top-left' : 'top-right');
     return () => map.removeControl(control);
-  }, [theme.direction, classes.button, cx]);
+  }, [theme.direction, classes.button, cx, t]);
 
   const onSelect = (feature) => {
     const [minX, minY, maxX, maxY] = feature.bbox;
@@ -117,8 +132,15 @@ const MapGeocoder = () => {
       anchorEl={anchorEl}
       open={Boolean(anchorEl)}
       onClose={() => setAnchorEl(null)}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: theme.direction === 'rtl' ? 'left' : 'right',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: theme.direction === 'rtl' ? 'left' : 'right',
+      }}
+      slotProps={{ paper: { className: classes.paper } }}
     >
       <Box className={classes.panel}>
         <Box className={classes.input}>
@@ -129,6 +151,15 @@ const MapGeocoder = () => {
             placeholder={t('sharedSearch')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchRoundedIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              },
+            }}
           />
         </Box>
         <List className={classes.results} dense disablePadding>

@@ -14,9 +14,9 @@ export default defineConfig((env) => {
         configureServer: demoServer,
         transformIndexHtml: (html) =>
           html
-            .replaceAll('${title}', 'Traccar Demo')
-            .replaceAll('${description}', 'Traccar Demo')
-            .replaceAll('${colorPrimary}', '#1a237e'),
+            .replaceAll('${title}', 'viper fleet demo')
+            .replaceAll('${description}', 'viper fleet demo')
+            .replaceAll('${colorPrimary}', '#102C54'),
       },
     ],
   };

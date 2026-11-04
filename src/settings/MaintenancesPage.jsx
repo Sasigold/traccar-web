@@ -1,6 +1,6 @@
 import { useCallback, useReducer, useState } from 'react';
 import dayjs from 'dayjs';
-import { Table, TableRow, TableCell, TableHead, TableBody } from '@mui/material';
+import { TableRow, TableCell, TableHead, TableBody } from '@mui/material';
 import { useAsyncTask, useScrollToLoad, pageSize } from '../reactHelper';
 import usePositionAttributes from '../common/attributes/usePositionAttributes';
 import useAttributeUnits from '../common/util/useAttributeUnits';
@@ -11,7 +11,8 @@ import SettingsMenu from './components/SettingsMenu';
 import AddFab from './components/AddFab';
 import CollectionActions from './components/CollectionActions';
 import TableShimmer from '../common/components/TableShimmer';
-import SearchHeader from './components/SearchHeader';
+import DataTable from '../common/components/table/DataTable';
+import TableToolbar from '../common/components/table/TableToolbar';
 import useSettingsStyles from './common/useSettingsStyles';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 
@@ -67,8 +68,19 @@ const MaintenacesPage = () => {
 
   return (
     <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'sharedMaintenance']}>
-      <SearchHeader keyword={searchKeyword} setKeyword={setSearchKeyword} />
-      <Table className={classes.table}>
+      <DataTable
+        toolbar={
+          <TableToolbar
+            search={{ value: searchKeyword, onChange: setSearchKeyword }}
+            addPath="/settings/maintenance"
+          />
+        }
+        empty={!hasMore && items.length === 0}
+        emptyState={{
+          title: t(searchKeyword ? 'tableNoMatches' : 'tableEmptyTitle'),
+          description: searchKeyword ? undefined : t('tableEmptyDescription'),
+        }}
+      >
         <TableHead>
           <TableRow>
             <TableCell>{t('sharedName')}</TableCell>
@@ -99,7 +111,7 @@ const MaintenacesPage = () => {
             <TableShimmer ref={items.length > 0 ? sentinelRef : null} columns={5} endAction />
           )}
         </TableBody>
-      </Table>
+      </DataTable>
       <AddFab editPath="/settings/maintenance" />
     </PageLayout>
   );

@@ -1,0 +1,192 @@
+import { Link, useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import {
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
+} from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
+import KeyboardDoubleArrowLeftRoundedIcon from '@mui/icons-material/KeyboardDoubleArrowLeftRounded';
+import KeyboardDoubleArrowRightRoundedIcon from '@mui/icons-material/KeyboardDoubleArrowRightRounded';
+import BrandLogo, { BrandSymbol } from '../brand/BrandLogo';
+import { useTranslation } from '../LocalizationProvider';
+import useNavItems from './navItems';
+import { useShell } from './ShellContext';
+
+const useStyles = makeStyles()((theme, { collapsed }) => ({
+  root: {
+    gridRow: '1 / -1',
+    width: collapsed ? theme.dimensions.railWidthCollapsed : theme.dimensions.railWidth,
+    display: 'flex',
+    flexDirection: 'column',
+    // Navy navigation with an aqua active item (brand book page 14), in both modes.
+    backgroundColor: theme.palette.chrome.background,
+    color: theme.palette.chrome.text,
+    borderInlineEnd: `1px solid ${theme.palette.chrome.border}`,
+    transition: theme.transitions.create('width', {
+      duration: 220,
+      easing: theme.tokens.motion.easing.emphasized,
+    }),
+    overflow: 'hidden',
+    zIndex: theme.layers.rail,
+    '@media print': {
+      display: 'none',
+    },
+  },
+  brand: {
+    height: theme.dimensions.topBarHeight,
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: collapsed ? 'center' : 'flex-start',
+    paddingInline: collapsed ? 0 : theme.spacing(2.5),
+  },
+  logoImage: {
+    maxHeight: 30,
+    maxWidth: 180,
+  },
+  list: {
+    flex: 1,
+    paddingTop: theme.spacing(1.5),
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2,
+  },
+  item: {
+    flex: '0 0 auto',
+    minHeight: 44,
+    marginInline: theme.spacing(1),
+    paddingInline: collapsed ? 0 : theme.spacing(1.5),
+    justifyContent: collapsed ? 'center' : 'flex-start',
+    borderRadius: theme.tokens.radius.md,
+    color: theme.palette.chrome.text,
+    '&:hover': {
+      backgroundColor: theme.palette.chrome.backgroundHover,
+      color: theme.palette.chrome.textStrong,
+    },
+    '&.Mui-selected, &.Mui-selected:hover': {
+      backgroundColor: theme.palette.chrome.activeBackground,
+      color: theme.palette.chrome.activeText,
+      '& .MuiListItemIcon-root': {
+        color: theme.palette.chrome.activeText,
+      },
+    },
+    '&.Mui-selected::before': {
+      display: 'none',
+    },
+    '&.Mui-focusVisible': {
+      outline: `2px solid ${theme.palette.chrome.activeBackground}`,
+      outlineOffset: 2,
+    },
+  },
+  itemIcon: {
+    minWidth: collapsed ? 0 : 40,
+    justifyContent: 'center',
+    color: 'inherit',
+    '& svg': {
+      fontSize: 22,
+    },
+  },
+  label: {
+    margin: 0,
+    whiteSpace: 'nowrap',
+    opacity: collapsed ? 0 : 1,
+    width: collapsed ? 0 : 'auto',
+    transition: 'opacity 160ms ease',
+    '& .MuiListItemText-primary': {
+      fontSize: '0.9375rem',
+      fontWeight: 500,
+    },
+  },
+  footer: {
+    padding: theme.spacing(1, 1, 1.5),
+    display: 'flex',
+    justifyContent: collapsed ? 'center' : 'flex-end',
+    borderTop: `1px solid ${theme.palette.chrome.border}`,
+  },
+  collapse: {
+    color: theme.palette.chrome.text,
+    '&:hover': {
+      backgroundColor: theme.palette.chrome.backgroundHover,
+      color: theme.palette.chrome.textStrong,
+    },
+  },
+}));
+
+const NavRail = () => {
+  const { railCollapsed: collapsed, toggleRail } = useShell();
+  const { classes, theme } = useStyles({ collapsed });
+  const t = useTranslation();
+  const location = useLocation();
+  const items = useNavItems();
+
+  const logo = useSelector((state) => state.session.server.attributes?.logo);
+
+  const rtl = theme.direction === 'rtl';
+  const tooltipPlacement = rtl ? 'left' : 'right';
+  const pointsStart = !collapsed;
+  const CollapseIcon =
+    pointsStart !== rtl ? KeyboardDoubleArrowLeftRoundedIcon : KeyboardDoubleArrowRightRoundedIcon;
+
+  return (
+    <nav className={`${classes.root} app-rail`} aria-label={t('shellNavigation')}>
+      <div className={classes.brand}>
+        {collapsed ? (
+          <BrandSymbol size={30} color={theme.palette.brand.aqua} title="viper fleet" />
+        ) : logo ? (
+          <img className={classes.logoImage} src={logo} alt="" />
+        ) : (
+          <BrandLogo variant="reverse" height={34} />
+        )}
+      </div>
+      <List
+        component="nav"
+        aria-label={t('shellNavigation')}
+        className={classes.list}
+        disablePadding
+      >
+        {items.map((item) => {
+          const Icon = item.icon;
+          const selected = item.match(location.pathname);
+          const button = (
+            <ListItemButton
+              key={item.key}
+              component={Link}
+              to={item.path}
+              selected={selected}
+              aria-current={selected ? 'page' : undefined}
+              className={classes.item}
+            >
+              <ListItemIcon className={classes.itemIcon}>
+                <Icon />
+              </ListItemIcon>
+              <ListItemText primary={t(item.titleKey)} className={classes.label} />
+            </ListItemButton>
+          );
+          return collapsed ? (
+            <Tooltip key={item.key} title={t(item.titleKey)} placement={tooltipPlacement}>
+              {button}
+            </Tooltip>
+          ) : (
+            button
+          );
+        })}
+      </List>
+      <div className={classes.footer}>
+        <Tooltip
+          title={collapsed ? t('shellExpandMenu') : t('shellCollapseMenu')}
+          placement={tooltipPlacement}
+        >
+          <IconButton className={classes.collapse} onClick={toggleRail} size="small">
+            <CollapseIcon />
+          </IconButton>
+        </Tooltip>
+      </div>
+    </nav>
+  );
+};
+
+export default NavRail;

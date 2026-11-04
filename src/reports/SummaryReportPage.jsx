@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -6,7 +6,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Table,
   TableHead,
   TableRow,
   TableBody,
@@ -27,9 +26,15 @@ import PageLayout from '../common/components/PageLayout';
 import ReportsMenu from './components/ReportsMenu';
 import usePersistedState from '../common/util/usePersistedState';
 import ColumnSelect from './components/ColumnSelect';
+import ReportKpis from './components/ReportKpis';
+import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
+import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded';
+import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
+import LocalGasStationRoundedIcon from '@mui/icons-material/LocalGasStationRounded';
 import { useCatch, useCatchCallback } from '../reactHelper';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
+import DataTable from '../common/components/table/DataTable';
 import scheduleReport from './common/scheduleReport';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import exportExcel from '../common/util/exportExcel';
@@ -117,6 +122,42 @@ const SummaryReportPage = () => {
     navigate('/reports/scheduled');
   });
 
+  const kpis = useMemo(() => {
+    if (!items.length) {
+      return [];
+    }
+    const sum = (key) => items.reduce((total, item) => total + (item[key] || 0), 0);
+    const maxSpeed = Math.max(0, ...items.map((item) => item.maxSpeed || 0));
+    const engineHours = sum('engineHours');
+    const spentFuel = sum('spentFuel');
+    return [
+      {
+        key: 'distance',
+        label: `${t('sharedTotal')} · ${t('sharedDistance')}`,
+        value: formatDistance(sum('distance'), distanceUnit, t),
+        icon: <RouteRoundedIcon />,
+      },
+      {
+        key: 'maxSpeed',
+        label: t('reportMaximumSpeed'),
+        value: maxSpeed > 0 ? formatSpeed(maxSpeed, speedUnit, t) : null,
+        icon: <SpeedRoundedIcon />,
+      },
+      {
+        key: 'engineHours',
+        label: t('reportEngineHours'),
+        value: engineHours > 0 ? formatNumericHours(engineHours, t) : null,
+        icon: <TimerRoundedIcon />,
+      },
+      {
+        key: 'spentFuel',
+        label: t('reportSpentFuel'),
+        value: spentFuel > 0 ? formatVolume(spentFuel, volumeUnit, t) : null,
+        icon: <LocalGasStationRoundedIcon />,
+      },
+    ];
+  }, [items, distanceUnit, speedUnit, volumeUnit, t]);
+
   const formatValue = (item, key) => {
     const value = item[key];
     switch (key) {
@@ -155,8 +196,9 @@ const SummaryReportPage = () => {
         >
           <div className={classes.filterItem}>
             <FormControl fullWidth>
-              <InputLabel>{t('sharedType')}</InputLabel>
+              <InputLabel id="summary-report-page-shared-type-label">{t('sharedType')}</InputLabel>
               <Select
+                labelId="summary-report-page-shared-type-label"
                 label={t('sharedType')}
                 value={daily}
                 onChange={(e) =>
@@ -173,7 +215,8 @@ const SummaryReportPage = () => {
           <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
         </ReportFilter>
       </div>
-      <Table>
+      {!loading && <ReportKpis items={kpis} />}
+      <DataTable variant="flush">
         <TableHead>
           <TableRow>
             <TableCell>{t('sharedDevice')}</TableCell>
@@ -196,7 +239,7 @@ const SummaryReportPage = () => {
             <TableShimmer columns={columns.length + 1} />
           )}
         </TableBody>
-      </Table>
+      </DataTable>
     </PageLayout>
   );
 };

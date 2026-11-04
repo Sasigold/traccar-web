@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  useMediaQuery,
   Select,
   MenuItem,
   FormControl,
@@ -16,7 +15,7 @@ import CountryFlag from 'react-country-flag';
 import { makeStyles } from 'tss-react/mui';
 import VpnLockIcon from '@mui/icons-material/VpnLock';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
-import { useTheme } from '@mui/material/styles';
+import { ctaFill } from '../common/theme/surfaces';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { sessionActions } from '../store';
@@ -29,7 +28,6 @@ import {
   nativeEnvironment,
   nativePostMessage,
 } from '../common/components/NativeInterface';
-import LogoImage from './LogoImage';
 import { useCatch } from '../reactHelper';
 import ServerQrCodeDialog from '../common/components/ServerQrCodeDialog';
 import PasswordField from '../common/components/PasswordField';
@@ -38,10 +36,16 @@ const useStyles = makeStyles()((theme) => ({
   options: {
     position: 'fixed',
     top: theme.spacing(2),
-    right: theme.spacing(2),
+    insetInlineEnd: theme.spacing(2),
     display: 'flex',
     flexDirection: 'row',
+    alignItems: 'center',
     gap: theme.spacing(1),
+    zIndex: 2,
+    '& .MuiOutlinedInput-root': {
+      borderRadius: theme.tokens.radius.pill,
+      backgroundColor: theme.palette.background.paper,
+    },
   },
   container: {
     display: 'flex',
@@ -62,16 +66,22 @@ const useStyles = makeStyles()((theme) => ({
     cursor: 'pointer',
   },
   flag: {
-    marginRight: theme.spacing(1),
+    marginInlineEnd: theme.spacing(1),
   },
   heading: {
     marginBottom: theme.spacing(1),
   },
   title: {
-    fontWeight: 800,
+    fontWeight: 600,
+    letterSpacing: '-0.02em',
   },
   subtitle: {
     color: theme.palette.text.secondary,
+  },
+  cta: {
+    height: 48,
+    fontSize: '0.9375rem',
+    ...ctaFill(theme),
   },
 }));
 
@@ -79,7 +89,6 @@ const LoginPage = () => {
   const { classes } = useStyles();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const theme = useTheme();
   const t = useTranslation();
 
   const { languages, language, setLocalLanguage } = useLocalization();
@@ -180,7 +189,11 @@ const LoginPage = () => {
     <LoginLayout>
       <div className={classes.options}>
         {nativeEnvironment && changeEnabled && (
-          <IconButton color="primary" onClick={() => navigate('/change-server')}>
+          <IconButton
+            color="primary"
+            onClick={() => navigate('/change-server')}
+            aria-label={t('settingsServer')}
+          >
             <Tooltip
               title={`${t('settingsServer')}: ${window.location.hostname}`}
               open={showServerTooltip}
@@ -191,17 +204,25 @@ const LoginPage = () => {
           </IconButton>
         )}
         {!nativeEnvironment && (
-          <IconButton color="primary" onClick={() => setShowQr(true)}>
+          <IconButton
+            color="primary"
+            onClick={() => setShowQr(true)}
+            aria-label={t('sharedQrCode')}
+          >
             <QrCode2Icon />
           </IconButton>
         )}
         {languageEnabled && (
           <FormControl>
-            <Select value={language} onChange={(e) => setLocalLanguage(e.target.value)}>
+            <Select
+              value={language}
+              onChange={(e) => setLocalLanguage(e.target.value)}
+              aria-label={t('loginLanguage')}
+            >
               {languageList.map((it) => (
                 <MenuItem key={it.code} value={it.code}>
                   <span className={classes.flag}>
-                    <CountryFlag countryCode={it.country} svg />
+                    <CountryFlag countryCode={it.country} svg alt="" aria-hidden="true" />
                   </span>
                   {it.name}
                 </MenuItem>
@@ -211,19 +232,14 @@ const LoginPage = () => {
         )}
       </div>
       <div className={classes.container}>
-        {useMediaQuery(theme.breakpoints.down('lg')) && (
-          <LogoImage color={theme.palette.primary.main} />
-        )}
-        {!useMediaQuery(theme.breakpoints.down('lg')) && (
-          <div className={classes.heading}>
-            <Typography variant="h5" className={classes.title}>
-              {t('loginTitle')}
-            </Typography>
-            <Typography variant="body2" className={classes.subtitle}>
-              הזינו את פרטי המשתמש כדי להיכנס למערכת
-            </Typography>
-          </div>
-        )}
+        <div className={classes.heading}>
+          <Typography variant="h4" className={classes.title}>
+            {t('loginTitle')}
+          </Typography>
+          <Typography variant="body2" className={classes.subtitle}>
+            {t('loginSubtitle')}
+          </Typography>
+        </div>
         {!!announcement && !announcementShown && (
           <Alert severity="info" onClose={() => setAnnouncementShown(true)}>
             {announcement}
@@ -240,7 +256,7 @@ const LoginPage = () => {
               autoComplete="email"
               autoFocus={!email}
               onChange={(e) => setEmail(e.target.value)}
-              helperText={failed && 'Invalid username or password'}
+              helperText={failed && t('loginFailed')}
             />
             <PasswordField
               required
@@ -267,7 +283,9 @@ const LoginPage = () => {
               onClick={handlePasswordLogin}
               type="submit"
               variant="contained"
-              color="secondary"
+              color="primary"
+              className={classes.cta}
+              loading={submitting}
               disabled={submitting || !email || !password || (codeEnabled && !code)}
             >
               {t('loginLogin')}
@@ -277,8 +295,9 @@ const LoginPage = () => {
         {openIdEnabled && (
           <Button
             onClick={() => handleOpenIdLogin()}
-            variant="contained"
-            color="secondary"
+            variant="outlined"
+            color="primary"
+            size="large"
             disabled={submitting}
           >
             {t('loginOpenId')}
@@ -290,8 +309,8 @@ const LoginPage = () => {
               <Link
                 onClick={() => navigate('/register')}
                 className={classes.link}
-                underline="none"
-                variant="caption"
+                underline="hover"
+                variant="body2"
               >
                 {t('loginRegister')}
               </Link>
@@ -300,8 +319,8 @@ const LoginPage = () => {
               <Link
                 onClick={() => navigate('/reset-password')}
                 className={classes.link}
-                underline="none"
-                variant="caption"
+                underline="hover"
+                variant="body2"
               >
                 {t('loginReset')}
               </Link>

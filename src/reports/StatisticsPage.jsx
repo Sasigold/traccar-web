@@ -1,13 +1,5 @@
 import { useState } from 'react';
-import {
-  Table,
-  TableRow,
-  TableCell,
-  TableHead,
-  TableBody,
-  MenuItem,
-  TextField,
-} from '@mui/material';
+import { TableRow, TableCell, TableHead, TableBody, MenuItem, TextField } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { formatTime } from '../common/util/formatter';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -19,6 +11,7 @@ import ColumnSelect from './components/ColumnSelect';
 import { useCatchCallback } from '../reactHelper';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
+import DataTable from '../common/components/table/DataTable';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 
 const columnsArray = [
@@ -89,7 +82,7 @@ const StatisticsPage = () => {
           <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
         </ReportFilter>
       </div>
-      <Table>
+      <DataTable variant="flush">
         <TableHead>
           <TableRow>
             {columns.map((key) => (
@@ -112,7 +105,7 @@ const StatisticsPage = () => {
             <TableShimmer columns={columns.length} />
           )}
         </TableBody>
-      </Table>
+      </DataTable>
     </PageLayout>
   );
 };

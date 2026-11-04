@@ -2,17 +2,17 @@ import { useCallback, useReducer, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
-  Table,
   TableRow,
   TableCell,
   TableHead,
   TableBody,
-  Button,
-  TableFooter,
   FormControlLabel,
   Switch,
+  Typography,
 } from '@mui/material';
-import LinkIcon from '@mui/icons-material/Link';
+import { makeStyles } from 'tss-react/mui';
+import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
+import DnsRoundedIcon from '@mui/icons-material/DnsRounded';
 import { useTheme } from '@mui/material/styles';
 import { useAsyncTask, useScrollToLoad, pageSize } from '../reactHelper';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -21,7 +21,8 @@ import SettingsMenu from './components/SettingsMenu';
 import AddFab from './components/AddFab';
 import CollectionActions from './components/CollectionActions';
 import TableShimmer from '../common/components/TableShimmer';
-import SearchHeader from './components/SearchHeader';
+import DataTable from '../common/components/table/DataTable';
+import TableToolbar from '../common/components/table/TableToolbar';
 import { formatAddress, formatStatus, formatTime } from '../common/util/formatter';
 import { useDeviceReadonly, useManager } from '../common/util/permissions';
 import { usePreference } from '../common/util/preferences';
@@ -31,9 +32,39 @@ import usePersistedState from '../common/util/usePersistedState';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import AddressValue from '../common/components/AddressValue';
 import exportExcel from '../common/util/exportExcel';
+import { statusColor } from '../common/theme/surfaces';
+import DeviceTile from '../common/components/brand/DeviceTile';
+
+const useStyles = makeStyles()((theme) => ({
+  name: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1.5),
+    fontWeight: 600,
+  },
+  status: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.75),
+    whiteSpace: 'nowrap',
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: '50%',
+  },
+  muted: {
+    color: theme.palette.text.secondary,
+  },
+  mono: {
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+    fontSize: '0.8125rem',
+  },
+}));
 
 const DevicesPage = () => {
-  const { classes } = useSettingsStyles();
+  const { classes: settingsClasses } = useSettingsStyles();
+  const { classes } = useStyles();
   const theme = useTheme();
   const navigate = useNavigate();
   const t = useTranslation();
@@ -100,17 +131,53 @@ const DevicesPage = () => {
   const actionConnections = {
     key: 'connections',
     title: t('sharedConnections'),
-    icon: <LinkIcon fontSize="small" />,
+    icon: <LinkRoundedIcon fontSize="small" />,
     handler: (deviceId) => navigate(`/settings/device/${deviceId}/connections`),
   };
 
+  const columnCount = manager ? 10 : 9;
+
   return (
-    <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'deviceTitle']}>
-      <SearchHeader keyword={searchKeyword} setKeyword={setSearchKeyword} />
-      <Table className={classes.table}>
+    <PageLayout
+      menu={<SettingsMenu />}
+      breadcrumbs={['settingsTitle', 'deviceTitle']}
+      description={t('settingsDevicesDescription')}
+    >
+      <DataTable
+        toolbar={
+          <TableToolbar
+            search={{ value: searchKeyword, onChange: setSearchKeyword }}
+            count={items.length}
+            addPath="/settings/device"
+            addDisabled={deviceReadonly}
+            exportHandler={handleExport}
+            actions={
+              manager && (
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={showAll}
+                      onChange={(e) => setShowAll(e.target.checked)}
+                      size="small"
+                    />
+                  }
+                  label={t('notificationAlways')}
+                />
+              )
+            }
+          />
+        }
+        empty={!hasMore && items.length === 0}
+        emptyState={{
+          icon: <DnsRoundedIcon />,
+          title: t(searchKeyword ? 'tableNoMatches' : 'deviceRegisterFirst'),
+          description: searchKeyword ? undefined : t('settingsDevicesDescription'),
+        }}
+      >
         <TableHead>
           <TableRow>
             <TableCell>{t('sharedName')}</TableCell>
+            <TableCell>{t('deviceStatus')}</TableCell>
             <TableCell>{t('deviceIdentifier')}</TableCell>
             <TableCell>{t('groupParent')}</TableCell>
             <TableCell>{t('sharedPhone')}</TableCell>
@@ -119,78 +186,74 @@ const DevicesPage = () => {
             <TableCell>{t('userExpirationTime')}</TableCell>
             <TableCell>{t('positionAddress')}</TableCell>
             {manager && <TableCell>{t('settingsUsers')}</TableCell>}
-            <TableCell className={classes.columnAction} />
+            <TableCell className={settingsClasses.columnAction} />
           </TableRow>
         </TableHead>
         <TableBody>
-          {items.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell>{item.name}</TableCell>
-              <TableCell>{item.uniqueId}</TableCell>
-              <TableCell>{item.groupId ? groups[item.groupId]?.name : null}</TableCell>
-              <TableCell>{item.phone}</TableCell>
-              <TableCell>{item.model}</TableCell>
-              <TableCell>{item.contact}</TableCell>
-              <TableCell>{formatTime(item.expirationTime, 'date')}</TableCell>
-              <TableCell>
-                {positions[item.id] && (
-                  <AddressValue
-                    latitude={positions[item.id].latitude}
-                    longitude={positions[item.id].longitude}
-                    originalAddress={positions[item.id]?.address}
-                  />
-                )}
-              </TableCell>
-              {manager && (
+          {items.map((item) => {
+            const color = statusColor(theme, item.status);
+            return (
+              <TableRow key={item.id} hover>
                 <TableCell>
-                  <DeviceUsersValue deviceId={item.id} />
+                  <span className={classes.name}>
+                    <DeviceTile category={item.category} status={item.status} size={32} />
+                    {item.name}
+                  </span>
                 </TableCell>
-              )}
-              <TableCell className={classes.columnAction} padding="none">
-                <CollectionActions
-                  itemId={item.id}
-                  editPath="/settings/device"
-                  endpoint="devices"
-                  onReload={reload}
-                  customActions={[actionConnections]}
-                  readonly={deviceReadonly}
-                />
-              </TableCell>
-            </TableRow>
-          ))}
+                <TableCell>
+                  <span className={classes.status}>
+                    <span className={classes.dot} style={{ backgroundColor: color }} />
+                    {formatStatus(item.status, t)}
+                    {item.lastUpdate && (
+                      <Typography variant="caption" className={classes.muted}>
+                        · {formatTime(item.lastUpdate, 'minutes')}
+                      </Typography>
+                    )}
+                  </span>
+                </TableCell>
+                <TableCell className={classes.mono}>{item.uniqueId}</TableCell>
+                <TableCell>{item.groupId ? groups[item.groupId]?.name : null}</TableCell>
+                <TableCell>{item.phone}</TableCell>
+                <TableCell>{item.model}</TableCell>
+                <TableCell>{item.contact}</TableCell>
+                <TableCell>{formatTime(item.expirationTime, 'date')}</TableCell>
+                <TableCell>
+                  {positions[item.id] && (
+                    <AddressValue
+                      latitude={positions[item.id].latitude}
+                      longitude={positions[item.id].longitude}
+                      originalAddress={positions[item.id]?.address}
+                    />
+                  )}
+                </TableCell>
+                {manager && (
+                  <TableCell>
+                    <DeviceUsersValue deviceId={item.id} />
+                  </TableCell>
+                )}
+                <TableCell className={settingsClasses.columnAction} padding="none">
+                  <CollectionActions
+                    itemId={item.id}
+                    editPath="/settings/device"
+                    endpoint="devices"
+                    onReload={reload}
+                    customActions={[actionConnections]}
+                    readonly={deviceReadonly}
+                  />
+                </TableCell>
+              </TableRow>
+            );
+          })}
           {hasMore && (
             <TableShimmer
               ref={items.length > 0 ? sentinelRef : null}
-              columns={manager ? 9 : 8}
+              columns={columnCount}
               endAction
             />
           )}
         </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TableCell>
-              <Button onClick={handleExport} variant="text">
-                {t('reportExport')}
-              </Button>
-            </TableCell>
-            <TableCell colSpan={manager ? 9 : 8} align="right">
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={showAll}
-                    onChange={(e) => setShowAll(e.target.checked)}
-                    size="small"
-                  />
-                }
-                label={t('notificationAlways')}
-                labelPlacement="start"
-                disabled={!manager}
-              />
-            </TableCell>
-          </TableRow>
-        </TableFooter>
-      </Table>
-      <AddFab editPath="/settings/device" />
+      </DataTable>
+      <AddFab editPath="/settings/device" disabled={deviceReadonly} />
     </PageLayout>
   );
 };

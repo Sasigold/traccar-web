@@ -60,7 +60,15 @@ const MapMarkers = ({ markers, showTitles, cluster, direction, onClick, disabled
             'icon-allow-overlap': true,
             'symbol-sort-key': ['get', 'id'],
           },
-      ...(showTitles ? { paint: { 'text-halo-color': 'white', 'text-halo-width': 1 } } : {}),
+      ...(showTitles
+        ? {
+            paint: {
+              'text-color': theme.palette.brand.ink,
+              'text-halo-color': theme.palette.brand.white,
+              'text-halo-width': 1.2,
+            },
+          }
+        : {}),
       ...(onClick
         ? { on: { mouseenter: onMouseEnter, mouseleave: onMouseLeave, click: onMarkerClick } }
         : {}),
@@ -95,6 +103,9 @@ const MapMarkers = ({ markers, showTitles, cluster, direction, onClick, disabled
         'text-font': findFonts(map),
         'text-size': 14,
         'text-allow-overlap': true,
+      },
+      paint: {
+        'text-color': theme.palette.brand.paper,
       },
       on: { mouseenter: onMouseEnter, mouseleave: onMouseLeave, click: onClusterClick },
     });

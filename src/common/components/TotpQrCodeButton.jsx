@@ -3,8 +3,10 @@ import { useSelector } from 'react-redux';
 import { IconButton } from '@mui/material';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import QrCodeDialog from './QrCodeDialog';
+import { useTranslation } from './LocalizationProvider';
 
 const TotpQrCodeButton = ({ email, totpKey }) => {
+  const t = useTranslation();
   const [open, setOpen] = useState(false);
   const title = useSelector((state) => state.session.server.attributes.title);
 
@@ -19,7 +21,12 @@ const TotpQrCodeButton = ({ email, totpKey }) => {
 
   return (
     <>
-      <IconButton size="small" edge="end" onClick={() => setOpen(true)}>
+      <IconButton
+        size="small"
+        edge="end"
+        onClick={() => setOpen(true)}
+        aria-label={t('sharedQrCode')}
+      >
         <QrCode2Icon fontSize="small" />
       </IconButton>
       <QrCodeDialog open={open} onClose={() => setOpen(false)} value={uri} />

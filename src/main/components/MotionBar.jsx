@@ -4,15 +4,18 @@ import { useSelector } from 'react-redux';
 const useStyles = makeStyles()((theme) => ({
   root: {
     display: 'inline-flex',
-    width: theme.spacing(16),
-    height: theme.spacing(1),
+    width: theme.spacing(14),
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
     backgroundColor: theme.palette.action.disabledBackground,
+    verticalAlign: 'middle',
   },
   moving: {
-    backgroundColor: theme.palette.success.light,
+    backgroundColor: theme.palette.success.main,
   },
   stopped: {
-    backgroundColor: theme.palette.error.light,
+    backgroundColor: theme.palette.error.main,
   },
 }));
 

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import MapView from '../map/core/MapView';
 import MapSelectedDevice from '../map/main/MapSelectedDevice';
 import MapAccuracy from '../map/main/MapAccuracy';
@@ -17,16 +17,13 @@ import MapOverlay from '../map/overlay/MapOverlay';
 import MapGeocoder from '../map/control/MapGeocoder';
 import MapScale from '../map/MapScale';
 import MapRuler from '../map/control/MapRuler';
-import MapNotification from '../map/control/MapNotification';
 import useFeatures from '../common/util/useFeatures';
 
-const MainMap = ({ filteredPositions, selectedPosition, onEventsClick }) => {
+const MainMap = ({ filteredPositions, selectedPosition }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
 
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
-
-  const eventsAvailable = useSelector((state) => !!state.events.items.length);
 
   const features = useFeatures();
 
@@ -57,17 +54,12 @@ const MainMap = ({ filteredPositions, selectedPosition, onEventsClick }) => {
         <MapDefaultCamera filteredPositions={filteredPositions} />
         <MapSelectedDevice />
         <MapRuler positions={filteredPositions} onActiveChange={setRulerActive} />
-        {!features.disableEvents && (
-          <MapNotification enabled={eventsAvailable} onClick={onEventsClick} />
-        )}
       </MapView>
       <MapScale />
       <MapCurrentLocation />
       <MapGeocoder />
       {desktop && !features.disableDeviceList && (
-        <MapPadding
-          start={parseInt(theme.dimensions.drawerWidthDesktop, 10) + parseInt(theme.spacing(2), 10)}
-        />
+        <MapPadding start={theme.dimensions.devicePanelWidth + 2 * theme.dimensions.panelGap} />
       )}
     </>
   );

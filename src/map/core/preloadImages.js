@@ -1,6 +1,5 @@
-import { grey } from '@mui/material/colors';
-import { createTheme } from '@mui/material';
 import { loadImage, prepareIcon } from './mapUtil';
+import { brandColors, slate, status } from '../../common/theme/tokens';
 
 import directionSvg from '../../resources/images/direction.svg';
 import backgroundSvg from '../../resources/images/background.svg';
@@ -112,11 +111,14 @@ export const eventIconKey = (type) => (eventIcons.hasOwnProperty(type) ? type : 
 
 export const mapImages = {};
 
-const theme = createTheme({
-  palette: {
-    neutral: { main: grey[500] },
-  },
-});
+// Glyph tint on the navy marker disc, per device status: online vehicles are
+// aqua on navy (brand book page 14), offline red, unknown slate, info ice.
+const markerColors = {
+  info: brandColors.ice,
+  success: brandColors.aqua,
+  error: status.dark.error,
+  neutral: slate[300],
+};
 
 export default async () => {
   const background = await loadImage(backgroundSvg);
@@ -128,7 +130,7 @@ export default async () => {
       ['info', 'success', 'error', 'neutral'].forEach((color) => {
         results.push(
           loadImage(mapIcons[key]).then((icon) => {
-            mapImages[`${key}-${color}`] = prepareIcon(background, icon, theme.palette[color].main);
+            mapImages[`${key}-${color}`] = prepareIcon(background, icon, markerColors[color]);
           }),
         );
       });
@@ -138,7 +140,7 @@ export default async () => {
   await Promise.all(
     Object.keys(eventIcons).map((key) =>
       loadImage(eventIcons[key]).then((icon) => {
-        mapImages[key] = prepareIcon(background, icon, theme.palette.neutral.main);
+        mapImages[key] = prepareIcon(background, icon, markerColors.neutral);
       }),
     ),
   );

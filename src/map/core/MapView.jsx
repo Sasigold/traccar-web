@@ -150,16 +150,14 @@ const MapView = ({ children }) => {
   const controlVariables = useMemo(() => {
     const dark = theme.palette.mode === 'dark';
     return {
-      '--map-ctrl-bg': alpha(theme.palette.background.paper, 0.82),
-      '--map-ctrl-border': dark ? alpha('#ffffff', 0.08) : alpha('#ffffff', 0.7),
-      '--map-ctrl-divider': theme.palette.divider,
+      '--map-ctrl-bg': alpha(theme.palette.background.paper, 0.88),
+      '--map-ctrl-border': theme.palette.surface.border,
+      '--map-ctrl-divider': theme.palette.surface.border,
       '--map-ctrl-hover': alpha(theme.palette.primary.main, 0.1),
       '--map-ctrl-fg': theme.palette.text.primary,
       '--map-ctrl-accent': theme.palette.primary.main,
       '--map-ctrl-icon-filter': dark ? 'invert(1) brightness(1.1)' : 'none',
-      '--map-ctrl-shadow': dark
-        ? `0 14px 36px ${alpha('#000000', 0.5)}`
-        : `0 14px 36px ${alpha('#0f172a', 0.14)}`,
+      '--map-ctrl-shadow': theme.shadows[3],
     };
   }, [theme]);
 

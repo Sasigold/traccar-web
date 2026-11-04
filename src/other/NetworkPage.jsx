@@ -1,23 +1,12 @@
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
-
-import {
-  Typography,
-  Container,
-  Paper,
-  AppBar,
-  Toolbar,
-  IconButton,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-} from '@mui/material';
+import { useParams } from 'react-router-dom';
+import { TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import { useNavigate, useParams } from 'react-router-dom';
 import { useAsyncTask } from '../reactHelper';
-import BackIcon from '../common/components/BackIcon';
+import PageHeader from '../common/components/shell/PageHeader';
+import DataTable from '../common/components/table/DataTable';
+import { useTranslation } from '../common/components/LocalizationProvider';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 
 const useStyles = makeStyles()((theme) => ({
@@ -27,18 +16,24 @@ const useStyles = makeStyles()((theme) => ({
     flexDirection: 'column',
   },
   content: {
+    flex: 1,
+    minHeight: 0,
     overflow: 'auto',
-    paddingTop: theme.spacing(2),
-    paddingBottom: theme.spacing(2),
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(2),
+  },
+  table: {
+    maxWidth: 960,
+    width: '100%',
+    marginInline: 'auto',
+    flex: 'none',
   },
 }));
 
 const NetworkPage = () => {
   const { classes } = useStyles();
-  const navigate = useNavigate();
+  const t = useTranslation();
 
   const { positionId } = useParams();
 
@@ -67,61 +62,57 @@ const NetworkPage = () => {
     return null;
   });
 
+  const cells = item.network?.cellTowers || [];
+  const wifi = item.network?.wifiAccessPoints || [];
+
   return (
     <div className={classes.root}>
-      <AppBar position="sticky" color="inherit">
-        <Toolbar>
-          <IconButton color="inherit" edge="start" sx={{ mr: 2 }} onClick={() => navigate(-1)}>
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6">{deviceName}</Typography>
-        </Toolbar>
-      </AppBar>
+      <PageHeader back title={deviceName || t('positionNetwork')} />
       <div className={classes.content}>
-        <Container maxWidth="sm">
-          <Paper>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>MCC</TableCell>
-                  <TableCell>MNC</TableCell>
-                  <TableCell>LAC</TableCell>
-                  <TableCell>CID</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {(item.network?.cellTowers || []).map((cell) => (
-                  <TableRow key={cell.cellId}>
-                    <TableCell>{cell.mobileCountryCode}</TableCell>
-                    <TableCell>{cell.mobileNetworkCode}</TableCell>
-                    <TableCell>{cell.locationAreaCode}</TableCell>
-                    <TableCell>{cell.cellId}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Paper>
-        </Container>
-        <Container maxWidth="sm">
-          <Paper>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>MAC</TableCell>
-                  <TableCell>RSSI</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {(item.network?.wifiAccessPoints || []).map((wifi) => (
-                  <TableRow key={wifi.macAddress}>
-                    <TableCell>{wifi.macAddress}</TableCell>
-                    <TableCell>{wifi.signalStrength}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Paper>
-        </Container>
+        <DataTable
+          className={classes.table}
+          empty={cells.length === 0}
+          emptyState={{ title: t('sharedNoData') }}
+        >
+          <TableHead>
+            <TableRow>
+              <TableCell>MCC</TableCell>
+              <TableCell>MNC</TableCell>
+              <TableCell>LAC</TableCell>
+              <TableCell>CID</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {cells.map((cell) => (
+              <TableRow key={cell.cellId} hover>
+                <TableCell>{cell.mobileCountryCode}</TableCell>
+                <TableCell>{cell.mobileNetworkCode}</TableCell>
+                <TableCell>{cell.locationAreaCode}</TableCell>
+                <TableCell>{cell.cellId}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </DataTable>
+        <DataTable
+          className={classes.table}
+          empty={wifi.length === 0}
+          emptyState={{ title: t('sharedNoData') }}
+        >
+          <TableHead>
+            <TableRow>
+              <TableCell>MAC</TableCell>
+              <TableCell>RSSI</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {wifi.map((point) => (
+              <TableRow key={point.macAddress} hover>
+                <TableCell>{point.macAddress}</TableCell>
+                <TableCell>{point.signalStrength}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </DataTable>
       </div>
     </div>
   );

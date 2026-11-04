@@ -1,8 +1,7 @@
 import { useCallback, useState } from 'react';
 
-import { Typography, AppBar, Toolbar, IconButton } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useAsyncTask } from '../reactHelper';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import MapView from '../map/core/MapView';
@@ -10,9 +9,9 @@ import MapCamera from '../map/MapCamera';
 import MapPositionMarkers from '../map/MapPositionMarkers';
 import MapGeofence from '../map/MapGeofence';
 import StatusCard from '../common/components/StatusCard';
-import { formatNotificationTitle } from '../common/util/formatter';
+import { formatNotificationTitle, formatTime } from '../common/util/formatter';
 import MapScale from '../map/MapScale';
-import BackIcon from '../common/components/BackIcon';
+import PageHeader from '../common/components/shell/PageHeader';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 
 const useStyles = makeStyles()(() => ({
@@ -21,9 +20,6 @@ const useStyles = makeStyles()(() => ({
     display: 'flex',
     flexDirection: 'column',
   },
-  toolbar: {
-    zIndex: 1,
-  },
   mapContainer: {
     flexGrow: 1,
   },
@@ -31,7 +27,6 @@ const useStyles = makeStyles()(() => ({
 
 const EventPage = () => {
   const { classes } = useStyles();
-  const navigate = useNavigate();
   const t = useTranslation();
 
   const { id } = useParams();
@@ -80,14 +75,12 @@ const EventPage = () => {
 
   return (
     <div className={classes.root}>
-      <AppBar color="inherit" position="static" className={classes.toolbar}>
-        <Toolbar>
-          <IconButton color="inherit" edge="start" sx={{ mr: 2 }} onClick={() => navigate('/')}>
-            <BackIcon />
-          </IconButton>
-          <Typography variant="h6">{event && formatType(event)}</Typography>
-        </Toolbar>
-      </AppBar>
+      <PageHeader
+        back
+        backTo="/"
+        title={event ? formatType(event) : ''}
+        description={event ? formatTime(event.eventTime, 'seconds') : undefined}
+      />
       <div className={classes.mapContainer}>
         <MapView>
           <MapGeofence />

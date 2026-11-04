@@ -3,7 +3,6 @@ import { makeStyles } from 'tss-react/mui';
 import { keyframes } from 'tss-react';
 import { alpha } from '@mui/material/styles';
 import {
-  IconButton,
   Tooltip,
   Avatar,
   ListItemAvatar,
@@ -17,7 +16,7 @@ import Battery60Icon from '@mui/icons-material/Battery60';
 import BatteryCharging60Icon from '@mui/icons-material/BatteryCharging60';
 import Battery20Icon from '@mui/icons-material/Battery20';
 import BatteryCharging20Icon from '@mui/icons-material/BatteryCharging20';
-import ErrorIcon from '@mui/icons-material/Error';
+import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { devicesActions } from '../store';
@@ -25,6 +24,7 @@ import {
   formatAlarm,
   formatBoolean,
   formatPercentage,
+  formatSpeed,
   formatStatus,
   getStatusColor,
 } from '../common/util/formatter';
@@ -36,7 +36,7 @@ import { useAttributePreference } from '../common/util/preferences';
 import GeofencesValue from '../common/components/GeofencesValue';
 import DriverValue from '../common/components/DriverValue';
 import MotionBar from './components/MotionBar';
-import { accentGradient, statusColor } from '../common/theme/glass';
+import { brandTile, statusColor } from '../common/theme/surfaces';
 
 dayjs.extend(relativeTime);
 
@@ -49,42 +49,42 @@ const useStyles = makeStyles()((theme) => ({
   row: {
     height: 64,
     marginBlock: 4,
-    gap: theme.spacing(0.5),
+    marginInline: theme.spacing(1),
+    paddingInline: theme.spacing(1.25),
+    gap: theme.spacing(1),
+    borderRadius: theme.tokens.radius.lg,
     border: '1px solid transparent',
-    transition: 'background-color 160ms ease, border-color 160ms ease',
+    transition: 'background-color 140ms ease, border-color 140ms ease',
     '&:hover': {
-      backgroundColor: alpha(theme.palette.primary.main, 0.06),
-      borderColor: alpha(theme.palette.primary.main, 0.12),
+      backgroundColor: alpha(theme.palette.text.primary, 0.04),
+    },
+    '&::before': {
+      display: 'none',
     },
   },
   avatarWrapper: {
-    minWidth: 52,
+    minWidth: 0,
   },
   avatarBox: {
     position: 'relative',
     display: 'inline-flex',
   },
+  // Navy tile with an aqua glyph: the app icon, repeated per vehicle.
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    background: accentGradient(theme),
-    boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.28)}, inset 0 1px 0 ${alpha('#ffffff', 0.25)}`,
-    ...(theme.palette.mode === 'dark' && {
-      background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.38)} 0%, ${alpha(theme.palette.info.main, 0.22)} 100%)`,
-      border: `1px solid ${alpha(theme.palette.primary.main, 0.45)}`,
-      boxShadow: `0 0 18px ${alpha(theme.palette.primary.main, 0.22)}, inset 0 1px 0 ${alpha('#ffffff', 0.12)}`,
-    }),
+    ...brandTile(),
+    width: 42,
+    height: 42,
+    borderRadius: theme.tokens.radius.md,
+    border:
+      theme.palette.mode === 'dark' ? `1px solid ${theme.palette.surface.borderStrong}` : 'none',
   },
-  avatarInactive: {
-    border: 'none',
-    background: `linear-gradient(135deg, ${theme.palette.neutral.main} 0%, ${alpha(theme.palette.neutral.main, 0.7)} 100%)`,
-    boxShadow: 'none',
+  avatarIdle: {
+    color: alpha(theme.palette.brand.ice, 0.5),
   },
   statusDot: {
     position: 'absolute',
     bottom: -3,
-    right: -3,
+    insetInlineEnd: -3,
     width: 12,
     height: 12,
     borderRadius: '50%',
@@ -104,22 +104,55 @@ const useStyles = makeStyles()((theme) => ({
   },
   secondaryText: {
     fontSize: '0.75rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.75),
+    minWidth: 0,
+  },
+  secondaryValue: {
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  speed: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    height: 18,
+    paddingInline: 6,
+    borderRadius: 6,
+    fontSize: '0.6875rem',
+    fontWeight: 700,
+    fontVariantNumeric: 'tabular-nums',
+    color: theme.palette.primary.main,
+    backgroundColor: theme.palette.surface.tint,
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
+  },
+  indicators: {
+    display: 'flex',
+    gap: 4,
+    flexShrink: 0,
   },
   indicator: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     width: 30,
     height: 30,
     borderRadius: 9,
-    backgroundColor: alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.06 : 0.04),
+    border: `1px solid ${theme.palette.surface.border}`,
+    backgroundColor: theme.palette.surface.sunken,
   },
   icon: {
-    width: '22px',
-    height: '22px',
-    filter: 'brightness(0) invert(1)',
-  },
-  batteryText: {
-    fontSize: '0.75rem',
-    fontWeight: 'normal',
-    lineHeight: '0.875rem',
+    width: 22,
+    height: 22,
+    backgroundColor: 'currentColor',
+    maskSize: 'contain',
+    maskRepeat: 'no-repeat',
+    maskPosition: 'center',
+    WebkitMaskSize: 'contain',
+    WebkitMaskRepeat: 'no-repeat',
+    WebkitMaskPosition: 'center',
   },
   success: {
     color: theme.palette.success.main,
@@ -135,9 +168,8 @@ const useStyles = makeStyles()((theme) => ({
   },
   selected: {
     '&&': {
-      background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.16)} 0%, ${alpha(theme.palette.info.main, 0.06)} 100%)`,
-      borderColor: alpha(theme.palette.primary.main, 0.3),
-      boxShadow: `inset 3px 0 0 ${theme.palette.primary.main}`,
+      backgroundColor: theme.palette.surface.tint,
+      borderColor: alpha(theme.palette.primary.main, 0.25),
     },
   },
 }));
@@ -155,6 +187,7 @@ const DeviceRow = ({ devices, index, style }) => {
 
   const devicePrimary = useAttributePreference('devicePrimary', 'name');
   const deviceSecondary = useAttributePreference('deviceSecondary', '');
+  const speedUnit = useAttributePreference('speedUnit');
 
   const resolveFieldValue = (field) => {
     if (field === 'geofenceIds') {
@@ -174,6 +207,8 @@ const DeviceRow = ({ devices, index, style }) => {
   const primaryValue = resolveFieldValue(devicePrimary);
   const secondaryValue = resolveFieldValue(deviceSecondary);
 
+  const moving = Boolean(position && (position.attributes?.motion || position.speed > 1));
+
   const secondaryText = () => {
     let status;
     if (item.status === 'online' || !item.lastUpdate) {
@@ -183,32 +218,42 @@ const DeviceRow = ({ devices, index, style }) => {
     }
     return (
       <>
+        <span className={cx(classes.secondaryValue, classes[getStatusColor(item.status)])}>
+          {status}
+        </span>
         {secondaryValue && (
           <>
-            {secondaryValue}
-            {' • '}
+            <span>·</span>
+            <span className={classes.secondaryValue}>{secondaryValue}</span>
           </>
         )}
-        <span className={classes[getStatusColor(item.status)]}>{status}</span>
+        {moving && (
+          <span className={classes.speed}>{formatSpeed(position.speed, speedUnit, t)}</span>
+        )}
       </>
     );
   };
 
+  const avatarClass = cx(classes.avatar, item.status !== 'online' && classes.avatarIdle);
+  const iconUrl = `url("${mapIcons[mapIconKey(item.category)]}")`;
+
   return (
-    <div style={style}>
+    <div style={style} role="listitem">
       <ListItemButton
         key={item.id}
         onClick={() => dispatch(devicesActions.selectId(item.id))}
         disabled={!admin && item.disabled}
         selected={selectedDeviceId === item.id}
+        aria-pressed={selectedDeviceId === item.id}
         className={cx(classes.row, selectedDeviceId === item.id && classes.selected)}
       >
         <ListItemAvatar className={classes.avatarWrapper}>
           <span className={classes.avatarBox}>
-            <Avatar
-              className={cx(classes.avatar, item.status !== 'online' && classes.avatarInactive)}
-            >
-              <img className={classes.icon} src={mapIcons[mapIconKey(item.category)]} alt="" />
+            <Avatar className={avatarClass}>
+              <span
+                className={classes.icon}
+                style={{ maskImage: iconUrl, WebkitMaskImage: iconUrl }}
+              />
             </Avatar>
             <span
               className={classes.statusDot}
@@ -233,36 +278,36 @@ const DeviceRow = ({ devices, index, style }) => {
           }}
           slotProps={{
             primary: { noWrap: true, className: classes.primaryText },
-            secondary: { noWrap: true, className: classes.secondaryText },
+            secondary: { component: 'span', className: classes.secondaryText },
           }}
         />
         {position && (
-          <>
+          <span className={classes.indicators}>
             {position.attributes.hasOwnProperty('alarm') && (
               <Tooltip title={`${t('eventAlarm')}: ${formatAlarm(position.attributes.alarm, t)}`}>
-                <IconButton size="small" className={classes.indicator}>
-                  <ErrorIcon fontSize="small" className={classes.error} />
-                </IconButton>
+                <span role="img" className={classes.indicator}>
+                  <ErrorRoundedIcon fontSize="small" className={classes.error} />
+                </span>
               </Tooltip>
             )}
             {position.attributes.hasOwnProperty('ignition') && (
               <Tooltip
                 title={`${t('positionIgnition')}: ${formatBoolean(position.attributes.ignition, t)}`}
               >
-                <IconButton size="small" className={classes.indicator}>
+                <span role="img" className={classes.indicator}>
                   {position.attributes.ignition ? (
-                    <EngineIcon width={20} height={20} className={classes.success} />
+                    <EngineIcon width={18} height={18} className={classes.success} />
                   ) : (
-                    <EngineIcon width={20} height={20} className={classes.neutral} />
+                    <EngineIcon width={18} height={18} className={classes.neutral} />
                   )}
-                </IconButton>
+                </span>
               </Tooltip>
             )}
             {position.attributes.hasOwnProperty('batteryLevel') && (
               <Tooltip
                 title={`${t('positionBatteryLevel')}: ${formatPercentage(position.attributes.batteryLevel)}`}
               >
-                <IconButton size="small" className={classes.indicator}>
+                <span role="img" className={classes.indicator}>
                   {(position.attributes.batteryLevel > 70 &&
                     (position.attributes.charge ? (
                       <BatteryChargingFullIcon fontSize="small" className={classes.success} />
@@ -280,10 +325,10 @@ const DeviceRow = ({ devices, index, style }) => {
                     ) : (
                       <Battery20Icon fontSize="small" className={classes.error} />
                     ))}
-                </IconButton>
+                </span>
               </Tooltip>
             )}
-          </>
+          </span>
         )}
       </ListItemButton>
     </div>

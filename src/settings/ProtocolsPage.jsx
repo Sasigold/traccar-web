@@ -7,7 +7,6 @@ import {
   DialogTitle,
   IconButton,
   MenuItem,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -15,14 +14,15 @@ import {
   TextField,
   Tooltip,
 } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import { useAsyncTask, useCatch } from '../reactHelper';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import { useAdministrator } from '../common/util/permissions';
 import PageLayout from '../common/components/PageLayout';
 import TableShimmer from '../common/components/TableShimmer';
 import SettingsMenu from './components/SettingsMenu';
-import SearchHeader from './components/SearchHeader';
+import DataTable from '../common/components/table/DataTable';
+import TableToolbar from '../common/components/table/TableToolbar';
 import useSettingsStyles from './common/useSettingsStyles';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 
@@ -52,6 +52,10 @@ const ProtocolsPage = () => {
     }
   }, []);
 
+  const filtered = items.filter(
+    (item) => item.protocol.includes(keyword.toLowerCase()) || String(item.port).includes(keyword),
+  );
+
   const handleSave = useCatch(async () => {
     setSaving(true);
     try {
@@ -70,8 +74,13 @@ const ProtocolsPage = () => {
 
   return (
     <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'settingsProtocols']}>
-      <SearchHeader keyword={keyword} setKeyword={setKeyword} />
-      <Table className={classes.table}>
+      <DataTable
+        toolbar={
+          <TableToolbar search={{ value: keyword, onChange: setKeyword }} count={items.length} />
+        }
+        empty={!loading && filtered.length === 0}
+        emptyState={{ title: t('tableNoMatches') }}
+      >
         <TableHead>
           <TableRow>
             <TableCell>{t('positionProtocol')}</TableCell>
@@ -81,35 +90,29 @@ const ProtocolsPage = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {items
-            .filter(
-              (item) =>
-                item.protocol.includes(keyword.toLowerCase()) ||
-                String(item.port).includes(keyword),
-            )
-            .map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.protocol}</TableCell>
-                <TableCell>{item.port}</TableCell>
-                <TableCell>{transports[item.transport]}</TableCell>
-                {admin && (
-                  <TableCell className={classes.columnAction} padding="none">
-                    <Tooltip title={t('sharedEdit')}>
-                      <IconButton
-                        size="small"
-                        aria-label={t('sharedEdit')}
-                        onClick={() => setEditing(item)}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                )}
-              </TableRow>
-            ))}
+          {filtered.map((item) => (
+            <TableRow key={item.id}>
+              <TableCell>{item.protocol}</TableCell>
+              <TableCell>{item.port}</TableCell>
+              <TableCell>{transports[item.transport]}</TableCell>
+              {admin && (
+                <TableCell className={classes.columnAction} padding="none">
+                  <Tooltip title={t('sharedEdit')}>
+                    <IconButton
+                      size="small"
+                      aria-label={t('sharedEdit')}
+                      onClick={() => setEditing(item)}
+                    >
+                      <EditRoundedIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+              )}
+            </TableRow>
+          ))}
           {loading && <TableShimmer columns={admin ? 4 : 3} endAction={admin} />}
         </TableBody>
-      </Table>
+      </DataTable>
       {admin && editing && (
         <Dialog open onClose={() => !saving && setEditing(null)} fullWidth maxWidth="xs">
           <DialogTitle>{editing.protocol}</DialogTitle>
@@ -138,7 +141,7 @@ const ProtocolsPage = () => {
             <Button disabled={saving} onClick={() => setEditing(null)}>
               {t('sharedCancel')}
             </Button>
-            <Button loading={saving} onClick={handleSave}>
+            <Button variant="contained" loading={saving} onClick={handleSave}>
               {t('sharedSave')}
             </Button>
           </DialogActions>

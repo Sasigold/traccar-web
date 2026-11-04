@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button, TextField, Typography, IconButton, InputAdornment } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
+import { ctaFill } from '../common/theme/surfaces';
 import { useNavigate } from 'react-router-dom';
 import LoginLayout from './LoginLayout';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -23,10 +24,14 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: 'center',
   },
   title: {
-    fontSize: theme.spacing(3),
-    fontWeight: 500,
-    marginLeft: theme.spacing(1),
-    textTransform: 'uppercase',
+    fontWeight: 600,
+    letterSpacing: '-0.02em',
+    marginInlineStart: theme.spacing(0.5),
+  },
+  cta: {
+    height: 48,
+    fontSize: '0.9375rem',
+    ...ctaFill(theme),
   },
 }));
 
@@ -77,11 +82,15 @@ const RegisterPage = () => {
       <div className={classes.container}>
         <div className={classes.header}>
           {!server.newServer && (
-            <IconButton color="primary" onClick={() => navigate('/login')}>
+            <IconButton
+              aria-label={t('a11yBack')}
+              color="primary"
+              onClick={() => navigate('/login')}
+            >
               <BackIcon />
             </IconButton>
           )}
-          <Typography className={classes.title} color="primary">
+          <Typography variant="h4" className={classes.title}>
             {t('loginRegister')}
           </Typography>
         </div>
@@ -131,7 +140,9 @@ const RegisterPage = () => {
         )}
         <Button
           variant="contained"
-          color="secondary"
+          color="primary"
+          className={classes.cta}
+          loading={submitting}
           onClick={handleSubmit}
           type="submit"
           disabled={

@@ -1,8 +1,5 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useMediaQuery, useTheme } from '@mui/material';
-import { makeStyles } from 'tss-react/mui';
-import BottomMenu from './common/components/BottomMenu';
 import SocketController from './SocketController';
 import CachingController from './CachingController';
 import { useCatch, useAsyncTask } from './reactHelper';
@@ -11,32 +8,13 @@ import UpdateController from './UpdateController';
 import MotionController from './main/MotionController';
 import TermsDialog from './common/components/TermsDialog';
 import Loader from './common/components/Loader';
-import useFeatures from './common/util/useFeatures';
+import AppShell from './common/components/shell/AppShell';
 import fetchOrThrow from './common/util/fetchOrThrow';
 
-const useStyles = makeStyles()(() => ({
-  page: {
-    flexGrow: 1,
-    overflow: 'auto',
-  },
-  menu: {
-    zIndex: 4,
-    '@media print': {
-      display: 'none',
-    },
-  },
-}));
-
 const App = () => {
-  const { classes } = useStyles();
-  const theme = useTheme();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const features = useFeatures();
-
-  const desktop = useMediaQuery(theme.breakpoints.up('md'));
 
   const newServer = useSelector((state) => state.session.server.newServer);
   const termsUrl = useSelector((state) => state.session.server.attributes.termsUrl);
@@ -79,14 +57,9 @@ const App = () => {
       <CachingController />
       <UpdateController />
       <MotionController />
-      <div className={classes.page}>
+      <AppShell>
         <Outlet />
-      </div>
-      {!desktop && !features.disableTabs && (
-        <div className={classes.menu}>
-          <BottomMenu />
-        </div>
-      )}
+      </AppShell>
     </>
   );
 };

@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { IconButton, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import { IconButton, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
 import ReportFilter, { updateReportParams } from './components/ReportFilter';
@@ -18,6 +18,7 @@ import MapRoutePoints from '../map/MapRoutePoints';
 import MapPositionMarkers from '../map/MapPositionMarkers';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
+import DataTable from '../common/components/table/DataTable';
 import MapCamera from '../map/MapCamera';
 import MapGeofence from '../map/MapGeofence';
 import scheduleReport from './common/scheduleReport';
@@ -172,7 +173,7 @@ const PositionsReportPage = () => {
               />
             </ReportFilter>
           </div>
-          <Table>
+          <DataTable variant="flush">
             <TableHead>
               <TableRow>
                 <TableCell className={classes.columnAction} />
@@ -189,6 +190,7 @@ const PositionsReportPage = () => {
                     <TableCell className={classes.columnAction} padding="none">
                       {selectedItem === item ? (
                         <IconButton
+                          aria-label={t('a11yHideOnMap')}
                           size="small"
                           onClick={() => setSelectedItem(null)}
                           ref={selectedRef}
@@ -196,7 +198,11 @@ const PositionsReportPage = () => {
                           <GpsFixedIcon fontSize="small" />
                         </IconButton>
                       ) : (
-                        <IconButton size="small" onClick={() => setSelectedItem(item)}>
+                        <IconButton
+                          aria-label={t('a11yShowOnMap')}
+                          size="small"
+                          onClick={() => setSelectedItem(item)}
+                        >
                           <LocationSearchingIcon fontSize="small" />
                         </IconButton>
                       )}
@@ -226,7 +232,7 @@ const PositionsReportPage = () => {
                 <TableShimmer columns={columns.length + 1} startAction />
               )}
             </TableBody>
-          </Table>
+          </DataTable>
         </div>
       </div>
     </PageLayout>

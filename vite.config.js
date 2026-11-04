@@ -6,10 +6,12 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 // Brand values baked into index.html and the PWA manifest at build time,
 // so the UI looks right whether Traccar or a plain static server serves it.
+// VIPER FLEET / SYNC POINT / MIDNIGHT AQUA - see BRAND.md.
 const brand = {
-  title: 'ניהול צי',
-  description: 'מרכז שליטה ובקרה לצי הרכב',
-  colorPrimary: '#0b5e5a',
+  title: 'viper fleet',
+  description: 'כל רכב. כל רגע. בתמונה אחת.',
+  colorPrimary: '#102C54', // midnight navy
+  background: '#F8FCFD', // paper
 };
 
 export default defineConfig(() => ({
@@ -21,9 +23,34 @@ export default defineConfig(() => ({
       '/api': 'http://localhost:8082',
     },
   },
+  test: {
+    include: ['src/**/*.test.js'],
+  },
   build: {
     outDir: 'build',
     chunkSizeWarningLimit: 1100,
+    rolldownOptions: {
+      output: {
+        // Long-lived vendor chunks: a UI deploy only invalidates our own code, so returning users
+        // re-download a few hundred KB instead of the whole app. Only libraries the first screen
+        // already needs go here; page-specific ones (charts, draw, excel, video) stay lazy.
+        codeSplitting: {
+          groups: [
+            { name: 'maplibre', test: /node_modules[\\/]maplibre-gl[\\/]/, priority: 30 },
+            {
+              name: 'react',
+              test: /node_modules[\\/](react|react-dom|react-router|react-router-dom|react-redux|@reduxjs|redux|immer|reselect|scheduler)[\\/]/,
+              priority: 20,
+            },
+            {
+              name: 'mui',
+              test: /node_modules[\\/](@mui[\\/](material|system|styled-engine|utils|private-theming)|@emotion|tss-react|stylis|stylis-plugin-rtl)[\\/]/,
+              priority: 10,
+            },
+          ],
+        },
+      },
+    },
   },
   plugins: [
     {
@@ -38,16 +65,17 @@ export default defineConfig(() => ({
     react(),
     VitePWA({
       injectRegister: false,
-      includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png'],
+      includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon-180x180.png'],
       workbox: {
         navigateFallbackDenylist: [/\/api(\/|$)/],
         globPatterns: ['**/*.{js,css,html,woff,woff2,mp3}'],
       },
       manifest: {
         short_name: brand.title,
-        name: brand.description,
+        name: 'VIPER FLEET',
+        description: brand.description,
         theme_color: brand.colorPrimary,
-        background_color: '#f2f5f7',
+        background_color: brand.background,
         lang: 'he',
         dir: 'rtl',
         icons: [
@@ -65,14 +93,26 @@ export default defineConfig(() => ({
             src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable',
+            purpose: 'any',
+          },
+          {
+            src: 'maskable-icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
           },
         ],
       },
     }),
     viteStaticCopy({
       targets: [
-        { src: 'node_modules/@mapbox/mapbox-gl-rtl-text/dist/mapbox-gl-rtl-text.js', dest: '' },
+        // stripBase: static-copy v4 keeps the source folder structure by default, which put the
+        // plugin under build/node_modules/... and broke Hebrew map labels.
+        {
+          src: 'node_modules/@mapbox/mapbox-gl-rtl-text/dist/mapbox-gl-rtl-text.js',
+          dest: '',
+          rename: { stripBase: true },
+        },
       ],
     }),
   ],

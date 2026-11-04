@@ -2,7 +2,6 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { CssBaseline, StyledEngineProvider } from '@mui/material';
-import '@fontsource-variable/heebo';
 import store from './store';
 import { LocalizationProvider } from './common/components/LocalizationProvider';
 import MessageHandler from './common/components/MessageHandler';
@@ -22,7 +21,7 @@ root.render(
       <LocalizationProvider>
         <StyledEngineProvider injectFirst>
           <AppThemeProvider>
-            <CssBaseline />
+            <CssBaseline enableColorScheme />
             <ServerProvider>
               <BrowserRouter basename={new URL(document.baseURI).pathname}>
                 <Navigation />

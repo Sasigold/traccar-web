@@ -1,159 +1,152 @@
-import { useMediaQuery, Paper, Typography } from '@mui/material';
+import { Paper, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import { useTheme, alpha } from '@mui/material/styles';
-import GpsFixedIcon from '@mui/icons-material/GpsFixed';
-import TimelineIcon from '@mui/icons-material/Timeline';
-import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import LogoImage from './LogoImage';
+import SyncArc from '../common/components/brand/SyncArc';
+import { useTranslation } from '../common/components/LocalizationProvider';
+import { brandPanel } from '../common/theme/surfaces';
 
+// Login screen composed like the brand book cover (pages 01 and 16): a flat
+// midnight navy panel with the reverse logo, a two-line display headline whose
+// second line is aqua, and the Sync Point arc bleeding off the edge.
 const useStyles = makeStyles()((theme) => ({
   root: {
-    display: 'flex',
+    display: 'grid',
+    gridTemplateColumns: 'minmax(0, 46%) minmax(0, 1fr)',
     height: '100%',
-    background: theme.palette.background.default,
+    backgroundColor: theme.palette.background.default,
+    [theme.breakpoints.down('md')]: {
+      gridTemplateColumns: 'minmax(0, 1fr)',
+      gridTemplateRows: 'auto minmax(0, 1fr)',
+      overflow: 'auto',
+    },
   },
   brand: {
+    ...brandPanel(),
     position: 'relative',
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
-    gap: theme.spacing(4),
-    padding: theme.spacing(8),
-    width: '46%',
-    color: '#ffffff',
-    background: `linear-gradient(160deg, #06302e 0%, #0b5e5a 55%, #0f766e 100%)`,
+    padding: theme.spacing(6, 7),
     [theme.breakpoints.down('lg')]: {
-      width: '40%',
       padding: theme.spacing(5),
     },
     [theme.breakpoints.down('md')]: {
       display: 'none',
     },
   },
-  glow: {
-    position: 'absolute',
-    borderRadius: '50%',
-    filter: 'blur(60px)',
-    opacity: 0.55,
-    pointerEvents: 'none',
-  },
-  glowOne: {
-    width: 420,
-    height: 420,
-    top: -120,
-    insetInlineEnd: -140,
-    background: '#e8732a',
-  },
-  glowTwo: {
-    width: 360,
-    height: 360,
-    bottom: -140,
-    insetInlineStart: -100,
-    background: '#6ee7d8',
-  },
-  grid: {
-    position: 'absolute',
-    inset: 0,
-    backgroundImage:
-      'linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)',
-    backgroundSize: '48px 48px',
-    maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)',
-    pointerEvents: 'none',
-  },
   brandContent: {
     position: 'relative',
     zIndex: 1,
+    flex: 1,
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(3),
-    maxWidth: 480,
+    marginTop: 'clamp(40px, 13vh, 150px)',
   },
   headline: {
-    fontWeight: 800,
-    lineHeight: 1.15,
+    fontWeight: 400,
+    lineHeight: 1.1,
     letterSpacing: '-0.01em',
+    fontSize: 'clamp(2.25rem, 3.7vw, 3.75rem)',
+    color: theme.palette.brand.paper,
+  },
+  headlineLine: {
+    display: 'block',
+    whiteSpace: 'nowrap',
+  },
+  headlineAccent: {
+    color: theme.palette.brand.aqua,
   },
   tagline: {
-    opacity: 0.85,
+    color: theme.palette.brand.ice,
+    opacity: 0.86,
     lineHeight: 1.7,
+    fontSize: '1.0625rem',
+    maxWidth: 420,
   },
-  features: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1.5),
-    marginTop: theme.spacing(2),
+  brandLine: {
+    position: 'relative',
+    zIndex: 1,
+    fontSize: '0.75rem',
+    fontWeight: 500,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    color: theme.palette.brand.paper,
+    textAlign: 'start',
   },
-  feature: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1.5),
-    padding: theme.spacing(1.25, 2),
-    borderRadius: 12,
-    background: 'rgba(255,255,255,0.08)',
-    border: '1px solid rgba(255,255,255,0.14)',
-    backdropFilter: 'blur(6px)',
+  mobileBrand: {
+    display: 'none',
+    [theme.breakpoints.down('md')]: {
+      ...brandPanel(),
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      minHeight: 132,
+      padding: theme.spacing(3),
+      position: 'relative',
+      overflow: 'hidden',
+    },
   },
   formSide: {
-    flex: 1,
+    position: 'relative',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     padding: theme.spacing(3),
+    overflow: 'auto',
+    [theme.breakpoints.down('sm')]: {
+      padding: theme.spacing(2),
+      alignItems: 'flex-start',
+    },
   },
   card: {
+    position: 'relative',
     width: '100%',
     maxWidth: 440,
     padding: theme.spacing(5),
-    borderRadius: 20,
-    boxShadow: `0 20px 60px ${alpha('#06302e', 0.14)}`,
+    borderRadius: theme.tokens.radius.xxl,
+    backgroundColor: theme.palette.background.paper,
+    border: `1px solid ${theme.palette.surface.border}`,
+    boxShadow: theme.shadows[2],
     [theme.breakpoints.down('sm')]: {
       padding: theme.spacing(3),
+      maxWidth: 'none',
       boxShadow: 'none',
-      background: 'transparent',
-      border: 'none',
     },
   },
 }));
 
 const LoginLayout = ({ children }) => {
-  const { classes } = useStyles();
-  const theme = useTheme();
-
-  const desktop = useMediaQuery(theme.breakpoints.up('md'));
+  const { classes, cx } = useStyles();
+  const t = useTranslation();
 
   return (
     <main className={classes.root}>
-      {desktop && (
-        <section className={classes.brand}>
-          <div className={`${classes.glow} ${classes.glowOne}`} />
-          <div className={`${classes.glow} ${classes.glowTwo}`} />
-          <div className={classes.grid} />
-          <div className={classes.brandContent}>
-            <LogoImage color="#ffffff" />
-            <Typography variant="h3" className={classes.headline}>
-              מרכז השליטה של הצי שלך
-            </Typography>
-            <Typography variant="body1" className={classes.tagline}>
-              מיקום בזמן אמת, היסטוריית נסיעות, דוחות והתראות – הכל במקום אחד, בעברית מלאה.
-            </Typography>
-            <div className={classes.features}>
-              <div className={classes.feature}>
-                <GpsFixedIcon fontSize="small" />
-                <Typography variant="body2">מעקב חי אחרי כל רכב ומכשיר</Typography>
-              </div>
-              <div className={classes.feature}>
-                <TimelineIcon fontSize="small" />
-                <Typography variant="body2">נגן מסלול והיסטוריה מלאה</Typography>
-              </div>
-              <div className={classes.feature}>
-                <NotificationsActiveIcon fontSize="small" />
-                <Typography variant="body2">התראות על מהירות, גיאופנסים והצתה</Typography>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
+      <section className={classes.brand}>
+        <LogoImage variant="reverse" height={44} />
+        <div className={classes.brandContent}>
+          <Typography variant="h1" component="p" className={classes.headline}>
+            <span className={classes.headlineLine}>{t('loginHeadline')}</span>
+            <span className={cx(classes.headlineLine, classes.headlineAccent)}>
+              {t('loginHeadlineAccent')}
+            </span>
+          </Typography>
+          <Typography variant="body1" className={classes.tagline}>
+            {t('loginTagline')}
+          </Typography>
+        </div>
+        {/* Brand signature: always Latin, left to right, bottom-left (inline dir, not
+            CSS direction, which the RTL style plugin would flip). */}
+        <span className={classes.brandLine} dir="ltr">
+          {t('loginBrandLine')}
+        </span>
+        <SyncArc
+          style={{ right: -24, bottom: '7%', width: 'clamp(150px, 17vw, 270px)', height: 'auto' }}
+        />
+      </section>
+      <div className={classes.mobileBrand}>
+        <LogoImage variant="reverse" height={36} />
+      </div>
       <div className={classes.formSide}>
         <Paper className={classes.card} elevation={0}>
           <form>{children}</form>

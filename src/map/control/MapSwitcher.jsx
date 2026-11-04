@@ -86,6 +86,9 @@ const MapSwitcher = ({ styles, selectedId, onSelect }) => {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = cx('maplibregl-ctrl-icon', classes.button);
+        button.title = t('mapLayer');
+        button.setAttribute('aria-label', t('mapLayer'));
+        button.setAttribute('aria-haspopup', 'true');
         button.onclick = () => setAnchorEl(button);
         element.appendChild(button);
         iconRoot = createRoot(button);
@@ -99,15 +102,21 @@ const MapSwitcher = ({ styles, selectedId, onSelect }) => {
     };
     map.addControl(control, theme.direction === 'rtl' ? 'top-left' : 'top-right');
     return () => map.removeControl(control);
-  }, [theme.direction, classes.button, cx]);
+  }, [theme.direction, classes.button, cx, t]);
 
   return (
     <Menu
       anchorEl={anchorEl}
       open={Boolean(anchorEl)}
       onClose={() => setAnchorEl(null)}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: theme.direction === 'rtl' ? 'left' : 'right',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: theme.direction === 'rtl' ? 'left' : 'right',
+      }}
     >
       {styles.map((style) => (
         <MenuItem
