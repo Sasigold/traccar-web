@@ -27,7 +27,10 @@ const useStyles = makeStyles()((theme) => ({
     borderBottom: `1px solid ${theme.palette.surface.border}`,
     zIndex: theme.layers.topBar,
     [theme.breakpoints.down('md')]: {
-      height: theme.dimensions.topBarHeightMobile,
+      // viewport-fit=cover draws the page under the iOS status bar; pad the bar
+      // so the status bar sits on its solid paper fill instead of blurred content.
+      height: `calc(${theme.dimensions.topBarHeightMobile}px + env(safe-area-inset-top, 0px))`,
+      paddingTop: 'env(safe-area-inset-top, 0px)',
       paddingInline: theme.spacing(1),
     },
     '@media print': {

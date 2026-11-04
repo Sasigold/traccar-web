@@ -31,7 +31,8 @@ const useStyles = makeStyles()((theme) => ({
     flexDirection: 'column',
   },
   brand: {
-    height: theme.dimensions.topBarHeightMobile,
+    height: `calc(${theme.dimensions.topBarHeightMobile}px + env(safe-area-inset-top, 0px))`,
+    paddingTop: 'env(safe-area-inset-top, 0px)',
     display: 'flex',
     alignItems: 'center',
     paddingInline: theme.spacing(2.5),

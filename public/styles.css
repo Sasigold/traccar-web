@@ -1,6 +1,12 @@
 /* VIPER FLEET / MIDNIGHT AQUA: pre-React page background (paper / ink). */
 html, body {
   height: 100%;
+  /* App feel: no page zoom (pinch / double tap), no rubber-band bounce or pull-to-refresh. */
+  touch-action: pan-x pan-y;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
