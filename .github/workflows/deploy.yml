@@ -1,0 +1,47 @@
+name: Deploy to VPS
+
+# Every push to main builds the custom UI and syncs build/ into the Traccar
+# container's web directory on the Hostinger VPS (see deploy/deploy.sh).
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_HOST: root@72.61.153.60
+      DEPLOY_DIR: /docker/traccar-ovjj/web
+      SITE_URL: https://traccar-ovjj.srv2122641.hstgr.cloud
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-node@v7
+      with:
+        cache: npm
+        cache-dependency-path: package-lock.json
+    - run: npm ci
+
+    - name: Configure SSH
+      env:
+        SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      run: |
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        # Pinned host key of the VPS (ssh-keyscan -t ed25519 72.61.153.60)
+        echo '72.61.153.60 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID5SogCUGVSqGkOEvyAJz8/h8e5bvMed6JOhA3oE23R9' >> ~/.ssh/known_hosts
+
+    - name: Build and upload
+      run: sh deploy/deploy.sh
+
+    - name: Verify site
+      run: |
+        sleep 3
+        curl -fsS --max-time 30 "$SITE_URL/" | grep -q '<div id="root">' && echo "Site responds with the app shell."
