@@ -1,7 +1,25 @@
 import { makeStyles } from 'tss-react/mui';
 import { keyframes } from 'tss-react';
 import { alpha } from '@mui/material/styles';
+import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import useAnimatedNumber from './useAnimatedNumber';
+
+// Click and keyboard props for a tile or chip that opens its settings.
+const clickProps = (onClick, label) =>
+  onClick
+    ? {
+        role: 'button',
+        tabIndex: 0,
+        'aria-label': label,
+        onClick,
+        onKeyDown: (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onClick();
+          }
+        },
+      }
+    : {};
 
 const pulse = keyframes`
   0% { transform: scale(1); opacity: 0.55; }
@@ -180,6 +198,22 @@ const useStyles = makeStyles()((theme) => ({
       borderColor: theme.palette.surface.borderStrong,
       transform: 'translateY(-1px)',
     },
+  },
+  clickable: {
+    cursor: 'pointer',
+    '&:focus-visible': {
+      outline: `2px solid ${theme.palette.primary.main}`,
+      outlineOffset: 2,
+    },
+    '&:hover .vf-tile-edit, &:focus-visible .vf-tile-edit': { opacity: 1 },
+  },
+  tileEdit: {
+    display: 'inline-flex',
+    color: theme.palette.text.secondary,
+    opacity: 0,
+    transition: `opacity ${theme.tokens.motion.duration.base}ms ease`,
+    '& svg': { fontSize: 16 },
+    '@media (hover: none)': { display: 'none' },
   },
   tileHead: {
     display: 'flex',
@@ -423,7 +457,7 @@ export const AnimatedValue = ({ value, format }) => {
   return format(typeof value === 'number' ? animated : value);
 };
 
-export const StatusChip = ({ icon, label, state, on, alert, index = 0 }) => {
+export const StatusChip = ({ icon, label, state, on, alert, index = 0, onClick }) => {
   const { classes, cx, theme } = useStyles();
   const dotColor = alert
     ? theme.palette.error.main
@@ -432,8 +466,14 @@ export const StatusChip = ({ icon, label, state, on, alert, index = 0 }) => {
       : theme.palette.neutral.main;
   return (
     <div
-      className={cx(classes.chip, classes.enter, on && !alert && classes.chipOn)}
+      className={cx(
+        classes.chip,
+        classes.enter,
+        on && !alert && classes.chipOn,
+        onClick && classes.clickable,
+      )}
       style={{ animationDelay: `${index * 35}ms` }}
+      {...clickProps(onClick, label)}
     >
       <span
         className={cx(
@@ -468,10 +508,15 @@ export const MetricTile = ({
   tone,
   small,
   index = 0,
+  onClick,
 }) => {
   const { classes, cx } = useStyles();
   return (
-    <div className={cx(classes.tile, classes.enter)} style={{ animationDelay: `${index * 35}ms` }}>
+    <div
+      className={cx(classes.tile, classes.enter, onClick && classes.clickable)}
+      style={{ animationDelay: `${index * 35}ms` }}
+      {...clickProps(onClick, label)}
+    >
       <div className={classes.tileHead}>
         <span
           className={cx(
@@ -485,6 +530,11 @@ export const MetricTile = ({
         <span className={classes.tileLabel} title={label}>
           {label}
         </span>
+        {onClick && (
+          <span className={cx(classes.tileEdit, 'vf-tile-edit')} aria-hidden>
+            <TuneRoundedIcon />
+          </span>
+        )}
       </div>
       <div className={classes.tileBody}>
         <span className={cx(classes.tileValue, small && classes.tileValueSmall)}>{value}</span>

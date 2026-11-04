@@ -1,12 +1,14 @@
 import { makeStyles } from 'tss-react/mui';
 import { useTranslation } from '../LocalizationProvider';
 import usePositionAttributes from '../../attributes/usePositionAttributes';
-import { FuelGauge, SpeedGauge, fuelReading, isNumber } from './TelemetryDashboard';
+import { FuelGauge, SpeedGauge } from './TelemetryDashboard';
+import { TirePressureCompact } from './TirePressure';
+import { fuelReading, isNumber, parseProfile, tireReading } from './vehicleProfile';
 import { BatteryGlyph, useLevelColor } from './TelemetryWidgets';
 import { states } from './telemetryCatalog';
 
 // Compact live readout for the vehicle card on the map: speed and fuel dials,
-// battery level and the main on/off states.
+// tire pressures, battery level and the main on/off states.
 const useStyles = makeStyles()((theme) => ({
   root: {
     display: 'flex',
@@ -64,7 +66,9 @@ const TelemetryStrip = ({ position, device }) => {
   const levelColor = useLevelColor();
   const positionAttributes = usePositionAttributes(t);
 
-  const fuel = fuelReading(position, device);
+  const profile = parseProfile(device);
+  const fuel = fuelReading(position, device, profile);
+  const tires = tireReading(position, device, profile);
   const { batteryLevel, ignition, motion } = position.attributes;
 
   return (
@@ -79,13 +83,19 @@ const TelemetryStrip = ({ position, device }) => {
           <span className={classes.label}>{positionAttributes.fuel?.name}</span>
         </div>
       )}
+      {tires && (
+        <div className={classes.cell} style={{ flex: '0 0 auto', paddingInline: 8 }}>
+          <TirePressureCompact reading={tires} />
+          <span className={classes.label}>{t('telemetryTiresShort')}</span>
+        </div>
+      )}
       {(isNumber(batteryLevel) || typeof ignition === 'boolean' || typeof motion === 'boolean') && (
         <div
           className={cx(classes.cell, classes.stack)}
           style={{ alignItems: 'stretch', paddingInline: 10 }}
         >
           {isNumber(batteryLevel) && (
-            <span className={classes.row}>
+            <span className={classes.row} style={{ flexWrap: 'wrap', rowGap: 2 }}>
               <BatteryGlyph
                 ratio={batteryLevel / 100}
                 color={levelColor(batteryLevel / 100, { lowWarn: 0.3, lowError: 0.15 })}
