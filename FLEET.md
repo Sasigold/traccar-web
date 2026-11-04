@@ -77,7 +77,9 @@ database from the lines, and a customer can be billed only once per period (canc
 `device_registry`, `device_assignment_history`, `billing_plans`, `billing_subscriptions`,
 `billing_invoices`, `billing_invoice_lines`, the views `billing_invoices_view` and
 `customer_device_counts`, RLS policies and the permission keys `customers.read`, `customers.manage`,
-`billing.read`, `billing.manage` (granted to `owner` and `admin`, `customers.read` to `manager`). It is
+`billing.read`, `billing.manage` (granted to `owner` and `admin`, `customers.read` to `manager`).
+`20261104130000_super_admin_permissions.sql` registers those keys in the permission catalog that
+`role_permissions.permission` references (found through the foreign key) and then grants them. Both are
 idempotent. The deploy workflow applies every file in `supabase/migrations/` once
 (`deploy/migrate.sh`: finds the `supabase/postgres` container over SSH, records applied files in
 `vf_meta.ui_migrations`, reloads the PostgREST schema). To run it by hand: `sh deploy/migrate.sh`.
