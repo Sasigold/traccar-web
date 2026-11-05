@@ -46,6 +46,9 @@
   "scripts": {
     "start": "vite --host",
     "demo": "vite --config demo/vite.config.js",
+    "site": "vite --config website/vite.config.js",
+    "site:build": "vite build --config website/vite.config.js",
+    "site:preview": "vite preview --config website/vite.config.js",
     "build": "vite build",
     "generate-pwa-assets": "pwa-assets-generator --preset minimal public/logo.svg",
     "lint": "eslint --max-warnings 0 .",

@@ -15,6 +15,7 @@ export default [
       'switcher.js',
       'theme.js',
       'vite.config.js',
+      'website/dist/**',
       'test-results/**',
       'playwright-report/**',
     ],
@@ -65,7 +66,7 @@ export default [
     // Brand guard (BRAND.md, section 9): every color comes from the design
     // tokens in src/common/theme. Raw hex / rgb / hsl values anywhere else in
     // the app fail the lint, and therefore CI.
-    files: ['src/**/*.{js,jsx}'],
+    files: ['src/**/*.{js,jsx}', 'website/src/**/*.{js,jsx}'],
     ignores: ['src/common/theme/**'],
     rules: {
       'no-restricted-syntax': [
