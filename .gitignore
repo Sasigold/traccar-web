@@ -24,3 +24,4 @@ yarn-error.log*
 
 # local secrets for demo-data script
 deploy/.demo.env
+website/dist
