@@ -10,7 +10,10 @@ export const PERMISSION_AREAS = [
   { area: 'incidents', keys: ['incidents.read', 'incidents.write'] },
   { area: 'costs', keys: ['costs.read', 'costs.write'] },
   { area: 'safety', keys: ['safety.read', 'safety.write'] },
+  { area: 'poi', keys: ['poi.read', 'poi.write'] },
+  { area: 'dispatch', keys: ['dispatch.read', 'dispatch.write'] },
   { area: 'reports', keys: ['reports.read', 'audit.read'] },
+  { area: 'integrations', keys: ['integrations.manage'] },
   { area: 'users', keys: ['users.read', 'users.manage', 'roles.manage'] },
   {
     area: 'billing',

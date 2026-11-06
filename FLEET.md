@@ -169,3 +169,41 @@ the same.
 Migrations: `20261106130000_fleet_stage2.sql`, `20261106140000_fleet_stage3.sql`,
 `20261106150000_fleet_stage4.sql` (the last adds the `safety_officer` role value before its transaction).
 Each was checked against the database in a rolled-back transaction before commit.
+
+## Roadmap stage 5: expansions
+
+`supabase/migrations/20261106160000_fleet_stage5.sql` (idempotent; tested on a local Postgres with
+stand-ins for the earlier schema, **not yet applied** to the VPS database). Pure logic with unit tests:
+`src/common/fleet/dispatch.js`, `visits.js`, `sensors.js`, `integrations.js`.
+
+| Screen | What | Permission |
+|--------|------|------------|
+| `/fleet/dispatch` | Jobs (delivery, pickup, service, visit) with point / address, vehicle, driver, time window; live ETA from the vehicle's position; customer tracking link (a Traccar share link that expires an hour after the window) with a ready WhatsApp message | `dispatch.read` / `dispatch.write` |
+| `/driver` → "My jobs today" | The driver moves a job along: on the way → arrived → done (receiver name and / or photo) or not done; navigation in Waze | `dispatch.read` (role `driver`) |
+| `/fleet/poi` | Points of interest (customer, depot, supplier, fuel, garage) with a Traccar circle geofence; "visits" pairs `geofenceEnter` / `geofenceExit` events into arrivals, departures and minutes | `poi.read` / `poi.write` |
+| `/fleet/equipment` | Trailers and equipment without a tracker: a `vehicles` row with `asset_kind` = `trailer` / `equipment`, no `traccar_device_id`, optionally `attached_vehicle_id` | `vehicles.read` / `vehicles.write` |
+| `/fleet/sensors` | EV battery (`batteryLevel`, `charge`) and cold chain temperatures (`temp`, `temp1`, ...) live from the latest positions, against per-vehicle limits (`temp_min`, `temp_max`, `battery_min`) | live data for everyone; limits `vehicles.write` |
+| `/fleet/integrations` | API keys (shown once, stored as SHA-256), webhooks (HTTPS, events per table), delivery log | `integrations.manage` |
+
+**Dispatch rules in the database.** Status timestamps (`started_at`, `arrived_at`, `completed_at`) are
+set by a trigger; a job with a vehicle or driver moves from `planned` to `assigned`. A driver reads only
+their own jobs and may only set `en_route`, `arrived`, `done` or `failed`. Proof photos go to
+`fleet-files/<org_id>/dispatch/...`.
+
+**Webhooks.** Triggers on `dispatch_jobs`, `incidents`, `work_orders`, `issues`, `inspections`,
+`document_alerts` and `driver_violations` queue a delivery per matching webhook in `webhook_deliveries`.
+Event names are `<table>.insert`, `<table>.status` (status changed), `<table>.update` or `<table>.*`.
+The `vf_send_webhooks` pg_cron job (every minute) posts them with `pg_net`, signs the body in
+`X-ViperFleet-Signature: sha256=<HMAC-SHA256(body, secret)>`, and retries with exponential back-off up to
+5 attempts. Without the `pg_net` extension deliveries stay `queued`.
+
+**API keys.** `api_key_lookup(key)` (service role only) returns the organization and scopes of a valid
+key. The public API gateway that calls it (an edge function on the VPS, next to `traccar-auth`) is not in
+this repository yet; until it exists keys can be created and revoked but not used. The screen says so.
+
+**Left out on purpose.**
+- *Per-customer branding (white label).* BRAND.md forbids changing, recoloring or replacing the viper fleet
+  logo and palette, so this needs a brand decision before any code.
+- *Accounting, payroll and fuel company APIs.* Each needs a chosen provider and its keys; until then the
+  Excel exports and webhooks are the integration points.
+- *Documents for trailers and equipment.* The documents card is still tied to a Traccar device.

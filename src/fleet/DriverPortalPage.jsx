@@ -17,6 +17,7 @@ import { useFleetLabel, useFleetProfile, useFleetStatus } from '../common/fleet/
 import { statusColor } from '../common/theme/surfaces';
 import ExpiryBadge from './components/ExpiryBadge';
 import FleetNotice from './components/FleetNotice';
+import DriverJobsCard from './components/DriverJobsCard';
 import { incidentKey } from './IncidentsPage';
 
 const useStyles = makeStyles()((theme) => ({
@@ -187,6 +188,8 @@ const DriverPortalPage = () => {
                 </Button>
               </div>
             </Paper>
+
+            <DriverJobsCard driverId={data.driver.id} />
 
             <Paper elevation={0} className={classes.card}>
               <div className={classes.head}>

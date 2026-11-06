@@ -65,6 +65,12 @@ test.describe('fleet', () => {
     await expect(page.getByRole('row', { name: /567-89-012/ })).toHaveCount(0);
   });
 
+  test('battery and temperature lists the reporting vehicles', async ({ page }) => {
+    await gotoReady(page, '/fleet/sensors');
+    await expect(page.getByRole('row').nth(1)).toBeVisible();
+    await expect(page.getByText(/°C/).first()).toBeVisible();
+  });
+
   test('maintenance shows what is left per vehicle', async ({ page }) => {
     await gotoReady(page, '/settings/maintenances');
     await expect(page.getByRole('row', { name: /Oil service/ }).first()).toBeVisible();
