@@ -8,8 +8,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Checkbox,
-  FormControlLabel,
+  FormHelperText,
   FormGroup,
   InputAdornment,
   IconButton,
@@ -35,6 +34,7 @@ import { useTranslation, useTranslationKeys } from '../common/components/Localiz
 import SettingsMenu from './components/SettingsMenu';
 import FormPage from './components/FormPage';
 import FormSection from './components/FormSection';
+import CheckboxField from './components/CheckboxField';
 import SaveBar from './components/SaveBar';
 import usePositionAttributes from '../common/attributes/usePositionAttributes';
 import { prefixString, unprefixString } from '../common/util/stringUtils';
@@ -197,17 +197,13 @@ const PreferencesPage = () => {
     throw Error(response.statusText);
   });
 
-  const renderToggle = (key, labelKey, defaultValue) => (
-    <FormControlLabel
+  const renderToggle = (key, labelKey, defaultValue, helpKey) => (
+    <CheckboxField
       key={key}
-      className={classes.toggle}
-      control={
-        <Checkbox
-          checked={attributes.hasOwnProperty(key) ? attributes[key] : defaultValue}
-          onChange={(e) => setAttributes({ ...attributes, [key]: e.target.checked })}
-        />
-      }
+      checked={attributes.hasOwnProperty(key) ? attributes[key] : defaultValue}
+      onChange={(e) => setAttributes({ ...attributes, [key]: e.target.checked })}
       label={t(labelKey)}
+      helperText={helpKey && t(helpKey)}
     />
   );
 
@@ -278,6 +274,7 @@ const PreferencesPage = () => {
                 </MenuItem>
               ))}
             </Select>
+            <FormHelperText>{t('preferencesMapActiveHelp')}</FormHelperText>
           </FormControl>
           <FormControl>
             <InputLabel id="preferences-page-map-overlay-label">{t('mapOverlay')}</InputLabel>
@@ -307,6 +304,7 @@ const PreferencesPage = () => {
                 </MenuItem>
               ))}
             </Select>
+            <FormHelperText>{t('preferencesOverlayHelp')}</FormHelperText>
           </FormControl>
           <Autocomplete
             multiple
@@ -349,7 +347,13 @@ const PreferencesPage = () => {
                 {option.name ? option.name : positionAttributes[option]?.name || option}
               </li>
             )}
-            renderInput={(params) => <TextField {...params} label={t('attributePopupInfo')} />}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label={t('attributePopupInfo')}
+                helperText={t('preferencesPopupHelp')}
+              />
+            )}
           />
           <FormControl>
             <InputLabel id="preferences-page-map-live-routes-label">
@@ -365,6 +369,7 @@ const PreferencesPage = () => {
               <MenuItem value="selected">{t('deviceSelected')}</MenuItem>
               <MenuItem value="all">{t('notificationAlways')}</MenuItem>
             </Select>
+            <FormHelperText>{t('preferencesLiveRoutesHelp')}</FormHelperText>
           </FormControl>
           <FormControl>
             <InputLabel id="preferences-page-map-direction-label">{t('mapDirection')}</InputLabel>
@@ -378,11 +383,12 @@ const PreferencesPage = () => {
               <MenuItem value="selected">{t('deviceSelected')}</MenuItem>
               <MenuItem value="all">{t('notificationAlways')}</MenuItem>
             </Select>
+            <FormHelperText>{t('preferencesDirectionHelp')}</FormHelperText>
           </FormControl>
           <FormGroup className={classes.toggles}>
-            {renderToggle('mapFollow', 'deviceFollow', false)}
-            {renderToggle('mapCluster', 'mapClustering', true)}
-            {renderToggle('mapOnSelect', 'mapOnSelect', true)}
+            {renderToggle('mapFollow', 'deviceFollow', false, 'preferencesFollowHelp')}
+            {renderToggle('mapCluster', 'mapClustering', true, 'preferencesClusterHelp')}
+            {renderToggle('mapOnSelect', 'mapOnSelect', true, 'preferencesOnSelectHelp')}
           </FormGroup>
         </FormSection>
       )}
@@ -399,6 +405,7 @@ const PreferencesPage = () => {
             data={deviceFields}
             titleGetter={(it) => t(it.name)}
             label={t('devicePrimaryInfo')}
+            helperText={t('preferencesPrimaryHelp')}
           />
           <SelectField
             value={attributes.deviceSecondary}
@@ -406,12 +413,17 @@ const PreferencesPage = () => {
             data={deviceFields}
             titleGetter={(it) => t(it.name)}
             label={t('deviceSecondaryInfo')}
+            helperText={t('preferencesSecondaryHelp')}
           />
         </FormSection>
       )}
 
       {section === 'sound' && (
-        <FormSection title={t('sharedSound')} icon={<VolumeUpRoundedIcon />}>
+        <FormSection
+          title={t('sharedSound')}
+          description={t('preferencesSoundHelp')}
+          icon={<VolumeUpRoundedIcon />}
+        >
           <SelectField
             multiple
             value={attributes.soundEvents?.split(',') || []}
@@ -437,7 +449,11 @@ const PreferencesPage = () => {
       )}
 
       {section === 'token' && (
-        <FormSection title={t('userToken')} icon={<KeyRoundedIcon />}>
+        <FormSection
+          title={t('userToken')}
+          description={t('preferencesTokenHelp')}
+          icon={<KeyRoundedIcon />}
+        >
           <TextField
             label={t('userExpirationTime')}
             type="date"

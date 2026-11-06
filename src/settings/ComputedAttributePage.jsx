@@ -124,12 +124,19 @@ const ComputedAttributePage = () => {
                 typeof option === 'object' ? option.inputValue || option.name : option
               }
               renderOption={(props, option) => <li {...props}>{option.name || option}</li>}
-              renderInput={(params) => <TextField {...params} label={t('sharedAttribute')} />}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={t('sharedAttribute')}
+                  helperText={t('computedAttributeFieldHelp')}
+                />
+              )}
             />
             <TextField
               value={item.expression || ''}
               onChange={(e) => setItem({ ...item, expression: e.target.value })}
               label={t('sharedExpression')}
+              helperText={t('computedExpressionHelp')}
               multiline
               rows={4}
             />
@@ -155,9 +162,10 @@ const ComputedAttributePage = () => {
               value={item.priority || 0}
               onChange={(e) => setItem({ ...item, priority: Number(e.target.value) })}
               label={t('sharedPriority')}
+              helperText={t('computedPriorityHelp')}
             />
           </FormSection>
-          <FormSection title={t('sharedTest')}>
+          <FormSection title={t('computedTestSection')} description={t('computedTestHelp')}>
             <SelectField
               value={deviceId}
               onChange={(e) => setDeviceId(Number(e.target.value))}

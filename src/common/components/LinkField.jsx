@@ -10,6 +10,7 @@ const defaultTitleGetter = (item) => item.name;
 
 const LinkField = ({
   label,
+  helperText,
   endpointAll,
   endpointLinked,
   baseId,
@@ -94,7 +95,8 @@ const LinkField = ({
         <TextField
           {...params}
           label={label}
-          placeholder={!active ? t('reportShow') : null}
+          helperText={helperText}
+          placeholder={!active ? t('linkFieldPlaceholder') : null}
           onFocus={() => setActive(true)}
           slotProps={{
             ...params.slotProps,

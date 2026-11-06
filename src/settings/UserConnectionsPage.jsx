@@ -16,8 +16,9 @@ const UserConnectionsPage = () => {
     <FormPage
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'settingsUser', 'sharedConnections']}
+      description={t('connectionsUserDescription')}
     >
-      <FormSection title={t('sharedConnections')}>
+      <FormSection title={t('sharedConnections')} description={t('connectionsHint')}>
         <LinkField
           endpointAll="api/devices?all=true&excludeAttributes=true"
           endpointLinked={`api/devices?userId=${id}&excludeAttributes=true`}
@@ -26,6 +27,7 @@ const UserConnectionsPage = () => {
           keyLink="deviceId"
           titleGetter={(it) => `${it.name} (${it.uniqueId})`}
           label={t('deviceTitle')}
+          helperText={t('userConnectionsDevicesHelp')}
         />
         <LinkField
           endpointAll="api/groups?all=true"
@@ -34,6 +36,7 @@ const UserConnectionsPage = () => {
           keyBase="userId"
           keyLink="groupId"
           label={t('settingsGroups')}
+          helperText={t('userConnectionsGroupsHelp')}
         />
         <LinkField
           endpointAll="api/geofences?all=true"
@@ -42,6 +45,7 @@ const UserConnectionsPage = () => {
           keyBase="userId"
           keyLink="geofenceId"
           label={t('sharedGeofences')}
+          helperText={t('userConnectionsOtherHelp')}
         />
         <LinkField
           endpointAll="api/notifications?all=true"
@@ -51,6 +55,7 @@ const UserConnectionsPage = () => {
           keyLink="notificationId"
           titleGetter={(it) => formatNotificationTitle(t, it, true)}
           label={t('sharedNotifications')}
+          helperText={t('userConnectionsOtherHelp')}
         />
         <LinkField
           endpointAll="api/calendars?all=true"
@@ -59,6 +64,7 @@ const UserConnectionsPage = () => {
           keyBase="userId"
           keyLink="calendarId"
           label={t('sharedCalendars')}
+          helperText={t('userConnectionsOtherHelp')}
         />
         <LinkField
           endpointAll="api/users?all=true&excludeAttributes=true"
@@ -67,6 +73,7 @@ const UserConnectionsPage = () => {
           keyBase="userId"
           keyLink="managedUserId"
           label={t('settingsUsers')}
+          helperText={t('userConnectionsUsersHelp')}
         />
         <LinkField
           endpointAll="api/attributes/computed?all=true"
@@ -76,6 +83,7 @@ const UserConnectionsPage = () => {
           keyLink="attributeId"
           titleGetter={(it) => it.description}
           label={t('sharedComputedAttributes')}
+          helperText={t('userConnectionsOtherHelp')}
         />
         <LinkField
           endpointAll="api/drivers?all=true"
@@ -85,6 +93,7 @@ const UserConnectionsPage = () => {
           keyLink="driverId"
           titleGetter={(it) => `${it.name} (${it.uniqueId})`}
           label={t('sharedDrivers')}
+          helperText={t('userConnectionsOtherHelp')}
         />
         <LinkField
           endpointAll="api/commands?all=true"
@@ -94,6 +103,7 @@ const UserConnectionsPage = () => {
           keyLink="commandId"
           titleGetter={(it) => it.description}
           label={t('sharedSavedCommands')}
+          helperText={t('userConnectionsOtherHelp')}
         />
         <LinkField
           endpointAll="api/maintenance?all=true"
@@ -102,6 +112,7 @@ const UserConnectionsPage = () => {
           keyBase="userId"
           keyLink="maintenanceId"
           label={t('sharedMaintenance')}
+          helperText={t('userConnectionsOtherHelp')}
         />
       </FormSection>
     </FormPage>

@@ -34,6 +34,7 @@ const AnnouncementPage = () => {
     <FormPage
       menu={<SettingsMenu />}
       breadcrumbs={['serverAnnouncement']}
+      description={t('announcementPageDescription')}
       footer={
         <SaveBar
           onCancel={() => navigate(-1)}
@@ -50,6 +51,7 @@ const AnnouncementPage = () => {
           onChange={(e) => setUsers(e.target.value)}
           endpoint="api/users"
           label={t('settingsUsers')}
+          helperText={t('announcementUsersHelp')}
         />
         <SelectField
           value={notificator}
@@ -57,7 +59,7 @@ const AnnouncementPage = () => {
           endpoint="api/notifications/notificators?announcement=true"
           keyGetter={(it) => it.type}
           titleGetter={(it) => t(prefixString('notificator', it.type))}
-          label={t('notificationNotificators')}
+          label={t('announcementChannelLabel')}
         />
         <TextField
           value={message.subject}

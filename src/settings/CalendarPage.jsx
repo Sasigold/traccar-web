@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import TextField from '@mui/material/TextField';
-import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { FormControl, FormHelperText, InputLabel, Select, MenuItem } from '@mui/material';
 import FileInput from '../common/components/FileInput';
 import EditItemView from './components/EditItemView';
 import EditAttributesAccordion from './components/EditAttributesAccordion';
@@ -133,6 +133,7 @@ const CalendarPage = () => {
                 <MenuItem value="simple">{t('calendarSimple')}</MenuItem>
                 <MenuItem value="custom">{t('reportCustom')}</MenuItem>
               </Select>
+              <FormHelperText>{t('calendarTypeHelp')}</FormHelperText>
             </FormControl>
             {simple ? (
               <>
@@ -144,6 +145,7 @@ const CalendarPage = () => {
                     const time = formatCalendarTime(dayjs(e.target.value, 'YYYY-MM-DDTHH:mm'));
                     setItem({ ...item, data: updateCalendar(lines, 5, `DTSTART;${time}`) });
                   }}
+                  helperText={t('calendarRangeHelp')}
                 />
                 <TextField
                   label={t('reportTo')}
@@ -175,6 +177,7 @@ const CalendarPage = () => {
                       </MenuItem>
                     ))}
                   </Select>
+                  <FormHelperText>{t('calendarRecurrenceHelp')}</FormHelperText>
                 </FormControl>
                 {['WEEKLY', 'MONTHLY'].includes(rule.frequency) && (
                   <FormControl>

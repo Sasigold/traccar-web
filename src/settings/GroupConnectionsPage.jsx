@@ -19,8 +19,9 @@ const GroupConnectionsPage = () => {
     <FormPage
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'groupDialog', 'sharedConnections']}
+      description={t('connectionsGroupDescription')}
     >
-      <FormSection title={t('sharedConnections')}>
+      <FormSection title={t('sharedConnections')} description={t('connectionsHint')}>
         <LinkField
           endpointAll="api/geofences"
           endpointLinked={`api/geofences?groupId=${id}`}
@@ -28,6 +29,7 @@ const GroupConnectionsPage = () => {
           keyBase="groupId"
           keyLink="geofenceId"
           label={t('sharedGeofences')}
+          helperText={t('connectionsGeofencesHelp')}
         />
         <LinkField
           endpointAll="api/notifications"
@@ -37,6 +39,7 @@ const GroupConnectionsPage = () => {
           keyLink="notificationId"
           titleGetter={(it) => formatNotificationTitle(t, it)}
           label={t('sharedNotifications')}
+          helperText={t('connectionsNotificationsHelp')}
         />
         {!features.disableDrivers && (
           <LinkField
@@ -47,6 +50,7 @@ const GroupConnectionsPage = () => {
             keyLink="driverId"
             titleGetter={(it) => `${it.name} (${it.uniqueId})`}
             label={t('sharedDrivers')}
+            helperText={t('connectionsDriversHelp')}
           />
         )}
         {!features.disableComputedAttributes && (
@@ -58,6 +62,7 @@ const GroupConnectionsPage = () => {
             keyLink="attributeId"
             titleGetter={(it) => it.description}
             label={t('sharedComputedAttributes')}
+            helperText={t('connectionsComputedHelp')}
           />
         )}
         {!features.disableSavedCommands && (
@@ -69,6 +74,7 @@ const GroupConnectionsPage = () => {
             keyLink="commandId"
             titleGetter={(it) => it.description}
             label={t('sharedSavedCommands')}
+            helperText={t('connectionsCommandsHelp')}
           />
         )}
         {!features.disableMaintenance && (
@@ -79,6 +85,7 @@ const GroupConnectionsPage = () => {
             keyBase="groupId"
             keyLink="maintenanceId"
             label={t('sharedMaintenance')}
+            helperText={t('connectionsMaintenanceHelp')}
           />
         )}
       </FormSection>

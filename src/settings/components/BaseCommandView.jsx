@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Autocomplete, Checkbox, FormControlLabel, TextField } from '@mui/material';
+import CheckboxField from './CheckboxField';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import { useRestriction } from '../../common/util/permissions';
 import { useAsyncTask } from '../../reactHelper';
@@ -116,7 +117,7 @@ const BaseCommandView = ({
             : options.find((it) => it.optionType === 'type' && it.type === item.type) || null
         }
         onChange={handleSelect}
-        renderInput={(params) => <TextField {...params} label={t('sharedType')} />}
+        renderInput={(params) => <TextField {...params} label={t('commandTypeLabel')} />}
       />
       {(!includeSaved || !savedId) &&
         attributes.map(({ key, name, type }) => {
@@ -154,30 +155,24 @@ const BaseCommandView = ({
           );
         })}
       {textEnabled && (
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={item.textChannel}
-              onChange={(e) => setItem({ ...item, textChannel: e.target.checked })}
-            />
-          }
+        <CheckboxField
+          checked={item.textChannel}
+          onChange={(e) => setItem({ ...item, textChannel: e.target.checked })}
           label={t('commandSendSms')}
+          helperText={t('commandSendSmsHelp')}
         />
       )}
       {!item.textChannel && (
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={item.attributes?.noQueue}
-              onChange={(e) =>
-                setItem({
-                  ...item,
-                  attributes: { ...item?.attributes, noQueue: e.target.checked },
-                })
-              }
-            />
+        <CheckboxField
+          checked={item.attributes?.noQueue}
+          onChange={(e) =>
+            setItem({
+              ...item,
+              attributes: { ...item?.attributes, noQueue: e.target.checked },
+            })
           }
           label={t('commandNoQueue')}
+          helperText={t('commandNoQueueHelp')}
         />
       )}
     </>

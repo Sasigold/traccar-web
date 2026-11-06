@@ -4,12 +4,10 @@ import {
   Typography,
   Button,
   FormControl,
-  Checkbox,
-  FormControlLabel,
   InputLabel,
   Select,
   MenuItem,
-  FormGroup,
+  FormHelperText,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -27,6 +25,7 @@ import useMapStyles from '../map/core/useMapStyles';
 import { map } from '../map/core/MapView';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import FormSection from './components/FormSection';
+import CheckboxField from './components/CheckboxField';
 import FormPage from './components/FormPage';
 import SaveBar from './components/SaveBar';
 
@@ -66,20 +65,23 @@ const ServerPage = () => {
     <FormPage
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'settingsServer']}
+      description={t('serverPageDescription')}
       footer={<SaveBar onCancel={() => navigate(-1)} onSave={handleSave} />}
     >
       {item && (
         <>
-          <FormSection title={t('sharedPreferences')}>
+          <FormSection title={t('serverDisplaySection')} description={t('serverDisplayHelp')}>
             <TextField
               value={item.mapUrl || ''}
               onChange={(event) => setItem({ ...item, mapUrl: event.target.value })}
               label={t('mapCustomLabel')}
+              helperText={t('serverMapUrlHelp')}
             />
             <TextField
               value={item.overlayUrl || ''}
               onChange={(event) => setItem({ ...item, overlayUrl: event.target.value })}
               label={t('mapOverlayCustom')}
+              helperText={t('serverOverlayUrlHelp')}
             />
             <FormControl>
               <InputLabel id="server-page-map-default-label">{t('mapDefault')}</InputLabel>
@@ -97,6 +99,7 @@ const ServerPage = () => {
                     </MenuItem>
                   ))}
               </Select>
+              <FormHelperText>{t('userMapHelp')}</FormHelperText>
             </FormControl>
             <FormControl>
               <InputLabel id="server-page-settings-coordinate-format-label">
@@ -112,6 +115,7 @@ const ServerPage = () => {
                 <MenuItem value="ddm">{t('sharedDegreesDecimalMinutes')}</MenuItem>
                 <MenuItem value="dms">{t('sharedDegreesMinutesSeconds')}</MenuItem>
               </Select>
+              <FormHelperText>{t('userCoordinateHelp')}</FormHelperText>
             </FormControl>
             <FormControl>
               <InputLabel id="server-page-settings-speed-unit-label">
@@ -204,30 +208,28 @@ const ServerPage = () => {
               keyGetter={(it) => it}
               titleGetter={(it) => it}
               label={t('sharedTimezone')}
+              helperText={t('userTimezoneHelp')}
             />
             <TextField
               value={item.poiLayer || ''}
               onChange={(event) => setItem({ ...item, poiLayer: event.target.value })}
               label={t('mapPoiLayer')}
+              helperText={t('userPoiLayerHelp')}
             />
             <TextField
               value={item.announcement || ''}
               onChange={(event) => setItem({ ...item, announcement: event.target.value })}
               label={t('serverAnnouncement')}
+              helperText={t('serverAnnouncementHelp')}
             />
-            <FormGroup>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={item.forceSettings}
-                    onChange={(event) => setItem({ ...item, forceSettings: event.target.checked })}
-                  />
-                }
-                label={t('serverForceSettings')}
-              />
-            </FormGroup>
+            <CheckboxField
+              checked={item.forceSettings}
+              onChange={(event) => setItem({ ...item, forceSettings: event.target.checked })}
+              label={t('serverForceSettings')}
+              helperText={t('serverForceSettingsHelp')}
+            />
           </FormSection>
-          <FormSection title={t('sharedLocation')}>
+          <FormSection title={t('userLocationSection')} description={t('serverLocationHelp')}>
             <TextField
               type="number"
               value={item.latitude || 0}
@@ -245,6 +247,7 @@ const ServerPage = () => {
               value={item.zoom || 0}
               onChange={(event) => setItem({ ...item, zoom: Number(event.target.value) })}
               label={t('serverZoom')}
+              helperText={t('userZoomHelp')}
             />
             <Button
               variant="outlined"
@@ -262,65 +265,48 @@ const ServerPage = () => {
               {t('mapCurrentLocation')}
             </Button>
           </FormSection>
-          <FormSection title={t('sharedPermissions')}>
-            <FormGroup>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={item.registration}
-                    onChange={(event) => setItem({ ...item, registration: event.target.checked })}
-                  />
-                }
-                label={t('serverRegistration')}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={item.readonly}
-                    onChange={(event) => setItem({ ...item, readonly: event.target.checked })}
-                  />
-                }
-                label={t('serverReadonly')}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={item.deviceReadonly}
-                    onChange={(event) => setItem({ ...item, deviceReadonly: event.target.checked })}
-                  />
-                }
-                label={t('userDeviceReadonly')}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={item.limitCommands}
-                    onChange={(event) => setItem({ ...item, limitCommands: event.target.checked })}
-                  />
-                }
-                label={t('userLimitCommands')}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={item.disableReports}
-                    onChange={(event) => setItem({ ...item, disableReports: event.target.checked })}
-                  />
-                }
-                label={t('userDisableReports')}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={item.fixedEmail}
-                    onChange={(e) => setItem({ ...item, fixedEmail: e.target.checked })}
-                  />
-                }
-                label={t('userFixedEmail')}
-              />
-            </FormGroup>
+          <FormSection
+            title={t('serverPermissionsSection')}
+            description={t('serverPermissionsHelp')}
+          >
+            <CheckboxField
+              checked={item.registration}
+              onChange={(event) => setItem({ ...item, registration: event.target.checked })}
+              label={t('serverRegistration')}
+              helperText={t('serverRegistrationHelp')}
+            />
+            <CheckboxField
+              checked={item.readonly}
+              onChange={(event) => setItem({ ...item, readonly: event.target.checked })}
+              label={t('serverReadonly')}
+              helperText={t('userReadonlyHelp')}
+            />
+            <CheckboxField
+              checked={item.deviceReadonly}
+              onChange={(event) => setItem({ ...item, deviceReadonly: event.target.checked })}
+              label={t('userDeviceReadonly')}
+              helperText={t('userDeviceReadonlyHelp')}
+            />
+            <CheckboxField
+              checked={item.limitCommands}
+              onChange={(event) => setItem({ ...item, limitCommands: event.target.checked })}
+              label={t('userLimitCommands')}
+              helperText={t('userLimitCommandsHelp')}
+            />
+            <CheckboxField
+              checked={item.disableReports}
+              onChange={(event) => setItem({ ...item, disableReports: event.target.checked })}
+              label={t('userDisableReports')}
+              helperText={t('userDisableReportsHelp')}
+            />
+            <CheckboxField
+              checked={item.fixedEmail}
+              onChange={(e) => setItem({ ...item, fixedEmail: e.target.checked })}
+              label={t('userFixedEmail')}
+              helperText={t('userFixedEmailHelp')}
+            />
           </FormSection>
-          <FormSection title={t('sharedFile')}>
+          <FormSection title={t('serverFileSection')} description={t('serverFileHelp')}>
             <FileInput
               placeholder={t('sharedSelectFile')}
               value={null}

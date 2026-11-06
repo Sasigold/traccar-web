@@ -19,8 +19,9 @@ const DeviceConnectionsPage = () => {
     <FormPage
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'sharedDevice', 'sharedConnections']}
+      description={t('connectionsDeviceDescription')}
     >
-      <FormSection title={t('sharedConnections')}>
+      <FormSection title={t('sharedConnections')} description={t('connectionsHint')}>
         <LinkField
           endpointAll="api/devices"
           endpointLinked={`api/devices?deviceId=${id}`}
@@ -28,6 +29,7 @@ const DeviceConnectionsPage = () => {
           keyBase="deviceId"
           keyLink="linkedDeviceId"
           label={t('deviceTitle')}
+          helperText={t('connectionsDevicesHelp')}
         />
         <LinkField
           endpointAll="api/geofences"
@@ -36,6 +38,7 @@ const DeviceConnectionsPage = () => {
           keyBase="deviceId"
           keyLink="geofenceId"
           label={t('sharedGeofences')}
+          helperText={t('connectionsGeofencesHelp')}
         />
         <LinkField
           endpointAll="api/notifications"
@@ -45,6 +48,7 @@ const DeviceConnectionsPage = () => {
           keyLink="notificationId"
           titleGetter={(it) => formatNotificationTitle(t, it)}
           label={t('sharedNotifications')}
+          helperText={t('connectionsNotificationsHelp')}
         />
         {!features.disableDrivers && (
           <LinkField
@@ -55,6 +59,7 @@ const DeviceConnectionsPage = () => {
             keyLink="driverId"
             titleGetter={(it) => `${it.name} (${it.uniqueId})`}
             label={t('sharedDrivers')}
+            helperText={t('connectionsDriversHelp')}
           />
         )}
         {!features.disableComputedAttributes && (
@@ -66,6 +71,7 @@ const DeviceConnectionsPage = () => {
             keyLink="attributeId"
             titleGetter={(it) => it.description}
             label={t('sharedComputedAttributes')}
+            helperText={t('connectionsComputedHelp')}
           />
         )}
         {!features.disableSavedCommands && (
@@ -77,6 +83,7 @@ const DeviceConnectionsPage = () => {
             keyLink="commandId"
             titleGetter={(it) => it.description}
             label={t('sharedSavedCommands')}
+            helperText={t('connectionsCommandsHelp')}
           />
         )}
         {!features.disableMaintenance && (
@@ -87,6 +94,7 @@ const DeviceConnectionsPage = () => {
             keyBase="deviceId"
             keyLink="maintenanceId"
             label={t('sharedMaintenance')}
+            helperText={t('connectionsMaintenanceHelp')}
           />
         )}
       </FormSection>

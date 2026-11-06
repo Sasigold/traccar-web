@@ -40,6 +40,7 @@ const SharePage = () => {
     <FormPage
       menu={<SettingsMenu />}
       breadcrumbs={['sharedShare']}
+      description={t('sharePageDescription')}
       footer={
         <SaveBar
           onCancel={() => navigate(-1)}
@@ -60,14 +61,16 @@ const SharePage = () => {
           type="datetime-local"
           value={expiration}
           onChange={(e) => setExpiration(e.target.value)}
+          helperText={t('shareExpirationHelp')}
         />
         <Button variant="outlined" color="primary" onClick={handleShare}>
-          {t('reportShow')}
+          {t('shareCreateLink')}
         </Button>
         <TextField
           value={link || ''}
           onChange={(e) => setLink(e.target.value)}
           label={t('sharedLink')}
+          helperText={t('shareLinkHelp')}
           slotProps={{ input: { readOnly: true } }}
         />
       </FormSection>
