@@ -29,6 +29,13 @@ export default makeStyles()((theme) => ({
     flexDirection: 'column',
     flex: 1,
     minHeight: 0,
+    // On phones and tablets the whole column scrolls (filter, totals, results) instead of
+    // squeezing the results into whatever height is left under the filter.
+    [theme.breakpoints.down('md')]: {
+      '& > *': {
+        flex: '0 0 auto !important',
+      },
+    },
   },
   header: {
     position: 'sticky',
@@ -39,6 +46,10 @@ export default makeStyles()((theme) => ({
     flexDirection: 'column',
     alignItems: 'stretch',
     backgroundColor: theme.palette.background.default,
+    // On phones and tablets the filter is tall; it scrolls away so the results get the screen.
+    [theme.breakpoints.down('md')]: {
+      position: 'static',
+    },
     '@media print': {
       display: 'none',
     },

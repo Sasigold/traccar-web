@@ -53,6 +53,7 @@ export const useReportsSections = () => {
           items: [
             {
               id: 'combined',
+              descriptionKey: 'reportCombinedDescription',
               titleKey: 'reportCombined',
               icon: StarRoundedIcon,
               path: '/reports/combined',
@@ -61,6 +62,7 @@ export const useReportsSections = () => {
             },
             {
               id: 'events',
+              descriptionKey: 'reportEventsDescription',
               titleKey: 'reportEvents',
               icon: NotificationsActiveRoundedIcon,
               path: '/reports/events',
@@ -69,6 +71,7 @@ export const useReportsSections = () => {
             },
             {
               id: 'geofences',
+              descriptionKey: 'reportGeofencesDescription',
               titleKey: 'sharedGeofences',
               icon: PlaceRoundedIcon,
               path: '/reports/geofences',
@@ -77,6 +80,7 @@ export const useReportsSections = () => {
             },
             {
               id: 'trips',
+              descriptionKey: 'reportTripsDescription',
               titleKey: 'reportTrips',
               icon: PlayCircleRoundedIcon,
               path: '/reports/trips',
@@ -85,6 +89,7 @@ export const useReportsSections = () => {
             },
             {
               id: 'stops',
+              descriptionKey: 'reportStopsDescription',
               titleKey: 'reportStops',
               icon: PauseCircleRoundedIcon,
               path: '/reports/stops',
@@ -93,6 +98,7 @@ export const useReportsSections = () => {
             },
             {
               id: 'summary',
+              descriptionKey: 'reportSummaryDescription',
               titleKey: 'reportSummary',
               icon: ListAltRoundedIcon,
               path: '/reports/summary',
@@ -101,6 +107,7 @@ export const useReportsSections = () => {
             },
             {
               id: 'chart',
+              descriptionKey: 'reportChartDescription',
               titleKey: 'reportChart',
               icon: ShowChartRoundedIcon,
               path: '/reports/chart',
@@ -109,6 +116,7 @@ export const useReportsSections = () => {
             },
             {
               id: 'replay',
+              descriptionKey: 'reportReplayDescription',
               titleKey: 'reportReplay',
               icon: RouteRoundedIcon,
               path: '/replay',
@@ -117,6 +125,7 @@ export const useReportsSections = () => {
             },
             {
               id: 'positions',
+              descriptionKey: 'reportPositionsDescription',
               titleKey: 'reportPositions',
               icon: TimelineRoundedIcon,
               path: '/reports/route',
@@ -131,6 +140,7 @@ export const useReportsSections = () => {
           items: [
             {
               id: 'logs',
+              descriptionKey: 'reportLogsDescription',
               titleKey: 'sharedLogs',
               icon: ArticleRoundedIcon,
               path: '/reports/logs',
@@ -138,6 +148,7 @@ export const useReportsSections = () => {
             },
             {
               id: 'scheduled',
+              descriptionKey: 'reportScheduledDescription',
               titleKey: 'reportScheduled',
               icon: EventRepeatRoundedIcon,
               path: '/reports/scheduled',
@@ -146,6 +157,7 @@ export const useReportsSections = () => {
             },
             {
               id: 'statistics',
+              descriptionKey: 'reportStatisticsDescription',
               titleKey: 'statisticsTitle',
               icon: BarChartRoundedIcon,
               path: '/reports/statistics',
@@ -155,6 +167,7 @@ export const useReportsSections = () => {
             },
             {
               id: 'audit',
+              descriptionKey: 'reportAuditDescription',
               titleKey: 'reportAudit',
               icon: VerifiedUserRoundedIcon,
               path: '/reports/audit',

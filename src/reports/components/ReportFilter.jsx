@@ -22,6 +22,7 @@ import SelectField from '../../common/components/SelectField';
 import { useRestriction } from '../../common/util/permissions';
 import { deviceEquality } from '../../common/util/deviceEquality';
 import { reportsActions } from '../../store';
+import ReportIntro from './ReportIntro';
 
 const getPeriodRange = (period) => {
   const now = dayjs();
@@ -201,8 +202,18 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
     }
   };
 
+  let hint = null;
+  if (selectedOption === 'schedule') {
+    hint = t('reportScheduleHint');
+  } else if (deviceType === 'multiple') {
+    hint = t('reportFilterHint');
+  } else if (deviceType === 'single') {
+    hint = t('reportFilterHintSingle');
+  }
+
   return (
     <div className={classes.filter}>
+      <ReportIntro hint={hint} />
       {deviceType !== 'none' && (
         <div className={classes.filterItem}>
           <SelectField
@@ -322,6 +333,7 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
               value={description || ''}
               onChange={(event) => setDescription(event.target.value)}
               label={t('sharedDescription')}
+              helperText={t('reportScheduleNameHelp')}
               fullWidth
             />
           </div>
@@ -331,6 +343,7 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
               onChange={(event) => setCalendarId(Number(event.target.value))}
               endpoint="api/calendars"
               label={t('sharedCalendar')}
+              helperText={t('reportScheduleCalendarHelp')}
               fullWidth
             />
           </div>

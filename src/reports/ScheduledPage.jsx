@@ -7,6 +7,7 @@ import { useAsyncTask } from '../reactHelper';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import ReportsMenu from './components/ReportsMenu';
+import ReportIntro from './components/ReportIntro';
 import TableShimmer from '../common/components/TableShimmer';
 import DataTable from '../common/components/table/DataTable';
 import RemoveDialog from '../common/components/RemoveDialog';
@@ -63,7 +64,7 @@ const ScheduledPage = () => {
 
   return (
     <PageLayout menu={<ReportsMenu />} breadcrumbs={['reportTitle', 'reportScheduled']}>
-      <DataTable variant="flush">
+      <DataTable variant="flush" toolbar={<ReportIntro padded />}>
         <TableHead>
           <TableRow>
             <TableCell>{t('sharedType')}</TableCell>
