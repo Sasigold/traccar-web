@@ -386,7 +386,7 @@ const PreferencesPage = () => {
             <FormHelperText>{t('preferencesDirectionHelp')}</FormHelperText>
           </FormControl>
           <FormGroup className={classes.toggles}>
-            {renderToggle('mapFollow', 'deviceFollow', false, 'preferencesFollowHelp')}
+            {renderToggle('mapFollow', 'deviceFollow', true, 'preferencesFollowHelp')}
             {renderToggle('mapCluster', 'mapClustering', true, 'preferencesClusterHelp')}
             {renderToggle('mapOnSelect', 'mapOnSelect', true, 'preferencesOnSelectHelp')}
           </FormGroup>
