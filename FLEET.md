@@ -88,3 +88,25 @@ the session.
 
 Without the migration, or with the fleet database disabled, the device, sensor and user pages still work;
 the customer and billing parts show why they are unavailable.
+
+## Roadmap stage 0: fleet details in Traccar attributes
+
+Stage 0 of the roadmap works without the fleet database. Structured vehicle and driver details are stored
+in the Traccar `attributes` JSON; the keys are defined once in `src/common/fleet/fleetFields.js` and stage
+1 migrates them into the `vehicles` / `drivers` tables. Dates are `YYYY-MM-DD` strings.
+
+| Entity | Keys |
+|--------|------|
+| Vehicle (device) | `plateNumber`, `vin`, `make`, `vehicleModel`, `modelYear`, `fuelType`, `ownership`, `fleetNotes`; dates `testExpiry`, `insuranceCompulsoryExpiry`, `insuranceComprehensiveExpiry`, `leaseEndDate` |
+| Driver | `nationalId`, `phone`, `email`, `hireDate`, `driverStatus`, `licenseNumber`, `licenseClasses` (array), `fleetNotes`; date `licenseExpiry` |
+
+- **Validity** (`/fleet/expiries`): every date above, soonest first, "needs attention" = expired or within
+  30 days. The map shows a one-line summary above the vehicle list; `/fleet` shows tiles. Drivers marked
+  `ended` are left out.
+- **Maintenance status** (`/settings/maintenances`, "status by vehicle", and the vehicle page): computed
+  from the latest position (`src/common/fleet/maintenanceStatus.js`). `start` is read as the last service:
+  next = `start` while the value is below it, otherwise `start + period`; due soon = within 10% of the
+  period. "Mark as done" sets `start` to the current value (it applies to every vehicle linked to that
+  maintenance, and the dialog says so).
+- **Fault codes**: `dtcs` / `faults` position attributes appear as chips on the map status card.
+- **Navigation**: a top-level "Fleet" item (`/fleet`) covers vehicles, drivers, maintenance and validity.

@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 import { FormControlLabel, Checkbox, TextField, Button } from '@mui/material';
+import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded';
+import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
 import FileInput from '../common/components/FileInput';
 import EditItemView from './components/EditItemView';
 import EditAttributesAccordion from './components/EditAttributesAccordion';
@@ -15,11 +18,23 @@ import { useCatch } from '../reactHelper';
 import ServerQrCodeDialog from '../common/components/ServerQrCodeDialog';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import FormSection from './components/FormSection';
+import { devicesActions } from '../store';
 import FleetDocumentsSection from './components/FleetDocumentsSection';
+import FleetFieldsSection from '../fleet/components/FleetFieldsSection';
+import MaintenanceStatusSection from '../fleet/components/MaintenanceStatusSection';
+import {
+  mergeAttributes,
+  notesField,
+  splitAttributes,
+  vehicleExpiryFields,
+  vehicleFieldKeys,
+  vehicleFields,
+} from '../common/fleet/fleetFields';
 
 const DevicePage = () => {
   const t = useTranslation();
 
+  const dispatch = useDispatch();
   const manager = useManager();
 
   const commonDeviceAttributes = useCommonDeviceAttributes(t);
@@ -47,6 +62,8 @@ const DevicePage = () => {
     }
   });
 
+  const setAttributes = (attributes) => setItem({ ...item, attributes });
+
   const validate = () => item && item.name && item.uniqueId;
 
   return (
@@ -55,6 +72,7 @@ const DevicePage = () => {
       item={item}
       setItem={setItem}
       validate={validate}
+      onItemSaved={(saved) => dispatch(devicesActions.update([saved]))}
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'sharedDevice']}
     >
@@ -74,6 +92,23 @@ const DevicePage = () => {
               disabled={Boolean(uniqueId)}
             />
           </FormSection>
+          <FleetFieldsSection
+            title={t('fleetVehicleDetails')}
+            icon={<DirectionsCarRoundedIcon />}
+            fields={[...vehicleFields, notesField]}
+            attributes={item.attributes}
+            setAttributes={setAttributes}
+          />
+          <FleetFieldsSection
+            title={t('fleetVehicleValidity')}
+            description={t('fleetExpiryHint')}
+            icon={<EventAvailableRoundedIcon />}
+            fields={vehicleExpiryFields}
+            attributes={item.attributes}
+            setAttributes={setAttributes}
+            showExpiry
+          />
+          {item.id && <MaintenanceStatusSection deviceId={item.id} />}
           <FormSection title={t('sharedExtra')}>
             <SelectField
               value={item.groupId}
@@ -155,8 +190,10 @@ const DevicePage = () => {
             identifier={item.uniqueId}
           />
           <EditAttributesAccordion
-            attributes={item.attributes}
-            setAttributes={(attributes) => setItem({ ...item, attributes })}
+            attributes={splitAttributes(item.attributes, vehicleFieldKeys)}
+            setAttributes={(other) =>
+              setAttributes(mergeAttributes(item.attributes, vehicleFieldKeys, other))
+            }
             definitions={{ ...commonDeviceAttributes, ...deviceAttributes }}
           />
         </>

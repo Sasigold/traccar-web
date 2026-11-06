@@ -18,6 +18,7 @@ import RouterRoundedIcon from '@mui/icons-material/RouterRounded';
 import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
+import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
 import { useAdministrator, useManager, useRestriction } from '../../common/util/permissions';
 import useFeatures from '../../common/util/useFeatures';
 import { useFleetPermission } from '../../common/fleet/useFleet';
@@ -117,6 +118,14 @@ export const useSettingsSections = () => {
             path: '/settings/maintenances',
             match: (pathname) => pathname.startsWith('/settings/maintenance'),
             visible: !features.disableMaintenance,
+          },
+          {
+            id: 'expiries',
+            titleKey: 'fleetExpiriesPage',
+            descriptionKey: 'fleetExpiriesPageDescription',
+            icon: EventAvailableRoundedIcon,
+            path: '/fleet/expiries',
+            match: (pathname) => pathname.startsWith('/fleet/expiries'),
           },
           {
             id: 'fleetDocuments',

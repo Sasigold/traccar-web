@@ -12,6 +12,8 @@ import { useLocalization } from './common/components/LocalizationProvider';
 import fetchOrThrow from './common/util/fetchOrThrow';
 
 const NotFoundPage = lazy(() => import('./other/NotFoundPage'));
+const FleetHubPage = lazy(() => import('./fleet/FleetHubPage'));
+const ExpiriesPage = lazy(() => import('./fleet/ExpiriesPage'));
 const CombinedReportPage = lazy(() => import('./reports/CombinedReportPage'));
 const PositionsReportPage = lazy(() => import('./reports/PositionsReportPage'));
 const ServerPage = lazy(() => import('./settings/ServerPage'));
@@ -152,6 +154,11 @@ const Navigation = () => {
           <Route path="geofences" element={<GeofencesPage />} />
           <Route path="emulator" element={<EmulatorPage />} />
           <Route path="stream" element={<StreamPage />} />
+
+          <Route path="fleet">
+            <Route index element={<FleetHubPage />} />
+            <Route path="expiries" element={<ExpiriesPage />} />
+          </Route>
 
           <Route path="settings">
             <Route index element={<SettingsHubPage />} />

@@ -14,11 +14,12 @@ import usePersistedState from '../common/util/usePersistedState';
 import useFilter from './useFilter';
 import MainToolbar from './MainToolbar';
 import { useAttributePreference } from '../common/util/preferences';
-import { useDeviceReadonly } from '../common/util/permissions';
+import { useDeviceReadonly, useRestriction } from '../common/util/permissions';
 import useFeatures from '../common/util/useFeatures';
 import { glass } from '../common/theme/surfaces';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import FleetStats from './components/FleetStats';
+import ExpiryTiles from '../fleet/components/ExpiryTiles';
 
 const MainMap = lazy(() => import('./MainMap'));
 
@@ -119,6 +120,7 @@ const MainPage = () => {
   const deviceReadonly = useDeviceReadonly();
 
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
+  const readonly = useRestriction('readonly');
 
   const mapOnSelect = useAttributePreference('mapOnSelect', true);
 
@@ -192,6 +194,7 @@ const MainPage = () => {
                   setFilterMap={setFilterMap}
                 />
                 {devicesOpen && !showEmpty && <FleetStats filter={filter} setFilter={setFilter} />}
+                {devicesOpen && !showEmpty && !readonly && <ExpiryTiles compact />}
                 {devicesOpen && desktop && <div className={classes.divider} />}
               </div>
             )}

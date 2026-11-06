@@ -43,7 +43,7 @@ const MobileTabs = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const t = useTranslation();
-  const items = useNavItems();
+  const items = useNavItems().filter((item) => !item.mobileHidden);
 
   const user = useSelector((state) => state.session.user);
   const socket = useSelector((state) => state.session.socket);

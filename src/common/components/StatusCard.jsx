@@ -33,6 +33,8 @@ import TelemetryStrip from './telemetry/TelemetryStrip';
 import { useTranslation } from './LocalizationProvider';
 import RemoveDialog from './RemoveDialog';
 import PositionValue from './PositionValue';
+import FaultCodes from '../../fleet/components/FaultCodes';
+import { faultCodes } from '../fleet/fleetFields';
 import { useDeviceReadonly, useRestriction } from '../util/permissions';
 import usePositionAttributes from '../attributes/usePositionAttributes';
 import { devicesActions } from '../../store';
@@ -275,7 +277,8 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                     .split(',')
                     .filter(
                       (key) =>
-                        position.hasOwnProperty(key) || position.attributes.hasOwnProperty(key),
+                        key !== 'dtcs' &&
+                        (position.hasOwnProperty(key) || position.attributes.hasOwnProperty(key)),
                     )
                     .map((key) => (
                       <div className={classes.row} key={key}>
@@ -291,6 +294,14 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                         </span>
                       </div>
                     ))}
+                  {faultCodes(position).length > 0 && (
+                    <div className={classes.row}>
+                      <span className={classes.rowLabel}>{t('fleetFaultCodes')}</span>
+                      <span className={classes.rowValue}>
+                        <FaultCodes position={position} />
+                      </span>
+                    </div>
+                  )}
                   <Link
                     component={RouterLink}
                     to={`/position/${position.id}`}

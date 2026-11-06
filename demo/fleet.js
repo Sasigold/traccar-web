@@ -3,7 +3,133 @@ import route from './route.js';
 const interval = 5000;
 const retention = 20 * 60 * 1000;
 
+// YYYY-MM-DD, `days` from `now` (local date).
+const dateFrom = (now, days) => {
+  const date = new Date(now + days * 86400000);
+  const pad = (value) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
+
+// Roadmap stage 0 vehicle details: one expired, one expiring, the rest valid.
+const vehicleDetails = (now) => [
+  {
+    plateNumber: '12-345-67',
+    make: 'Ford',
+    vehicleModel: 'Transit',
+    modelYear: 2022,
+    fuelType: 'diesel',
+    ownership: 'leased',
+    testExpiry: dateFrom(now, 140),
+    insuranceCompulsoryExpiry: dateFrom(now, -4),
+    insuranceComprehensiveExpiry: dateFrom(now, 200),
+    leaseEndDate: dateFrom(now, 420),
+  },
+  {
+    plateNumber: '234-56-789',
+    make: 'Renault',
+    vehicleModel: 'Kangoo',
+    modelYear: 2021,
+    fuelType: 'diesel',
+    ownership: 'owned',
+    testExpiry: dateFrom(now, 12),
+    insuranceCompulsoryExpiry: dateFrom(now, 95),
+  },
+  {
+    plateNumber: '345-67-890',
+    make: 'Toyota',
+    vehicleModel: 'Proace',
+    modelYear: 2023,
+    fuelType: 'hybrid',
+    ownership: 'leased',
+    testExpiry: dateFrom(now, 260),
+    insuranceCompulsoryExpiry: dateFrom(now, 75),
+    leaseEndDate: dateFrom(now, 25),
+  },
+  {
+    plateNumber: '45-678-90',
+    make: 'Skoda',
+    vehicleModel: 'Octavia',
+    modelYear: 2020,
+    fuelType: 'petrol',
+    ownership: 'owned',
+    testExpiry: dateFrom(now, 300),
+    insuranceCompulsoryExpiry: dateFrom(now, 180),
+  },
+  {
+    plateNumber: '567-89-012',
+    make: 'Hyundai',
+    vehicleModel: 'Ioniq 5',
+    modelYear: 2024,
+    fuelType: 'electric',
+    ownership: 'rented',
+    testExpiry: dateFrom(now, 500),
+  },
+  {
+    plateNumber: '678-90-123',
+    make: 'Volvo',
+    vehicleModel: 'FL',
+    modelYear: 2019,
+    fuelType: 'diesel',
+    ownership: 'owned',
+    testExpiry: dateFrom(now, 60),
+    insuranceCompulsoryExpiry: dateFrom(now, 60),
+  },
+];
+
+export const createDrivers = (now = Date.now()) => [
+  {
+    id: 1,
+    name: 'דנה לוי',
+    uniqueId: '0A1B2C3D',
+    attributes: {
+      phone: '050-1234567',
+      licenseNumber: '7654321',
+      licenseClasses: ['B', 'C1'],
+      licenseExpiry: dateFrom(now, 18),
+      driverStatus: 'active',
+      hireDate: '2021-03-01',
+    },
+  },
+  {
+    id: 2,
+    name: 'Yossi Cohen',
+    uniqueId: '1B2C3D4E',
+    attributes: {
+      phone: '052-7654321',
+      licenseNumber: '1234567',
+      licenseClasses: ['B', 'C', 'C+E'],
+      licenseExpiry: dateFrom(now, -10),
+      driverStatus: 'active',
+    },
+  },
+  {
+    id: 3,
+    name: 'Noa Mizrahi',
+    uniqueId: '2C3D4E5F',
+    attributes: {
+      licenseClasses: ['B'],
+      licenseExpiry: dateFrom(now, 700),
+      driverStatus: 'active',
+    },
+  },
+];
+
+// Distance maintenance in meters, linked to every vehicle except the electric one.
+export const createMaintenance = () => [
+  {
+    id: 1,
+    name: 'Oil service',
+    type: 'totalDistance',
+    start: 15000 * 1000,
+    period: 15000 * 1000,
+    attributes: {},
+  },
+];
+
+export const maintenanceFor = (deviceId) => (Number(deviceId) === 5 ? [] : createMaintenance());
+
 export const createFleet = (now = Date.now()) => {
+  const details = vehicleDetails(now);
   const anchor = Math.floor(now / interval) * interval;
   const names = ['Delivery Van', 'Service Van', 'City Shuttle', 'Courier', 'Support Car', 'בדיקה'];
   const testDeviceId = names.length;
@@ -16,7 +142,10 @@ export const createFleet = (now = Date.now()) => {
     disabled: false,
     groupId: 0,
     // The test device has a tank capacity (liters) and a speed limit (knots).
-    attributes: index + 1 === testDeviceId ? { fuelCapacity: 80, speedLimit: 27 } : {},
+    attributes: {
+      ...details[index],
+      ...(index + 1 === testDeviceId && { fuelCapacity: 80, speedLimit: 27 }),
+    },
   }));
 
   // A device that reports a rich set of parameters, to exercise the dashboard.
@@ -95,6 +224,7 @@ export const createFleet = (now = Date.now()) => {
           motion: moving,
           power: moving ? 14.2 : 12.6,
           totalDistance: (12000 + index * 8000) * 1000,
+          ...(index === 1 && { dtcs: 'P0171,P0420' }),
           ...(device.id === testDeviceId && testAttributes(step, speed, moving)),
         },
       };
