@@ -26,6 +26,11 @@ import LocalGasStationRoundedIcon from '@mui/icons-material/LocalGasStationRound
 import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
 import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
 import HealthAndSafetyRoundedIcon from '@mui/icons-material/HealthAndSafetyRounded';
+import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
+import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
+import RvHookupRoundedIcon from '@mui/icons-material/RvHookupRounded';
+import ThermostatRoundedIcon from '@mui/icons-material/ThermostatRounded';
+import WebhookRoundedIcon from '@mui/icons-material/WebhookRounded';
 import { useAdministrator, useManager, useRestriction } from '../../common/util/permissions';
 import useFeatures from '../../common/util/useFeatures';
 import { useFleetPermission } from '../../common/fleet/useFleet';
@@ -48,6 +53,10 @@ export const useSettingsSections = () => {
   const fleetInspections = useFleetPermission('inspections.read');
   const fleetUsers = useFleetPermission('users.read');
   const fleetSafety = useFleetPermission('safety.read');
+  const fleetPoi = useFleetPermission('poi.read');
+  const fleetDispatch = useFleetPermission('dispatch.read');
+  const fleetVehicles = useFleetPermission('vehicles.read');
+  const fleetIntegrations = useFleetPermission('integrations.manage');
 
   return useMemo(() => {
     const profilePath = `/settings/user/${userId}`;
@@ -198,6 +207,41 @@ export const useSettingsSections = () => {
             visible: fleetCosts,
           },
           {
+            id: 'dispatch',
+            titleKey: 'fleetDispatchPage',
+            descriptionKey: 'fleetDispatchPageDescription',
+            icon: LocalShippingRoundedIcon,
+            path: '/fleet/dispatch',
+            match: (pathname) => pathname.startsWith('/fleet/dispatch'),
+            visible: fleetDispatch,
+          },
+          {
+            id: 'poi',
+            titleKey: 'fleetPoiPage',
+            descriptionKey: 'fleetPoiPageDescription',
+            icon: PlaceRoundedIcon,
+            path: '/fleet/poi',
+            match: (pathname) => pathname.startsWith('/fleet/poi'),
+            visible: fleetPoi,
+          },
+          {
+            id: 'equipment',
+            titleKey: 'fleetEquipmentPage',
+            descriptionKey: 'fleetEquipmentPageDescription',
+            icon: RvHookupRoundedIcon,
+            path: '/fleet/equipment',
+            match: (pathname) => pathname.startsWith('/fleet/equipment'),
+            visible: fleetVehicles,
+          },
+          {
+            id: 'sensors',
+            titleKey: 'fleetSensorsPage',
+            descriptionKey: 'fleetSensorsPageDescription',
+            icon: ThermostatRoundedIcon,
+            path: '/fleet/sensors',
+            match: (pathname) => pathname.startsWith('/fleet/sensors'),
+          },
+          {
             id: 'fleetDocuments',
             titleKey: 'fleetDocumentsPage',
             descriptionKey: 'fleetDocumentsPageDescription',
@@ -264,6 +308,15 @@ export const useSettingsSections = () => {
             match: (pathname) =>
               pathname.startsWith('/fleet/users') || pathname.startsWith('/fleet/roles'),
             visible: fleetUsers,
+          },
+          {
+            id: 'integrations',
+            titleKey: 'fleetIntegrationsPage',
+            descriptionKey: 'fleetIntegrationsPageDescription',
+            icon: WebhookRoundedIcon,
+            path: '/fleet/integrations',
+            match: (pathname) => pathname.startsWith('/fleet/integrations'),
+            visible: fleetIntegrations,
           },
           {
             id: 'server',
@@ -336,6 +389,10 @@ export const useSettingsSections = () => {
     fleetInspections,
     fleetUsers,
     fleetSafety,
+    fleetPoi,
+    fleetDispatch,
+    fleetVehicles,
+    fleetIntegrations,
   ]);
 };
 

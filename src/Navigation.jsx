@@ -28,6 +28,11 @@ const FleetUsersPage = lazy(() => import('./fleet/FleetUsersPage'));
 const DriverPortalPage = lazy(() => import('./fleet/DriverPortalPage'));
 const SafetyPage = lazy(() => import('./fleet/SafetyPage'));
 const DriverFilePage = lazy(() => import('./fleet/DriverFilePage'));
+const PoiPage = lazy(() => import('./fleet/PoiPage'));
+const DispatchPage = lazy(() => import('./fleet/DispatchPage'));
+const EquipmentPage = lazy(() => import('./fleet/EquipmentPage'));
+const SensorsPage = lazy(() => import('./fleet/SensorsPage'));
+const IntegrationsPage = lazy(() => import('./fleet/IntegrationsPage'));
 const CombinedReportPage = lazy(() => import('./reports/CombinedReportPage'));
 const PositionsReportPage = lazy(() => import('./reports/PositionsReportPage'));
 const ServerPage = lazy(() => import('./settings/ServerPage'));
@@ -189,6 +194,11 @@ const Navigation = () => {
             <Route path="users" element={<FleetUsersPage />} />
             <Route path="safety" element={<SafetyPage />} />
             <Route path="driver-file/:id" element={<DriverFilePage />} />
+            <Route path="poi" element={<PoiPage />} />
+            <Route path="dispatch" element={<DispatchPage />} />
+            <Route path="equipment" element={<EquipmentPage />} />
+            <Route path="sensors" element={<SensorsPage />} />
+            <Route path="integrations" element={<IntegrationsPage />} />
           </Route>
 
           <Route path="settings">

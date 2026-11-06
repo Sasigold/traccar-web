@@ -36,6 +36,10 @@ const fleetItems = [
   'drivers',
   'maintenance',
   'fleetDocuments',
+  'dispatch',
+  'poi',
+  'equipment',
+  'sensors',
 ];
 
 // Top-level "Fleet" destination: vehicles, drivers, maintenance and validity in one place.
