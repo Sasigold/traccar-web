@@ -20,6 +20,7 @@ const WorkOrderPage = lazy(() => import('./fleet/WorkOrderPage'));
 const VendorsPage = lazy(() => import('./fleet/VendorsPage'));
 const IncidentsPage = lazy(() => import('./fleet/IncidentsPage'));
 const IncidentPage = lazy(() => import('./fleet/IncidentPage'));
+const CostsPage = lazy(() => import('./fleet/CostsPage'));
 const CombinedReportPage = lazy(() => import('./reports/CombinedReportPage'));
 const PositionsReportPage = lazy(() => import('./reports/PositionsReportPage'));
 const ServerPage = lazy(() => import('./settings/ServerPage'));
@@ -172,6 +173,7 @@ const Navigation = () => {
             <Route path="incidents" element={<IncidentsPage />} />
             <Route path="incident/:id" element={<IncidentPage />} />
             <Route path="incident" element={<IncidentPage />} />
+            <Route path="costs" element={<CostsPage />} />
           </Route>
 
           <Route path="settings">
