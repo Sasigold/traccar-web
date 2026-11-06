@@ -1497,5 +1497,9 @@
     "fleetIssueStatusOpen": "Open",
     "fleetIssueStatusInProgress": "In progress",
     "fleetIssueStatusResolved": "Fixed",
-    "fleetIssueStatusWontFix": "Won't fix"
+    "fleetIssueStatusWontFix": "Won't fix",
+    "fleetKpiOpenWorkOrders": "Open work orders",
+    "fleetKpiOpenIssues": "Open issues",
+    "fleetKpiOpenIncidents": "Open damage reports",
+    "fleetKpiMonthCost": "Costs this month"
 }

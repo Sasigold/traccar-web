@@ -1497,5 +1497,9 @@
     "fleetIssueStatusOpen": "פתוחה",
     "fleetIssueStatusInProgress": "בטיפול",
     "fleetIssueStatusResolved": "תוקנה",
-    "fleetIssueStatusWontFix": "לא לטיפול"
+    "fleetIssueStatusWontFix": "לא לטיפול",
+    "fleetKpiOpenWorkOrders": "הזמנות עבודה פתוחות",
+    "fleetKpiOpenIssues": "תקלות פתוחות",
+    "fleetKpiOpenIncidents": "נזקים בטיפול",
+    "fleetKpiMonthCost": "עלויות החודש"
 }

@@ -7,6 +7,7 @@ import SettingsCard from '../settings/components/SettingsCard';
 import { useSettingsSections } from '../settings/components/settingsSections';
 import ExpiryTiles from './components/ExpiryTiles';
 import FleetSyncCard from './components/FleetSyncCard';
+import FleetKpis from './components/FleetKpis';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -56,6 +57,7 @@ const FleetHubPage = () => {
     >
       <div className={classes.root}>
         <ExpiryTiles />
+        <FleetKpis />
         <div className={classes.grid}>
           {items.map((item) => (
             <SettingsCard
