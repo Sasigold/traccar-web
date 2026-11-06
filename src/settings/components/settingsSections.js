@@ -24,6 +24,7 @@ import HandymanRoundedIcon from '@mui/icons-material/HandymanRounded';
 import CarCrashRoundedIcon from '@mui/icons-material/CarCrashRounded';
 import LocalGasStationRoundedIcon from '@mui/icons-material/LocalGasStationRounded';
 import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
+import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
 import { useAdministrator, useManager, useRestriction } from '../../common/util/permissions';
 import useFeatures from '../../common/util/useFeatures';
 import { useFleetPermission } from '../../common/fleet/useFleet';
@@ -44,6 +45,7 @@ export const useSettingsSections = () => {
   const fleetIncidents = useFleetPermission('incidents.read');
   const fleetCosts = useFleetPermission('costs.read');
   const fleetInspections = useFleetPermission('inspections.read');
+  const fleetUsers = useFleetPermission('users.read');
 
   return useMemo(() => {
     const profilePath = `/settings/user/${userId}`;
@@ -242,6 +244,16 @@ export const useSettingsSections = () => {
             visible: Boolean(manager),
           },
           {
+            id: 'fleetUsers',
+            titleKey: 'fleetUsersPage',
+            descriptionKey: 'fleetUsersPageDescription',
+            icon: AdminPanelSettingsRoundedIcon,
+            path: '/fleet/users',
+            match: (pathname) =>
+              pathname.startsWith('/fleet/users') || pathname.startsWith('/fleet/roles'),
+            visible: fleetUsers,
+          },
+          {
             id: 'server',
             titleKey: 'settingsServer',
             descriptionKey: 'settingsServerDescription',
@@ -310,6 +322,7 @@ export const useSettingsSections = () => {
     fleetIncidents,
     fleetCosts,
     fleetInspections,
+    fleetUsers,
   ]);
 };
 

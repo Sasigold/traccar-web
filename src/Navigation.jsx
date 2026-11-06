@@ -23,6 +23,9 @@ const IncidentPage = lazy(() => import('./fleet/IncidentPage'));
 const CostsPage = lazy(() => import('./fleet/CostsPage'));
 const InspectionsPage = lazy(() => import('./fleet/InspectionsPage'));
 const InspectionPage = lazy(() => import('./fleet/InspectionPage'));
+const RolesPage = lazy(() => import('./fleet/RolesPage'));
+const FleetUsersPage = lazy(() => import('./fleet/FleetUsersPage'));
+const DriverPortalPage = lazy(() => import('./fleet/DriverPortalPage'));
 const CombinedReportPage = lazy(() => import('./reports/CombinedReportPage'));
 const PositionsReportPage = lazy(() => import('./reports/PositionsReportPage'));
 const ServerPage = lazy(() => import('./settings/ServerPage'));
@@ -164,6 +167,7 @@ const Navigation = () => {
           <Route path="emulator" element={<EmulatorPage />} />
           <Route path="stream" element={<StreamPage />} />
 
+          <Route path="driver" element={<DriverPortalPage />} />
           <Route path="fleet">
             <Route index element={<FleetHubPage />} />
             <Route path="expiries" element={<ExpiriesPage />} />
@@ -179,6 +183,8 @@ const Navigation = () => {
             <Route path="inspections" element={<InspectionsPage />} />
             <Route path="inspection/:id" element={<InspectionPage />} />
             <Route path="inspection" element={<InspectionPage />} />
+            <Route path="roles" element={<RolesPage />} />
+            <Route path="users" element={<FleetUsersPage />} />
           </Route>
 
           <Route path="settings">

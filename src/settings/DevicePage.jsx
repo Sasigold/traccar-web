@@ -21,6 +21,7 @@ import FormSection from './components/FormSection';
 import { devicesActions, messagesActions } from '../store';
 import { saveFleetRecord, useFleetAccess, useFleetOverlay } from '../fleet/fleetRecords';
 import FleetDocumentsSection from './components/FleetDocumentsSection';
+import HistorySection from '../fleet/components/HistorySection';
 import FleetFieldsSection from '../fleet/components/FleetFieldsSection';
 import MaintenanceStatusSection from '../fleet/components/MaintenanceStatusSection';
 import {
@@ -206,6 +207,7 @@ const DevicePage = () => {
             name={item.name}
             identifier={item.uniqueId}
           />
+          <HistorySection entity="vehicle" traccarId={item.id} />
           <EditAttributesAccordion
             attributes={splitAttributes(item.attributes, vehicleFieldKeys)}
             setAttributes={(other) =>

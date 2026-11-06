@@ -13,6 +13,8 @@ import { saveFleetRecord, useFleetAccess, useFleetOverlay } from '../fleet/fleet
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import FormSection from './components/FormSection';
 import FleetDocumentsSection from './components/FleetDocumentsSection';
+import DriverAssignmentSection from '../fleet/components/DriverAssignmentSection';
+import HistorySection from '../fleet/components/HistorySection';
 import FleetFieldsSection from '../fleet/components/FleetFieldsSection';
 import {
   driverExpiryFields,
@@ -92,12 +94,14 @@ const DriverPage = () => {
             setAttributes={setAttributes}
             showExpiry
           />
+          <DriverAssignmentSection driver={item} />
           <FleetDocumentsSection
             entity="driver"
             traccarId={item.id}
             name={item.name}
             identifier={item.uniqueId}
           />
+          <HistorySection entity="driver" traccarId={item.id} />
           <EditAttributesAccordion
             attributes={splitAttributes(item.attributes, driverFieldKeys)}
             setAttributes={(other) =>

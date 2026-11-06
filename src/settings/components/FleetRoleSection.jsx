@@ -6,6 +6,8 @@ import { useTranslation } from '../../common/components/LocalizationProvider';
 import { useAsyncTask, useCatch } from '../../reactHelper';
 import { getFleetClient, unwrap } from '../../common/fleet/client';
 import { fleetRoles } from '../../common/fleet/config';
+import { applyRole } from '../../fleet/users';
+import { effectiveGranted } from '../../common/fleet/permissionsCatalog';
 import {
   useFleetError,
   useFleetPermission,
@@ -21,6 +23,23 @@ const useStyles = makeStyles()((theme) => ({
     gap: theme.spacing(0.75),
   },
 }));
+
+// The role's permissions in this organization: global defaults with the organization's changes.
+const rolePermissions = async (role) => {
+  if (role === 'owner') {
+    return ['*'];
+  }
+  const client = getFleetClient();
+  const [defaults, overrides] = await Promise.all([
+    client.from('role_permissions').select('role, permission').eq('role', role),
+    client.from('org_role_permissions').select('role, permission, granted').eq('role', role),
+  ]);
+  const defaultRows = unwrap(defaults) || [];
+  // Before the stage 3 migration the overrides table doesn't exist; fall back to the defaults.
+  const overrideRows = overrides.error ? [] : overrides.data || [];
+  const keys = new Set([...defaultRows, ...overrideRows].map((row) => row.permission));
+  return [...keys].filter((key) => effectiveGranted(role, key, defaultRows, overrideRows)).sort();
+};
 
 const roleKey = (role) => `fleetRole${role.charAt(0).toUpperCase()}${role.slice(1)}`;
 
@@ -55,10 +74,7 @@ const FleetRoleSection = ({ traccarUserId }) => {
       if (row.id === me?.id) {
         setPermissions(unwrap(await client.rpc('my_permissions')) || []);
       } else {
-        const rows = unwrap(
-          await client.from('role_permissions').select('permission').eq('role', row.role),
-        );
-        setPermissions(row.role === 'owner' ? ['*'] : (rows || []).map((it) => it.permission));
+        setPermissions(await rolePermissions(row.role));
       }
     }
     setLoaded(true);
@@ -66,20 +82,9 @@ const FleetRoleSection = ({ traccarUserId }) => {
 
   const handleRoleChange = useCatch(async (event) => {
     const role = event.target.value;
-    const client = getFleetClient();
-    const updated = unwrap(
-      await client
-        .from('profiles')
-        .update({ role })
-        .eq('id', profile.id)
-        .select('id, role')
-        .single(),
-    );
+    const updated = await applyRole({ ...profile, traccar_user_id: traccarUserId }, role);
     setProfile({ ...profile, role: updated.role });
-    const rows = unwrap(
-      await client.from('role_permissions').select('permission').eq('role', updated.role),
-    );
-    setPermissions(updated.role === 'owner' ? ['*'] : (rows || []).map((it) => it.permission));
+    setPermissions(await rolePermissions(updated.role));
   });
 
   if (status === 'disabled' || status === 'idle' || !traccarUserId) {

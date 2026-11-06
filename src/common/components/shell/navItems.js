@@ -5,6 +5,7 @@ import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import HexagonRoundedIcon from '@mui/icons-material/HexagonRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
+import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded';
 import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
 import { useAdministrator, useRestriction } from '../../util/permissions';
 
@@ -25,6 +26,8 @@ export default () => {
   const readonly = useRestriction('readonly');
   const disableReports = useRestriction('disableReports');
   const admin = useAdministrator();
+  // Fleet role "driver" gets the driver portal (roadmap 4.6) instead of the fleet screens.
+  const driverRole = useSelector((state) => state.fleet.profile?.role === 'driver');
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
   const devices = useSelector((state) => state.devices.items);
 
@@ -67,7 +70,15 @@ export default () => {
         icon: LocalShippingRoundedIcon,
         path: '/fleet',
         match: isFleetPath,
-        hidden: readonly,
+        hidden: readonly || driverRole,
+      },
+      {
+        key: 'driver',
+        titleKey: 'fleetDriverPortal',
+        icon: BadgeRoundedIcon,
+        path: '/driver',
+        match: (pathname) => pathname.startsWith('/driver'),
+        hidden: !driverRole,
       },
       {
         key: 'settings',
@@ -88,5 +99,5 @@ export default () => {
         hidden: !admin,
       },
     ].filter((item) => !item.hidden);
-  }, [readonly, disableReports, admin, selectedDeviceId, devices]);
+  }, [readonly, disableReports, admin, driverRole, selectedDeviceId, devices]);
 };
