@@ -465,7 +465,7 @@ export default {
         brandPrimary(theme)
           ? {
               '&.Mui-checked': {
-                color: brandColors.white,
+                color: brandColors.ink,
               },
               '&.Mui-checked + .MuiSwitch-track': {
                 backgroundColor: theme.palette.cta.main,
