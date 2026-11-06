@@ -37,41 +37,57 @@ const MapMarkers = ({ markers, showTitles, cluster, direction, onClick, disabled
     map.easeTo({ center: feature.geometry.coordinates, zoom });
   }, []);
 
+  const iconLayout = showTitles
+    ? {
+        'icon-image': '{image}',
+        'icon-size': iconScale,
+        'icon-allow-overlap': true,
+        'text-field': '{title}',
+        'text-allow-overlap': true,
+        'text-anchor': 'bottom',
+        'text-offset': [0, -2 * iconScale],
+        'text-font': findFonts(map),
+        'text-size': 12,
+        'symbol-sort-key': ['get', 'id'],
+      }
+    : {
+        'icon-image': '{image}',
+        'icon-size': iconScale,
+        'icon-allow-overlap': true,
+        'symbol-sort-key': ['get', 'id'],
+      };
+  const iconLayer = {
+    type: 'symbol',
+    ...(showTitles
+      ? {
+          paint: {
+            'text-color': theme.palette.brand.ink,
+            'text-halo-color': theme.palette.brand.white,
+            'text-halo-width': 1.2,
+          },
+        }
+      : {}),
+    ...(onClick
+      ? { on: { mouseenter: onMouseEnter, mouseleave: onMouseLeave, click: onMarkerClick } }
+      : {}),
+  };
+
   const layers = [
     {
-      type: 'symbol',
-      filter: ['!has', 'point_count'],
-      layout: showTitles
-        ? {
-            'icon-image': '{image}',
-            'icon-size': iconScale,
-            'icon-allow-overlap': true,
-            'text-field': '{title}',
-            'text-allow-overlap': true,
-            'text-anchor': 'bottom',
-            'text-offset': [0, -2 * iconScale],
-            'text-font': findFonts(map),
-            'text-size': 12,
-            'symbol-sort-key': ['get', 'id'],
-          }
-        : {
-            'icon-image': '{image}',
-            'icon-size': iconScale,
-            'icon-allow-overlap': true,
-            'symbol-sort-key': ['get', 'id'],
-          },
-      ...(showTitles
-        ? {
-            paint: {
-              'text-color': theme.palette.brand.ink,
-              'text-halo-color': theme.palette.brand.white,
-              'text-halo-width': 1.2,
-            },
-          }
-        : {}),
-      ...(onClick
-        ? { on: { mouseenter: onMouseEnter, mouseleave: onMouseLeave, click: onMarkerClick } }
-        : {}),
+      ...iconLayer,
+      filter: ['all', ['!has', 'point_count'], ['!=', 'heading', true]],
+      layout: iconLayout,
+    },
+    {
+      // Top-down vehicles: the image points north and turns with the course on the map.
+      ...iconLayer,
+      key: 'heading',
+      filter: ['all', ['!has', 'point_count'], ['==', 'heading', true]],
+      layout: {
+        ...iconLayout,
+        'icon-rotate': ['get', 'rotation'],
+        'icon-rotation-alignment': 'map',
+      },
     },
   ];
 
@@ -118,7 +134,16 @@ const MapMarkers = ({ markers, showTitles, cluster, direction, onClick, disabled
     data: {
       type: 'FeatureCollection',
       features: markers.map(
-        ({ latitude, longitude, image, title, rotation, direction: showDirection, ...rest }) => ({
+        ({
+          latitude,
+          longitude,
+          image,
+          title,
+          rotation,
+          direction: showDirection,
+          heading,
+          ...rest
+        }) => ({
           type: 'Feature',
           geometry: {
             type: 'Point',
@@ -130,6 +155,7 @@ const MapMarkers = ({ markers, showTitles, cluster, direction, onClick, disabled
             title: title || '',
             rotation: rotation || 0,
             direction: showDirection || false,
+            heading: heading || false,
           },
         }),
       ),

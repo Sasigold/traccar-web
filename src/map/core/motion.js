@@ -72,3 +72,36 @@ export const liveTransitionDuration = (from, to) => {
 // Playback time for one replay segment, derived from the real time the vehicle took.
 export const replaySegmentDuration = (from, to) =>
   clamp(fixTimeGap(from, to) / REPLAY_TIME_SCALE, REPLAY_MIN_SEGMENT, REPLAY_MAX_SEGMENT);
+
+// One device's glide between fixes. The live markers (useSmoothPositions) and the follow camera
+// (MapSelectedDevice) each keep a track fed with the same fixes, so the camera moves in step with
+// the marker and a followed vehicle stays put on screen.
+export const createTrack = (position) => ({ target: position, start: null });
+
+// Where the track is shown at time `now` (ms, performance.now()), or null once the glide is over
+// and the track rests on its target.
+export const trackCoordinates = (track, now) => {
+  if (track.start == null) {
+    return null;
+  }
+  const progress = (now - track.start) / track.duration;
+  if (progress >= 1) {
+    track.start = null;
+    return null;
+  }
+  return interpolateCoordinates(track.from, track.target, progress);
+};
+
+// Head for a new fix, starting from wherever the track is shown right now so it never jumps back.
+export const retargetTrack = (track, position, now, animate) => {
+  const current = trackCoordinates(track, now) ?? track.target;
+  const duration = animate ? liveTransitionDuration(track.target, position) : 0;
+  track.from = {
+    latitude: current.latitude,
+    longitude: current.longitude,
+    course: current.course,
+  };
+  track.target = position;
+  track.start = duration ? now : null;
+  track.duration = duration;
+};

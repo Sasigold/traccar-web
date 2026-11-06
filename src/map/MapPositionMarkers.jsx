@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { map } from './core/MapView';
 import MapMarkers from './MapMarkers';
 import { formatTime, getStatusColor } from '../common/util/formatter';
-import { deviceIconKey, isDeviceMoving } from './core/preloadImages';
+import { deviceIconKey, isDeviceMoving, isHeadingIcon } from './core/preloadImages';
 import { useAttributePreference } from '../common/util/preferences';
 import { fromMapCoordinates } from './core/mapUtil';
 import useSmoothPositions from './core/useSmoothPositions';
@@ -59,15 +59,19 @@ const MapPositionMarkers = ({
       ? position.attributes.color || getStatusColor(device.status)
       : 'neutral';
     const titles = { name: device.name, fixTime: formatTime(position.fixTime, 'seconds') };
+    const iconKey = deviceIconKey(device.category, showStatus && isDeviceMoving(device, position));
+    // A top-down vehicle already shows where it is heading; it needs no direction arrow.
+    const heading = isHeadingIcon(iconKey);
     return {
       id: position.id,
       deviceId: position.deviceId,
       latitude: position.latitude,
       longitude: position.longitude,
-      image: `${deviceIconKey(device.category, showStatus && isDeviceMoving(device, position))}-${color}`,
+      image: `${iconKey}-${color}`,
       title: titles[titleField || 'name'],
       rotation: position.course,
-      direction: showDirection,
+      direction: showDirection && !heading,
+      heading,
     };
   };
 

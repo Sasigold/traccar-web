@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef } from 'react';
-import { interpolateCoordinates, liveTransitionDuration } from './motion';
+import { createTrack, retargetTrack, trackCoordinates } from './motion';
 import { prefersReducedMotion } from './movingIcon';
 
 // Glide live markers between GPS fixes instead of jumping. Each device keeps a track: the fix it is
@@ -19,36 +19,13 @@ const useSmoothPositions = (positions, enabled = true) => {
       seen.add(position.deviceId);
       let track = tracks.get(position.deviceId);
       if (!track) {
-        track = { target: position, start: null };
+        track = createTrack(position);
         tracks.set(position.deviceId, track);
       } else if (track.target !== position) {
-        const current =
-          track.start == null
-            ? track.target
-            : interpolateCoordinates(
-                track.from,
-                track.target,
-                (now - track.start) / track.duration,
-              );
-        const duration = animate ? liveTransitionDuration(track.target, position) : 0;
-        track.from = {
-          latitude: current.latitude,
-          longitude: current.longitude,
-          course: current.course,
-        };
-        track.target = position;
-        track.start = duration ? now : null;
-        track.duration = duration;
+        retargetTrack(track, position, now, animate);
       }
-      if (track.start == null) {
-        return position;
-      }
-      const progress = (now - track.start) / track.duration;
-      if (progress >= 1) {
-        track.start = null;
-        return position;
-      }
-      return { ...position, ...interpolateCoordinates(track.from, track.target, progress) };
+      const coordinates = trackCoordinates(track, now);
+      return coordinates ? { ...position, ...coordinates } : position;
     });
     tracks.forEach((_, deviceId) => {
       if (!seen.has(deviceId)) {

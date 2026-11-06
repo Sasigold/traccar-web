@@ -1,5 +1,6 @@
 import { canvasTintImage, loadImage, prepareIcon } from './mapUtil';
 import { createMovingImage } from './movingIcon';
+import { createTopDownImage, topDownShapes } from './topDownIcon';
 import { brandColors, slate, status } from '../../common/theme/tokens';
 
 import directionSvg from '../../resources/images/direction.svg';
@@ -107,11 +108,19 @@ export const isDeviceMoving = (device, position) =>
   device?.status === 'online' &&
   Boolean(position && (position.attributes?.motion || position.speed > 1));
 
-// Map image key prefix for a device: the animated driving variant when it is moving.
+// Map image key prefix for a device. While it drives: a bird's-eye car, truck or motorcycle
+// that the map turns to the vehicle's course (see topDownIcon.js), or for other vehicles the
+// disc with animated speed streaks.
 export const deviceIconKey = (category, moving) => {
   const key = mapIconKey(category);
+  if (moving && topDownShapes.hasOwnProperty(key)) {
+    return `${topDownShapes[key]}TopDown`;
+  }
   return moving && movingCategories.has(key) ? `${key}Moving` : key;
 };
+
+// Top-down images point north and are rotated by the map to the vehicle's course.
+export const isHeadingIcon = (iconKey) => iconKey.endsWith('TopDown');
 
 export const eventIcons = {
   alarm: warningSvg,
@@ -178,6 +187,16 @@ export default async () => {
       await Promise.all(results);
     }),
   );
+  new Set(Object.values(topDownShapes)).forEach((shape) => {
+    Object.entries(markerColors).forEach(([color, tint]) => {
+      mapImages[`${shape}TopDown-${color}`] = createTopDownImage({
+        shape,
+        size: background.width,
+        color: tint,
+        pixelRatio: devicePixelRatio,
+      });
+    });
+  });
   await Promise.all(
     Object.keys(eventIcons).map((key) =>
       loadImage(eventIcons[key]).then((icon) => {

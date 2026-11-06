@@ -253,6 +253,7 @@
     "deviceLastUpdate": "Last Update",
     "deviceCommand": "Command",
     "deviceCommandSender": "Command Channel",
+    "mapBackToVehicle": "Back to vehicle",
     "deviceFollow": "Map follows the selected vehicle",
     "deviceTotalDistance": "Total Distance",
     "deviceStatus": "Status",
