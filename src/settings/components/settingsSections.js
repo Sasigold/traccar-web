@@ -20,6 +20,7 @@ import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
 import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
+import HandymanRoundedIcon from '@mui/icons-material/HandymanRounded';
 import { useAdministrator, useManager, useRestriction } from '../../common/util/permissions';
 import useFeatures from '../../common/util/useFeatures';
 import { useFleetPermission } from '../../common/fleet/useFleet';
@@ -36,6 +37,7 @@ export const useSettingsSections = () => {
   const billingLink = useSelector((state) => state.session.user.attributes.billingLink);
   const fleetDocuments = useFleetPermission('documents.read');
   const fleetAlerts = useFleetPermission('alerts.read');
+  const fleetMaintenance = useFleetPermission('maintenance.read');
 
   return useMemo(() => {
     const profilePath = `/settings/user/${userId}`;
@@ -137,6 +139,16 @@ export const useSettingsSections = () => {
             path: '/fleet/alerts',
             match: (pathname) => pathname.startsWith('/fleet/alerts'),
             visible: fleetAlerts,
+          },
+          {
+            id: 'workOrders',
+            titleKey: 'fleetWorkOrdersPage',
+            descriptionKey: 'fleetWorkOrdersPageDescription',
+            icon: HandymanRoundedIcon,
+            path: '/fleet/work-orders',
+            match: (pathname) =>
+              pathname.startsWith('/fleet/work-order') || pathname.startsWith('/fleet/vendors'),
+            visible: fleetMaintenance,
           },
           {
             id: 'fleetDocuments',
@@ -261,6 +273,7 @@ export const useSettingsSections = () => {
     billingLink,
     fleetDocuments,
     fleetAlerts,
+    fleetMaintenance,
   ]);
 };
 

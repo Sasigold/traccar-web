@@ -15,6 +15,9 @@ const NotFoundPage = lazy(() => import('./other/NotFoundPage'));
 const FleetHubPage = lazy(() => import('./fleet/FleetHubPage'));
 const ExpiriesPage = lazy(() => import('./fleet/ExpiriesPage'));
 const AlertsPage = lazy(() => import('./fleet/AlertsPage'));
+const WorkOrdersPage = lazy(() => import('./fleet/WorkOrdersPage'));
+const WorkOrderPage = lazy(() => import('./fleet/WorkOrderPage'));
+const VendorsPage = lazy(() => import('./fleet/VendorsPage'));
 const CombinedReportPage = lazy(() => import('./reports/CombinedReportPage'));
 const PositionsReportPage = lazy(() => import('./reports/PositionsReportPage'));
 const ServerPage = lazy(() => import('./settings/ServerPage'));
@@ -160,6 +163,10 @@ const Navigation = () => {
             <Route index element={<FleetHubPage />} />
             <Route path="expiries" element={<ExpiriesPage />} />
             <Route path="alerts" element={<AlertsPage />} />
+            <Route path="work-orders" element={<WorkOrdersPage />} />
+            <Route path="work-order/:id" element={<WorkOrderPage />} />
+            <Route path="work-order" element={<WorkOrderPage />} />
+            <Route path="vendors" element={<VendorsPage />} />
           </Route>
 
           <Route path="settings">

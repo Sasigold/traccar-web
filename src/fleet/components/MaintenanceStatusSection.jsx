@@ -7,10 +7,12 @@ import { useAsyncTask } from '../../reactHelper';
 import FormSection from '../../settings/components/FormSection';
 import { loadMaintenanceLinks, useMaintenanceRows } from '../maintenance';
 import MaintenanceStatusTable from './MaintenanceStatusTable';
+import { useFleetPermission } from '../../common/fleet/useFleet';
 
 // Maintenance linked to one vehicle: how much is left and "mark as done".
 const MaintenanceStatusSection = ({ deviceId }) => {
   const t = useTranslation();
+  const workOrders = useFleetPermission('maintenance.read');
   const [reloadKey, reload] = useReducer((k) => k + 1, 0);
   const [links, setLinks] = useState(null);
 
@@ -31,9 +33,20 @@ const MaintenanceStatusSection = ({ deviceId }) => {
       description={t('fleetMaintenanceSectionDescription')}
       icon={<BuildRoundedIcon />}
       actions={
-        <Button size="small" component={RouterLink} to="/settings/maintenances">
-          {t('fleetMaintenanceManage')}
-        </Button>
+        <>
+          {workOrders && (
+            <Button
+              size="small"
+              component={RouterLink}
+              to={`/fleet/work-orders?vehicle=${deviceId}`}
+            >
+              {t('fleetServiceHistory')}
+            </Button>
+          )}
+          <Button size="small" component={RouterLink} to="/settings/maintenances">
+            {t('fleetMaintenanceManage')}
+          </Button>
+        </>
       }
     >
       {rows && rows.length > 0 && <MaintenanceStatusTable rows={rows} onDone={reload} />}
