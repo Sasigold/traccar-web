@@ -50,15 +50,21 @@ const useStyles = makeStyles()((theme, { collapsed }) => ({
   },
   list: {
     flex: 1,
-    paddingTop: theme.spacing(1.5),
+    padding: collapsed ? theme.spacing(1.25, 0) : theme.spacing(1.25, 1.5),
     display: 'flex',
     flexDirection: 'column',
-    gap: 2,
+    // Collapsed: every item sits on the rail's center line.
+    alignItems: collapsed ? 'center' : 'stretch',
+    gap: 4,
+    overflowY: 'auto',
+    overflowX: 'hidden',
   },
   item: {
     flex: '0 0 auto',
-    minHeight: 44,
-    marginInline: theme.spacing(1),
+    width: collapsed ? 48 : 'auto',
+    height: collapsed ? 48 : 44,
+    minHeight: 0,
+    gap: theme.spacing(1.5),
     paddingInline: collapsed ? 0 : theme.spacing(1.5),
     justifyContent: collapsed ? 'center' : 'flex-start',
     borderRadius: theme.tokens.radius.md,
@@ -83,7 +89,8 @@ const useStyles = makeStyles()((theme, { collapsed }) => ({
     },
   },
   itemIcon: {
-    minWidth: collapsed ? 0 : 40,
+    minWidth: 0,
+    width: 24,
     justifyContent: 'center',
     color: 'inherit',
     '& svg': {
@@ -93,16 +100,13 @@ const useStyles = makeStyles()((theme, { collapsed }) => ({
   label: {
     margin: 0,
     whiteSpace: 'nowrap',
-    opacity: collapsed ? 0 : 1,
-    width: collapsed ? 0 : 'auto',
-    transition: 'opacity 160ms ease',
     '& .MuiListItemText-primary': {
       fontSize: '0.9375rem',
       fontWeight: 500,
     },
   },
   footer: {
-    padding: theme.spacing(1, 1, 1.5),
+    padding: collapsed ? theme.spacing(1, 0, 1.5) : theme.spacing(1, 1.5, 1.5),
     display: 'flex',
     justifyContent: collapsed ? 'center' : 'flex-end',
     borderTop: `1px solid ${theme.palette.chrome.border}`,
@@ -163,7 +167,7 @@ const NavRail = () => {
               <ListItemIcon className={classes.itemIcon}>
                 <Icon />
               </ListItemIcon>
-              <ListItemText primary={t(item.titleKey)} className={classes.label} />
+              {!collapsed && <ListItemText primary={t(item.titleKey)} className={classes.label} />}
             </ListItemButton>
           );
           return collapsed ? (
