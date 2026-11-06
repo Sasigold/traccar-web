@@ -253,6 +253,7 @@
     "deviceLastUpdate": "עודכן לאחרונה",
     "deviceCommand": "פקודה",
     "deviceCommandSender": "ערוץ פקודות",
+    "mapBackToVehicle": "חזרה לרכב",
     "deviceFollow": "המפה עוקבת אחרי הרכב שנבחר",
     "deviceTotalDistance": "מרחק כולל",
     "deviceStatus": "סטטוס",
