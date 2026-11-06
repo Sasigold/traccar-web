@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   Button,
   MenuItem,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -10,6 +9,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import ResponsiveTable from '../../common/components/table/ResponsiveTable';
 import { makeStyles } from 'tss-react/mui';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
@@ -312,7 +312,7 @@ const CustomerBilling = ({ customer, directory, editable }) => {
         )}
         {invoices && invoices.length > 0 && (
           <div className={classes.scroll}>
-            <Table size="small">
+            <ResponsiveTable size="small">
               <TableHead>
                 <TableRow>
                   <TableCell>{t('adminInvoiceNumber')}</TableCell>
@@ -356,7 +356,7 @@ const CustomerBilling = ({ customer, directory, editable }) => {
                   );
                 })}
               </TableBody>
-            </Table>
+            </ResponsiveTable>
           </div>
         )}
       </FormSection>

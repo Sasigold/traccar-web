@@ -8,7 +8,6 @@ import {
   DialogTitle,
   FormControlLabel,
   Switch,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -17,6 +16,7 @@ import {
   Typography,
   useMediaQuery,
 } from '@mui/material';
+import ResponsiveTable from '../../common/components/table/ResponsiveTable';
 import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import { useLocalization, useTranslation } from '../../common/components/LocalizationProvider';
@@ -149,7 +149,7 @@ const GenerateBillsDialog = ({ directory, invoices, onClose, onDone }) => {
             label={t('adminIssueImmediately')}
           />
         </div>
-        <Table size="small">
+        <ResponsiveTable size="small">
           <TableHead>
             <TableRow>
               <TableCell padding="checkbox" />
@@ -203,7 +203,7 @@ const GenerateBillsDialog = ({ directory, invoices, onClose, onDone }) => {
               );
             })}
           </TableBody>
-        </Table>
+        </ResponsiveTable>
         <Typography variant="body2" className={classes.total}>
           {t('adminGenerateSummary')
             .replace('{0}', selected.length)

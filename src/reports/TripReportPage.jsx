@@ -298,7 +298,7 @@ const TripReportPage = () => {
               <div className={classes.filterItem}>
                 <SelectField
                   fullWidth
-                  label={t('sharedType')}
+                  label={t('reportTripTypeLabel')}
                   value={tripType}
                   data={[
                     { id: 'business', name: t('positionBusiness') },

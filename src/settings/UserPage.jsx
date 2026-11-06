@@ -6,9 +6,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  FormControlLabel,
-  Checkbox,
-  FormGroup,
+  FormHelperText,
   TextField,
   Button,
   InputAdornment,
@@ -23,6 +21,7 @@ import CachedIcon from '@mui/icons-material/Cached';
 import CloseIcon from '@mui/icons-material/Close';
 import { useDispatch, useSelector } from 'react-redux';
 import EditItemView from './components/EditItemView';
+import CheckboxField from './components/CheckboxField';
 import EditAttributesAccordion from './components/EditAttributesAccordion';
 import FleetRoleSection from './components/FleetRoleSection';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -137,25 +136,29 @@ const UserPage = () => {
       onItemSaved={onItemSaved}
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'settingsUser']}
+      description={t('userPageDescription')}
     >
       {item && (
         <>
-          <FormSection title={t('sharedRequired')}>
+          <FormSection title={t('formSectionBasic')}>
             <TextField
               value={item.name || ''}
               onChange={(e) => setItem({ ...item, name: e.target.value })}
               label={t('sharedName')}
+              helperText={t('userNameHelp')}
             />
             <TextField
               value={item.email || ''}
               onChange={(e) => setItem({ ...item, email: e.target.value })}
               label={t('userEmail')}
+              helperText={t('userEmailHelp')}
               disabled={fixedEmail && item.id === currentUser.id}
             />
             {!openIdForced && (
               <PasswordField
                 onChange={(e) => setItem({ ...item, password: e.target.value })}
                 label={t('userPassword')}
+                helperText={t(item.id ? 'userPasswordHelpEdit' : 'userPasswordHelpNew')}
               />
             )}
             {totpEnable && (
@@ -188,14 +191,16 @@ const UserPage = () => {
                     </InputAdornment>
                   }
                 />
+                <FormHelperText>{t('userTotpHelp')}</FormHelperText>
               </FormControl>
             )}
           </FormSection>
-          <FormSection title={t('sharedPreferences')}>
+          <FormSection title={t('userPreferencesSection')} description={t('userPreferencesHelp')}>
             <TextField
               value={item.phone || ''}
               onChange={(e) => setItem({ ...item, phone: e.target.value })}
               label={t('sharedPhone')}
+              helperText={t('userPhoneHelp')}
             />
             <FormControl>
               <InputLabel id="user-page-map-default-label">{t('mapDefault')}</InputLabel>
@@ -213,6 +218,7 @@ const UserPage = () => {
                     </MenuItem>
                   ))}
               </Select>
+              <FormHelperText>{t('userMapHelp')}</FormHelperText>
             </FormControl>
             <FormControl>
               <InputLabel id="user-page-settings-coordinate-format-label">
@@ -228,6 +234,7 @@ const UserPage = () => {
                 <MenuItem value="ddm">{t('sharedDegreesDecimalMinutes')}</MenuItem>
                 <MenuItem value="dms">{t('sharedDegreesMinutesSeconds')}</MenuItem>
               </Select>
+              <FormHelperText>{t('userCoordinateHelp')}</FormHelperText>
             </FormControl>
             <FormControl>
               <InputLabel id="user-page-settings-speed-unit-label">
@@ -317,14 +324,16 @@ const UserPage = () => {
               keyGetter={(it) => it}
               titleGetter={(it) => it}
               label={t('sharedTimezone')}
+              helperText={t('userTimezoneHelp')}
             />
             <TextField
               value={item.poiLayer || ''}
               onChange={(e) => setItem({ ...item, poiLayer: e.target.value })}
               label={t('mapPoiLayer')}
+              helperText={t('userPoiLayerHelp')}
             />
           </FormSection>
-          <FormSection title={t('sharedLocation')}>
+          <FormSection title={t('userLocationSection')} description={t('userLocationHelp')}>
             <TextField
               type="number"
               value={item.latitude || 0}
@@ -342,6 +351,7 @@ const UserPage = () => {
               value={item.zoom || 0}
               onChange={(e) => setItem({ ...item, zoom: Number(e.target.value) })}
               label={t('serverZoom')}
+              helperText={t('userZoomHelp')}
             />
             <Button
               variant="outlined"
@@ -359,7 +369,7 @@ const UserPage = () => {
               {t('mapCurrentLocation')}
             </Button>
           </FormSection>
-          <FormSection title={t('sharedPermissions')}>
+          <FormSection title={t('sharedPermissions')} description={t('userPermissionsHelp')}>
             <TextField
               label={t('userExpirationTime')}
               type="date"
@@ -369,6 +379,7 @@ const UserPage = () => {
                   setItem({ ...item, expirationTime: new Date(e.target.value).toISOString() });
                 }
               }}
+              helperText={t('userExpirationHelp')}
               disabled={!manager}
             />
             <TextField
@@ -376,6 +387,7 @@ const UserPage = () => {
               value={item.deviceLimit || 0}
               onChange={(e) => setItem({ ...item, deviceLimit: Number(e.target.value) })}
               label={t('userDeviceLimit')}
+              helperText={t('userDeviceLimitHelp')}
               disabled={!admin}
             />
             <TextField
@@ -383,83 +395,66 @@ const UserPage = () => {
               value={item.userLimit || 0}
               onChange={(e) => setItem({ ...item, userLimit: Number(e.target.value) })}
               label={t('userUserLimit')}
+              helperText={t('userUserLimitHelp')}
               disabled={!admin}
             />
-            <Button variant="outlined" color="primary" onClick={() => setRevokeDialogOpen(true)}>
-              {t('userRevokeToken')}
-            </Button>
-            <FormGroup>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={item.disabled}
-                    onChange={(e) => setItem({ ...item, disabled: e.target.checked })}
-                  />
-                }
-                label={t('sharedDisabled')}
-                disabled={!manager}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={item.administrator}
-                    onChange={(e) => setItem({ ...item, administrator: e.target.checked })}
-                  />
-                }
-                label={t('userAdmin')}
-                disabled={!admin}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={item.readonly}
-                    onChange={(e) => setItem({ ...item, readonly: e.target.checked })}
-                  />
-                }
-                label={t('serverReadonly')}
-                disabled={!manager}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={item.deviceReadonly}
-                    onChange={(e) => setItem({ ...item, deviceReadonly: e.target.checked })}
-                  />
-                }
-                label={t('userDeviceReadonly')}
-                disabled={!manager}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={item.limitCommands}
-                    onChange={(e) => setItem({ ...item, limitCommands: e.target.checked })}
-                  />
-                }
-                label={t('userLimitCommands')}
-                disabled={!manager}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={item.disableReports}
-                    onChange={(e) => setItem({ ...item, disableReports: e.target.checked })}
-                  />
-                }
-                label={t('userDisableReports')}
-                disabled={!manager}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={item.fixedEmail}
-                    onChange={(e) => setItem({ ...item, fixedEmail: e.target.checked })}
-                  />
-                }
-                label={t('userFixedEmail')}
-                disabled={!manager}
-              />
-            </FormGroup>
+            <div>
+              <Button variant="outlined" color="primary" onClick={() => setRevokeDialogOpen(true)}>
+                {t('userRevokeToken')}
+              </Button>
+              <Typography variant="caption" color="textSecondary" component="p" sx={{ mt: 0.5 }}>
+                {t('userRevokeTokenHelp')}
+              </Typography>
+            </div>
+            <CheckboxField
+              checked={item.disabled}
+              onChange={(e) => setItem({ ...item, disabled: e.target.checked })}
+              label={t('sharedDisabled')}
+              helperText={t('userDisabledHelp')}
+              disabled={!manager}
+            />
+            <CheckboxField
+              checked={item.administrator}
+              onChange={(e) => setItem({ ...item, administrator: e.target.checked })}
+              label={t('userAdmin')}
+              helperText={t('userAdminHelp')}
+              disabled={!admin}
+            />
+            <CheckboxField
+              checked={item.readonly}
+              onChange={(e) => setItem({ ...item, readonly: e.target.checked })}
+              label={t('serverReadonly')}
+              helperText={t('userReadonlyHelp')}
+              disabled={!manager}
+            />
+            <CheckboxField
+              checked={item.deviceReadonly}
+              onChange={(e) => setItem({ ...item, deviceReadonly: e.target.checked })}
+              label={t('userDeviceReadonly')}
+              helperText={t('userDeviceReadonlyHelp')}
+              disabled={!manager}
+            />
+            <CheckboxField
+              checked={item.limitCommands}
+              onChange={(e) => setItem({ ...item, limitCommands: e.target.checked })}
+              label={t('userLimitCommands')}
+              helperText={t('userLimitCommandsHelp')}
+              disabled={!manager}
+            />
+            <CheckboxField
+              checked={item.disableReports}
+              onChange={(e) => setItem({ ...item, disableReports: e.target.checked })}
+              label={t('userDisableReports')}
+              helperText={t('userDisableReportsHelp')}
+              disabled={!manager}
+            />
+            <CheckboxField
+              checked={item.fixedEmail}
+              onChange={(e) => setItem({ ...item, fixedEmail: e.target.checked })}
+              label={t('userFixedEmail')}
+              helperText={t('userFixedEmailHelp')}
+              disabled={!manager}
+            />
           </FormSection>
           <FleetRoleSection traccarUserId={item.id} />
           <EditAttributesAccordion
@@ -495,6 +490,7 @@ const UserPage = () => {
             value={revokeToken}
             onChange={(e) => setRevokeToken(e.target.value)}
             label={t('userToken')}
+            helperText={t('userTokenHelp')}
             autoFocus
             fullWidth
           />

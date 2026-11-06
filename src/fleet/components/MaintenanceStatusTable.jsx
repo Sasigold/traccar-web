@@ -10,12 +10,12 @@ import {
   DialogContentText,
   DialogTitle,
   Link,
-  Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
 } from '@mui/material';
+import ResponsiveTable from '../../common/components/table/ResponsiveTable';
 import { makeStyles } from 'tss-react/mui';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import { useTranslation } from '../../common/components/LocalizationProvider';
@@ -157,7 +157,7 @@ const MaintenanceStatusTable = ({ rows, shared = {}, showVehicle, onDone, bare }
 
   return (
     <>
-      {bare ? content : <Table size="small">{content}</Table>}
+      {bare ? content : <ResponsiveTable size="small">{content}</ResponsiveTable>}
       <Dialog open={Boolean(pending)} onClose={() => !saving && setPending(null)}>
         <DialogTitle>{t('fleetMaintenanceMarkDone')}</DialogTitle>
         <DialogContent>

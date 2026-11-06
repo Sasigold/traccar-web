@@ -49,7 +49,7 @@ const AccumulatorsPage = () => {
       footer={<SaveBar onCancel={() => navigate(-1)} onSave={handleSave} />}
     >
       {item && (
-        <FormSection title={t('sharedRequired')}>
+        <FormSection title={t('formSectionBasic')}>
           <TextField
             type="number"
             value={item.hours / 3600000}

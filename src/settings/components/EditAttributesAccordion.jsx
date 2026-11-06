@@ -25,6 +25,9 @@ import {
   attributeUnitString,
 } from '../../common/util/attributeUnits';
 import useFeatures from '../../common/util/useFeatures';
+import VehicleProfileSummary, {
+  isProfileKey,
+} from '../../common/components/telemetry/VehicleProfileSummary';
 
 const useStyles = makeStyles()((theme) => ({
   booleanRow: {
@@ -57,6 +60,7 @@ const EditAttributesAccordion = ({
   setAttributes,
   definitions,
   focusAttribute,
+  itemId,
 }) => {
   const { classes } = useStyles();
   const t = useTranslation();
@@ -118,7 +122,7 @@ const EditAttributesAccordion = ({
       'timezone',
     ];
     Object.keys(attributes || [])
-      .filter((key) => !excludeAttributes.includes(key))
+      .filter((key) => !excludeAttributes.includes(key) && !isProfileKey(key))
       .forEach((key) => {
         const value = attributes[key];
         const type = getAttributeType(value);
@@ -164,11 +168,13 @@ const EditAttributesAccordion = ({
   }
 
   const list = convertToList(attributes);
+  const profileKey = Object.keys(attributes || {}).find(isProfileKey);
   void attribute;
 
   return (
     <FormSection
-      title={t('sharedAttributes')}
+      title={t('attributesSectionTitle')}
+      description={t('attributesSectionHelp')}
       actions={
         <Button
           variant="outlined"
@@ -180,9 +186,15 @@ const EditAttributesAccordion = ({
         </Button>
       }
     >
-      {list.length === 0 && (
+      {profileKey && (
+        <VehicleProfileSummary
+          device={{ id: itemId, attributes }}
+          onRemove={() => deleteAttribute(profileKey)}
+        />
+      )}
+      {list.length === 0 && !profileKey && (
         <Typography variant="body2" className={classes.empty}>
-          {t('sharedNoData')}
+          {t('attributesSectionEmpty')}
         </Typography>
       )}
       {list.map(({ key, value, type, dataType }) => {

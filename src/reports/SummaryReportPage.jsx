@@ -196,10 +196,12 @@ const SummaryReportPage = () => {
         >
           <div className={classes.filterItem}>
             <FormControl fullWidth>
-              <InputLabel id="summary-report-page-shared-type-label">{t('sharedType')}</InputLabel>
+              <InputLabel id="summary-report-page-shared-type-label">
+                {t('reportSummaryView')}
+              </InputLabel>
               <Select
                 labelId="summary-report-page-shared-type-label"
-                label={t('sharedType')}
+                label={t('reportSummaryView')}
                 value={daily}
                 onChange={(e) =>
                   updateReportParams(searchParams, setSearchParams, 'daily', [
@@ -207,8 +209,8 @@ const SummaryReportPage = () => {
                   ])
                 }
               >
-                <MenuItem value={false}>{t('reportSummary')}</MenuItem>
-                <MenuItem value>{t('reportDaily')}</MenuItem>
+                <MenuItem value={false}>{t('reportSummaryTotal')}</MenuItem>
+                <MenuItem value>{t('reportSummaryByDay')}</MenuItem>
               </Select>
             </FormControl>
           </div>

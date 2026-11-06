@@ -43,7 +43,7 @@ const AnnouncementPage = () => {
         />
       }
     >
-      <FormSection title={t('sharedRequired')}>
+      <FormSection title={t('formSectionBasic')}>
         <SelectField
           multiple
           value={users}

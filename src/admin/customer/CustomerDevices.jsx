@@ -9,7 +9,6 @@ import {
   DialogTitle,
   IconButton,
   Switch,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -18,6 +17,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import ResponsiveTable from '../../common/components/table/ResponsiveTable';
 import { makeStyles } from 'tss-react/mui';
 import DnsRoundedIcon from '@mui/icons-material/DnsRounded';
 import AddLinkRoundedIcon from '@mui/icons-material/AddLinkRounded';
@@ -118,7 +118,7 @@ const CustomerDevices = ({ customer, devices, directory, editable }) => {
         <EmptyState compact icon={<DnsRoundedIcon />} title={t('adminNoDevicesForCustomer')} />
       ) : (
         <div className={classes.scroll}>
-          <Table size="small" className={classes.table}>
+          <ResponsiveTable size="small" className={classes.table}>
             <TableHead>
               <TableRow>
                 <TableCell>{t('sharedDevice')}</TableCell>
@@ -185,7 +185,7 @@ const CustomerDevices = ({ customer, devices, directory, editable }) => {
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
+          </ResponsiveTable>
         </div>
       )}
       {adding && (

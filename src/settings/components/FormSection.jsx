@@ -20,6 +20,7 @@ const useStyles = makeStyles()((theme, { tone }) => {
     },
     header: {
       display: 'flex',
+      flexWrap: 'wrap',
       alignItems: 'center',
       gap: theme.spacing(1.5),
     },
@@ -40,6 +41,10 @@ const useStyles = makeStyles()((theme, { tone }) => {
     titles: {
       flex: 1,
       minWidth: 0,
+      // On phones a header action (e.g. "Add") wraps under the title instead of squeezing it.
+      [theme.breakpoints.down('sm')]: {
+        flexBasis: 'calc(100% - 48px)',
+      },
     },
     title: {
       fontWeight: 700,

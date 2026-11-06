@@ -49,7 +49,7 @@ const SharePage = () => {
         />
       }
     >
-      <FormSection title={t('sharedRequired')}>
+      <FormSection title={t('formSectionBasic')}>
         <TextField
           value={item.name}
           label={t(type === 'group' ? 'groupDialog' : 'sharedDevice')}

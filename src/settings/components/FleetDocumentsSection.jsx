@@ -7,7 +7,6 @@ import {
   DialogActions,
   DialogTitle,
   IconButton,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -16,6 +15,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import ResponsiveTable from '../../common/components/table/ResponsiveTable';
 import { makeStyles } from 'tss-react/mui';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
@@ -265,7 +265,7 @@ const FleetDocumentsSection = ({ entity, traccarId, name, identifier }) => {
             <Typography color="textSecondary">{t('fleetNoDocuments')}</Typography>
           )}
           {documents.length > 0 && (
-            <Table size="small" className={classes.table}>
+            <ResponsiveTable size="small" className={classes.table}>
               <TableHead>
                 <TableRow>
                   <TableCell>{t('fleetDocumentType')}</TableCell>
@@ -308,7 +308,7 @@ const FleetDocumentsSection = ({ entity, traccarId, name, identifier }) => {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+            </ResponsiveTable>
           )}
           {canWrite && (
             <>

@@ -9,10 +9,10 @@ const ColumnSelect = ({ columns, setColumns, columnsArray, rawValues, disabled }
   return (
     <div className={classes.filterItem}>
       <FormControl fullWidth>
-        <InputLabel id="column-select-shared-columns-label">{t('sharedColumns')}</InputLabel>
+        <InputLabel id="column-select-shared-columns-label">{t('reportColumnsLabel')}</InputLabel>
         <Select
           labelId="column-select-shared-columns-label"
-          label={t('sharedColumns')}
+          label={t('reportColumnsLabel')}
           value={columns}
           onChange={(e) => setColumns(e.target.value)}
           multiple

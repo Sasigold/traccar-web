@@ -1,6 +1,7 @@
-import { Paper, Table, TableContainer } from '@mui/material';
+import { Paper, TableContainer } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import EmptyState from './EmptyState';
+import ResponsiveTable from './ResponsiveTable';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -52,6 +53,7 @@ const useStyles = makeStyles()((theme) => ({
 
 // Table wrapper: a card with an optional toolbar, a scrolling container with a
 // sticky header, and an empty state. Children are the page's own TableHead/TableBody.
+// On phones and tablets the rows are shown as cards (see ResponsiveTable).
 const DataTable = ({
   toolbar,
   children,
@@ -60,6 +62,7 @@ const DataTable = ({
   variant = 'card',
   stickyHeader = true,
   minWidth,
+  responsive = true,
   className,
 }) => {
   const { classes, cx } = useStyles();
@@ -72,14 +75,15 @@ const DataTable = ({
     >
       {toolbar}
       <TableContainer className={classes.container}>
-        <Table
+        <ResponsiveTable
+          responsive={responsive}
           stickyHeader={stickyHeader}
           size="small"
           className={cx(classes.table, !card && classes.flush)}
           style={minWidth ? { minWidth } : undefined}
         >
           {children}
-        </Table>
+        </ResponsiveTable>
       </TableContainer>
       {empty && <EmptyState compact {...emptyState} />}
     </Root>

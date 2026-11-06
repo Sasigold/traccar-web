@@ -83,10 +83,11 @@ const ComputedAttributePage = () => {
       validate={validate}
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'sharedComputedAttribute']}
+      description={t('computedAttributePageDescription')}
     >
       {item && (
         <>
-          <FormSection title={t('sharedRequired')}>
+          <FormSection title={t('formSectionBasic')}>
             <TextField
               value={item.description || ''}
               onChange={(e) => setItem({ ...item, description: e.target.value })}
@@ -148,7 +149,7 @@ const ComputedAttributePage = () => {
               </Select>
             </FormControl>
           </FormSection>
-          <FormSection title={t('sharedExtra')}>
+          <FormSection title={t('formSectionMore')}>
             <TextField
               type="number"
               value={item.priority || 0}

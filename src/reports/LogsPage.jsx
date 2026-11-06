@@ -11,6 +11,7 @@ import PageLayout from '../common/components/PageLayout';
 import DataTable from '../common/components/table/DataTable';
 import BaseFab from '../common/components/BaseFab';
 import ReportsMenu from './components/ReportsMenu';
+import ReportIntro from './components/ReportIntro';
 import { sessionActions } from '../store';
 
 const useStyles = makeStyles()((theme) => ({
@@ -48,7 +49,7 @@ const LogsPage = () => {
 
   return (
     <PageLayout menu={<ReportsMenu />} breadcrumbs={['reportTitle', 'sharedLogs']}>
-      <DataTable variant="flush">
+      <DataTable variant="flush" toolbar={<ReportIntro padded />}>
         <TableHead>
           <TableRow>
             <TableCell className={classes.columnAction} />

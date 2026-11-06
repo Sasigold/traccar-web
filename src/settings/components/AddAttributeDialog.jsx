@@ -4,7 +4,10 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
+  DialogContentText,
+  DialogTitle,
   FormControl,
+  FormHelperText,
   InputLabel,
   MenuItem,
   Select,
@@ -22,7 +25,7 @@ const useStyles = makeStyles()((theme) => ({
     flexDirection: 'column',
     gap: theme.spacing(2),
     paddingBottom: theme.spacing(1),
-    paddingTop: theme.spacing(3),
+    paddingTop: theme.spacing(1),
   },
 }));
 
@@ -51,8 +54,10 @@ const AddAttributeDialog = ({ open, onResult, definitions }) => {
   const [type, setType] = useState('string');
 
   return (
-    <Dialog open={open} fullWidth maxWidth="xs">
+    <Dialog open={open} fullWidth maxWidth="xs" onClose={() => onResult(null)}>
+      <DialogTitle>{t('attributeDialogTitle')}</DialogTitle>
       <DialogContent className={classes.details}>
+        <DialogContentText variant="body2">{t('attributeDialogHelp')}</DialogContentText>
         <Autocomplete
           freeSolo
           onChange={(_, option) => {
@@ -71,7 +76,7 @@ const AddAttributeDialog = ({ open, onResult, definitions }) => {
             ) {
               filtered.push({
                 inputValue: params.inputValue,
-                name: `${t('sharedAdd')} "${params.inputValue}"`,
+                name: t('attributeDialogNew').replace('{0}', params.inputValue),
               });
             }
             return filtered;
@@ -81,28 +86,33 @@ const AddAttributeDialog = ({ open, onResult, definitions }) => {
             option && typeof option === 'object' ? option.inputValue || option.name : option
           }
           renderOption={(props, option) => <li {...props}>{option.name || option}</li>}
-          renderInput={(params) => <TextField {...params} label={t('sharedAttribute')} />}
+          renderInput={(params) => <TextField {...params} label={t('attributeDialogField')} />}
         />
-        <FormControl fullWidth disabled={key in definitions}>
-          <InputLabel id="add-attribute-dialog-shared-type-label">{t('sharedType')}</InputLabel>
-          <Select
-            labelId="add-attribute-dialog-shared-type-label"
-            label={t('sharedType')}
-            value={type || 'string'}
-            onChange={(e) => setType(e.target.value)}
-          >
-            <MenuItem value="string">{t('sharedTypeString')}</MenuItem>
-            <MenuItem value="number">{t('sharedTypeNumber')}</MenuItem>
-            <MenuItem value="boolean">{t('sharedTypeBoolean')}</MenuItem>
-          </Select>
-        </FormControl>
+        {key && !(key in definitions) && (
+          <FormControl fullWidth>
+            <InputLabel id="add-attribute-dialog-shared-type-label">
+              {t('attributeDialogType')}
+            </InputLabel>
+            <Select
+              labelId="add-attribute-dialog-shared-type-label"
+              label={t('attributeDialogType')}
+              value={type || 'string'}
+              onChange={(e) => setType(e.target.value)}
+            >
+              <MenuItem value="string">{t('sharedTypeString')}</MenuItem>
+              <MenuItem value="number">{t('sharedTypeNumber')}</MenuItem>
+              <MenuItem value="boolean">{t('sharedTypeBoolean')}</MenuItem>
+            </Select>
+            <FormHelperText>{t('attributeDialogTypeHelp')}</FormHelperText>
+          </FormControl>
+        )}
       </DialogContent>
       <DialogActions>
-        <Button color="primary" disabled={!key} onClick={() => onResult({ key, type })}>
-          {t('sharedAdd')}
-        </Button>
         <Button autoFocus onClick={() => onResult(null)}>
           {t('sharedCancel')}
+        </Button>
+        <Button variant="contained" disabled={!key} onClick={() => onResult({ key, type })}>
+          {t('sharedAdd')}
         </Button>
       </DialogActions>
     </Dialog>

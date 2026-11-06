@@ -21,9 +21,10 @@ const CommandPage = () => {
       validate={validate}
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'sharedSavedCommand']}
+      description={t('commandPageDescription')}
     >
       {item && (
-        <FormSection title={t('sharedRequired')}>
+        <FormSection title={t('formSectionBasic')}>
           <TextField
             value={item.description || ''}
             onChange={(event) => setItem({ ...item, description: event.target.value })}

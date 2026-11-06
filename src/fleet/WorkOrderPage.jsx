@@ -7,7 +7,6 @@ import {
   FormControlLabel,
   IconButton,
   MenuItem,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -16,6 +15,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import ResponsiveTable from '../common/components/table/ResponsiveTable';
 import { makeStyles } from 'tss-react/mui';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
@@ -368,7 +368,7 @@ const WorkOrderPage = () => {
           </FormSection>
 
           <FormSection title={t('fleetWorkOrderItems')} icon={<ReceiptLongRoundedIcon />}>
-            <Table size="small">
+            <ResponsiveTable size="small">
               <TableHead>
                 <TableRow>
                   <TableCell className={classes.itemCell}>{t('sharedType')}</TableCell>
@@ -453,7 +453,7 @@ const WorkOrderPage = () => {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+            </ResponsiveTable>
             <Button
               startIcon={<AddRoundedIcon />}
               onClick={() => setItems((current) => [...current, emptyItem()])}

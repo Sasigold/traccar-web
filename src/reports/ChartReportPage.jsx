@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import { useCallback, useState } from 'react';
-import { FormControl, InputLabel, Select, MenuItem, useTheme } from '@mui/material';
+import { FormControl, FormHelperText, InputLabel, Select, MenuItem, useTheme } from '@mui/material';
 import {
   Brush,
   CartesianGrid,
@@ -143,11 +143,11 @@ const ChartReportPage = () => {
             <div className={classes.filterItem}>
               <FormControl fullWidth>
                 <InputLabel id="chart-report-page-report-chart-type-label">
-                  {t('reportChartType')}
+                  {t('reportChartValues')}
                 </InputLabel>
                 <Select
                   labelId="chart-report-page-report-chart-type-label"
-                  label={t('reportChartType')}
+                  label={t('reportChartValues')}
                   value={selectedTypes}
                   onChange={(e) => setSelectedTypes(e.target.value)}
                   multiple
@@ -164,11 +164,11 @@ const ChartReportPage = () => {
             <div className={classes.filterItem}>
               <FormControl fullWidth>
                 <InputLabel id="chart-report-page-report-time-type-label">
-                  {t('reportTimeType')}
+                  {t('reportTimeTypeLabel')}
                 </InputLabel>
                 <Select
                   labelId="chart-report-page-report-time-type-label"
-                  label={t('reportTimeType')}
+                  label={t('reportTimeTypeLabel')}
                   value={timeType}
                   onChange={(e) => setTimeType(e.target.value)}
                   disabled={!items.length}
@@ -177,6 +177,7 @@ const ChartReportPage = () => {
                   <MenuItem value="deviceTime">{t('positionDeviceTime')}</MenuItem>
                   <MenuItem value="serverTime">{t('positionServerTime')}</MenuItem>
                 </Select>
+                <FormHelperText>{t('reportTimeTypeHelp')}</FormHelperText>
               </FormControl>
             </div>
           </ReportFilter>

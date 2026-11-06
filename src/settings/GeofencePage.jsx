@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { TextField, FormControlLabel, Checkbox } from '@mui/material';
+import { TextField } from '@mui/material';
 import EditItemView from './components/EditItemView';
 import EditAttributesAccordion from './components/EditAttributesAccordion';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -9,6 +9,7 @@ import SettingsMenu from './components/SettingsMenu';
 import SelectField from '../common/components/SelectField';
 import { geofencesActions } from '../store';
 import FormSection from './components/FormSection';
+import CheckboxField from './components/CheckboxField';
 
 const GeofencePage = () => {
   const dispatch = useDispatch();
@@ -33,41 +34,41 @@ const GeofencePage = () => {
       onItemSaved={onItemSaved}
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'sharedGeofence']}
+      description={t('geofencePageDescription')}
     >
       {item && (
         <>
-          <FormSection title={t('sharedRequired')}>
+          <FormSection title={t('formSectionBasic')}>
             <TextField
               value={item.name || ''}
               onChange={(event) => setItem({ ...item, name: event.target.value })}
               label={t('sharedName')}
             />
           </FormSection>
-          <FormSection title={t('sharedExtra')}>
+          <FormSection title={t('formSectionMore')}>
             <TextField
               value={item.description || ''}
               onChange={(event) => setItem({ ...item, description: event.target.value })}
               label={t('sharedDescription')}
+              helperText={t('sharedDescriptionHelp')}
             />
             <SelectField
               value={item.calendarId}
               onChange={(event) => setItem({ ...item, calendarId: Number(event.target.value) })}
               endpoint="api/calendars"
               label={t('sharedCalendar')}
+              helperText={t('geofenceCalendarHelp')}
             />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={item.attributes.hide}
-                  onChange={(e) =>
-                    setItem({
-                      ...item,
-                      attributes: { ...item.attributes, hide: e.target.checked },
-                    })
-                  }
-                />
+            <CheckboxField
+              checked={item.attributes.hide}
+              onChange={(e) =>
+                setItem({
+                  ...item,
+                  attributes: { ...item.attributes, hide: e.target.checked },
+                })
               }
               label={t('sharedFilterMap')}
+              helperText={t('geofenceHideHelp')}
             />
           </FormSection>
           <EditAttributesAccordion
