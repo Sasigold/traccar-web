@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { InputAdornment, TextField, Typography, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
@@ -8,7 +9,8 @@ import PageLayout from '../common/components/PageLayout';
 import EmptyState from '../common/components/table/EmptyState';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import SettingsMenu from './components/SettingsMenu';
-import SettingsCard from './components/SettingsCard';
+import { SettingsList, SettingsProfileCard } from './components/SettingsList';
+import { userInitial } from '../common/components/shell/UserMenu';
 import { useSettingsSections } from './components/settingsSections';
 
 const useStyles = makeStyles()((theme) => ({
@@ -17,7 +19,7 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(3.5),
-    maxWidth: 1180,
+    maxWidth: 760,
     width: '100%',
     marginInline: 'auto',
     [theme.breakpoints.down('md')]: {
@@ -26,7 +28,6 @@ const useStyles = makeStyles()((theme) => ({
     },
   },
   search: {
-    maxWidth: 520,
     '& .MuiOutlinedInput-root': {
       height: 48,
       borderRadius: theme.tokens.radius.lg,
@@ -36,15 +37,12 @@ const useStyles = makeStyles()((theme) => ({
   group: {
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing(1.5),
+    gap: theme.spacing(1),
   },
   groupTitle: {
     color: theme.palette.text.secondary,
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-    gap: theme.spacing(1.5),
+    fontWeight: 600,
+    paddingInline: theme.spacing(0.75),
   },
 }));
 
@@ -53,6 +51,10 @@ const SettingsHubPage = () => {
   const theme = useTheme();
   const t = useTranslation();
   const sections = useSettingsSections();
+  const user = useSelector((state) => state.session.user);
+  const profile = sections
+    .flatMap((section) => section.items)
+    .find((item) => item.id === 'profile');
 
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
 
@@ -99,23 +101,29 @@ const SettingsHubPage = () => {
             },
           }}
         />
+        {profile && !query.trim() && (
+          <SettingsProfileCard
+            to={profile.path}
+            initial={userInitial(user)}
+            name={user.name || user.email}
+            detail={user.name ? user.email : t(profile.titleKey)}
+          />
+        )}
         {filtered.map((section) => (
           <section key={section.id} className={classes.group}>
-            <Typography variant="overline" className={classes.groupTitle}>
+            <Typography variant="body2" component="h2" className={classes.groupTitle}>
               {t(section.titleKey)}
             </Typography>
-            <div className={classes.grid}>
-              {section.items.map((item) => (
-                <SettingsCard
-                  key={item.id}
-                  icon={item.icon}
-                  title={t(item.titleKey)}
-                  description={t(item.descriptionKey)}
-                  to={item.path}
-                  href={item.href}
-                />
-              ))}
-            </div>
+            <SettingsList
+              items={section.items.map((item) => ({
+                id: item.id,
+                icon: item.icon,
+                title: t(item.titleKey),
+                description: t(item.descriptionKey),
+                to: item.path,
+                href: item.href,
+              }))}
+            />
           </section>
         ))}
         {filtered.length === 0 && (

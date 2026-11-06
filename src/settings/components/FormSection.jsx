@@ -5,24 +5,25 @@ import { makeStyles } from 'tss-react/mui';
 const useStyles = makeStyles()((theme, { tone }) => {
   const accent = tone === 'danger' ? theme.palette.error.main : theme.palette.primary.main;
   return {
+    // Direction A card: a titled header split from the body by a hairline.
     root: {
       borderRadius: theme.tokens.radius.lg,
-      padding: theme.spacing(2.5, 3),
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(2),
       ...(tone === 'danger' && {
         borderColor: alpha(theme.palette.error.main, 0.35),
       }),
-      [theme.breakpoints.down('sm')]: {
-        padding: theme.spacing(2),
-      },
     },
     header: {
       display: 'flex',
       flexWrap: 'wrap',
       alignItems: 'center',
       gap: theme.spacing(1.5),
+      padding: theme.spacing(1.75, 2.5),
+      borderBottom: `1px solid ${theme.palette.surface.border}`,
+      [theme.breakpoints.down('sm')]: {
+        padding: theme.spacing(1.5, 2),
+      },
     },
     icon: {
       width: 34,
@@ -47,13 +48,17 @@ const useStyles = makeStyles()((theme, { tone }) => {
       },
     },
     title: {
-      fontWeight: 700,
+      fontWeight: 600,
       color: tone === 'danger' ? theme.palette.error.main : theme.palette.text.primary,
     },
     body: {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(2),
+      padding: theme.spacing(2.25, 2.5, 2.5),
+      [theme.breakpoints.down('sm')]: {
+        padding: theme.spacing(2),
+      },
     },
   };
 });
