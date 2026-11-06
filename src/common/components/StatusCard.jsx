@@ -3,7 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { Rnd } from 'react-rnd';
 import {
+  Button,
   Card,
+  Divider,
   Typography,
   IconButton,
   Menu,
@@ -48,7 +50,7 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     ...glass(theme, 0.93),
     pointerEvents: 'auto',
     position: 'relative',
-    width: theme.dimensions.popupMaxWidth,
+    width: 340,
     maxWidth: 'calc(100vw - 32px)',
     borderRadius: theme.tokens.radius.xl,
     overflow: 'hidden',
@@ -74,11 +76,33 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     fontWeight: 700,
     lineHeight: 1.25,
   },
+  subline: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    marginTop: 2,
+    minWidth: 0,
+  },
+  plate: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    height: 22,
+    paddingInline: 8,
+    borderRadius: theme.tokens.radius.sm,
+    backgroundColor: theme.palette.surface.sunken,
+    color: theme.palette.text.primary,
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    letterSpacing: '0.02em',
+    whiteSpace: 'nowrap',
+  },
   status: {
     display: 'flex',
     alignItems: 'center',
     gap: 6,
     fontSize: '0.75rem',
+    fontWeight: 600,
+    whiteSpace: 'nowrap',
   },
   dot: {
     width: 7,
@@ -127,25 +151,27 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
   },
   actions: {
     display: 'flex',
-    justifyContent: 'space-between',
-    margin: theme.spacing(0, 1.25, 1.25),
-    padding: theme.spacing(0.5),
-    borderRadius: theme.tokens.radius.lg,
-    backgroundColor: theme.palette.surface.sunken,
-    border: `1px solid ${theme.palette.surface.border}`,
+    alignItems: 'center',
+    gap: theme.spacing(0.75),
+    padding: theme.spacing(0.5, 2, 2),
   },
   action: {
-    color: theme.palette.text.secondary,
+    width: 40,
+    height: 40,
+    borderRadius: theme.tokens.radius.md,
+    border: `1px solid ${theme.palette.surface.borderStrong}`,
+    color: theme.palette.primary.main,
     '&:hover': {
-      color: theme.palette.primary.main,
-      backgroundColor: alpha(theme.palette.primary.main, 0.1),
+      backgroundColor: alpha(theme.palette.primary.main, 0.08),
+    },
+    '&.Mui-disabled': {
+      borderColor: theme.palette.surface.border,
     },
   },
-  danger: {
-    '&:hover': {
-      color: theme.palette.error.main,
-      backgroundColor: alpha(theme.palette.error.main, 0.1),
-    },
+  primaryAction: {
+    marginInlineStart: 'auto',
+    height: 40,
+    whiteSpace: 'nowrap',
   },
   root: {
     pointerEvents: 'none',
@@ -220,6 +246,7 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
   }, [navigate, position, t]);
 
   const color = device ? statusColor(theme, device.status) : theme.palette.neutral.main;
+  const plateNumber = device?.attributes?.plateNumber;
 
   const header = device && (
     <div className={cx(classes.header, deviceImage && classes.headerMedia)}>
@@ -228,14 +255,21 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
         <Typography variant="subtitle2" color="inherit" className={classes.title} noWrap>
           {device.name}
         </Typography>
-        <Typography
-          component="span"
-          color={deviceImage ? 'inherit' : 'textSecondary'}
-          className={classes.status}
-        >
-          <span className={classes.dot} style={{ backgroundColor: color }} />
-          {formatStatus(device.status, t)}
-        </Typography>
+        <div className={classes.subline}>
+          {plateNumber && (
+            <span className={classes.plate} dir="ltr">
+              {plateNumber}
+            </span>
+          )}
+          <Typography
+            component="span"
+            color={deviceImage ? 'inherit' : 'textSecondary'}
+            className={classes.status}
+          >
+            <span className={classes.dot} style={{ backgroundColor: color }} />
+            {formatStatus(device.status, t)}
+          </Typography>
+        </div>
       </div>
       <IconButton
         aria-label={t('a11yClose')}
@@ -313,42 +347,15 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                 </div>
               )}
               <div className={classes.actions}>
-                <Tooltip title={t('sharedExtra')} describeChild>
-                  <span>
-                    <IconButton
-                      aria-label={t('sharedExtra')}
-                      size="small"
-                      className={classes.action}
-                      onClick={(e) => setAnchorEl(e.currentTarget)}
-                      disabled={!position}
-                    >
-                      <MoreHorizRoundedIcon />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-                <Tooltip title={t('telemetryTitle')} describeChild>
-                  <span>
-                    <IconButton
-                      aria-label={t('telemetryTitle')}
-                      size="small"
-                      className={classes.action}
-                      onClick={() => navigate(`/telemetry/${deviceId}`)}
-                      disabled={disableActions || !position}
-                    >
-                      <SpeedRoundedIcon />
-                    </IconButton>
-                  </span>
-                </Tooltip>
                 <Tooltip title={t('reportReplay')} describeChild>
                   <span>
                     <IconButton
                       aria-label={t('reportReplay')}
-                      size="small"
                       className={classes.action}
                       onClick={() => navigate(`/replay?deviceId=${deviceId}`)}
                       disabled={disableActions || !position}
                     >
-                      <RouteRoundedIcon />
+                      <RouteRoundedIcon fontSize="small" />
                     </IconButton>
                   </span>
                 </Tooltip>
@@ -356,48 +363,61 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                   <span>
                     <IconButton
                       aria-label={t('commandTitle')}
-                      size="small"
                       className={classes.action}
                       onClick={() => navigate(`/settings/device/${deviceId}/command`)}
                       disabled={disableActions}
                     >
-                      <SendRoundedIcon />
+                      <SendRoundedIcon fontSize="small" />
                     </IconButton>
                   </span>
                 </Tooltip>
-                <Tooltip title={t('sharedEdit')} describeChild>
+                <Tooltip title={t('sharedExtra')} describeChild>
                   <span>
                     <IconButton
-                      aria-label={t('sharedEdit')}
-                      size="small"
+                      aria-label={t('sharedExtra')}
                       className={classes.action}
-                      onClick={() => navigate(`/settings/device/${deviceId}`)}
-                      disabled={disableActions || deviceReadonly}
+                      onClick={(e) => setAnchorEl(e.currentTarget)}
                     >
-                      <EditRoundedIcon />
+                      <MoreHorizRoundedIcon fontSize="small" />
                     </IconButton>
                   </span>
                 </Tooltip>
-                <Tooltip title={t('sharedRemove')} describeChild>
-                  <span>
-                    <IconButton
-                      aria-label={t('sharedRemove')}
-                      size="small"
-                      className={cx(classes.action, classes.danger)}
-                      onClick={() => setRemoving(true)}
-                      disabled={disableActions || deviceReadonly}
-                    >
-                      <DeleteOutlineRoundedIcon />
-                    </IconButton>
-                  </span>
-                </Tooltip>
+                <Button
+                  variant="contained"
+                  className={classes.primaryAction}
+                  startIcon={<SpeedRoundedIcon />}
+                  onClick={() => navigate(`/telemetry/${deviceId}`)}
+                  disabled={disableActions || !position}
+                >
+                  {t('telemetryTitle')}
+                </Button>
               </div>
             </Card>
           </Rnd>
         )}
       </div>
-      {position && (
-        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            navigate(`/settings/device/${deviceId}`);
+          }}
+          disabled={disableActions || deviceReadonly}
+        >
+          <ListItemIcon>
+            <EditRoundedIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>{t('sharedEdit')}</ListItemText>
+        </MenuItem>
+        {position && !shareDisabled && !user.temporary && (
+          <MenuItem onClick={() => navigate(`/settings/device/${deviceId}/share`)}>
+            <ListItemIcon>
+              <ShareRoundedIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{t('sharedShare')}</ListItemText>
+          </MenuItem>
+        )}
+        {position && (
           <MenuItem
             onClick={() => navigate(`/stream?deviceId=${deviceId}`)}
             disabled={position.protocol !== 'jt808'}
@@ -407,14 +427,17 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
             </ListItemIcon>
             <ListItemText>{t('linkLiveVideo')}</ListItemText>
           </MenuItem>
-          {!readonly && (
-            <MenuItem onClick={handleGeofence}>
-              <ListItemIcon>
-                <HexagonRoundedIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>{t('sharedCreateGeofence')}</ListItemText>
-            </MenuItem>
-          )}
+        )}
+        {position && !readonly && (
+          <MenuItem onClick={handleGeofence}>
+            <ListItemIcon>
+              <HexagonRoundedIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{t('sharedCreateGeofence')}</ListItemText>
+          </MenuItem>
+        )}
+        {position && <Divider />}
+        {position && (
           <MenuItem
             component="a"
             target="_blank"
@@ -425,6 +448,8 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
             </ListItemIcon>
             <ListItemText>{t('linkGoogleMaps')}</ListItemText>
           </MenuItem>
+        )}
+        {position && (
           <MenuItem
             component="a"
             target="_blank"
@@ -435,6 +460,8 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
             </ListItemIcon>
             <ListItemText>{t('linkAppleMaps')}</ListItemText>
           </MenuItem>
+        )}
+        {position && (
           <MenuItem
             component="a"
             target="_blank"
@@ -445,30 +472,36 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
             </ListItemIcon>
             <ListItemText>{t('linkStreetView')}</ListItemText>
           </MenuItem>
-          {navigationAppTitle && navigationAppLink && (
-            <MenuItem
-              component="a"
-              target="_blank"
-              href={navigationAppLink
-                .replace('{latitude}', position.latitude)
-                .replace('{longitude}', position.longitude)}
-            >
-              <ListItemIcon>
-                <OpenInNewRoundedIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>{navigationAppTitle}</ListItemText>
-            </MenuItem>
-          )}
-          {!shareDisabled && !user.temporary && (
-            <MenuItem onClick={() => navigate(`/settings/device/${deviceId}/share`)}>
-              <ListItemIcon>
-                <ShareRoundedIcon fontSize="small" color="primary" />
-              </ListItemIcon>
-              <ListItemText>{t('sharedShare')}</ListItemText>
-            </MenuItem>
-          )}
-        </Menu>
-      )}
+        )}
+        {position && navigationAppTitle && navigationAppLink && (
+          <MenuItem
+            component="a"
+            target="_blank"
+            href={navigationAppLink
+              .replace('{latitude}', position.latitude)
+              .replace('{longitude}', position.longitude)}
+          >
+            <ListItemIcon>
+              <OpenInNewRoundedIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{navigationAppTitle}</ListItemText>
+          </MenuItem>
+        )}
+        <Divider />
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            setRemoving(true);
+          }}
+          disabled={disableActions || deviceReadonly}
+          sx={{ color: 'error.main' }}
+        >
+          <ListItemIcon sx={{ color: 'inherit' }}>
+            <DeleteOutlineRoundedIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>{t('sharedRemove')}</ListItemText>
+        </MenuItem>
+      </Menu>
       <RemoveDialog
         open={removing}
         endpoint="devices"

@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Avatar, Badge, BottomNavigation, BottomNavigationAction } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
+import { ctaFill } from '../../theme/surfaces';
 import { useTranslation } from '../LocalizationProvider';
 import useNavItems from './navItems';
 import { UserMenuPopover, userInitial } from './UserMenu';
@@ -19,11 +20,34 @@ const useStyles = makeStyles()((theme) => ({
   },
   action: {
     minWidth: 0,
-    paddingTop: 10,
+    paddingTop: 8,
+    gap: 4,
+    color: theme.palette.text.secondary,
+    // Active tab: aqua pill behind the icon with ink glyph, label in the text color.
+    '& .vf-tab-indicator': {
+      width: 56,
+      height: 32,
+      borderRadius: 999,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      transition: theme.transitions.create('background-color', { duration: 160 }),
+    },
+    '&:hover .vf-tab-indicator': {
+      backgroundColor: theme.palette.action.hover,
+    },
+    '&.Mui-selected': {
+      color: theme.palette.text.primary,
+      '& .vf-tab-indicator': {
+        ...ctaFill(theme),
+      },
+    },
     '& .MuiBottomNavigationAction-label': {
       fontSize: '0.6875rem',
+      fontWeight: 500,
       '&.Mui-selected': {
         fontSize: '0.6875rem',
+        fontWeight: 600,
       },
     },
   },
@@ -86,7 +110,7 @@ const MobileTabs = () => {
               key={item.key}
               className={classes.action}
               label={t(item.titleKey)}
-              icon={icon}
+              icon={<span className="vf-tab-indicator">{icon}</span>}
               value={item.key}
             />
           );
@@ -95,9 +119,11 @@ const MobileTabs = () => {
           className={classes.action}
           label={t('settingsUser')}
           icon={
-            <Avatar className={cx(classes.avatar, !anchorEl && classes.avatarInactive)}>
-              {userInitial(user)}
-            </Avatar>
+            <span className="vf-tab-indicator">
+              <Avatar className={cx(classes.avatar, !anchorEl && classes.avatarInactive)}>
+                {userInitial(user)}
+              </Avatar>
+            </span>
           }
           value="account"
         />

@@ -176,8 +176,8 @@ const useStyles = makeStyles()((theme) => ({
   },
   selected: {
     '&&': {
+      // Direction A: the selected vehicle is a plain ice tile.
       backgroundColor: theme.palette.surface.tint,
-      borderColor: alpha(theme.palette.primary.main, 0.25),
     },
   },
 }));

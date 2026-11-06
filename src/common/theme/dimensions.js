@@ -13,8 +13,8 @@ export default {
   cardContentMaxHeight: '40vh',
   qrCodeSize: 192,
   // App shell
-  railWidth: 240,
-  railWidthCollapsed: 72,
+  railWidth: 248,
+  railWidthCollapsed: 76,
   topBarHeight: 56,
   topBarHeightMobile: 52,
   mobileTabsHeight: 64,

@@ -6,7 +6,7 @@ const useStyles = makeStyles()((theme, { tone }) => {
   const accent = tone === 'danger' ? theme.palette.error.main : theme.palette.primary.main;
   return {
     root: {
-      borderRadius: theme.tokens.radius.xl,
+      borderRadius: theme.tokens.radius.lg,
       padding: theme.spacing(2.5, 3),
       display: 'flex',
       flexDirection: 'column',
@@ -32,7 +32,7 @@ const useStyles = makeStyles()((theme, { tone }) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: alpha(accent, 0.1),
+      backgroundColor: tone === 'danger' ? alpha(accent, 0.1) : theme.palette.surface.tint,
       color: accent,
       '& svg': {
         fontSize: 20,

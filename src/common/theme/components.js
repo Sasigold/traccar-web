@@ -276,16 +276,7 @@ export default {
           '& .MuiListItemText-primary': {
             fontWeight: 600,
           },
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            insetInlineStart: 0,
-            top: '22%',
-            bottom: '22%',
-            width: 3,
-            borderRadius: 3,
-            backgroundColor: theme.palette.primary.main,
-          },
+          // Direction A: the selected item is an ice tile with filled-weight text, no side bar.
           '&:hover': {
             backgroundColor: theme.palette.surface.tint,
           },
@@ -306,11 +297,10 @@ export default {
       root: ({ theme }) => ({
         backgroundColor: 'transparent',
         color: theme.palette.text.secondary,
-        fontSize: '0.6875rem',
-        fontWeight: 700,
-        letterSpacing: '0.06em',
-        textTransform: 'uppercase',
+        fontSize: '0.75rem',
+        fontWeight: 600,
         lineHeight: '32px',
+        marginTop: theme.spacing(0.5),
         paddingInline: theme.spacing(2.5),
       }),
     },
