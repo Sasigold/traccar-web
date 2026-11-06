@@ -20,6 +20,7 @@ import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import { glass } from '../../theme/surfaces';
 import { formatNotificationTitle } from '../../util/formatter';
 import { useTranslation } from '../LocalizationProvider';
+import FleetAlertsBanner from '../../../fleet/components/FleetAlertsBanner';
 import { eventsActions } from '../../../store';
 import { eventIconKey, eventIcons } from '../../../map/core/preloadImages';
 
@@ -154,6 +155,7 @@ const EventsDrawer = ({ open, onClose }) => {
           <CloseRoundedIcon fontSize="small" />
         </IconButton>
       </div>
+      <FleetAlertsBanner onNavigate={onClose} />
       {events.length === 0 ? (
         <div className={classes.empty}>
           <span className={classes.emptyIcon}>

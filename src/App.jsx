@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import SocketController from './SocketController';
 import CachingController from './CachingController';
 import FleetController from './FleetController';
+import FleetAlertsController from './fleet/FleetAlertsController';
 import { useCatch, useAsyncTask } from './reactHelper';
 import { sessionActions } from './store';
 import UpdateController from './UpdateController';
@@ -57,6 +58,7 @@ const App = () => {
       <SocketController />
       <CachingController />
       <FleetController />
+      <FleetAlertsController />
       <UpdateController />
       <MotionController />
       <AppShell>

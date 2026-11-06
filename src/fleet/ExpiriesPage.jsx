@@ -13,6 +13,7 @@ import { formatTime } from '../common/util/formatter';
 import exportExcel from '../common/util/exportExcel';
 import ExpiryBadge, { statusLabelKey, useDaysText } from './components/ExpiryBadge';
 import useExpiries from './useExpiries';
+import { useFleetLabel } from '../common/fleet/useFleet';
 
 const useStyles = makeStyles()((theme) => ({
   name: {
@@ -52,6 +53,8 @@ const ExpiriesPage = () => {
   const navigate = useNavigate();
   const daysText = useDaysText();
   const { rows } = useExpiries();
+  const fleetLabel = useFleetLabel();
+  const rowLabel = (row) => (row.labelKey ? t(row.labelKey) : fleetLabel(row.labels));
 
   const [searchParams, setSearchParams] = useSearchParams();
   const status = statusFilters.includes(searchParams.get('status'))
@@ -86,12 +89,12 @@ const ExpiriesPage = () => {
       }
       return (
         !keyword ||
-        [row.name, row.plateNumber, t(row.labelKey)].some((value) =>
-          value?.toLowerCase().includes(keyword),
+        [row.name, row.plateNumber, row.labelKey ? t(row.labelKey) : fleetLabel(row.labels)].some(
+          (value) => value?.toLowerCase().includes(keyword),
         )
       );
     });
-  }, [rows, status, entity, search, t]);
+  }, [rows, status, entity, search, t, fleetLabel]);
 
   const entityText = (row) =>
     row.entity === 'vehicle' ? t('fleetEntityVehicle') : t('fleetEntityDriver');
@@ -108,7 +111,7 @@ const ExpiriesPage = () => {
       [t('fleetEntity')]: entityText(row),
       [t('sharedName')]: row.name,
       [t('fleetPlateNumber')]: row.plateNumber || '',
-      [t('fleetValidityType')]: t(row.labelKey),
+      [t('fleetValidityType')]: rowLabel(row),
       [t('fleetExpiresAt')]: formatTime(row.date, 'date'),
       [t('deviceStatus')]: t(statusLabelKey[row.status]),
       [t('fleetDaysColumn')]: row.days,
@@ -203,7 +206,7 @@ const ExpiriesPage = () => {
                   )}
                 </span>
               </TableCell>
-              <TableCell>{t(row.labelKey)}</TableCell>
+              <TableCell>{rowLabel(row)}</TableCell>
               <TableCell className={classes.ltr}>
                 {formatTime(row.date, 'date')}
                 {row.status !== 'valid' && ` · ${daysText(row.days)}`}

@@ -8,8 +8,12 @@ const { reducer, actions } = createSlice({
     profile: null,
     permissions: [],
     error: null,
+    alertsCount: 0, // open document alerts (roadmap 3.4), shown on the bell
   },
   reducers: {
+    alertsCount(state, action) {
+      state.alertsCount = action.payload;
+    },
     loading(state) {
       state.status = 'loading';
       state.error = null;
@@ -31,6 +35,7 @@ const { reducer, actions } = createSlice({
       state.error = null;
     },
     reset(state) {
+      state.alertsCount = 0;
       state.status = 'idle';
       state.profile = null;
       state.permissions = [];

@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import { Link as RouterLink } from 'react-router-dom';
+import { useFleetPermission } from '../common/fleet/useFleet';
 import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded';
 import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded';
 
@@ -8,11 +11,13 @@ import EditItemView from './components/EditItemView';
 import EditAttributesAccordion from './components/EditAttributesAccordion';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import SettingsMenu from './components/SettingsMenu';
-import { driversActions } from '../store';
-import { useCatch } from '../reactHelper';
+import { driversActions, messagesActions } from '../store';
+import { saveFleetRecord, useFleetAccess, useFleetOverlay } from '../fleet/fleetRecords';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import FormSection from './components/FormSection';
 import FleetDocumentsSection from './components/FleetDocumentsSection';
+import DriverAssignmentSection from '../fleet/components/DriverAssignmentSection';
+import HistorySection from '../fleet/components/HistorySection';
 import FleetFieldsSection from '../fleet/components/FleetFieldsSection';
 import {
   driverExpiryFields,
@@ -31,11 +36,23 @@ const DriverPage = () => {
 
   const [item, setItem] = useState();
 
-  // Keep the cached drivers (expiry tile, expiries page) in step with the edit.
-  const onItemSaved = useCatch(async () => {
-    const response = await fetchOrThrow('api/drivers');
-    dispatch(driversActions.refresh(await response.json()));
-  });
+  const fleet = useFleetAccess('driver');
+  const safety = useFleetPermission('safety.read');
+  useFleetOverlay('driver', item, setItem);
+
+  // Traccar first, then the fleet database; keep the cached drivers (validity tile and page)
+  // in step. Errors are reported without undoing the Traccar save.
+  const onItemSaved = async (saved) => {
+    try {
+      if (fleet.write) {
+        await saveFleetRecord('driver', saved, fleet.profile, { withDocuments: fleet.documents });
+      }
+      const response = await fetchOrThrow('api/drivers');
+      dispatch(driversActions.refresh(await response.json()));
+    } catch (error) {
+      dispatch(messagesActions.push(error.message));
+    }
+  };
 
   const setAttributes = (attributes) => setItem({ ...item, attributes });
 
@@ -81,12 +98,24 @@ const DriverPage = () => {
             setAttributes={setAttributes}
             showExpiry
           />
+          {item.id && safety && (
+            <Button
+              variant="outlined"
+              component={RouterLink}
+              to={`/fleet/driver-file/${item.id}`}
+              sx={{ alignSelf: 'flex-start' }}
+            >
+              {t('fleetDriverFile')}
+            </Button>
+          )}
+          <DriverAssignmentSection driver={item} />
           <FleetDocumentsSection
             entity="driver"
             traccarId={item.id}
             name={item.name}
             identifier={item.uniqueId}
           />
+          <HistorySection entity="driver" traccarId={item.id} />
           <EditAttributesAccordion
             attributes={splitAttributes(item.attributes, driverFieldKeys)}
             setAttributes={(other) =>

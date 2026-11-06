@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fleetActions } from './store';
 import { isFleetConfigured } from './common/fleet/config';
 import { clearFleetSession, ensureFleetSession } from './common/fleet/session';
+import { getFleetClient } from './common/fleet/client';
 
 const REFRESH_INTERVAL_MS = 30 * 60 * 1000;
 
@@ -31,6 +32,13 @@ const FleetController = () => {
           dispatch(
             fleetActions.ready({ profile: session.profile, permissions: session.permissions }),
           );
+          // "Last seen" for the users screen; missing before the stage 3 migration, so ignored.
+          getFleetClient()
+            .rpc('touch_last_seen')
+            .then(
+              () => {},
+              () => {},
+            );
         }
       } catch (error) {
         if (!cancelled) {

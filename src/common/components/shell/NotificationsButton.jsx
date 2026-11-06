@@ -7,7 +7,7 @@ import { useShell } from './ShellContext';
 const NotificationsButton = () => {
   const t = useTranslation();
   const { openEvents } = useShell();
-  const count = useSelector((state) => state.events.items.length);
+  const count = useSelector((state) => state.events.items.length + state.fleet.alertsCount);
 
   return (
     <Tooltip title={t('reportEvents')}>

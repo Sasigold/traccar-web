@@ -110,3 +110,62 @@ in the Traccar `attributes` JSON; the keys are defined once in `src/common/fleet
   maintenance, and the dialog says so).
 - **Fault codes**: `dtcs` / `faults` position attributes appear as chips on the map status card.
 - **Navigation**: a top-level "Fleet" item (`/fleet`) covers vehicles, drivers, maintenance and validity.
+
+## Roadmap stage 1: cards saved to the fleet database
+
+`supabase/migrations/20261106120000_fleet_stage1.sql` (applied) adds the vehicle / driver detail columns,
+`alert_recipients`, `document_alerts`, `notification_deliveries`, `vehicle_fuel_cards` and the daily
+`vf_document_alerts` pg_cron job (04:00 UTC, thresholds 60/30/14/7/0). Alerts are queued for WhatsApp
+recipients; nothing is sent until a sender with provider keys exists.
+
+- **Saving** a vehicle or driver card writes Traccar first, then the `vehicles` / `drivers` row
+  (`src/fleet/fleetRecords.js`, mapping in `src/common/fleet/fleetSync.js`, unit-tested). Validity dates
+  become documents without a file (test, compulsory / comprehensive insurance, lease, driving license):
+  a missing one is added, a file-less one has its date moved, one with a scanned file is kept and a new
+  one is added. Clearing a date never deletes a document. A database error is shown and saving again
+  retries; the Traccar save is not undone.
+- **Opening** a card lays the database values over the Traccar attributes (the database wins).
+- **Validity page** merges `documents_expiring` with the card dates and keeps only the latest date per
+  vehicle / driver and type, so a renewed document doesn't leave an expired one behind.
+- **Copy to the database** (card on `/fleet`, needs `vehicles.write` or `drivers.write`) copies every card
+  with stage 0 details; it only fills values, never clears what the database already has.
+
+## Roadmap stages 2-4
+
+All fleet database screens live under `/fleet` (code in `src/fleet/`, pure logic with unit tests in
+`src/common/fleet/`). Files go to the private `fleet-files` bucket as `<org_id>/<area>/...`; the area
+(`work-orders`, `incidents`, `inspections`, `expenses`, `safety`) picks the storage permission
+(`fleet_file_permission()`).
+
+| Screen | What | Permission |
+|--------|------|------------|
+| `/fleet/alerts` | Open expiry alerts ("handled"), recipients (WhatsApp alerts, email reports), outbox | `alerts.read` / `alerts.manage` |
+| `/fleet/work-orders`, `/fleet/work-order`, `/fleet/vendors` | Work orders with lines (database total), invoice, closing resets the Traccar maintenance counter | `maintenance.*` |
+| `/fleet/inspections`, `/fleet/inspection` | Checklist templates, filling in (failed item opens an issue), open issues | `inspections.*`, issues `maintenance.*` |
+| `/fleet/incidents`, `/fleet/incident` | Damage / accidents: location and driver from the track, photos, parties, insurance claim | `incidents.*` |
+| `/fleet/costs` | Cost per vehicle, fuel company import (CSV / Excel, anomaly flags, re-import safe), expenses | `costs.*` |
+| `/fleet/roles`, `/fleet/users` | Role matrix per organization, users (role, active, last seen, exceptions) | `roles.manage`, `users.*` |
+| `/fleet/safety`, `/fleet/driver-file/:id` | Driver score, driving / rest hours, license checks, trainings, violations ("who drove?"), printable driver file | `safety.*` |
+| `/driver` | Driver portal (role `driver`): my vehicle, morning check, damage report, my documents | `inspections.write`, `incidents.write` |
+
+**Permissions.** `has_permission()` reads, in order: the user's exception (`user_permissions`), owner (all),
+the organization's role setting (`org_role_permissions`), the global role default (`role_permissions`).
+The owner role can't be edited and admin can't lose `roles.manage`. Changing a role on `/fleet/users`
+also sets the Traccar user flags (read only / device read only / limited commands) to match.
+
+**Drivers.** A user with the `driver` role sees only the vehicle assigned to them
+(`vehicle_driver_assignments`, set on the driver page) and only their own inspections and incidents.
+Link the driver to the user on the driver page ("linked user"). In Traccar the driver's user also needs a
+link to the vehicle (connections) to see it live.
+
+**Safety numbers are parameters.** Score weights and driving / rest limits are stored per organization in
+`org_safety_settings` and edited on `/fleet/safety`; the defaults in `src/common/fleet/safety.js` must be
+confirmed by a certified transport safety officer before relying on them.
+
+**Waiting for provider keys.** Alerts are queued in `notification_deliveries` with status `queued`;
+nothing is sent until a WhatsApp / email sender is added. User invitations by email / WhatsApp wait for
+the same.
+
+Migrations: `20261106130000_fleet_stage2.sql`, `20261106140000_fleet_stage3.sql`,
+`20261106150000_fleet_stage4.sql` (the last adds the `safety_officer` role value before its transaction).
+Each was checked against the database in a rolled-back transaction before commit.

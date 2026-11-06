@@ -6,6 +6,8 @@ import SettingsMenu from '../settings/components/SettingsMenu';
 import SettingsCard from '../settings/components/SettingsCard';
 import { useSettingsSections } from '../settings/components/settingsSections';
 import ExpiryTiles from './components/ExpiryTiles';
+import FleetSyncCard from './components/FleetSyncCard';
+import FleetKpis from './components/FleetKpis';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -27,7 +29,14 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const fleetItems = ['expiries', 'devices', 'drivers', 'maintenance', 'fleetDocuments'];
+const fleetItems = [
+  'expiries',
+  'fleetAlerts',
+  'devices',
+  'drivers',
+  'maintenance',
+  'fleetDocuments',
+];
 
 // Top-level "Fleet" destination: vehicles, drivers, maintenance and validity in one place.
 const FleetHubPage = () => {
@@ -48,6 +57,7 @@ const FleetHubPage = () => {
     >
       <div className={classes.root}>
         <ExpiryTiles />
+        <FleetKpis />
         <div className={classes.grid}>
           {items.map((item) => (
             <SettingsCard
@@ -59,6 +69,7 @@ const FleetHubPage = () => {
             />
           ))}
         </div>
+        <FleetSyncCard />
       </div>
     </PageLayout>
   );

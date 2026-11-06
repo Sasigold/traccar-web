@@ -18,8 +18,10 @@ import { useCatch } from '../reactHelper';
 import ServerQrCodeDialog from '../common/components/ServerQrCodeDialog';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import FormSection from './components/FormSection';
-import { devicesActions } from '../store';
+import { devicesActions, messagesActions } from '../store';
+import { saveFleetRecord, useFleetAccess, useFleetOverlay } from '../fleet/fleetRecords';
 import FleetDocumentsSection from './components/FleetDocumentsSection';
+import HistorySection from '../fleet/components/HistorySection';
 import FleetFieldsSection from '../fleet/components/FleetFieldsSection';
 import MaintenanceStatusSection from '../fleet/components/MaintenanceStatusSection';
 import {
@@ -64,6 +66,22 @@ const DevicePage = () => {
 
   const setAttributes = (attributes) => setItem({ ...item, attributes });
 
+  const fleet = useFleetAccess('vehicle');
+  useFleetOverlay('vehicle', item, setItem);
+
+  // Traccar is saved first; the fleet database follows. A database error is reported but does
+  // not undo the Traccar save (saving again retries it).
+  const onItemSaved = async (saved) => {
+    dispatch(devicesActions.update([saved]));
+    if (fleet.write) {
+      try {
+        await saveFleetRecord('vehicle', saved, fleet.profile, { withDocuments: fleet.documents });
+      } catch (error) {
+        dispatch(messagesActions.push(error.message));
+      }
+    }
+  };
+
   const validate = () => item && item.name && item.uniqueId;
 
   return (
@@ -72,7 +90,7 @@ const DevicePage = () => {
       item={item}
       setItem={setItem}
       validate={validate}
-      onItemSaved={(saved) => dispatch(devicesActions.update([saved]))}
+      onItemSaved={onItemSaved}
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'sharedDevice']}
     >
@@ -189,6 +207,7 @@ const DevicePage = () => {
             name={item.name}
             identifier={item.uniqueId}
           />
+          <HistorySection entity="vehicle" traccarId={item.id} />
           <EditAttributesAccordion
             attributes={splitAttributes(item.attributes, vehicleFieldKeys)}
             setAttributes={(other) =>

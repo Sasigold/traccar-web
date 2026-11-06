@@ -19,6 +19,13 @@ import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
+import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
+import HandymanRoundedIcon from '@mui/icons-material/HandymanRounded';
+import CarCrashRoundedIcon from '@mui/icons-material/CarCrashRounded';
+import LocalGasStationRoundedIcon from '@mui/icons-material/LocalGasStationRounded';
+import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
+import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
+import HealthAndSafetyRoundedIcon from '@mui/icons-material/HealthAndSafetyRounded';
 import { useAdministrator, useManager, useRestriction } from '../../common/util/permissions';
 import useFeatures from '../../common/util/useFeatures';
 import { useFleetPermission } from '../../common/fleet/useFleet';
@@ -34,6 +41,13 @@ export const useSettingsSections = () => {
   const supportLink = useSelector((state) => state.session.server.attributes.support);
   const billingLink = useSelector((state) => state.session.user.attributes.billingLink);
   const fleetDocuments = useFleetPermission('documents.read');
+  const fleetAlerts = useFleetPermission('alerts.read');
+  const fleetMaintenance = useFleetPermission('maintenance.read');
+  const fleetIncidents = useFleetPermission('incidents.read');
+  const fleetCosts = useFleetPermission('costs.read');
+  const fleetInspections = useFleetPermission('inspections.read');
+  const fleetUsers = useFleetPermission('users.read');
+  const fleetSafety = useFleetPermission('safety.read');
 
   return useMemo(() => {
     const profilePath = `/settings/user/${userId}`;
@@ -128,6 +142,62 @@ export const useSettingsSections = () => {
             match: (pathname) => pathname.startsWith('/fleet/expiries'),
           },
           {
+            id: 'fleetAlerts',
+            titleKey: 'fleetAlertsPage',
+            descriptionKey: 'fleetAlertsPageDescription',
+            icon: NotificationsActiveRoundedIcon,
+            path: '/fleet/alerts',
+            match: (pathname) => pathname.startsWith('/fleet/alerts'),
+            visible: fleetAlerts,
+          },
+          {
+            id: 'workOrders',
+            titleKey: 'fleetWorkOrdersPage',
+            descriptionKey: 'fleetWorkOrdersPageDescription',
+            icon: HandymanRoundedIcon,
+            path: '/fleet/work-orders',
+            match: (pathname) =>
+              pathname.startsWith('/fleet/work-order') || pathname.startsWith('/fleet/vendors'),
+            visible: fleetMaintenance,
+          },
+          {
+            id: 'incidents',
+            titleKey: 'fleetIncidentsPage',
+            descriptionKey: 'fleetIncidentsPageDescription',
+            icon: CarCrashRoundedIcon,
+            path: '/fleet/incidents',
+            match: (pathname) => pathname.startsWith('/fleet/incident'),
+            visible: fleetIncidents,
+          },
+          {
+            id: 'inspections',
+            titleKey: 'fleetInspectionsPage',
+            descriptionKey: 'fleetInspectionsPageDescription',
+            icon: FactCheckRoundedIcon,
+            path: '/fleet/inspections',
+            match: (pathname) => pathname.startsWith('/fleet/inspection'),
+            visible: fleetInspections,
+          },
+          {
+            id: 'safety',
+            titleKey: 'fleetSafetyPage',
+            descriptionKey: 'fleetSafetyPageDescription',
+            icon: HealthAndSafetyRoundedIcon,
+            path: '/fleet/safety',
+            match: (pathname) =>
+              pathname.startsWith('/fleet/safety') || pathname.startsWith('/fleet/driver-file'),
+            visible: fleetSafety,
+          },
+          {
+            id: 'costs',
+            titleKey: 'fleetCostsPage',
+            descriptionKey: 'fleetCostsPageDescription',
+            icon: LocalGasStationRoundedIcon,
+            path: '/fleet/costs',
+            match: (pathname) => pathname.startsWith('/fleet/costs'),
+            visible: fleetCosts,
+          },
+          {
             id: 'fleetDocuments',
             titleKey: 'fleetDocumentsPage',
             descriptionKey: 'fleetDocumentsPageDescription',
@@ -186,6 +256,16 @@ export const useSettingsSections = () => {
             visible: Boolean(manager),
           },
           {
+            id: 'fleetUsers',
+            titleKey: 'fleetUsersPage',
+            descriptionKey: 'fleetUsersPageDescription',
+            icon: AdminPanelSettingsRoundedIcon,
+            path: '/fleet/users',
+            match: (pathname) =>
+              pathname.startsWith('/fleet/users') || pathname.startsWith('/fleet/roles'),
+            visible: fleetUsers,
+          },
+          {
             id: 'server',
             titleKey: 'settingsServer',
             descriptionKey: 'settingsServerDescription',
@@ -240,7 +320,23 @@ export const useSettingsSections = () => {
       .filter((group) => group.visible !== false)
       .map((group) => ({ ...group, items: group.items.filter((item) => item.visible !== false) }))
       .filter((group) => group.items.length > 0);
-  }, [readonly, admin, manager, features, userId, supportLink, billingLink, fleetDocuments]);
+  }, [
+    readonly,
+    admin,
+    manager,
+    features,
+    userId,
+    supportLink,
+    billingLink,
+    fleetDocuments,
+    fleetAlerts,
+    fleetMaintenance,
+    fleetIncidents,
+    fleetCosts,
+    fleetInspections,
+    fleetUsers,
+    fleetSafety,
+  ]);
 };
 
 export const useSettingsSectionItems = () => {

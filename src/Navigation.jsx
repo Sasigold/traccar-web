@@ -14,6 +14,20 @@ import fetchOrThrow from './common/util/fetchOrThrow';
 const NotFoundPage = lazy(() => import('./other/NotFoundPage'));
 const FleetHubPage = lazy(() => import('./fleet/FleetHubPage'));
 const ExpiriesPage = lazy(() => import('./fleet/ExpiriesPage'));
+const AlertsPage = lazy(() => import('./fleet/AlertsPage'));
+const WorkOrdersPage = lazy(() => import('./fleet/WorkOrdersPage'));
+const WorkOrderPage = lazy(() => import('./fleet/WorkOrderPage'));
+const VendorsPage = lazy(() => import('./fleet/VendorsPage'));
+const IncidentsPage = lazy(() => import('./fleet/IncidentsPage'));
+const IncidentPage = lazy(() => import('./fleet/IncidentPage'));
+const CostsPage = lazy(() => import('./fleet/CostsPage'));
+const InspectionsPage = lazy(() => import('./fleet/InspectionsPage'));
+const InspectionPage = lazy(() => import('./fleet/InspectionPage'));
+const RolesPage = lazy(() => import('./fleet/RolesPage'));
+const FleetUsersPage = lazy(() => import('./fleet/FleetUsersPage'));
+const DriverPortalPage = lazy(() => import('./fleet/DriverPortalPage'));
+const SafetyPage = lazy(() => import('./fleet/SafetyPage'));
+const DriverFilePage = lazy(() => import('./fleet/DriverFilePage'));
 const CombinedReportPage = lazy(() => import('./reports/CombinedReportPage'));
 const PositionsReportPage = lazy(() => import('./reports/PositionsReportPage'));
 const ServerPage = lazy(() => import('./settings/ServerPage'));
@@ -155,9 +169,26 @@ const Navigation = () => {
           <Route path="emulator" element={<EmulatorPage />} />
           <Route path="stream" element={<StreamPage />} />
 
+          <Route path="driver" element={<DriverPortalPage />} />
           <Route path="fleet">
             <Route index element={<FleetHubPage />} />
             <Route path="expiries" element={<ExpiriesPage />} />
+            <Route path="alerts" element={<AlertsPage />} />
+            <Route path="work-orders" element={<WorkOrdersPage />} />
+            <Route path="work-order/:id" element={<WorkOrderPage />} />
+            <Route path="work-order" element={<WorkOrderPage />} />
+            <Route path="vendors" element={<VendorsPage />} />
+            <Route path="incidents" element={<IncidentsPage />} />
+            <Route path="incident/:id" element={<IncidentPage />} />
+            <Route path="incident" element={<IncidentPage />} />
+            <Route path="costs" element={<CostsPage />} />
+            <Route path="inspections" element={<InspectionsPage />} />
+            <Route path="inspection/:id" element={<InspectionPage />} />
+            <Route path="inspection" element={<InspectionPage />} />
+            <Route path="roles" element={<RolesPage />} />
+            <Route path="users" element={<FleetUsersPage />} />
+            <Route path="safety" element={<SafetyPage />} />
+            <Route path="driver-file/:id" element={<DriverFilePage />} />
           </Route>
 
           <Route path="settings">
