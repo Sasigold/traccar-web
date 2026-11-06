@@ -2,6 +2,9 @@ import { Paper, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 
+// A dropdown field (MUI Select or TextField select) inside a section.
+const selectRow = '.MuiFormControl-root:has(> .MuiInputBase-root .MuiSelect-select)';
+
 const useStyles = makeStyles()((theme, { tone }) => {
   const accent = tone === 'danger' ? theme.palette.error.main : theme.palette.primary.main;
   return {
@@ -58,6 +61,56 @@ const useStyles = makeStyles()((theme, { tone }) => {
       padding: theme.spacing(2.25, 2.5, 2.5),
       [theme.breakpoints.down('sm')]: {
         padding: theme.spacing(2),
+      },
+      // Direction A on phones: a dropdown reads as one setting row, the name on one side
+      // and the current value with its arrow on the other.
+      [theme.breakpoints.down('md')]: {
+        [`& ${selectRow}`]: {
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          columnGap: theme.spacing(1.5),
+          minHeight: 48,
+          '& > .MuiInputLabel-root': {
+            position: 'static',
+            transform: 'none',
+            flex: '1 1 0',
+            minWidth: 0,
+            maxWidth: 'none',
+            whiteSpace: 'normal',
+            fontSize: '0.9375rem',
+            fontWeight: 500,
+            color: theme.palette.text.primary,
+          },
+          '& > .MuiInputBase-root': {
+            flex: '0 1 auto',
+            maxWidth: '58%',
+            borderRadius: theme.tokens.radius.md,
+            backgroundColor: 'transparent',
+            '& fieldset': {
+              border: 0,
+            },
+            '& .MuiSelect-select': {
+              paddingBlock: theme.spacing(1),
+              paddingInlineStart: theme.spacing(1),
+              textAlign: 'end',
+              color: theme.palette.text.secondary,
+              fontSize: '0.875rem',
+            },
+            '&.Mui-focused': {
+              backgroundColor: theme.palette.surface.tint,
+            },
+          },
+          '& > .MuiFormHelperText-root': {
+            flexBasis: '100%',
+            marginInline: 0,
+            marginTop: 0,
+          },
+        },
+        [`& ${selectRow} + ${selectRow}`]: {
+          borderTop: `1px solid ${theme.palette.surface.border}`,
+          paddingTop: theme.spacing(1),
+        },
       },
     },
   };
