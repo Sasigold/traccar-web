@@ -14,6 +14,7 @@ import fetchOrThrow from './common/util/fetchOrThrow';
 const NotFoundPage = lazy(() => import('./other/NotFoundPage'));
 const FleetHubPage = lazy(() => import('./fleet/FleetHubPage'));
 const ExpiriesPage = lazy(() => import('./fleet/ExpiriesPage'));
+const AlertsPage = lazy(() => import('./fleet/AlertsPage'));
 const CombinedReportPage = lazy(() => import('./reports/CombinedReportPage'));
 const PositionsReportPage = lazy(() => import('./reports/PositionsReportPage'));
 const ServerPage = lazy(() => import('./settings/ServerPage'));
@@ -158,6 +159,7 @@ const Navigation = () => {
           <Route path="fleet">
             <Route index element={<FleetHubPage />} />
             <Route path="expiries" element={<ExpiriesPage />} />
+            <Route path="alerts" element={<AlertsPage />} />
           </Route>
 
           <Route path="settings">

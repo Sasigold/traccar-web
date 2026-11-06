@@ -28,7 +28,14 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const fleetItems = ['expiries', 'devices', 'drivers', 'maintenance', 'fleetDocuments'];
+const fleetItems = [
+  'expiries',
+  'fleetAlerts',
+  'devices',
+  'drivers',
+  'maintenance',
+  'fleetDocuments',
+];
 
 // Top-level "Fleet" destination: vehicles, drivers, maintenance and validity in one place.
 const FleetHubPage = () => {

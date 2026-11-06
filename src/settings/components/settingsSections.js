@@ -19,6 +19,7 @@ import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
+import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
 import { useAdministrator, useManager, useRestriction } from '../../common/util/permissions';
 import useFeatures from '../../common/util/useFeatures';
 import { useFleetPermission } from '../../common/fleet/useFleet';
@@ -34,6 +35,7 @@ export const useSettingsSections = () => {
   const supportLink = useSelector((state) => state.session.server.attributes.support);
   const billingLink = useSelector((state) => state.session.user.attributes.billingLink);
   const fleetDocuments = useFleetPermission('documents.read');
+  const fleetAlerts = useFleetPermission('alerts.read');
 
   return useMemo(() => {
     const profilePath = `/settings/user/${userId}`;
@@ -126,6 +128,15 @@ export const useSettingsSections = () => {
             icon: EventAvailableRoundedIcon,
             path: '/fleet/expiries',
             match: (pathname) => pathname.startsWith('/fleet/expiries'),
+          },
+          {
+            id: 'fleetAlerts',
+            titleKey: 'fleetAlertsPage',
+            descriptionKey: 'fleetAlertsPageDescription',
+            icon: NotificationsActiveRoundedIcon,
+            path: '/fleet/alerts',
+            match: (pathname) => pathname.startsWith('/fleet/alerts'),
+            visible: fleetAlerts,
           },
           {
             id: 'fleetDocuments',
@@ -240,7 +251,17 @@ export const useSettingsSections = () => {
       .filter((group) => group.visible !== false)
       .map((group) => ({ ...group, items: group.items.filter((item) => item.visible !== false) }))
       .filter((group) => group.items.length > 0);
-  }, [readonly, admin, manager, features, userId, supportLink, billingLink, fleetDocuments]);
+  }, [
+    readonly,
+    admin,
+    manager,
+    features,
+    userId,
+    supportLink,
+    billingLink,
+    fleetDocuments,
+    fleetAlerts,
+  ]);
 };
 
 export const useSettingsSectionItems = () => {
