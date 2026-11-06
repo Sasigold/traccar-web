@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import dayjs from 'dayjs';
-import { TextField, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import {
+  TextField,
+  FormControl,
+  FormHelperText,
+  InputLabel,
+  MenuItem,
+  Select,
+} from '@mui/material';
 import EditItemView from './components/EditItemView';
 import EditAttributesAccordion from './components/EditAttributesAccordion';
 import useAttributeUnits from '../common/util/useAttributeUnits';
@@ -70,20 +77,23 @@ const MaintenancePage = () => {
       validate={validate}
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'sharedMaintenance']}
+      description={t('maintenancePageDescription')}
     >
       {item && (
         <>
-          <FormSection title={t('sharedRequired')}>
+          <FormSection title={t('formSectionBasic')}>
             <TextField
               value={item.name || ''}
               onChange={(e) => setItem({ ...item, name: e.target.value })}
               label={t('sharedName')}
             />
             <FormControl>
-              <InputLabel id="maintenance-page-shared-type-label">{t('sharedType')}</InputLabel>
+              <InputLabel id="maintenance-page-shared-type-label">
+                {t('maintenanceTypeLabel')}
+              </InputLabel>
               <Select
                 labelId="maintenance-page-shared-type-label"
-                label={t('sharedType')}
+                label={t('maintenanceTypeLabel')}
                 value={item.type || ''}
                 onChange={(e) => setItem({ ...item, type: e.target.value, start: 0, period: 0 })}
               >
@@ -93,6 +103,7 @@ const MaintenancePage = () => {
                   </MenuItem>
                 ))}
               </Select>
+              <FormHelperText>{t('maintenanceTypeHelp')}</FormHelperText>
             </FormControl>
             <TextField
               type={item.type?.endsWith('Time') ? 'date' : 'number'}
@@ -101,6 +112,7 @@ const MaintenancePage = () => {
               label={
                 labels.start ? `${t('maintenanceStart')} (${labels.start})` : t('maintenanceStart')
               }
+              helperText={t('maintenanceStartHelp')}
             />
             <TextField
               type="number"
@@ -111,6 +123,7 @@ const MaintenancePage = () => {
                   ? `${t('maintenancePeriod')} (${labels.period})`
                   : t('maintenancePeriod')
               }
+              helperText={t('maintenancePeriodHelp')}
             />
           </FormSection>
           <EditAttributesAccordion

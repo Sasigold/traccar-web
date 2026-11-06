@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import { TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import ResponsiveTable from '../../common/components/table/ResponsiveTable';
 import { makeStyles } from 'tss-react/mui';
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
 import { useTranslation } from '../../common/components/LocalizationProvider';
@@ -92,7 +93,7 @@ const HistorySection = ({ entity, traccarId }) => {
         </Typography>
       )}
       {rows && rows.length > 0 && (
-        <Table size="small">
+        <ResponsiveTable size="small">
           <TableHead>
             <TableRow>
               <TableCell>{t('fleetOutboxCreated')}</TableCell>
@@ -120,7 +121,7 @@ const HistorySection = ({ entity, traccarId }) => {
               </TableRow>
             ))}
           </TableBody>
-        </Table>
+        </ResponsiveTable>
       )}
     </FormSection>
   );

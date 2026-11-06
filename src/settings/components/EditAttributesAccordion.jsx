@@ -168,7 +168,8 @@ const EditAttributesAccordion = ({
 
   return (
     <FormSection
-      title={t('sharedAttributes')}
+      title={t('attributesSectionTitle')}
+      description={t('attributesSectionHelp')}
       actions={
         <Button
           variant="outlined"
@@ -182,7 +183,7 @@ const EditAttributesAccordion = ({
     >
       {list.length === 0 && (
         <Typography variant="body2" className={classes.empty}>
-          {t('sharedNoData')}
+          {t('attributesSectionEmpty')}
         </Typography>
       )}
       {list.map(({ key, value, type, dataType }) => {

@@ -107,10 +107,11 @@ const CalendarPage = () => {
       onItemSaved={onItemSaved}
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'sharedCalendar']}
+      description={t('calendarPageDescription')}
     >
       {item && (
         <>
-          <FormSection title={t('sharedRequired')}>
+          <FormSection title={t('formSectionBasic')}>
             <TextField
               value={item.name || ''}
               onChange={(event) => setItem({ ...item, name: event.target.value })}

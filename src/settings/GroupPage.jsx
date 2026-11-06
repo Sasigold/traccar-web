@@ -39,22 +39,24 @@ const GroupPage = () => {
       onItemSaved={onItemSaved}
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'groupDialog']}
+      description={t('groupPageDescription')}
     >
       {item && (
         <>
-          <FormSection title={t('sharedRequired')}>
+          <FormSection title={t('formSectionBasic')}>
             <TextField
               value={item.name || ''}
               onChange={(event) => setItem({ ...item, name: event.target.value })}
               label={t('sharedName')}
             />
           </FormSection>
-          <FormSection title={t('sharedExtra')}>
+          <FormSection title={t('formSectionMore')}>
             <SelectField
               value={item.groupId}
               onChange={(event) => setItem({ ...item, groupId: Number(event.target.value) })}
               endpoint="api/groups"
               label={t('groupParent')}
+              helperText={t('groupParentHelp')}
             />
           </FormSection>
           <EditAttributesAccordion

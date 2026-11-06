@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogTitle,
   MenuItem,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -17,6 +16,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import ResponsiveTable from '../../common/components/table/ResponsiveTable';
 import { makeStyles } from 'tss-react/mui';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import FileInput from '../../common/components/FileInput';
@@ -240,7 +240,7 @@ const FuelImportDialog = ({ onClose, onImported }) => {
                   .replace('{2}', String(valid.filter((tx) => tx.flags.length).length))}
               </Alert>
               <div className={classes.preview}>
-                <Table size="small" stickyHeader>
+                <ResponsiveTable size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell>{t('fleetFuelFieldOccurredAt')}</TableCell>
@@ -280,7 +280,7 @@ const FuelImportDialog = ({ onClose, onImported }) => {
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
+                </ResponsiveTable>
               </div>
             </>
           )}

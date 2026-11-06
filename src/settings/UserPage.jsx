@@ -140,7 +140,7 @@ const UserPage = () => {
     >
       {item && (
         <>
-          <FormSection title={t('sharedRequired')}>
+          <FormSection title={t('formSectionBasic')}>
             <TextField
               value={item.name || ''}
               onChange={(e) => setItem({ ...item, name: e.target.value })}

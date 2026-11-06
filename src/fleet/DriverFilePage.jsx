@@ -3,13 +3,13 @@ import { useParams } from 'react-router-dom';
 import {
   Button,
   Paper,
-  Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
   Typography,
 } from '@mui/material';
+import ResponsiveTable from '../common/components/table/ResponsiveTable';
 import { makeStyles } from 'tss-react/mui';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -167,7 +167,7 @@ const DriverFilePage = () => {
     ) : null;
 
   const table = (headers, rows) => (
-    <Table size="small">
+    <ResponsiveTable size="small">
       <TableHead>
         <TableRow>
           {headers.map((header) => (
@@ -176,7 +176,7 @@ const DriverFilePage = () => {
         </TableRow>
       </TableHead>
       <TableBody>{rows}</TableBody>
-    </Table>
+    </ResponsiveTable>
   );
 
   const empty = (

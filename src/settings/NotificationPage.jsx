@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { FormControlLabel, Checkbox, FormGroup, Button, TextField } from '@mui/material';
+import { Button, TextField, Typography } from '@mui/material';
 import { useTranslation, useTranslationKeys } from '../common/components/LocalizationProvider';
 import EditItemView from './components/EditItemView';
 import { prefixString, unprefixString } from '../common/util/stringUtils';
@@ -9,6 +9,7 @@ import SettingsMenu from './components/SettingsMenu';
 import { useCatch } from '../reactHelper';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import FormSection from './components/FormSection';
+import CheckboxField from './components/CheckboxField';
 
 const NotificationPage = () => {
   const t = useTranslation();
@@ -46,21 +47,22 @@ const NotificationPage = () => {
       validate={validate}
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'sharedNotification']}
+      description={t('notificationPageDescription')}
     >
       {item && (
         <>
-          <FormSection title={t('sharedRequired')}>
+          <FormSection title={t('formSectionBasic')}>
             <SelectField
               value={item.type}
               onChange={(e) => setItem({ ...item, type: e.target.value })}
               endpoint="api/notifications/types"
               keyGetter={(it) => it.type}
               titleGetter={(it) => t(prefixString('event', it.type))}
-              label={t('sharedType')}
+              label={t('notificationTypeLabel')}
               helperText={
                 ['geofenceEnter', 'geofenceExit', 'geofenceCrossed'].includes(item.type)
                   ? t('notificationGeofenceLabel')
-                  : null
+                  : t('notificationTypeHelp')
               }
             />
             {item.type === 'alarm' && (
@@ -80,6 +82,7 @@ const NotificationPage = () => {
                 data={alarms}
                 keyGetter={(it) => it.key}
                 label={t('sharedAlarms')}
+                helperText={t('notificationAlarmsHelp')}
               />
             )}
             <SelectField
@@ -89,7 +92,8 @@ const NotificationPage = () => {
               endpoint="api/notifications/notificators"
               keyGetter={(it) => it.type}
               titleGetter={(it) => t(prefixString('notificator', it.type))}
-              label={t('notificationNotificators')}
+              label={t('notificationChannelsLabel')}
+              helperText={t('notificationChannelsHelp')}
             />
             {item.notificators?.includes('command') && (
               <SelectField
@@ -98,39 +102,42 @@ const NotificationPage = () => {
                 endpoint="api/commands"
                 titleGetter={(it) => it.description}
                 label={t('sharedSavedCommand')}
+                helperText={t('notificationCommandHelp')}
               />
             )}
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={testNotificators}
-              disabled={!item.notificators}
-            >
-              {t('sharedTestNotificators')}
-            </Button>
-            <FormGroup>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={item.always}
-                    onChange={(e) => setItem({ ...item, always: e.target.checked })}
-                  />
-                }
-                label={t('notificationAlways')}
-              />
-            </FormGroup>
+            <CheckboxField
+              checked={item.always}
+              onChange={(e) => setItem({ ...item, always: e.target.checked })}
+              label={t('notificationAlwaysLabel')}
+              helperText={t('notificationAlwaysHelp')}
+            />
+            <div>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={testNotificators}
+                disabled={!item.notificators}
+              >
+                {t('sharedTestNotificators')}
+              </Button>
+              <Typography variant="caption" color="textSecondary" component="p" sx={{ mt: 0.5 }}>
+                {t('notificationTestHelp')}
+              </Typography>
+            </div>
           </FormSection>
-          <FormSection title={t('sharedExtra')}>
+          <FormSection title={t('formSectionMore')}>
             <TextField
               value={item.description || ''}
               onChange={(e) => setItem({ ...item, description: e.target.value })}
               label={t('sharedDescription')}
+              helperText={t('notificationDescriptionHelp')}
             />
             <SelectField
               value={item.calendarId}
               onChange={(e) => setItem({ ...item, calendarId: Number(e.target.value) })}
               endpoint="api/calendars"
               label={t('sharedCalendar')}
+              helperText={t('notificationCalendarHelp')}
             />
             {['geofenceEnter', 'geofenceExit', 'geofenceCrossed'].includes(item.type) && (
               <SelectField
@@ -149,24 +156,20 @@ const NotificationPage = () => {
                 endpoint="api/geofences"
                 keyGetter={(it) => String(it.id)}
                 label={t('sharedGeofences')}
+                helperText={t('notificationGeofencesHelp')}
               />
             )}
-            <FormGroup>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={item.attributes && item.attributes.priority}
-                    onChange={(e) =>
-                      setItem({
-                        ...item,
-                        attributes: { ...item.attributes, priority: e.target.checked },
-                      })
-                    }
-                  />
-                }
-                label={t('sharedPriority')}
-              />
-            </FormGroup>
+            <CheckboxField
+              checked={item.attributes?.priority}
+              onChange={(e) =>
+                setItem({
+                  ...item,
+                  attributes: { ...item.attributes, priority: e.target.checked },
+                })
+              }
+              label={t('notificationPriorityLabel')}
+              helperText={t('notificationPriorityHelp')}
+            />
           </FormSection>
         </>
       )}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
-import { FormControlLabel, Checkbox, TextField, Button } from '@mui/material';
+import { TextField, Button, Typography } from '@mui/material';
 import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded';
 import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
 import FileInput from '../common/components/FileInput';
@@ -18,6 +18,7 @@ import { useCatch } from '../reactHelper';
 import ServerQrCodeDialog from '../common/components/ServerQrCodeDialog';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import FormSection from './components/FormSection';
+import CheckboxField from './components/CheckboxField';
 import { devicesActions, messagesActions } from '../store';
 import { saveFleetRecord, useFleetAccess, useFleetOverlay } from '../fleet/fleetRecords';
 import FleetDocumentsSection from './components/FleetDocumentsSection';
@@ -93,14 +94,16 @@ const DevicePage = () => {
       onItemSaved={onItemSaved}
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'sharedDevice']}
+      description={t('devicePageDescription')}
     >
       {item && (
         <>
-          <FormSection title={t('sharedRequired')}>
+          <FormSection title={t('formSectionBasic')}>
             <TextField
               value={item.name || ''}
               onChange={(event) => setItem({ ...item, name: event.target.value })}
               label={t('sharedName')}
+              helperText={t('deviceNameHelp')}
             />
             <TextField
               value={item.uniqueId || ''}
@@ -127,27 +130,31 @@ const DevicePage = () => {
             showExpiry
           />
           {item.id && <MaintenanceStatusSection deviceId={item.id} />}
-          <FormSection title={t('sharedExtra')}>
+          <FormSection title={t('formSectionMore')}>
             <SelectField
               value={item.groupId}
               onChange={(event) => setItem({ ...item, groupId: Number(event.target.value) })}
               endpoint="api/groups"
               label={t('groupParent')}
+              helperText={t('deviceGroupHelp')}
             />
             <TextField
               value={item.phone || ''}
               onChange={(event) => setItem({ ...item, phone: event.target.value })}
               label={t('sharedPhone')}
+              helperText={t('devicePhoneHelp')}
             />
             <TextField
               value={item.model || ''}
               onChange={(event) => setItem({ ...item, model: event.target.value })}
               label={t('deviceModel')}
+              helperText={t('deviceModelHelp')}
             />
             <TextField
               value={item.contact || ''}
               onChange={(event) => setItem({ ...item, contact: event.target.value })}
               label={t('deviceContact')}
+              helperText={t('deviceContactHelp')}
             />
             <SelectField
               value={item.category || 'default'}
@@ -159,12 +166,14 @@ const DevicePage = () => {
                 }))
                 .sort((a, b) => a.name.localeCompare(b.name))}
               label={t('deviceCategory')}
+              helperText={t('deviceCategoryHelp')}
             />
             <SelectField
               value={item.calendarId}
               onChange={(event) => setItem({ ...item, calendarId: Number(event.target.value) })}
               endpoint="api/calendars"
               label={t('sharedCalendar')}
+              helperText={t('deviceCalendarHelp')}
             />
             <TextField
               label={t('userExpirationTime')}
@@ -175,24 +184,27 @@ const DevicePage = () => {
                   setItem({ ...item, expirationTime: new Date(e.target.value).toISOString() });
                 }
               }}
+              helperText={t('deviceExpirationHelp')}
               disabled={!manager}
             />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={item.disabled}
-                  onChange={(event) => setItem({ ...item, disabled: event.target.checked })}
-                />
-              }
+            <CheckboxField
+              checked={item.disabled}
+              onChange={(event) => setItem({ ...item, disabled: event.target.checked })}
               label={t('sharedDisabled')}
+              helperText={t('deviceDisabledHelp')}
               disabled={!manager}
             />
-            <Button variant="outlined" color="primary" onClick={() => setShowQr(true)}>
-              {t('sharedQrCode')}
-            </Button>
+            <div>
+              <Button variant="outlined" color="primary" onClick={() => setShowQr(true)}>
+                {t('sharedQrCode')}
+              </Button>
+              <Typography variant="caption" color="textSecondary" component="p" sx={{ mt: 0.5 }}>
+                {t('deviceQrHelp')}
+              </Typography>
+            </div>
           </FormSection>
           {item.id && (
-            <FormSection title={t('attributeDeviceImage')}>
+            <FormSection title={t('attributeDeviceImage')} description={t('deviceImageHelp')}>
               <FileInput
                 placeholder={t('attributeDeviceImage')}
                 value={imageFile}

@@ -62,7 +62,7 @@ const CommandDevicePage = () => {
         />
       }
     >
-      <FormSection title={t('sharedRequired')}>
+      <FormSection title={t('formSectionBasic')}>
         <BaseCommandView
           deviceId={id}
           item={item}

@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -18,6 +17,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import ResponsiveTable from '../../common/components/table/ResponsiveTable';
 import { makeStyles } from 'tss-react/mui';
 import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
 import PersonAddRoundedIcon from '@mui/icons-material/PersonAddRounded';
@@ -153,7 +153,7 @@ const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged })
         <EmptyState compact icon={<PeopleRoundedIcon />} title={t('adminNoUsersForCustomer')} />
       ) : (
         <div className={classes.scroll}>
-          <Table size="small">
+          <ResponsiveTable size="small">
             <TableHead>
               <TableRow>
                 <TableCell>{t('sharedName')}</TableCell>
@@ -220,7 +220,7 @@ const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged })
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
+          </ResponsiveTable>
         </div>
       )}
       {editable && rows.length > 0 && (
