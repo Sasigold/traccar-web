@@ -1227,5 +1227,9 @@
     "fleetMaintenanceOverdueBy": "{0} overdue",
     "fleetMaintenanceMarkDone": "Mark as done",
     "fleetMaintenanceMarkDoneConfirm": "Mark \"{0}\" as done now? The next service will be due in {1}.",
-    "fleetMaintenanceShared": "This maintenance is shared by {0} vehicles and the reset applies to all of them. To track them separately, create one per vehicle."
+    "fleetMaintenanceShared": "This maintenance is shared by {0} vehicles and the reset applies to all of them. To track them separately, create one per vehicle.",
+    "fleetSyncTitle": "Copy to the fleet database",
+    "fleetSyncDescription": "Copies the vehicle and driver details and validity dates entered on the cards into the fleet database. Safe to run again.",
+    "fleetSyncAction": "Copy {0} cards",
+    "fleetSyncDone": "{0} cards saved to the fleet database"
 }

@@ -110,3 +110,22 @@ in the Traccar `attributes` JSON; the keys are defined once in `src/common/fleet
   maintenance, and the dialog says so).
 - **Fault codes**: `dtcs` / `faults` position attributes appear as chips on the map status card.
 - **Navigation**: a top-level "Fleet" item (`/fleet`) covers vehicles, drivers, maintenance and validity.
+
+## Roadmap stage 1: cards saved to the fleet database
+
+`supabase/migrations/20261106120000_fleet_stage1.sql` (applied) adds the vehicle / driver detail columns,
+`alert_recipients`, `document_alerts`, `notification_deliveries`, `vehicle_fuel_cards` and the daily
+`vf_document_alerts` pg_cron job (04:00 UTC, thresholds 60/30/14/7/0). Alerts are queued for WhatsApp
+recipients; nothing is sent until a sender with provider keys exists.
+
+- **Saving** a vehicle or driver card writes Traccar first, then the `vehicles` / `drivers` row
+  (`src/fleet/fleetRecords.js`, mapping in `src/common/fleet/fleetSync.js`, unit-tested). Validity dates
+  become documents without a file (test, compulsory / comprehensive insurance, lease, driving license):
+  a missing one is added, a file-less one has its date moved, one with a scanned file is kept and a new
+  one is added. Clearing a date never deletes a document. A database error is shown and saving again
+  retries; the Traccar save is not undone.
+- **Opening** a card lays the database values over the Traccar attributes (the database wins).
+- **Validity page** merges `documents_expiring` with the card dates and keeps only the latest date per
+  vehicle / driver and type, so a renewed document doesn't leave an expired one behind.
+- **Copy to the database** (card on `/fleet`, needs `vehicles.write` or `drivers.write`) copies every card
+  with stage 0 details; it only fills values, never clears what the database already has.

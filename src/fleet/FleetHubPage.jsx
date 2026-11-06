@@ -6,6 +6,7 @@ import SettingsMenu from '../settings/components/SettingsMenu';
 import SettingsCard from '../settings/components/SettingsCard';
 import { useSettingsSections } from '../settings/components/settingsSections';
 import ExpiryTiles from './components/ExpiryTiles';
+import FleetSyncCard from './components/FleetSyncCard';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -59,6 +60,7 @@ const FleetHubPage = () => {
             />
           ))}
         </div>
+        <FleetSyncCard />
       </div>
     </PageLayout>
   );
