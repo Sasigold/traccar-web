@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>viper fleet · כיווני עיצוב</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..600,0..1,0&display=block" rel="stylesheet">
+<style>
+/* Brand palette only (BRAND.md §4). Layout: one style picker, then for each style a live
+   desktop frame + collapsed rail + two phones. Info surfaces stay light, nav is navy. */
+:root {
+  --navy: #102C54; --aqua: #35D7D6; --ice: #E1F5F7; --paper: #F8FCFD;
+  --ink: #0A1C30; --slate: #567286; --white: #FFFFFF;
+  --navy-950: #081627; --navy-850: #0E2440; --navy-700: #173A6B; --navy-600: #1F4A85; --navy-300: #7EA9E0;
+  --aqua-200: #A8EEED; --aqua-800: #0B7F7E; --slate-200: #C9D6DF; --slate-300: #9DB3C4;
+
+  --font: "Sora", "Assistant", system-ui, sans-serif;
+
+  /* light working surfaces */
+  --canvas: var(--paper); --card: var(--white); --tile: var(--ice);
+  --text: var(--ink); --text-2: var(--slate);
+  --line: rgba(16, 44, 84, 0.10); --line-2: rgba(16, 44, 84, 0.18);
+  --primary: var(--navy);           /* active text / links */
+  --ok: var(--aqua-800); --warn: #C27803; --err: #D63A42; --unk: #7E95A6;
+  --shadow-float: 0 1px 2px rgba(16, 44, 84, 0.06), 0 12px 32px -8px rgba(16, 44, 84, 0.22);
+  --shadow-soft: 0 1px 2px rgba(16, 44, 84, 0.05), 0 4px 14px -6px rgba(16, 44, 84, 0.14);
+  --hover: rgba(16, 44, 84, 0.05);
+
+  /* chrome (navy in both modes) */
+  --rail: var(--navy); --rail-text: rgba(248, 252, 253, 0.72); --rail-strong: var(--white);
+  --rail-hover: rgba(248, 252, 253, 0.08); --rail-line: rgba(248, 252, 253, 0.10);
+
+  /* map */
+  --map-land: #EEF6F8; --map-block: #E4EFF3; --map-park: #D7EFF1; --map-water: #C7E6EC;
+  --map-road: #FFFFFF; --map-road-edge: #D3E1E8; --map-major: #FFFFFF; --map-label: #7E95A6;
+
+  color-scheme: light;
+}
+:root[data-mode="dark"] {
+  --canvas: var(--ink); --card: var(--navy-850); --tile: #12305A;
+  --text: var(--paper); --text-2: var(--slate-300);
+  --line: rgba(248, 252, 253, 0.09); --line-2: rgba(248, 252, 253, 0.16);
+  --primary: var(--aqua);
+  --ok: var(--aqua); --warn: #F6B94A; --err: #FF7A7F; --unk: #9DB3C4;
+  --shadow-float: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 36px -10px rgba(0, 0, 0, 0.6);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.25), 0 6px 18px -8px rgba(0, 0, 0, 0.5);
+  --hover: rgba(248, 252, 253, 0.05);
+  --rail: var(--navy-950); --rail-line: rgba(248, 252, 253, 0.07);
+  --map-land: #0D2139; --map-block: #102741; --map-park: #0F2C40; --map-water: #0B2A44;
+  --map-road: #183A60; --map-road-edge: #12304F; --map-major: #1F4A75; --map-label: #7E95A6;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--canvas); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+:focus-visible { outline: 2px solid var(--aqua); outline-offset: 2px; }
+.ms { font-family: "Material Symbols Rounded"; font-weight: 400; font-style: normal; font-size: 22px; line-height: 1; display: inline-block; white-space: nowrap; direction: ltr; font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; -webkit-font-smoothing: antialiased; user-select: none; flex-shrink: 0; }
+.ms.fill { font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 24; }
+.ltr { direction: ltr; unicode-bidi: isolate; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ─── page chrome ─────────────────────────────────────────── */
+.page-head { background: var(--navy); color: var(--paper); padding: 28px 32px 0; }
+.page-head .inner { max-width: 1320px; margin: 0 auto; display: grid; gap: 18px; }
+.head-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.logo { display: block; height: 30px; width: auto; direction: ltr; }
+.eyebrow { font-size: 11px; letter-spacing: 0.08em; color: var(--aqua); direction: ltr; font-weight: 500; }
+.page-head h1 { margin: 0; font-size: 34px; font-weight: 500; line-height: 1.15; text-wrap: balance; }
+.page-head h1 span { color: var(--aqua); }
+.page-head p { margin: 0; max-width: 70ch; color: rgba(248, 252, 253, 0.78); }
+.mode-toggle { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(248, 252, 253, 0.08); }
+.mode-toggle button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; color: rgba(248, 252, 253, 0.8); font-size: 13px; font-weight: 500; }
+.mode-toggle button[aria-pressed="true"] { background: var(--aqua); color: var(--ink); }
+.mode-toggle .ms { font-size: 18px; }
+.tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 0; margin-top: 6px; }
+.tab { display: grid; gap: 2px; text-align: start; padding: 14px 18px 16px; border-radius: 16px 16px 0 0; color: rgba(248, 252, 253, 0.75); min-width: 210px; transition: background 160ms; }
+.tab:hover { background: rgba(248, 252, 253, 0.06); }
+.tab b { font-weight: 600; font-size: 16px; color: var(--paper); display: flex; gap: 8px; align-items: center; }
+.tab b i { font-style: normal; font-size: 11px; letter-spacing: 0.08em; color: var(--aqua); font-weight: 500; }
+.tab small { font-size: 13px; }
+.tab[aria-selected="true"] { background: var(--canvas); color: var(--text-2); }
+.tab[aria-selected="true"] b { color: var(--text); }
+.tab[aria-selected="true"] b i { color: var(--aqua-800); }
+:root[data-mode="dark"] .tab[aria-selected="true"] b i { color: var(--aqua); }
+
+main { max-width: 1320px; margin: 0 auto; padding: 28px 32px 64px; display: grid; gap: 28px; }
+.intro { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: start; }
+.intro h2 { margin: 0 0 6px; font-size: 26px; font-weight: 600; text-wrap: balance; }
+.intro p { margin: 0; color: var(--text-2); max-width: 64ch; }
+.traits { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.trait { font-size: 13px; padding: 5px 12px; border-radius: 999px; background: var(--tile); color: var(--text); }
+.spec { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; display: grid; gap: 10px; font-size: 14px; }
+.spec div { display: flex; gap: 10px; align-items: flex-start; }
+.spec .ms { font-size: 20px; color: var(--primary); }
+.spec b { font-weight: 600; }
+
+.label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.label { font-size: 13px; font-weight: 600; color: var(--text-2); display: flex; align-items: center; gap: 8px; }
+.label .ms { font-size: 18px; }
+.hint { font-size: 13px; color: var(--text-2); }
+.fict { font-size: 10.5px; letter-spacing: 0.08em; color: var(--text-2); direction: ltr; }
+
+.stage { display: grid; gap: 10px; }
+.scaler { width: 100%; overflow: hidden; }
+.scaler > .frame-wrap { transform-origin: top right; }
+
+.row2 { display: grid; grid-template-columns: auto auto auto 1fr; gap: 24px; align-items: start; }
+.cell { display: grid; gap: 10px; justify-items: start; }
+
+/* ─── desktop frame ───────────────────────────────────────── */
+.desk { width: 1240px; height: 720px; border-radius: 18px; overflow: hidden; border: 1px solid var(--line-2); background: var(--canvas); box-shadow: var(--shadow-soft); position: relative; }
+.browser { height: 34px; background: var(--card); border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; padding-inline: 14px; }
+.browser i { width: 10px; height: 10px; border-radius: 50%; background: var(--line-2); }
+.browser .url { margin-inline-start: 16px; flex: 0 1 360px; height: 22px; border-radius: 8px; background: var(--tile); font-size: 11.5px; color: var(--text-2); display: flex; align-items: center; padding-inline: 10px; direction: ltr; justify-content: flex-end; }
+.app { position: absolute; inset: 34px 0 0 0; display: flex; }
+
+/* rail */
+.rail { --rw: 248px; width: var(--rw); flex-shrink: 0; background: var(--rail); color: var(--rail-text); display: flex; flex-direction: column; transition: width 240ms cubic-bezier(.2,0,0,1); overflow: hidden; position: relative; z-index: 3; }
+.rail.collapsed { --rw: 76px; }
+.rail-brand { height: 64px; display: flex; align-items: center; padding-inline: 22px; flex-shrink: 0; }
+.rail-brand .logo { height: 26px; }
+.rail-brand .sym { width: 30px; height: 30px; display: none; direction: ltr; }
+.rail.collapsed .rail-brand { justify-content: center; padding-inline: 0; }
+.rail.collapsed .rail-brand .logo { display: none; }
+.rail.collapsed .rail-brand .sym { display: block; }
+.rail-list { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; }
+.rail-sec { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: rgba(248, 252, 253, 0.45); padding: 14px 12px 6px; white-space: nowrap; }
+.rail-item { position: relative; display: flex; align-items: center; gap: 12px; height: 44px; padding-inline: 12px; border-radius: 12px; color: var(--rail-text); font-weight: 500; font-size: 14.5px; white-space: nowrap; transition: background 140ms, color 140ms; text-align: start; width: 100%; }
+.rail-item:hover { background: var(--rail-hover); color: var(--rail-strong); }
+.rail-item .ms { font-size: 22px; width: 24px; text-align: center; }
+.rail-item .t { transition: opacity 160ms; }
+.rail-item .badge { margin-inline-start: auto; min-width: 20px; height: 20px; padding-inline: 6px; border-radius: 999px; background: var(--aqua); color: var(--ink); font-size: 11px; font-weight: 600; display: grid; place-items: center; direction: ltr; }
+.rail-item.active { background: var(--aqua); color: var(--ink); }
+.rail-item.active .ms { font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 24; }
+.rail-item.active .badge { background: var(--navy); color: var(--paper); }
+/* collapsed: every icon sits on the rail's center line */
+.rail.collapsed .rail-list { padding-inline: 0; align-items: center; }
+.rail.collapsed .rail-item { width: 48px; height: 48px; padding: 0; justify-content: center; gap: 0; }
+.rail.collapsed .rail-item .t, .rail.collapsed .rail-item .badge { position: absolute; opacity: 0; pointer-events: none; width: 0; overflow: hidden; }
+.rail.collapsed .rail-item .badge.dot { opacity: 1; width: 8px; min-width: 8px; height: 8px; padding: 0; top: 9px; inset-inline-end: 9px; font-size: 0; box-shadow: 0 0 0 2px var(--rail); }
+.rail.collapsed .rail-sec { height: 1px; padding: 0; margin: 10px 18px; background: var(--rail-line); font-size: 0; width: 40px; }
+.rail-tip { position: absolute; inset-inline-start: calc(100% + 10px); top: 50%; transform: translateY(-50%); background: var(--ink); color: var(--paper); font-size: 12.5px; padding: 5px 10px; border-radius: 8px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 120ms; z-index: 9; }
+.rail.collapsed .rail-item:hover .rail-tip { opacity: 1; }
+.rail-foot { padding: 12px; border-top: 1px solid var(--rail-line); display: flex; align-items: center; gap: 10px; }
+.rail.collapsed .rail-foot { flex-direction: column; padding-inline: 0; }
+.user { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; white-space: nowrap; }
+.avatar-u { width: 34px; height: 34px; border-radius: 50%; background: var(--navy-700); color: var(--paper); display: grid; place-items: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+.user .meta { display: grid; line-height: 1.25; }
+.user .meta b { font-size: 13.5px; font-weight: 600; color: var(--paper); }
+.user .meta span { font-size: 12px; }
+.rail.collapsed .user { flex: none; }
+.rail.collapsed .user .meta { display: none; }
+.icon-btn { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: inherit; flex-shrink: 0; transition: background 140ms; }
+.icon-btn:hover { background: var(--hover); }
+.rail .icon-btn:hover { background: var(--rail-hover); color: var(--rail-strong); }
+.rail .collapse-btn { margin-inline-start: auto; }
+.rail.collapsed .collapse-btn { margin: 0; }
+
+/* content */
+.content { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
+.topbar { height: 64px; flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding-inline: 20px; background: var(--card); border-bottom: 1px solid var(--line); position: relative; z-index: 2; }
+.crumbs { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); white-space: nowrap; }
+.crumbs b { color: var(--text); font-weight: 600; font-size: 17px; }
+.search { flex: 0 1 380px; margin-inline: auto; height: 40px; border-radius: 12px; background: var(--tile); display: flex; align-items: center; gap: 10px; padding-inline: 12px; color: var(--text-2); font-size: 14px; }
+.search kbd { margin-inline-start: auto; font: 500 11px var(--font); padding: 2px 6px; border-radius: 6px; border: 1px solid var(--line-2); direction: ltr; background: var(--card); }
+.top-actions { display: flex; align-items: center; gap: 4px; color: var(--text-2); }
+.pill-live { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding-inline: 10px; border-radius: 999px; background: var(--tile); color: var(--text); font-size: 12.5px; font-weight: 500; margin-inline-end: 6px; }
+.pill-live i { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+.has-dot { position: relative; }
+.has-dot::after { content: ""; position: absolute; top: 8px; inset-inline-end: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--err); box-shadow: 0 0 0 2px var(--card); }
+.body { flex: 1; min-height: 0; display: flex; position: relative; }
+
+/* vehicle list */
+.vlist { width: 330px; flex-shrink: 0; background: var(--card); border-inline-end: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; position: relative; z-index: 2; }
+.vlist-head { padding: 14px 14px 10px; display: grid; gap: 10px; }
+.vlist-title { display: flex; align-items: center; justify-content: space-between; }
+.vlist-title b { font-size: 15px; font-weight: 600; }
+.vlist-title span { font-size: 12.5px; color: var(--text-2); }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { height: 28px; padding-inline: 10px; border-radius: 999px; border: 1px solid var(--line-2); font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); font-weight: 500; }
+.chip i { width: 7px; height: 7px; border-radius: 50%; }
+.chip.on { background: var(--navy); border-color: var(--navy); color: var(--paper); }
+:root[data-mode="dark"] .chip.on { background: var(--aqua); border-color: var(--aqua); color: var(--ink); }
+.vrows { flex: 1; overflow: hidden; padding: 0 8px 8px; display: grid; align-content: start; gap: 2px; }
+.vrow { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; text-align: start; width: 100%; }
+.vrow:hover { background: var(--hover); }
+.vrow.sel { background: var(--tile); }
+.vavatar { position: relative; width: 40px; height: 40px; border-radius: 12px; background: var(--navy); color: var(--aqua); display: grid; place-items: center; flex-shrink: 0; }
+.vavatar .ms { font-size: 21px; font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 24; }
+.vavatar.dim { color: rgba(53, 215, 214, 0.38); }
+.vavatar .sd { position: absolute; bottom: -2px; inset-inline-start: -2px; width: 12px; height: 12px; border-radius: 50%; border: 2.5px solid var(--card); }
+.vrow.sel .vavatar .sd { border-color: var(--tile); }
+.vmain { flex: 1; min-width: 0; display: grid; line-height: 1.3; }
+.vmain b { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vmain span { font-size: 12.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vside { display: grid; justify-items: end; line-height: 1.3; font-size: 12px; color: var(--text-2); }
+.vside b { font-size: 13px; color: var(--text); font-weight: 600; }
+
+/* map */
+.map { flex: 1; position: relative; overflow: hidden; background: var(--map-land); }
+.map svg.base { position: absolute; inset: 0; width: 100%; height: 100%; }
+.map-ctrls { position: absolute; top: 14px; inset-inline-end: 14px; display: grid; gap: 8px; z-index: 2; }
+.ctrl-group { background: var(--card); border-radius: 12px; box-shadow: var(--shadow-soft); display: grid; overflow: hidden; border: 1px solid var(--line); }
+.ctrl-group button { width: 40px; height: 40px; display: grid; place-items: center; color: var(--text); }
+.ctrl-group button + button { border-top: 1px solid var(--line); }
+.ctrl-group button:hover { background: var(--hover); }
+.scale { position: absolute; bottom: 12px; inset-inline-end: 14px; font-size: 11px; color: var(--map-label); direction: ltr; display: flex; align-items: center; gap: 6px; }
+.scale i { width: 60px; height: 5px; border: 1.5px solid var(--map-label); border-top: 0; }
+.marker { position: absolute; transform: translate(-50%, -50%); width: 34px; height: 34px; border-radius: 50%; background: var(--navy); border: 3px solid var(--white); box-shadow: 0 2px 6px rgba(16, 44, 84, 0.35); display: grid; place-items: center; z-index: 1; }
+.marker .ms { font-size: 17px; font-variation-settings: "FILL" 1, "wght" 600, "GRAD" 0, "opsz" 20; }
+.marker.sel { width: 42px; height: 42px; z-index: 3; box-shadow: 0 0 0 6px rgba(53, 215, 214, 0.28), 0 2px 8px rgba(16, 44, 84, 0.4); }
+.marker.sel .ms { font-size: 21px; }
+.marker .head { position: absolute; top: -9px; left: 50%; width: 0; height: 0; border-inline: 5px solid transparent; border-bottom: 7px solid var(--navy); transform: translateX(-50%); }
+
+/* popup (shared bones) */
+.pop { position: absolute; z-index: 4; width: 340px; background: var(--card); color: var(--text); border-radius: 20px; box-shadow: var(--shadow-float); border: 1px solid var(--line); }
+.pop-tail { position: absolute; bottom: -8px; left: 50%; width: 16px; height: 16px; background: var(--card); transform: translateX(-50%) rotate(45deg); border-radius: 0 0 4px 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.p-head { display: flex; align-items: center; gap: 12px; padding: 14px 14px 10px 10px; }
+.p-head .vmain b { font-size: 15.5px; }
+.plate { display: inline-flex; align-items: center; height: 22px; padding-inline: 8px; border-radius: 6px; background: var(--tile); color: var(--text); font-size: 12px; font-weight: 600; direction: ltr; letter-spacing: 0.02em; }
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; }
+.status i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.s-ok { color: var(--ok); } .s-warn { color: var(--warn); } .s-err { color: var(--err); } .s-unk { color: var(--unk); }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 14px; }
+.stat { background: var(--tile); border-radius: 12px; padding: 10px 10px 9px; display: grid; gap: 2px; }
+.stat span { font-size: 11.5px; color: var(--text-2); display: flex; align-items: center; gap: 4px; }
+.stat span .ms { font-size: 15px; }
+.stat b { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat b small { font-size: 11.5px; font-weight: 500; color: var(--text-2); }
+.p-meta { padding: 12px 14px 4px; display: grid; gap: 8px; font-size: 13px; }
+.p-meta div { display: flex; align-items: center; gap: 8px; color: var(--text-2); }
+.p-meta div b { color: var(--text); font-weight: 500; }
+.p-meta .ms { font-size: 18px; }
+.p-actions { display: flex; align-items: center; gap: 6px; padding: 12px 14px 14px; }
+.p-actions .icon-btn { border: 1px solid var(--line-2); color: var(--primary); width: 40px; height: 40px; border-radius: 12px; }
+.cta { height: 40px; padding-inline: 16px; border-radius: 12px; background: var(--aqua); color: var(--ink); font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin-inline-start: auto; white-space: nowrap; }
+.cta:hover { background: #22BDBC; }
+.cta .ms { font-size: 19px; }
+.btn2 { height: 40px; padding-inline: 14px; border-radius: 12px; border: 1px solid var(--line-2); color: var(--primary); font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+
+/* ─── settings view ─────────────────────────────────────── */
+.settings { flex: 1; display: none; overflow: hidden; padding: 24px 28px; gap: 24px; }
+.desk.view-settings .settings { display: flex; }
+.desk.view-settings .body { display: none; }
+.set-nav { width: 230px; flex-shrink: 0; display: grid; align-content: start; gap: 2px; }
+.set-nav .h { font-size: 12px; font-weight: 600; color: var(--text-2); padding: 12px 12px 6px; }
+.set-nav button { display: flex; align-items: center; gap: 10px; height: 40px; padding-inline: 12px; border-radius: 10px; font-size: 14px; color: var(--text); text-align: start; }
+.set-nav button .ms { font-size: 20px; color: var(--text-2); }
+.set-nav button:hover { background: var(--hover); }
+.set-nav button.on { background: var(--tile); color: var(--primary); font-weight: 600; }
+.set-nav button.on .ms { color: var(--primary); font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 24; }
+.set-main { flex: 1; min-width: 0; display: grid; align-content: start; gap: 16px; max-width: 760px; }
+.set-title { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.set-title h3 { margin: 0; font-size: 22px; font-weight: 600; }
+.set-title p { margin: 2px 0 0; font-size: 13.5px; color: var(--text-2); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; }
+.card-h { padding: 14px 18px; border-bottom: 1px solid var(--line); font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 10px; }
+.card-h .ms { font-size: 20px; color: var(--primary); }
+.srow { display: flex; align-items: center; gap: 16px; padding: 13px 18px; }
+.srow + .srow { border-top: 1px solid var(--line); }
+.srow .l { flex: 1; display: grid; line-height: 1.35; }
+.srow .l b { font-weight: 500; font-size: 14px; }
+.srow .l span { font-size: 12.5px; color: var(--text-2); }
+.select { min-width: 170px; height: 38px; border-radius: 10px; border: 1px solid var(--line-2); display: flex; align-items: center; justify-content: space-between; padding-inline: 12px 8px; font-size: 13.5px; background: var(--card); }
+.select .ms { font-size: 20px; color: var(--text-2); }
+.seg { display: inline-flex; background: var(--tile); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg span { padding: 6px 12px; border-radius: 8px; font-size: 13px; color: var(--text-2); display: inline-flex; gap: 6px; align-items: center; }
+.seg span .ms { font-size: 17px; }
+.seg span.on { background: var(--card); color: var(--text); font-weight: 600; box-shadow: var(--shadow-soft); }
+.switch { width: 40px; height: 24px; border-radius: 999px; background: var(--slate-200); position: relative; flex-shrink: 0; transition: background 160ms; }
+:root[data-mode="dark"] .switch { background: var(--navy-700); }
+.switch::after { content: ""; position: absolute; top: 3px; inset-inline-start: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--white); box-shadow: 0 1px 2px rgba(10, 28, 48, 0.3); transition: inset-inline-start 160ms; }
+.switch.on { background: var(--aqua); }
+.switch.on::after { inset-inline-start: 19px; background: var(--ink); }
+.set-foot { display: flex; justify-content: flex-end; gap: 8px; }
+.set-foot .cta { margin: 0; }
+
+/* ─── phone ────────────────────────────────────────────── */
+.phone { width: 340px; height: 720px; border-radius: 44px; padding: 10px; background: var(--ink); box-shadow: var(--shadow-float); flex-shrink: 0; }
+:root[data-mode="dark"] .phone { background: #050F1C; box-shadow: 0 0 0 1px rgba(248,252,253,0.08), var(--shadow-float); }
+.screen { width: 100%; height: 100%; border-radius: 35px; overflow: hidden; background: var(--canvas); position: relative; display: flex; flex-direction: column; }
+.sbar { height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding-inline: 26px; font-size: 13px; font-weight: 600; direction: ltr; position: relative; z-index: 6; color: var(--text); }
+.sbar .island { position: absolute; left: 50%; top: 9px; transform: translateX(-50%); width: 92px; height: 24px; border-radius: 14px; background: var(--ink); }
+:root[data-mode="dark"] .sbar .island { background: #050F1C; }
+.sbar .ic { display: flex; gap: 4px; }
+.sbar .ic .ms { font-size: 15px; }
+.screen.over-map .sbar { position: absolute; inset: 0 0 auto; }
+.m-map { position: absolute; inset: 0; }
+.m-top { position: absolute; top: 46px; inset-inline: 12px; z-index: 5; display: flex; gap: 8px; }
+.m-search { flex: 1; height: 46px; border-radius: 14px; background: var(--card); box-shadow: var(--shadow-soft); display: flex; align-items: center; gap: 10px; padding-inline: 12px; font-size: 14px; color: var(--text-2); border: 1px solid var(--line); }
+.m-search .sym-s { width: 22px; height: 22px; direction: ltr; }
+.m-fab { width: 46px; height: 46px; border-radius: 14px; background: var(--card); box-shadow: var(--shadow-soft); display: grid; place-items: center; color: var(--text); border: 1px solid var(--line); position: relative; }
+.m-locate { position: absolute; inset-inline-end: 12px; z-index: 4; width: 44px; height: 44px; border-radius: 14px; background: var(--card); box-shadow: var(--shadow-soft); display: grid; place-items: center; border: 1px solid var(--line); color: var(--text); }
+
+/* mobile popup / sheet */
+.sheet { position: absolute; inset-inline: 10px; z-index: 5; background: var(--card); border-radius: 22px; box-shadow: var(--shadow-float); border: 1px solid var(--line); }
+.sheet .grab { width: 36px; height: 4px; border-radius: 4px; background: var(--line-2); margin: 8px auto 0; }
+.sheet .p-head { padding: 10px 14px 10px 10px; }
+.sheet .stats { padding: 0 12px; gap: 6px; }
+.sheet .stat { padding: 8px 9px; }
+.sheet .stat b { font-size: 15.5px; }
+.sheet .p-actions { padding: 10px 12px 12px; }
+
+/* mobile settings screen */
+.m-head { padding: 6px 18px 12px; display: grid; gap: 2px; }
+.m-head h4 { margin: 0; font-size: 26px; font-weight: 600; }
+.m-head span { font-size: 13px; color: var(--text-2); }
+.m-scroll { flex: 1; overflow: hidden; padding: 0 14px; display: grid; align-content: start; gap: 14px; }
+.m-profile { display: flex; align-items: center; gap: 12px; padding: 14px; }
+.m-profile .avatar-u { width: 46px; height: 46px; font-size: 16px; background: var(--navy); }
+.m-profile .l { flex: 1; display: grid; line-height: 1.3; }
+.m-profile .l b { font-size: 15.5px; font-weight: 600; }
+.m-profile .l span { font-size: 12.5px; color: var(--text-2); }
+.m-group-t { font-size: 12.5px; font-weight: 600; color: var(--text-2); padding-inline: 6px; margin-bottom: -6px; }
+.m-row { display: flex; align-items: center; gap: 12px; padding: 11px 14px; font-size: 14.5px; }
+.m-row + .m-row { border-top: 1px solid var(--line); }
+.m-row .ico { width: 32px; height: 32px; border-radius: 10px; background: var(--tile); color: var(--primary); display: grid; place-items: center; }
+.m-row .ico .ms { font-size: 19px; }
+.m-row .l { flex: 1; }
+.m-row .v { font-size: 13px; color: var(--text-2); }
+.m-row .chev { font-size: 20px; color: var(--text-2); }
+
+/* mobile nav: shared */
+.mnav { position: relative; z-index: 6; flex-shrink: 0; }
+.screen.over-map .mnav { position: absolute; inset: auto 0 0; }
+
+/* collapsed rail preview */
+.rail-solo { height: 720px; border-radius: 18px; overflow: hidden; display: flex; border: 1px solid var(--line-2); box-shadow: var(--shadow-soft); position: relative; }
+.rail-solo .rail { height: 100%; }
+.rail-solo .guide { position: absolute; top: 0; bottom: 0; left: 50%; width: 0; border-left: 1px dashed rgba(53, 215, 214, 0.6); pointer-events: none; z-index: 5; }
+
+.notes { display: grid; gap: 12px; align-content: start; min-width: 240px; }
+.note { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; display: grid; gap: 6px; font-size: 13.5px; color: var(--text-2); }
+.note b { color: var(--text); font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.note b .ms { font-size: 19px; color: var(--primary); }
+
+.choose { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: var(--tile); border-radius: 20px; padding: 18px 22px; }
+.choose b { font-size: 16px; font-weight: 600; }
+.choose span { color: var(--text-2); font-size: 14px; }
+.legend-fix { display: grid; gap: 4px; }
+
+/* ═══════════ STYLE A · מעוגן (Anchor) ═══════════ */
+.sA .vlist { width: 320px; }
+
+/* ═══════════ STYLE B · צף (Float) ═══════════ */
+.sB .app { padding: 12px; gap: 12px; background: var(--canvas); }
+.sB .rail { border-radius: 24px; }
+.sB .content { border-radius: 24px; overflow: hidden; border: 1px solid var(--line); background: var(--card); }
+.sB .topbar { height: 60px; }
+.sB .rail-item { border-radius: 999px; }
+.sB .rail.collapsed .rail-item { border-radius: 50%; }
+.sB .vlist { position: absolute; top: 14px; inset-inline-start: 14px; bottom: 14px; width: 310px; border-radius: 20px; border: 1px solid var(--line); box-shadow: var(--shadow-float); }
+.sB .body .map { position: absolute; inset: 0; }
+.sB .pop { border-radius: 24px; overflow: hidden; }
+.sB .p-band { background: var(--navy); color: var(--paper); padding: 14px 14px 16px; display: grid; gap: 12px; }
+:root[data-mode="dark"] .sB .p-band { background: var(--navy-700); }
+.sB .p-band .p-head { padding: 0; }
+.sB .p-band .vmain span { color: rgba(248, 252, 253, 0.7); }
+.sB .p-band .plate { background: rgba(248, 252, 253, 0.12); color: var(--paper); }
+.sB .p-band .icon-btn { color: var(--paper); }
+.sB .p-band .icon-btn:hover { background: rgba(248, 252, 253, 0.1); }
+.sB .p-band .vavatar { background: var(--aqua); color: var(--navy); }
+.sB .speed-row { display: flex; align-items: flex-end; justify-content: space-between; }
+.sB .speed-row .big { font-size: 40px; font-weight: 500; line-height: 1; direction: ltr; display: flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; }
+.sB .speed-row .big small { font-size: 14px; color: rgba(248, 252, 253, 0.7); font-weight: 500; }
+.sB .live { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding-inline: 10px; border-radius: 999px; background: var(--aqua); color: var(--ink); font-size: 12.5px; font-weight: 600; }
+.sB .live i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink); }
+.sB .p-list { padding: 6px 16px 0; display: grid; }
+.sB .p-list div { display: flex; align-items: center; gap: 10px; padding: 9px 0; font-size: 13.5px; color: var(--text-2); }
+.sB .p-list div + div { border-top: 1px solid var(--line); }
+.sB .p-list div b { margin-inline-start: auto; color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.sB .p-list .ms { font-size: 19px; color: var(--primary); }
+.sB .pop-tail { background: var(--card); }
+.sB .p-actions .icon-btn { border-radius: 50%; }
+.sB .cta, .sB .btn2 { border-radius: 999px; }
+.sB .card { border-radius: 20px; }
+.sB .settings { background: var(--canvas); }
+.sB .sheet { border-radius: 26px; overflow: hidden; }
+.sB .sheet .p-band { padding: 12px 14px 14px; }
+.sB .sheet .speed-row .big { font-size: 34px; }
+
+/* ═══════════ STYLE C · מיקוד (Focus) ═══════════ */
+.sC .rail { --rw: 96px; }
+.sC .rail.collapsed { --rw: 72px; }
+.sC .rail-brand { justify-content: center; padding-inline: 0; }
+.sC .rail-brand .logo { display: none; }
+.sC .rail-brand .sym { display: block; }
+.sC .rail-list { padding-inline: 0; align-items: center; gap: 6px; }
+.sC .rail-item { flex-direction: column; height: auto; width: 76px; padding: 8px 0 7px; gap: 4px; justify-content: center; border-radius: 16px; font-size: 11.5px; background: none !important; color: var(--rail-text); }
+.sC .rail-item .ms { width: 56px; height: 32px; border-radius: 999px; display: grid; place-items: center; transition: background 140ms; }
+.sC .rail-item:hover .ms { background: var(--rail-hover); }
+.sC .rail-item.active { color: var(--paper); font-weight: 600; }
+.sC .rail-item.active .ms { background: var(--aqua); color: var(--ink); }
+.sC .rail-item .badge { position: absolute; top: 4px; inset-inline-end: 12px; margin: 0; min-width: 18px; height: 18px; font-size: 10.5px; padding-inline: 5px; box-shadow: 0 0 0 2px var(--rail); }
+.sC .rail.collapsed .rail-item { width: 52px; height: 52px; padding: 0; border-radius: 16px; }
+.sC .rail.collapsed .rail-item .ms { width: 48px; height: 48px; border-radius: 16px; }
+.sC .rail.collapsed .rail-item .badge.dot { top: 8px; inset-inline-end: 8px; }
+.sC .rail-sec { display: none; }
+.sC .rail-foot { flex-direction: column; padding-inline: 0; }
+.sC .user .meta { display: none; }
+.sC .user { flex: none; }
+.sC .collapse-btn { margin: 0 !important; }
+.sC .topbar { height: 56px; }
+.sC .vlist { width: 300px; }
+.sC .vrow { padding: 8px 10px; }
+.sC .pop { width: 360px; border-radius: 16px; }
+.sC .p-compact { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 14px; }
+.sC .p-compact .vmain { gap: 3px; }
+.sC .p-speed { display: grid; justify-items: center; line-height: 1; padding-inline: 10px 4px; border-inline-start: 1px solid var(--line); }
+.sC .p-speed b { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.sC .p-speed span { font-size: 11px; color: var(--text-2); margin-top: 4px; }
+.sC .p-strip { display: flex; gap: 0; border-top: 1px solid var(--line); }
+.sC .p-strip div { flex: 1; padding: 9px 12px; display: grid; gap: 1px; font-size: 11.5px; color: var(--text-2); }
+.sC .p-strip div + div { border-inline-start: 1px solid var(--line); }
+.sC .p-strip b { font-size: 13.5px; color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.sC .p-actions { border-top: 1px solid var(--line); padding: 8px 10px; gap: 2px; }
+.sC .p-actions .icon-btn { border: 0; width: auto; padding-inline: 10px; gap: 6px; display: inline-flex; font-size: 13px; font-weight: 600; border-radius: 10px; }
+.sC .p-actions .icon-btn .ms { font-size: 19px; }
+.sC .cta { height: 36px; border-radius: 10px; padding-inline: 14px; }
+.sC .card { border-radius: 12px; }
+.sC .sheet { border-radius: 18px; }
+
+/* ═══════════ STYLE D · סטודיו (Studio) ═══════════ */
+.sD .rail { --rw: 264px; }
+.sD .rail-brand { height: 72px; padding-inline: 24px; }
+.sD .rail-list { padding-inline: 14px; gap: 2px; }
+.sD .rail-item { height: 42px; border-radius: 10px; }
+.sD .rail-item.active { background: var(--aqua); }
+.sD .rail-foot { margin: 12px; border: 1px solid var(--rail-line); border-radius: 16px; background: rgba(248, 252, 253, 0.04); }
+.sD .rail.collapsed .rail-foot { margin: 10px 8px; border-radius: 16px; }
+.sD .topbar { height: 72px; padding-inline: 24px; background: var(--canvas); border-bottom: 0; }
+.sD .body { padding: 0 16px 16px; gap: 16px; }
+.sD .vlist { border-radius: 20px; border: 1px solid var(--line); width: 330px; }
+.sD .map { border-radius: 20px; border: 1px solid var(--line); }
+.sD .vgroup { font-size: 11.5px; font-weight: 600; color: var(--text-2); padding: 10px 10px 4px; display: flex; justify-content: space-between; }
+.sD .pop { width: 360px; border-radius: 20px; }
+.sD .p-tabs { display: flex; gap: 4px; margin: 0 14px; padding: 3px; background: var(--tile); border-radius: 12px; }
+.sD .p-tabs span { flex: 1; text-align: center; font-size: 13px; padding: 6px 0; border-radius: 9px; color: var(--text-2); font-weight: 500; }
+.sD .p-tabs span.on { background: var(--card); color: var(--text); font-weight: 600; box-shadow: var(--shadow-soft); }
+.sD .p-chart { margin: 12px 14px 0; display: grid; gap: 6px; }
+.sD .p-chart .lab { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-2); }
+.sD .p-chart .lab b { color: var(--text); font-weight: 600; font-size: 13px; }
+.sD .p-chart svg { width: 100%; height: 54px; display: block; }
+.sD .p-chart .line { fill: none; stroke: var(--primary); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.sD .p-chart .area { fill: var(--primary); opacity: 0.08; }
+.sD .p-chart .grid { stroke: var(--line); stroke-width: 1; }
+.sD .p-chart .end { fill: var(--primary); stroke: var(--card); stroke-width: 2; }
+.sD .meters { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; padding: 12px 14px 0; }
+.sD .meter { display: grid; gap: 5px; font-size: 12px; color: var(--text-2); }
+.sD .meter .top { display: flex; justify-content: space-between; }
+.sD .meter .top b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.sD .bar { height: 6px; border-radius: 6px; background: var(--tile); overflow: hidden; }
+.sD .bar i { display: block; height: 100%; border-radius: 6px; background: var(--navy); }
+:root[data-mode="dark"] .sD .bar i { background: var(--aqua); }
+.sD .settings { padding: 8px 24px 24px; }
+.sD .card { border-radius: 20px; }
+.sD .sheet { border-radius: 24px; }
+
+@media (max-width: 900px) {
+  .page-head, main { padding-inline: 16px; }
+  .intro { grid-template-columns: 1fr; }
+  .row2 { grid-template-columns: 1fr; justify-items: center; }
+  .notes { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="page-head">
+  <div class="inner">
+    <div class="head-row">
+      <div style="display:grid;gap:10px">
+        <div class="eyebrow">SYNC POINT / DESIGN DIRECTIONS</div>
+        <span class="brandlogo"><svg class="logo" aria-label="viper fleet" role="img" xmlns="http://www.w3.org/2000/svg" width="521.76" height="100" viewBox="0 0 521.76 100"><path fill="#35D7D6" d="M44 8 H68 C81.255 8 92 18.745 92 32 V56 H73 V33 C73 29.686 70.314 27 67 27 H44 Z M56 92 H32 C18.745 92 8 81.255 8 68 V44 H27 V67 C27 70.314 29.686 73 33 73 H56 Z"/><circle cx="50" cy="50" r="9" fill="#35D7D6"/><g transform="translate(126 -8)"><path d="M15.76 80.0 1.68 36.88H11.44L25.04 80.0ZM18.400000000000002 80.0V72.4H28.88V80.0ZM22.400000000000002 80.0 34.24 36.88H43.36L31.12 80.0Z" fill="#F8FCFD"/><path d="M52.92 80.0V36.88H62.28V80.0ZM46.6 44.08V36.88H62.28V44.08ZM55.96 30.879999999999995Q53.08 30.879999999999995 51.68 29.359999999999996Q50.28 27.839999999999996 50.28 25.439999999999998Q50.28 23.119999999999997 51.68 21.56Q53.08 20.0 55.96 20.0Q58.92 20.0 60.32 21.56Q61.72 23.119999999999997 61.72 25.439999999999998Q61.72 27.839999999999996 60.32 29.359999999999996Q58.92 30.879999999999995 55.96 30.879999999999995Z" fill="#F8FCFD"/><path d="M74.39999999999999 96.0V36.88H81.84V55.519999999999996L80.39999999999999 55.44Q80.8 48.64 83.28 44.239999999999995Q85.75999999999999 39.839999999999996 89.84 37.67999999999999Q93.92 35.519999999999996 98.8 35.519999999999996Q103.44 35.519999999999996 107.19999999999999 37.239999999999995Q110.96 38.96 113.68 42.0Q116.4 45.04 117.8 49.04Q119.19999999999999 53.04 119.19999999999999 57.68V59.2Q119.19999999999999 63.76 117.75999999999999 67.8Q116.32 71.84 113.6 74.88Q110.88 77.92 107.12 79.68Q103.36 81.44 98.72 81.44Q94.0 81.44 89.92 79.44Q85.84 77.44 83.2 73.03999999999999Q80.56 68.64 80.24 61.599999999999994L83.75999999999999 67.52V96.0ZM96.72 73.36Q100.63999999999999 73.36 103.6 71.47999999999999Q106.56 69.6 108.2 66.19999999999999Q109.84 62.8 109.84 58.4Q109.84 54.0 108.2 50.64Q106.56 47.28 103.64 45.4Q100.72 43.519999999999996 96.72 43.519999999999996Q93.19999999999999 43.519999999999996 90.16 45.12Q87.12 46.72 85.28 49.72Q83.44 52.72 83.44 56.96V60.4Q83.44 64.48 85.32 67.4Q87.19999999999999 70.32 90.24 71.84Q93.28 73.36 96.72 73.36Z" fill="#F8FCFD"/><path d="M146.92000000000002 81.44Q141.32000000000002 81.44 137.16000000000003 79.52Q133.0 77.6 130.36 74.44Q127.72000000000001 71.28 126.4 67.32Q125.08000000000001 63.36 125.08000000000001 59.2V57.68Q125.08000000000001 53.44 126.4 49.48Q127.72000000000001 45.519999999999996 130.36 42.36Q133.0 39.199999999999996 137.04000000000002 37.31999999999999Q141.08 35.44 146.44 35.44Q153.4 35.44 158.04000000000002 38.48Q162.68 41.519999999999996 165.0 46.36Q167.32 51.2 167.32 56.8V60.56H129.08V54.239999999999995H161.0L158.44 57.44Q158.44 53.120000000000005 157.08 49.96Q155.72000000000003 46.8 153.08 45.08Q150.44 43.36 146.44 43.36Q142.28 43.36 139.48000000000002 45.28Q136.68 47.2 135.32 50.56Q133.96 53.92 133.96 58.480000000000004Q133.96 62.8 135.32 66.19999999999999Q136.68 69.6 139.56 71.56Q142.44 73.52 146.92000000000002 73.52Q151.4 73.52 154.28000000000003 71.56Q157.16000000000003 69.6 157.8 66.96H166.52Q165.64000000000001 71.36 162.96 74.64Q160.28 77.92 156.2 79.68Q152.12 81.44 146.92000000000002 81.44Z" fill="#F8FCFD"/><path d="M175.60000000000002 80.0V36.88H183.04000000000002V54.879999999999995H182.72000000000003Q182.72000000000003 45.6 186.8 41.0Q190.88000000000002 36.4 198.88000000000002 36.4H200.40000000000003V44.64H197.52000000000004Q191.44000000000003 44.64 188.20000000000005 47.88Q184.96000000000004 51.120000000000005 184.96000000000004 57.120000000000005V80.0Z" fill="#F8FCFD"/><path d="M223.92000000000002 80.0V35.36Q223.92000000000002 28.08 227.88000000000002 24.599999999999998Q231.84000000000003 21.119999999999997 239.44000000000003 21.119999999999997H244.88000000000002V28.560000000000002H238.40000000000003Q235.76000000000002 28.560000000000002 234.28000000000003 30.080000000000002Q232.80000000000004 31.6 232.80000000000004 34.24V80.0ZM218.24000000000004 44.48V37.519999999999996H245.60000000000002V44.48Z" fill="#F8FCFD"/><path d="M251.96000000000004 80.0V21.6H261.40000000000003V80.0ZM246.28000000000003 28.799999999999997V21.6H261.40000000000003V28.799999999999997Z" fill="#F8FCFD"/><path d="M292.16 81.44Q286.56 81.44 282.4 79.52Q278.24 77.6 275.6 74.44Q272.96000000000004 71.28 271.64 67.32Q270.32 63.36 270.32 59.2V57.68Q270.32 53.44 271.64 49.48Q272.96000000000004 45.519999999999996 275.6 42.36Q278.24 39.199999999999996 282.28 37.31999999999999Q286.32 35.44 291.68 35.44Q298.64000000000004 35.44 303.28000000000003 38.48Q307.92 41.519999999999996 310.24 46.36Q312.56 51.2 312.56 56.8V60.56H274.32V54.239999999999995H306.24L303.68 57.44Q303.68 53.120000000000005 302.32000000000005 49.96Q300.96000000000004 46.8 298.32000000000005 45.08Q295.68 43.36 291.68 43.36Q287.52000000000004 43.36 284.72 45.28Q281.92 47.2 280.56000000000006 50.56Q279.20000000000005 53.92 279.20000000000005 58.480000000000004Q279.20000000000005 62.8 280.56000000000006 66.19999999999999Q281.92 69.6 284.8 71.56Q287.68 73.52 292.16 73.52Q296.64000000000004 73.52 299.52000000000004 71.56Q302.40000000000003 69.6 303.04 66.96H311.76Q310.88 71.36 308.20000000000005 74.64Q305.52000000000004 77.92 301.44000000000005 79.68Q297.36 81.44 292.16 81.44Z" fill="#F8FCFD"/><path d="M339.64000000000004 81.44Q334.04 81.44 329.88 79.52Q325.72 77.6 323.08000000000004 74.44Q320.44000000000005 71.28 319.12 67.32Q317.8 63.36 317.8 59.2V57.68Q317.8 53.44 319.12 49.48Q320.44000000000005 45.519999999999996 323.08000000000004 42.36Q325.72 39.199999999999996 329.76 37.31999999999999Q333.8 35.44 339.16 35.44Q346.12000000000006 35.44 350.76000000000005 38.48Q355.40000000000003 41.519999999999996 357.72 46.36Q360.04 51.2 360.04 56.8V60.56H321.8V54.239999999999995H353.72L351.16 57.44Q351.16 53.120000000000005 349.80000000000007 49.96Q348.44000000000005 46.8 345.80000000000007 45.08Q343.16 43.36 339.16 43.36Q335.00000000000006 43.36 332.20000000000005 45.28Q329.40000000000003 47.2 328.0400000000001 50.56Q326.68000000000006 53.92 326.68000000000006 58.480000000000004Q326.68000000000006 62.8 328.0400000000001 66.19999999999999Q329.40000000000003 69.6 332.28000000000003 71.56Q335.16 73.52 339.64000000000004 73.52Q344.12000000000006 73.52 347.00000000000006 71.56Q349.88000000000005 69.6 350.52000000000004 66.96H359.24Q358.36 71.36 355.68000000000006 74.64Q353.00000000000006 77.92 348.9200000000001 79.68Q344.84000000000003 81.44 339.64000000000004 81.44Z" fill="#F8FCFD"/><path d="M386.00000000000006 80.48Q380.64000000000004 80.48 376.96000000000004 79.03999999999999Q373.28000000000003 77.6 371.40000000000003 74.08Q369.52000000000004 70.56 369.52000000000004 64.56V24.32H378.40000000000003V65.36Q378.40000000000003 68.72 380.20000000000005 70.52Q382.00000000000006 72.32 385.28000000000003 72.32H392.4800000000001V80.48ZM362.40000000000003 43.839999999999996V36.88H392.4800000000001V43.839999999999996Z" fill="#F8FCFD"/></g></svg></span>
+      </div>
+      <div class="mode-toggle" role="group" aria-label="מצב תצוגה">
+        <button type="button" data-mode="light" aria-pressed="true"><span class="ms">light_mode</span>בהיר</button>
+        <button type="button" data-mode="dark" aria-pressed="false"><span class="ms">dark_mode</span>כהה</button>
+      </div>
+    </div>
+    <h1>ארבעה כיווני עיצוב.<br><span>בחרו אחד.</span></h1>
+    <p>כל כיוון מראה את אותם מסכים: תפריט צד פתוח וסגור, המפה עם כרטיס הרכב, ניווט במובייל ומסך ההגדרות. כולם בתוך המותג: navy, aqua, ice ו-paper בלבד, Sora ו-Assistant, ואייקוני Rounded. אפשר ללחוץ על התפריט, לכווץ אותו, לעבור להגדרות ולבחור רכב.</p>
+    <div class="tabs" role="tablist" aria-label="סגנון">
+      <button class="tab" role="tab" data-style="A" aria-selected="true"><b>מעוגן <i>A · ANCHOR</i></b><small>קלאסי, יציב, צפוף מידע</small></button>
+      <button class="tab" role="tab" data-style="B" aria-selected="false"><b>צף <i>B · FLOAT</i></b><small>משטחים צפים, עגול ורך</small></button>
+      <button class="tab" role="tab" data-style="C" aria-selected="false"><b>מיקוד <i>C · FOCUS</i></b><small>פס אייקונים צר, מקסימום מפה</small></button>
+      <button class="tab" role="tab" data-style="D" aria-selected="false"><b>סטודיו <i>D · STUDIO</i></b><small>מרווח, מקובץ, עשיר בנתונים</small></button>
+    </div>
+  </div>
+</header>
+<main id="main"></main>
+
+<script>
+const LOGO = document.querySelector('.brandlogo').innerHTML;
+const SYMBOL = `<svg style="width:100%;height:100%" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path fill="#35D7D6" d="M44 8 H68 C81.255 8 92 18.745 92 32 V56 H73 V33 C73 29.686 70.314 27 67 27 H44 Z M56 92 H32 C18.745 92 8 81.255 8 68 V44 H27 V67 C27 70.314 29.686 73 33 73 H56 Z"/><circle cx="50" cy="50" r="9" fill="#35D7D6"/></svg>`;
+const ms = (n, cls = '') => `<span class="ms ${cls}">${n}</span>`;
+
+const STYLES = {
+  A: {
+    name: 'מעוגן', latin: 'ANCHOR',
+    lead: 'הכיוון הקרוב ביותר למערכת היום, אחרי ליטוש. פס ניווט navy מלא לגובה המסך, רשימת רכבים קבועה ומפה גדולה. מתאים למוקדנים שעובדים עם המערכת כל היום.',
+    traits: ['פס navy צמוד לקצה', 'גלולת aqua לפריט הפעיל', 'רשימה קבועה בצד', 'כרטיס רכב עם אריחי ice', 'טאב-בר לבן עם גלולה במובייל'],
+    spec: [['view_sidebar', 'תפריט', '248px פתוח, 76px סגור. אייקון 48×48 בדיוק על קו האמצע.'], ['ad', 'כרטיס רכב', 'לוחית, סטטוס, שלושה מדדים ופעולה ראשית אחת.'], ['smartphone', 'מובייל', 'סרגל תחתון עם גלולת aqua מאחורי האייקון הפעיל.']],
+  },
+  B: {
+    name: 'צף', latin: 'FLOAT',
+    lead: 'כל המשטחים צפים מעל רקע paper עם פינות גדולות, כמו אפליקציות SaaS מהדור החדש. הרשימה צפה מעל המפה, והכרטיס נפתח עם פס navy והמהירות בגדול.',
+    traits: ['פס ניווט מעוגל ומנותק מהקצה', 'גלולות מלאות', 'רשימה צפה מעל המפה', 'כרטיס עם כותרת navy', 'דוק navy צף במובייל'],
+    spec: [['view_sidebar', 'תפריט', 'כרטיס navy מעוגל 24px עם מרווח מהקצה. סגור: עיגולים ממורכזים.'], ['ad', 'כרטיס רכב', 'כותרת navy עם מהירות גדולה ותג "בתנועה", ומתחת רשימת נתונים.'], ['smartphone', 'מובייל', 'דוק navy צף בצורת גלולה. הפריט הפעיל נפתח לגלולת aqua עם תווית.']],
+  },
+  C: {
+    name: 'מיקוד', latin: 'FOCUS',
+    lead: 'פס אייקונים צר עם תוויות קטנות מתחת לכל אייקון, בגישת Material 3. נשאר כמעט כל רוחב המסך למפה. הכרטיס קומפקטי ואופקי, כדי לא להסתיר את המפה.',
+    traits: ['פס צר 96px עם תוויות', 'אינדיקטור aqua סביב האייקון', 'כרטיס אופקי קומפקטי', 'מהירות כמספר בולט', 'סרגל navy עם כפתור מרכזי במובייל'],
+    spec: [['view_sidebar', 'תפריט', '96px עם תוויות, 72px סגור בלי תוויות. הכל על ציר אחד ממורכז.'], ['ad', 'כרטיס רכב', 'שורה אחת: רכב, כתובת ומהירות, ופס נתונים דק.'], ['smartphone', 'מובייל', 'סרגל navy, כפתור חיפוש aqua מורם באמצע.']],
+  },
+  D: {
+    name: 'סטודיו', latin: 'STUDIO',
+    lead: 'הכיוון הכי "פרימיום". תפריט עם קבוצות (ניטור, ניהול), כרטיס משתמש בתחתית, ומשטחי עבודה מעוגלים עם אוויר. כרטיס הרכב כולל טאבים, גרף מהירות ומדי דלק וסוללה.',
+    traits: ['תפריט מקובץ לפי נושא', 'כרטיס משתמש בתחתית', 'מפה ורשימה ככרטיסים', 'כרטיס רכב עם טאבים וגרף', 'סרגל לבן עם טאב מתרחב במובייל'],
+    spec: [['view_sidebar', 'תפריט', '264px עם כותרות קבוצה. סגור: הכותרות הופכות לקו מפריד, האייקונים ממורכזים.'], ['ad', 'כרטיס רכב', 'טאבים סקירה, נסיעה וחיישנים. גרף מהירות של השעה האחרונה.'], ['smartphone', 'מובייל', 'הטאב הפעיל נפתח לאריח ice עם אייקון ותווית.']],
+  },
+};
+
+const NAV = [
+  { k: 'map', t: 'מפה', i: 'map', sec: 'ניטור' },
+  { k: 'reports', t: 'דוחות', i: 'insights' },
+  { k: 'events', t: 'אירועים', i: 'notifications', badge: 3 },
+  { k: 'geo', t: 'גדרות וירטואליות', i: 'hexagon' },
+  { k: 'fleet', t: 'צי', i: 'local_shipping', sec: 'ניהול' },
+  { k: 'drivers', t: 'נהגים', i: 'badge' },
+  { k: 'settings', t: 'הגדרות', i: 'settings' },
+  { k: 'admin', t: 'ניהול מערכת', i: 'admin_panel_settings' },
+];
+
+const V = [
+  { n: 'משאית 14', m: 'וולוו FH', p: '12-345-67', s: 'ok', st: 'בתנועה', sp: 62, a: 'דרך מנחם בגין, תל אביב', t: 'עכשיו', ic: 'local_shipping', x: 58, y: 47 },
+  { n: 'ואן חלוקה 03', m: 'פורד טרנזיט', p: '45-678-90', s: 'ok', st: 'בתנועה', sp: 48, a: 'איילון צפון, רמת גן', t: 'עכשיו', ic: 'airport_shuttle', x: 74, y: 22 },
+  { n: 'משאית 09', m: 'מרצדס אקטרוס', p: '89-012-34', s: 'warn', st: 'בהמתנה', sp: 0, a: 'רחוב הרכבת, תל אביב', t: 'לפני 4 דק׳', ic: 'local_shipping', x: 40, y: 62 },
+  { n: 'מסחרית 22', m: 'רנו מאסטר', p: '23-456-78', s: 'ok', st: 'בתנועה', sp: 37, a: 'שדרות רוטשילד, תל אביב', t: 'עכשיו', ic: 'airport_shuttle', x: 30, y: 30 },
+  { n: 'רכב מנהל 01', m: 'סקודה סופרב', p: '34-567-89', s: 'unk', st: 'חונה', sp: 0, a: 'רחוב הארבעה, תל אביב', t: 'לפני 38 דק׳', ic: 'directions_car', x: 82, y: 70 },
+  { n: 'טנדר שטח 07', m: 'טויוטה היילקס', p: '78-901-23', s: 'err', st: 'מנותק', sp: 0, a: 'אזור תעשייה, חולון', t: 'לפני 3 שע׳', ic: 'local_shipping', x: 18, y: 78 },
+];
+const sColor = { ok: 'var(--ok)', warn: 'var(--warn)', err: 'var(--err)', unk: 'var(--unk)' };
+
+/* fictional city map drawn from brand-tinted neutrals */
+function mapSVG(id) {
+  return `<svg class="base" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <rect width="1000" height="700" fill="var(--map-land)"/>
+  <path d="M0 0 H170 C150 120 120 220 135 330 C150 450 90 560 60 700 H0Z" fill="var(--map-water)"/>
+  <g fill="var(--map-block)">
+    ${Array.from({ length: 42 }, (_, i) => { const c = i % 7, r = Math.floor(i / 7); return `<rect x="${215 + c * 112}" y="${30 + r * 112}" width="${86 + (i * 13) % 14}" height="${84 - (i * 7) % 12}" rx="6"/>`; }).join('')}
+  </g>
+  <path d="M440 260 h170 v120 h-170z" fill="var(--map-park)" rx="8"/>
+  <path d="M780 470 c60 -20 140 10 160 60 c10 40 -40 80 -100 70 c-60 -10 -100 -90 -60 -130z" fill="var(--map-park)"/>
+  <g stroke="var(--map-road-edge)" stroke-width="20" fill="none" stroke-linecap="round">
+    <path d="M150 120 C420 140 640 90 1000 160"/><path d="M110 470 C380 430 650 520 1000 470"/>
+    <path d="M420 0 C450 260 470 460 520 700"/><path d="M820 0 C780 240 760 470 700 700"/>
+  </g>
+  <g stroke="var(--map-major)" stroke-width="15" fill="none" stroke-linecap="round">
+    <path d="M150 120 C420 140 640 90 1000 160"/><path d="M110 470 C380 430 650 520 1000 470"/>
+    <path d="M420 0 C450 260 470 460 520 700"/><path d="M820 0 C780 240 760 470 700 700"/>
+  </g>
+  <g stroke="var(--map-road)" stroke-width="6" fill="none">
+    ${[0, 1, 2, 3, 4, 5, 6].map((c) => `<path d="M${205 + c * 112} 0 V700"/>`).join('')}
+    ${[0, 1, 2, 3, 4, 5, 6].map((r) => `<path d="M170 ${20 + r * 112} H1000"/>`).join('')}
+  </g>
+  <path d="M560 680 C548 600 530 540 600 500 C680 455 640 380 580 340 C520 300 600 250 700 230 C760 218 760 170 740 154" fill="none" stroke="#35D7D6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+  <polygon points="250,190 380,170 400,290 280,320" fill="rgba(53,215,214,0.12)" stroke="#35D7D6" stroke-width="2.5" stroke-dasharray="8 6"/>
+  <g font-family="Assistant, sans-serif" font-size="15" fill="var(--map-label)" font-weight="600">
+    <text x="470" y="325">פארק הירקון</text><text x="60" y="380" transform="rotate(-80 60 380)">הים התיכון</text>
+    <text x="600" y="112">דרך מנחם בגין</text><text x="250" y="465">שדרות רוטשילד</text>
+  </g>
+</svg>`;
+}
+
+function markers(selIdx = 0, scaleX = 1) {
+  return V.map((v, i) => `<button class="marker ${i === selIdx ? 'sel' : ''}" style="left:${v.x}%;top:${v.y}%" data-v="${i}" aria-label="${v.n}">
+    ${v.sp > 0 ? '<i class="head" style="transform:translateX(-50%) rotate(0deg)"></i>' : ''}
+    <span class="ms" style="color:${v.s === 'ok' ? '#35D7D6' : sColor[v.s]}">${v.ic}</span></button>`).join('');
+}
+
+function avatar(v) {
+  return `<span class="vavatar ${v.s === 'err' || v.s === 'unk' ? 'dim' : ''}">${ms(v.ic)}<i class="sd" style="background:${sColor[v.s]}"></i></span>`;
+}
+
+function railHTML(s, active, collapsed) {
+  let out = `<nav class="rail ${collapsed ? 'collapsed' : ''}" aria-label="ניווט">
+    <div class="rail-brand"><span class="logo-wrap">${LOGO}</span><span class="sym">${SYMBOL}</span></div>
+    <div class="rail-list">`;
+  NAV.forEach((n) => {
+    if (s === 'D' && n.sec) out += `<div class="rail-sec">${n.sec}</div>`;
+    out += `<button class="rail-item ${n.k === active ? 'active' : ''}" data-nav="${n.k}">${ms(n.i)}<span class="t">${s === 'C' && n.k === 'geo' ? 'גדרות' : s === 'C' && n.k === 'admin' ? 'ניהול' : n.t}</span>${n.badge ? `<span class="badge dot">${n.badge}</span>` : ''}<span class="rail-tip">${n.t}</span></button>`;
+  });
+  out += `</div><div class="rail-foot">
+      ${s === 'D' ? `<div class="user"><span class="avatar-u">דכ</span><span class="meta"><b>דנה כהן</b><span>מנהלת צי</span></span></div>` : ''}
+      <button class="icon-btn collapse-btn" aria-label="כיווץ תפריט">${ms(collapsed ? 'keyboard_double_arrow_left' : 'keyboard_double_arrow_right')}</button>
+    </div></nav>`;
+  return out;
+}
+
+function popupHTML(s, v, mobile) {
+  const close = `<button class="icon-btn" aria-label="סגירה">${ms('close')}</button>`;
+  const head = (extra = '') => `<div class="p-head">${avatar(v)}<div class="vmain"><b>${v.n}</b><span style="display:flex;gap:8px;align-items:center"><span class="plate">${v.p}</span>${extra}</span></div>${close}</div>`;
+  const statusEl = `<span class="status s-${v.s}"><i></i>${v.st}</span>`;
+  if (s === 'A') {
+    return `${head(statusEl)}
+      <div class="stats">
+        <div class="stat"><span>${ms('speed')}מהירות</span><b class="ltr">${v.sp} <small>קמ״ש</small></b></div>
+        <div class="stat"><span>${ms('local_gas_station')}דלק</span><b class="ltr">68<small>%</small></b></div>
+        <div class="stat"><span>${ms('key')}מנוע</span><b>פועל</b></div>
+      </div>
+      <div class="p-meta">
+        <div>${ms('location_on')}<b>${v.a}</b></div>
+        ${mobile ? '' : `<div>${ms('person')}נהג: <b>יוסי לוי</b><span style="margin-inline-start:auto">${ms('schedule')}</span>${v.t}</div>`}
+      </div>
+      <div class="p-actions">
+        <button class="icon-btn" aria-label="מסלול">${ms('route')}</button>
+        <button class="icon-btn" aria-label="פקודה">${ms('terminal')}</button>
+        <button class="icon-btn" aria-label="שיתוף">${ms('share')}</button>
+        <button class="cta">${ms('my_location')}מעקב חי</button>
+      </div>`;
+  }
+  if (s === 'B') {
+    return `<div class="p-band">
+        <div class="p-head">${avatar(v)}<div class="vmain"><b>${v.n}</b><span style="display:flex;gap:8px;align-items:center"><span class="plate">${v.p}</span>${v.m}</span></div>${close}</div>
+        <div class="speed-row"><div class="big">${v.sp}<small>km/h</small></div><span class="live"><i></i>${v.st}</span></div>
+      </div>
+      <div class="p-list">
+        <div>${ms('location_on')}כתובת<b style="font-weight:500">${v.a}</b></div>
+        ${mobile ? '' : `<div>${ms('person')}נהג<b>יוסי לוי</b></div>`}
+        <div>${ms('local_gas_station')}דלק<b class="ltr">68%</b></div>
+        ${mobile ? '' : `<div>${ms('schedule')}עדכון אחרון<b>${v.t}</b></div>`}
+      </div>
+      <div class="p-actions">
+        <button class="icon-btn" aria-label="מסלול">${ms('route')}</button>
+        <button class="icon-btn" aria-label="פקודה">${ms('terminal')}</button>
+        <button class="icon-btn" aria-label="עוד">${ms('more_horiz')}</button>
+        <button class="cta">${ms('my_location')}מעקב חי</button>
+      </div>`;
+  }
+  if (s === 'C') {
+    return `<div class="p-compact">${avatar(v)}<div class="vmain"><b>${v.n} <span class="plate" style="margin-inline-start:6px">${v.p}</span></b><span>${statusEl} · ${v.a}</span></div>
+        <div class="p-speed"><b>${v.sp}</b><span>קמ״ש</span></div></div>
+      <div class="p-strip">
+        <div>דלק<b class="ltr">68%</b></div><div>נהג<b>יוסי לוי</b></div><div>היום<b class="ltr">142 ק״מ</b></div>
+      </div>
+      <div class="p-actions">
+        <button class="icon-btn">${ms('route')}מסלול</button>
+        <button class="icon-btn">${ms('terminal')}פקודה</button>
+        <button class="cta">${ms('my_location')}מעקב</button>
+      </div>`;
+  }
+  // D
+  const pts = [30, 34, 28, 40, 46, 44, 52, 38, 30, 42, 55, 58, 50, 62];
+  const w = 300, h = 54;
+  const path = pts.map((p, i) => `${(i / (pts.length - 1)) * w},${h - (p / 70) * h}`).join(' ');
+  const [ex, ey] = path.split(' ').pop().split(',');
+  return `${head(statusEl)}
+    <div class="p-tabs"><span class="on">סקירה</span><span>נסיעה</span><span>חיישנים</span></div>
+    <div class="p-chart">
+      <div class="lab"><span>מהירות, שעה אחרונה</span><b class="ltr">${v.sp} km/h</b></div>
+      <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><line class="grid" x1="0" x2="${w}" y1="${h / 2}" y2="${h / 2}"/><polygon class="area" points="0,${h} ${path} ${w},${h}"/><polyline class="line" points="${path}"/><circle class="end" cx="${ex - 4}" cy="${ey}" r="4"/></svg>
+    </div>
+    <div class="meters">
+      <div class="meter"><div class="top"><span>דלק</span><b class="ltr">68%</b></div><div class="bar"><i style="width:68%"></i></div></div>
+      <div class="meter"><div class="top"><span>מצבר</span><b class="ltr">12.6V</b></div><div class="bar"><i style="width:84%"></i></div></div>
+    </div>
+    ${mobile ? '' : `<div class="p-meta"><div>${ms('location_on')}<b>${v.a}</b></div></div>`}
+    <div class="p-actions">
+      <button class="icon-btn" aria-label="מסלול">${ms('route')}</button>
+      <button class="icon-btn" aria-label="פקודה">${ms('terminal')}</button>
+      <button class="btn2">${ms('description')}דוח</button>
+      <button class="cta">${ms('my_location')}מעקב חי</button>
+    </div>`;
+}
+
+function listHTML(s, sel) {
+  const rows = (arr, off = 0) => arr.map((v, j) => {
+    const i = j + off;
+    return `<button class="vrow ${i === sel ? 'sel' : ''}" data-v="${i}">${avatar(v)}<span class="vmain"><b>${v.n}</b><span><span class="ltr">${v.p}</span> · ${v.a}</span></span>
+      <span class="vside">${v.sp > 0 ? `<b class="ltr">${v.sp} km/h</b>` : `<span class="status s-${v.s}"><i></i>${v.st}</span>`}<span>${v.t}</span></span></button>`;
+  }).join('');
+  return `<aside class="vlist">
+    <div class="vlist-head">
+      <div class="vlist-title"><b>רכבים</b><span><span class="ltr">6</span> רכבים · <span class="ltr">3</span> בתנועה</span></div>
+      <div class="chips"><span class="chip on">הכל</span><span class="chip"><i style="background:var(--ok)"></i>מחובר</span><span class="chip"><i style="background:var(--warn)"></i>בהמתנה</span><span class="chip"><i style="background:var(--err)"></i>מנותק</span></div>
+    </div>
+    <div class="vrows">${s === 'D'
+      ? `<div class="vgroup"><span>הפצה מרכז</span><span class="ltr">4</span></div>${rows(V.slice(0, 4))}<div class="vgroup"><span>הנהלה ושטח</span><span class="ltr">2</span></div>${rows(V.slice(4), 4)}`
+      : rows(V)}</div>
+  </aside>`;
+}
+
+function settingsHTML() {
+  return `<div class="settings">
+    <div class="set-nav">
+      <div class="h">חשבון</div>
+      <button class="on">${ms('tune')}כללי</button>
+      <button>${ms('notifications')}התראות</button>
+      <button>${ms('lock')}אבטחה</button>
+      <div class="h">צי</div>
+      <button>${ms('local_shipping')}רכבים</button>
+      <button>${ms('badge')}נהגים</button>
+      <button>${ms('build')}תחזוקה</button>
+      <button>${ms('group')}משתמשים</button>
+    </div>
+    <div class="set-main">
+      <div class="set-title"><div><h3>הגדרות כלליות</h3><p>שפה, תצוגה ויחידות מידה לכל המשתמשים בחשבון.</p></div></div>
+      <div class="card">
+        <div class="card-h">${ms('palette')}תצוגה</div>
+        <div class="srow"><div class="l"><b>שפה</b><span>שפת הממשק והדוחות</span></div><span class="select">עברית${ms('expand_more')}</span></div>
+        <div class="srow"><div class="l"><b>ערכת נושא</b><span>בהיר, כהה או לפי המכשיר</span></div><span class="seg"><span class="on">${ms('light_mode')}בהיר</span><span>${ms('dark_mode')}כהה</span><span>${ms('contrast')}אוטומטי</span></span></div>
+        <div class="srow"><div class="l"><b>שכבת מפה</b><span>מפת הבסיס במסך הראשי</span></div><span class="select">רחובות${ms('expand_more')}</span></div>
+      </div>
+      <div class="card">
+        <div class="card-h">${ms('straighten')}יחידות והתראות</div>
+        <div class="srow"><div class="l"><b>מהירות</b><span>יחידת המהירות בכל המסכים</span></div><span class="seg"><span class="on">קמ״ש</span><span class="ltr">mph</span></span></div>
+        <div class="srow"><div class="l"><b>התראות קופצות</b><span>הצגת אירועים חדשים בזמן אמת</span></div><span class="switch on"></span></div>
+        <div class="srow"><div class="l"><b>צליל התראה</b><span>השמעת צליל באירוע חירום</span></div><span class="switch"></span></div>
+      </div>
+      <div class="set-foot"><button class="btn2">ביטול</button><button class="cta">שמירת שינויים</button></div>
+    </div>
+  </div>`;
+}
+
+function deskHTML(s) {
+  return `<div class="desk" data-desk>
+    <div class="browser"><i></i><i></i><i></i><span class="url">app.viperfleet.co.il</span></div>
+    <div class="app">
+      ${railHTML(s, 'map', false)}
+      <section class="content">
+        <div class="topbar">
+          <div class="crumbs" data-crumbs><b>מפה</b></div>
+          <div class="search">${ms('search')}חיפוש רכב, נהג או כתובת<kbd>Ctrl K</kbd></div>
+          <div class="top-actions">
+            <span class="pill-live"><i></i>מחובר</span>
+            <button class="icon-btn" aria-label="ערכת נושא">${ms('dark_mode')}</button>
+            <button class="icon-btn has-dot" aria-label="התראות">${ms('notifications')}</button>
+            ${s === 'D' ? '' : '<span class="avatar-u" style="width:32px;height:32px;margin-inline-start:6px;background:var(--navy)">דכ</span>'}
+          </div>
+        </div>
+        <div class="body">
+          ${listHTML(s, 0)}
+          <div class="map">${mapSVG()}${markers(0)}
+            <div class="map-ctrls">
+              <div class="ctrl-group"><button aria-label="הגדלה">${ms('add')}</button><button aria-label="הקטנה">${ms('remove')}</button></div>
+              <div class="ctrl-group"><button aria-label="שכבות">${ms('layers')}</button><button aria-label="המיקום שלי">${ms('my_location')}</button></div>
+            </div>
+            <div class="pop" data-pop></div>
+            <div class="scale"><i></i>500 m</div>
+          </div>
+        </div>
+        ${settingsHTML()}
+      </section>
+    </div>
+  </div>`;
+}
+
+function mnavHTML(s, active) {
+  const items = [['map', 'מפה', 'map'], ['vehicles', 'רכבים', 'local_shipping'], ['events', 'אירועים', 'notifications'], ['reports', 'דוחות', 'insights'], ['settings', 'עוד', 'menu']];
+  if (s === 'A') {
+    return `<nav class="mnav mA" style="background:var(--card);border-top:1px solid var(--line);padding:8px 6px 24px;display:flex">${items.map(([k, t, i]) => `
+      <button style="flex:1;display:grid;justify-items:center;gap:4px;font-size:11.5px;font-weight:${k === active ? 600 : 500};color:${k === active ? 'var(--text)' : 'var(--text-2)'}">
+        <span style="width:58px;height:32px;border-radius:999px;display:grid;place-items:center;position:relative;background:${k === active ? 'var(--aqua)' : 'transparent'};color:${k === active ? 'var(--ink)' : 'inherit'}">${ms(i, k === active ? 'fill' : '')}${k === 'events' ? '<i style="position:absolute;top:3px;inset-inline-end:14px;width:8px;height:8px;border-radius:50%;background:var(--err);box-shadow:0 0 0 2px var(--card)"></i>' : ''}</span>${t}</button>`).join('')}</nav>`;
+  }
+  if (s === 'B') {
+    return `<nav class="mnav" style="padding:0 14px 22px;background:transparent">
+      <div style="height:62px;border-radius:999px;background:var(--navy);box-shadow:0 12px 28px -8px rgba(10,28,48,.5);display:flex;align-items:center;justify-content:space-between;padding:0 8px">${items.map(([k, t, i]) => k === active
+        ? `<button style="height:46px;padding:0 16px 0 18px;border-radius:999px;background:var(--aqua);color:var(--ink);display:flex;align-items:center;gap:8px;font-weight:600;font-size:13.5px">${ms(i, 'fill')}${t}</button>`
+        : `<button style="width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:rgba(248,252,253,.75);position:relative">${ms(i)}${k === 'events' ? '<i style="position:absolute;top:10px;inset-inline-end:10px;width:8px;height:8px;border-radius:50%;background:var(--aqua);box-shadow:0 0 0 2px var(--navy)"></i>' : ''}</button>`).join('')}</div></nav>`;
+  }
+  if (s === 'C') {
+    const c = [['map', 'מפה', 'map'], ['vehicles', 'רכבים', 'local_shipping'], ['search', '', 'search'], ['events', 'אירועים', 'notifications'], ['settings', 'עוד', 'menu']];
+    return `<nav class="mnav" style="background:var(--navy);padding:10px 8px 24px;display:flex;align-items:flex-end;border-radius:24px 24px 0 0">${c.map(([k, t, i]) => k === 'search'
+      ? `<button style="flex:1;display:grid;justify-items:center"><span style="width:56px;height:56px;margin-top:-30px;border-radius:18px;background:var(--aqua);color:var(--ink);display:grid;place-items:center;box-shadow:0 0 0 5px var(--canvas)">${ms('search', 'fill')}</span></button>`
+      : `<button style="flex:1;display:grid;justify-items:center;gap:5px;font-size:11px;font-weight:${k === active ? 600 : 500};color:${k === active ? 'var(--white)' : 'rgba(248,252,253,.62)'}">
+          <span style="color:${k === active ? 'var(--aqua)' : 'inherit'};position:relative">${ms(i, k === active ? 'fill' : '')}${k === 'events' ? '<i style="position:absolute;top:-2px;inset-inline-end:-4px;width:8px;height:8px;border-radius:50%;background:var(--aqua);box-shadow:0 0 0 2px var(--navy)"></i>' : ''}</span>${t}
+          <i style="width:4px;height:4px;border-radius:50%;background:${k === active ? 'var(--aqua)' : 'transparent'}"></i></button>`).join('')}</nav>`;
+  }
+  return `<nav class="mnav" style="background:var(--card);border-top:1px solid var(--line);padding:10px 12px 24px;display:flex;gap:4px;justify-content:space-between">${items.map(([k, t, i]) => k === active
+    ? `<button style="height:44px;padding:0 14px;border-radius:14px;background:var(--tile);color:var(--primary);display:flex;align-items:center;gap:8px;font-weight:600;font-size:13.5px">${ms(i, 'fill')}${t}</button>`
+    : `<button style="width:46px;height:44px;border-radius:14px;display:grid;place-items:center;color:var(--text-2);position:relative">${ms(i)}${k === 'events' ? '<i style="position:absolute;top:9px;inset-inline-end:11px;width:8px;height:8px;border-radius:50%;background:var(--err);box-shadow:0 0 0 2px var(--card)"></i>' : ''}</button>`).join('')}</nav>`;
+}
+
+function phoneMap(s) {
+  const navH = { A: 82, B: 84, C: 90, D: 78 }[s];
+  const v = V[0];
+  return `<div class="phone"><div class="screen over-map">
+    <div class="sbar"><span>09:41</span><i class="island"></i><span class="ic">${ms('signal_cellular_alt')}${ms('wifi')}${ms('battery_full')}</span></div>
+    <div class="m-map map">${mapSVG()}${V.map((m, i) => `<span class="marker ${i === 0 ? 'sel' : ''}" style="left:${m.x}%;top:${m.y - 12}%"><span class="ms" style="color:${m.s === 'ok' ? '#35D7D6' : sColor[m.s]}">${m.ic}</span></span>`).join('')}</div>
+    <div class="m-top"><div class="m-search"><span class="sym-s">${SYMBOL}</span>חיפוש רכב או כתובת</div><button class="m-fab has-dot" aria-label="סינון">${ms('tune')}</button></div>
+    <div class="sheet" style="bottom:${navH + 10}px"><div class="grab" style="${s === 'B' ? 'display:none' : ''}"></div>${popupHTML(s, v, true)}</div>
+    ${mnavHTML(s, 'map')}
+  </div></div>`;
+}
+
+function phoneSettings(s) {
+  return `<div class="phone"><div class="screen">
+    <div class="sbar"><span>09:41</span><i class="island"></i><span class="ic">${ms('signal_cellular_alt')}${ms('wifi')}${ms('battery_full')}</span></div>
+    <div class="m-head"><h4>הגדרות</h4><span>חשבון viper fleet · הפצה מרכז</span></div>
+    <div class="m-scroll">
+      <div class="card m-profile"><span class="avatar-u">דכ</span><div class="l"><b>דנה כהן</b><span>מנהלת צי · <span class="ltr">dana@example.co.il</span></span></div>${ms('chevron_left', 'chev')}</div>
+      <div class="m-group-t">תצוגה</div>
+      <div class="card">
+        <div class="m-row"><span class="ico">${ms('language')}</span><span class="l">שפה</span><span class="v">עברית</span>${ms('chevron_left', 'chev')}</div>
+        <div class="m-row"><span class="ico">${ms('dark_mode')}</span><span class="l">מצב כהה</span><span class="switch"></span></div>
+        <div class="m-row"><span class="ico">${ms('speed')}</span><span class="l">יחידות</span><span class="v">קמ״ש</span>${ms('chevron_left', 'chev')}</div>
+      </div>
+      <div class="m-group-t">צי</div>
+      <div class="card">
+        <div class="m-row"><span class="ico">${ms('local_shipping')}</span><span class="l">רכבים</span><span class="v ltr">6</span>${ms('chevron_left', 'chev')}</div>
+        <div class="m-row"><span class="ico">${ms('badge')}</span><span class="l">נהגים</span><span class="v ltr">9</span>${ms('chevron_left', 'chev')}</div>
+        <div class="m-row"><span class="ico">${ms('notifications_active')}</span><span class="l">התראות</span><span class="switch on"></span></div>
+      </div>
+    </div>
+    ${mnavHTML(s, 'settings')}
+  </div></div>`;
+}
+
+function render(s) {
+  const st = STYLES[s];
+  const main = document.getElementById('main');
+  main.className = `s${s}`;
+  main.innerHTML = `
+    <section class="intro">
+      <div><h2>${st.name} <span class="fict" style="font-size:12px;margin-inline-start:8px">${s} · ${st.latin}</span></h2><p>${st.lead}</p>
+        <div class="traits">${st.traits.map((t) => `<span class="trait">${t}</span>`).join('')}</div></div>
+      <div class="spec">${st.spec.map(([i, b, t]) => `<div>${ms(i)}<span><b>${b}:</b> ${t}</span></div>`).join('')}</div>
+    </section>
+    <section class="stage">
+      <div class="label-row"><span class="label">${ms('desktop_windows')}דסקטופ · מפה וכרטיס רכב</span><span class="hint">לחצו על רכב, על "הגדרות" בתפריט או על כפתור הכיווץ בתחתית התפריט</span></div>
+      <div class="scaler"><div class="frame-wrap">${deskHTML(s)}</div></div>
+    </section>
+    <section class="row2">
+      <div class="cell"><span class="label">${ms('left_panel_close')}תפריט סגור</span>
+        <div class="rail-solo">${railHTML(s, 'map', true)}<i class="guide"></i></div>
+      </div>
+      <div class="cell"><span class="label">${ms('smartphone')}מובייל · מפה וכרטיס</span>${phoneMap(s)}</div>
+      <div class="cell"><span class="label">${ms('smartphone')}מובייל · הגדרות</span>${phoneSettings(s)}</div>
+      <div class="notes">
+        <div class="note"><b>${ms('align_horizontal_center')}אייקונים במרכז</b>הקו המקווקו בתפריט הסגור הוא קו האמצע. כל אייקון יושב עליו בדיוק. היום התווית הנסתרת עדיין תופסת מקום ודוחפת את האייקון לצד, וזה מה שמתוקן בכל הכיוונים.</div>
+        <div class="note"><b>${ms('ads_click')}פעולה ראשית אחת</b>בכל מסך יש כפתור aqua אחד בלבד: "מעקב חי" בכרטיס, "שמירת שינויים" בהגדרות.</div>
+        <div class="note"><b>${ms('contrast')}בהיר וכהה</b>החליפו מצב בראש העמוד. התפריט נשאר navy בשני המצבים, ומשטחי המידע עוברים לגווני navy כהים.</div>
+        <div class="note"><b>${ms('info')}נתונים</b>כל השמות, הלוחיות והמיקומים בדויים.<span class="fict">ILLUSTRATIVE UI / FICTIONAL DATA</span></div>
+      </div>
+    </section>
+    <section class="choose"><div class="legend-fix"><b>אהבתם את "${st.name}"?</b><span>כתבו לי את האות (${s}), או שילוב, למשל "תפריט של ${s === 'A' ? 'C' : 'A'} עם כרטיס של ${s}", ואיישם אותו במערכת.</span></div>
+      <div style="display:flex;gap:8px">${Object.keys(STYLES).filter((k) => k !== s).map((k) => `<button class="btn2" data-go="${k}">לכיוון ${STYLES[k].name}</button>`).join('')}</div></section>`;
+  wire(s);
+  fit();
+}
+
+function placePop(desk, s, idx) {
+  const pop = desk.querySelector('[data-pop]');
+  const map = desk.querySelector('.map');
+  const v = V[idx];
+  pop.innerHTML = popupHTML(s, v, false) + '<i class="pop-tail"></i>';
+  desk.querySelectorAll('.marker').forEach((m) => m.classList.toggle('sel', +m.dataset.v === idx));
+  desk.querySelectorAll('.vrow').forEach((m) => m.classList.toggle('sel', +m.dataset.v === idx));
+  const W = map.clientWidth, H = map.clientHeight;
+  const mx = (v.x / 100) * W, my = (v.y / 100) * H;
+  const pw = pop.offsetWidth, ph = pop.offsetHeight;
+  let left = mx - pw / 2, top = my - ph - 30;
+  let below = false, side = false;
+  if (top < 10) {
+    if (my + 30 + ph < H - 10) { top = my + 30; below = true; }
+    else { side = true; top = Math.max(10, Math.min(H - ph - 10, my - ph / 2)); left = mx - pw - 34; if (left < 10) left = mx + 34; }
+  }
+  left = Math.max(10, Math.min(W - pw - 64, left));
+  pop.style.left = `${left}px`; pop.style.top = `${top}px`;
+  const tail = pop.querySelector('.pop-tail');
+  tail.style.left = `${mx - left}px`;
+  if (side) tail.style.display = 'none';
+  if (below) { tail.style.bottom = 'auto'; tail.style.top = '-8px'; tail.style.transform = 'translateX(-50%) rotate(225deg)'; }
+  if (s === 'B' && below) tail.style.background = 'var(--navy)';
+}
+
+function wire(s) {
+  const desk = document.querySelector('[data-desk]');
+  const map = desk.querySelector('.map');
+  // B: popup and list float over full-bleed map
+  requestAnimationFrame(() => placePop(desk, s, 0));
+  desk.addEventListener('click', (e) => {
+    const mv = e.target.closest('[data-v]');
+    if (mv) { placePop(desk, s, +mv.dataset.v); return; }
+    if (e.target.closest('.pop .icon-btn[aria-label="סגירה"]')) { desk.querySelector('[data-pop]').style.display = 'none'; return; }
+    const nav = e.target.closest('[data-nav]');
+    if (nav) {
+      desk.querySelectorAll('[data-nav]').forEach((n) => n.classList.toggle('active', n === nav));
+      const settings = nav.dataset.nav === 'settings';
+      desk.classList.toggle('view-settings', settings);
+      desk.querySelector('[data-crumbs]').innerHTML = settings ? `<span>הגדרות</span>${ms('chevron_left')}<b>כללי</b>` : `<b>${NAV.find((n) => n.k === nav.dataset.nav).t}</b>`;
+      if (!settings) { desk.querySelector('[data-pop]').style.display = ''; requestAnimationFrame(() => placePop(desk, s, +(desk.querySelector('.vrow.sel')?.dataset.v || 0))); }
+      return;
+    }
+    const col = e.target.closest('.collapse-btn');
+    if (col) {
+      const rail = desk.querySelector('.rail');
+      rail.classList.toggle('collapsed');
+      col.innerHTML = ms(rail.classList.contains('collapsed') ? 'keyboard_double_arrow_left' : 'keyboard_double_arrow_right');
+      setTimeout(() => placePop(desk, s, +(desk.querySelector('.vrow.sel')?.dataset.v || 0)), 260);
+    }
+  });
+  document.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => select(b.dataset.go, true)));
+}
+
+function fit() {
+  document.querySelectorAll('.scaler').forEach((sc) => {
+    const wrap = sc.firstElementChild, inner = wrap.firstElementChild;
+    const k = Math.min(1, sc.clientWidth / inner.offsetWidth);
+    wrap.style.transform = `scale(${k})`;
+    sc.style.height = `${inner.offsetHeight * k}px`;
+  });
+}
+
+function select(s, scroll) {
+  document.querySelectorAll('.tab').forEach((t) => t.setAttribute('aria-selected', t.dataset.style === s));
+  render(s);
+  try { history.replaceState(null, '', `#style-${s.toLowerCase()}`); } catch (e) { /* ignore */ }
+  if (scroll) window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => select(t.dataset.style)));
+document.querySelectorAll('.mode-toggle button').forEach((b) => b.addEventListener('click', () => {
+  document.documentElement.dataset.mode = b.dataset.mode;
+  document.querySelectorAll('.mode-toggle button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+}));
+const vt = document.documentElement.dataset.theme;
+if (vt === 'dark' || (vt !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+  document.querySelector('.mode-toggle [data-mode="dark"]').click();
+}
+window.addEventListener('resize', fit);
+const fromHash = (location.hash.match(/^#style-([abcd])$/) || [])[1];
+select(fromHash ? fromHash.toUpperCase() : 'A');
+window.addEventListener('hashchange', () => { const m = location.hash.match(/^#style-([abcd])$/); if (m) select(m[1].toUpperCase()); });
+document.fonts && document.fonts.ready.then(() => { fit(); const d = document.querySelector('[data-desk]'); if (d) d.querySelector('.vrow.sel')?.click(); });
+</script>
+</body>
+</html>
