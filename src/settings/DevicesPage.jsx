@@ -34,6 +34,8 @@ import AddressValue from '../common/components/AddressValue';
 import exportExcel from '../common/util/exportExcel';
 import { statusColor } from '../common/theme/surfaces';
 import DeviceTile from '../common/components/brand/DeviceTile';
+import { entityExpiryStatus, vehicleExpiryFields } from '../common/fleet/fleetFields';
+import ExpiryBadge from '../fleet/components/ExpiryBadge';
 
 const useStyles = makeStyles()((theme) => ({
   name: {
@@ -111,6 +113,7 @@ const DevicesPage = () => {
   const handleExport = async () => {
     const data = items.map((item) => ({
       [t('sharedName')]: item.name,
+      [t('fleetPlateNumber')]: item.attributes?.plateNumber,
       [t('deviceIdentifier')]: item.uniqueId,
       [t('groupParent')]: item.groupId ? groups[item.groupId]?.name : null,
       [t('sharedPhone')]: item.phone,
@@ -135,7 +138,7 @@ const DevicesPage = () => {
     handler: (deviceId) => navigate(`/settings/device/${deviceId}/connections`),
   };
 
-  const columnCount = manager ? 10 : 9;
+  const columnCount = manager ? 12 : 11;
 
   return (
     <PageLayout
@@ -178,6 +181,8 @@ const DevicesPage = () => {
           <TableRow>
             <TableCell>{t('sharedName')}</TableCell>
             <TableCell>{t('deviceStatus')}</TableCell>
+            <TableCell>{t('fleetPlateNumber')}</TableCell>
+            <TableCell>{t('fleetValidity')}</TableCell>
             <TableCell>{t('deviceIdentifier')}</TableCell>
             <TableCell>{t('groupParent')}</TableCell>
             <TableCell>{t('sharedPhone')}</TableCell>
@@ -192,6 +197,7 @@ const DevicesPage = () => {
         <TableBody>
           {items.map((item) => {
             const color = statusColor(theme, item.status);
+            const validity = entityExpiryStatus(item, vehicleExpiryFields);
             return (
               <TableRow key={item.id} hover>
                 <TableCell>
@@ -211,6 +217,10 @@ const DevicesPage = () => {
                     )}
                   </span>
                 </TableCell>
+                <TableCell className={classes.mono}>
+                  <span dir="ltr">{item.attributes?.plateNumber}</span>
+                </TableCell>
+                <TableCell>{validity !== 'none' && <ExpiryBadge status={validity} />}</TableCell>
                 <TableCell className={classes.mono}>{item.uniqueId}</TableCell>
                 <TableCell>{item.groupId ? groups[item.groupId]?.name : null}</TableCell>
                 <TableCell>{item.phone}</TableCell>

@@ -4,8 +4,21 @@ import MapRoundedIcon from '@mui/icons-material/MapRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import HexagonRoundedIcon from '@mui/icons-material/HexagonRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
+import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
 import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
 import { useAdministrator, useRestriction } from '../../util/permissions';
+
+// Settings pages that belong to the "Fleet" destination (vehicles, drivers, maintenance, documents).
+const fleetSettingsPaths = [
+  '/settings/device',
+  '/settings/driver',
+  '/settings/maintenance',
+  '/settings/fleet-documents',
+  '/settings/accumulators',
+];
+
+const isFleetPath = (pathname) =>
+  pathname.startsWith('/fleet') || fleetSettingsPaths.some((path) => pathname.startsWith(path));
 
 // Primary destinations shown in the navigation rail and the mobile tabs.
 export default () => {
@@ -46,6 +59,15 @@ export default () => {
         match: (pathname) =>
           pathname.startsWith('/geofences') || pathname.startsWith('/settings/geofence'),
         hidden: readonly,
+        mobileHidden: true,
+      },
+      {
+        key: 'fleet',
+        titleKey: 'fleetTitle',
+        icon: LocalShippingRoundedIcon,
+        path: '/fleet',
+        match: isFleetPath,
+        hidden: readonly,
       },
       {
         key: 'settings',
@@ -53,7 +75,9 @@ export default () => {
         icon: SettingsRoundedIcon,
         path: '/settings',
         match: (pathname) =>
-          pathname.startsWith('/settings') && !pathname.startsWith('/settings/geofence'),
+          pathname.startsWith('/settings') &&
+          !pathname.startsWith('/settings/geofence') &&
+          !isFleetPath(pathname),
       },
       {
         key: 'admin',

@@ -1,6 +1,7 @@
 import { useCallback, useReducer, useState } from 'react';
 import dayjs from 'dayjs';
-import { TableRow, TableCell, TableHead, TableBody } from '@mui/material';
+import { useSelector } from 'react-redux';
+import { Chip, TableRow, TableCell, TableHead, TableBody } from '@mui/material';
 import { useAsyncTask, useScrollToLoad, pageSize } from '../reactHelper';
 import usePositionAttributes from '../common/attributes/usePositionAttributes';
 import useAttributeUnits from '../common/util/useAttributeUnits';
@@ -15,6 +16,15 @@ import DataTable from '../common/components/table/DataTable';
 import TableToolbar from '../common/components/table/TableToolbar';
 import useSettingsStyles from './common/useSettingsStyles';
 import fetchOrThrow from '../common/util/fetchOrThrow';
+import usePersistedState from '../common/util/usePersistedState';
+import { loadMaintenanceLinks, useMaintenanceRows } from '../fleet/maintenance';
+import MaintenanceStatusTable from '../fleet/components/MaintenanceStatusTable';
+
+const views = ['status', 'definitions'];
+const viewLabel = {
+  status: 'fleetMaintenanceStatusView',
+  definitions: 'fleetMaintenanceDefinitions',
+};
 
 const MaintenacesPage = () => {
   const { classes } = useSettingsStyles();
@@ -27,6 +37,46 @@ const MaintenacesPage = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [hasMore, setHasMore] = useState(true);
   const units = useAttributeUnits();
+
+  const [view, setView] = usePersistedState('maintenanceView', 'status');
+  const devices = useSelector((state) => state.devices.items);
+  const deviceIds = Object.keys(devices).join(',');
+  const [statusReloadKey, reloadStatus] = useReducer((k) => k + 1, 0);
+  const [links, setLinks] = useState(null);
+
+  useAsyncTask(
+    async ({ signal }) => {
+      void statusReloadKey;
+      if (view !== 'status') {
+        return;
+      }
+      setLinks(null);
+      const ids = deviceIds ? deviceIds.split(',') : [];
+      setLinks(await loadMaintenanceLinks(ids, signal));
+    },
+    [view, deviceIds, statusReloadKey],
+  );
+
+  const statusRows = useMaintenanceRows(links?.links);
+  const keyword = searchKeyword.trim().toLowerCase();
+  const filteredStatusRows = (statusRows || []).filter(
+    (row) =>
+      !keyword ||
+      [row.maintenance.name, row.device?.name].some((value) =>
+        value?.toLowerCase().includes(keyword),
+      ),
+  );
+
+  const viewChips = views.map((key) => (
+    <Chip
+      key={key}
+      size="small"
+      label={t(viewLabel[key])}
+      color={view === key ? 'primary' : 'default'}
+      variant={view === key ? 'filled' : 'outlined'}
+      onClick={() => setView(key)}
+    />
+  ));
 
   const loadItems = useCallback(
     async (offset, signal) => {
@@ -66,12 +116,54 @@ const MaintenacesPage = () => {
     return unit ? `${formatted} ${unit}` : formatted;
   };
 
+  if (view === 'status') {
+    return (
+      <PageLayout
+        menu={<SettingsMenu />}
+        breadcrumbs={['settingsTitle', 'sharedMaintenance']}
+        description={t('fleetMaintenanceStatusDescription')}
+      >
+        <DataTable
+          toolbar={
+            <TableToolbar
+              search={{ value: searchKeyword, onChange: setSearchKeyword }}
+              count={statusRows ? filteredStatusRows.length : undefined}
+              filters={viewChips}
+              addPath="/settings/maintenance"
+            />
+          }
+          empty={statusRows != null && filteredStatusRows.length === 0}
+          emptyState={{
+            title: t(keyword ? 'tableNoMatches' : 'fleetMaintenanceNone'),
+            description: keyword ? undefined : t('fleetMaintenanceNoneDescription'),
+          }}
+        >
+          {statusRows == null ? (
+            <TableBody>
+              <TableShimmer columns={6} />
+            </TableBody>
+          ) : (
+            <MaintenanceStatusTable
+              bare
+              showVehicle
+              rows={filteredStatusRows}
+              shared={links.shared}
+              onDone={reloadStatus}
+            />
+          )}
+        </DataTable>
+        <AddFab editPath="/settings/maintenance" />
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'sharedMaintenance']}>
       <DataTable
         toolbar={
           <TableToolbar
             search={{ value: searchKeyword, onChange: setSearchKeyword }}
+            filters={viewChips}
             addPath="/settings/maintenance"
           />
         }

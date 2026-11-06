@@ -1,5 +1,5 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import { createFleet } from './fleet.js';
+import { createDrivers, createFleet, createMaintenance, maintenanceFor } from './fleet.js';
 import { eventTypes, geofences, report, sampleEvent } from './reports.js';
 
 export const demoServer = (server) => {
@@ -54,13 +54,31 @@ export const demoServer = (server) => {
       case '/api/reports/geofences':
         data = report(fleet, url.pathname.split('/').at(-1), url.searchParams);
         break;
-      case '/api/groups':
       case '/api/drivers':
+        data = createDrivers();
+        break;
       case '/api/maintenance':
+        data = url.searchParams.has('deviceId')
+          ? maintenanceFor(url.searchParams.get('deviceId'))
+          : createMaintenance();
+        break;
+      case '/api/groups':
       case '/api/calendars':
         data = [];
         break;
       default:
+        if (/^\/api\/devices\/\d+$/.test(url.pathname)) {
+          data = fleet.devices.find(
+            (device) => device.id === Number(url.pathname.split('/').at(-1)),
+          );
+          if (data) break;
+        }
+        if (/^\/api\/drivers\/\d+$/.test(url.pathname)) {
+          data = createDrivers().find(
+            (driver) => driver.id === Number(url.pathname.split('/').at(-1)),
+          );
+          if (data) break;
+        }
         if (/^\/api\/events\/\d+$/.test(url.pathname)) {
           const id = Number(url.pathname.split('/').at(-1));
           const type = eventTypes[id % 10];

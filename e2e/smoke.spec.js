@@ -55,3 +55,18 @@ test.describe('language', () => {
 test.afterEach(async ({ pageErrors }) => {
   expect(pageErrors, 'uncaught errors in the page').toEqual([]);
 });
+
+test.describe('fleet', () => {
+  test('validity lists what expired and what expires soon', async ({ page }) => {
+    await gotoReady(page, '/fleet/expiries');
+    await expect(page.getByRole('row', { name: /12-345-67/ })).toBeVisible();
+    await expect(page.getByRole('row', { name: /Yossi Cohen/ })).toBeVisible();
+    // Valid dates are hidden until "all" is chosen.
+    await expect(page.getByRole('row', { name: /567-89-012/ })).toHaveCount(0);
+  });
+
+  test('maintenance shows what is left per vehicle', async ({ page }) => {
+    await gotoReady(page, '/settings/maintenances');
+    await expect(page.getByRole('row', { name: /Oil service/ }).first()).toBeVisible();
+  });
+});
