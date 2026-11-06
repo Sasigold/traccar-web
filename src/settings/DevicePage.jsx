@@ -226,6 +226,7 @@ const DevicePage = () => {
               setAttributes(mergeAttributes(item.attributes, vehicleFieldKeys, other))
             }
             definitions={{ ...commonDeviceAttributes, ...deviceAttributes }}
+            itemId={item.id}
           />
         </>
       )}
