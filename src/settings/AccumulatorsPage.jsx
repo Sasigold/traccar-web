@@ -46,6 +46,7 @@ const AccumulatorsPage = () => {
     <FormPage
       menu={<SettingsMenu />}
       breadcrumbs={['sharedDeviceAccumulators']}
+      description={t('accumulatorsPageDescription')}
       footer={<SaveBar onCancel={() => navigate(-1)} onSave={handleSave} />}
     >
       {item && (
@@ -55,6 +56,7 @@ const AccumulatorsPage = () => {
             value={item.hours / 3600000}
             onChange={(event) => setItem({ ...item, hours: Number(event.target.value) * 3600000 })}
             label={t('positionHours')}
+            helperText={t('accumulatorsHoursHelp')}
           />
           <TextField
             type="number"
@@ -66,6 +68,7 @@ const AccumulatorsPage = () => {
               })
             }
             label={`${t('deviceTotalDistance')} (${distanceUnitString(distanceUnit, t)})`}
+            helperText={t('accumulatorsDistanceHelp')}
           />
         </FormSection>
       )}

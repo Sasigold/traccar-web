@@ -53,6 +53,7 @@ const CommandDevicePage = () => {
     <FormPage
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'deviceCommand']}
+      description={t('commandDevicePageDescription')}
       footer={
         <SaveBar
           onCancel={() => navigate(-1)}

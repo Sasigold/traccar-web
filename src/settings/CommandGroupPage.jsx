@@ -1,21 +1,14 @@
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormControlLabel,
-  Checkbox,
-  TextField,
-} from '@mui/material';
+import { FormControl, InputLabel, Select, MenuItem, TextField } from '@mui/material';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import SettingsMenu from './components/SettingsMenu';
 import { useCatch } from '../reactHelper';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import { messagesActions } from '../store';
 import FormSection from './components/FormSection';
+import CheckboxField from './components/CheckboxField';
 import FormPage from './components/FormPage';
 import SaveBar from './components/SaveBar';
 
@@ -50,6 +43,7 @@ const CommandDevicePage = () => {
     <FormPage
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'deviceCommand']}
+      description={t('commandGroupPageDescription')}
       footer={
         <SaveBar
           onCancel={() => navigate(-1)}
@@ -76,17 +70,15 @@ const CommandDevicePage = () => {
           onChange={(e) =>
             setItem({ ...item, attributes: { ...item.attributes, data: e.target.value } })
           }
-          label={t('commandData')}
+          label={t('commandDataLabel')}
+          helperText={t('commandDataHelp')}
         />
         {textEnabled && (
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={item.textChannel}
-                onChange={(event) => setItem({ ...item, textChannel: event.target.checked })}
-              />
-            }
+          <CheckboxField
+            checked={item.textChannel}
+            onChange={(event) => setItem({ ...item, textChannel: event.target.checked })}
             label={t('commandSendSms')}
+            helperText={t('commandSendSmsHelp')}
           />
         )}
       </FormSection>
