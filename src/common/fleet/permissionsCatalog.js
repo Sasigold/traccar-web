@@ -9,6 +9,7 @@ export const PERMISSION_AREAS = [
   { area: 'inspections', keys: ['inspections.read', 'inspections.write', 'inspections.manage'] },
   { area: 'incidents', keys: ['incidents.read', 'incidents.write'] },
   { area: 'costs', keys: ['costs.read', 'costs.write'] },
+  { area: 'safety', keys: ['safety.read', 'safety.write'] },
   { area: 'reports', keys: ['reports.read', 'audit.read'] },
   { area: 'users', keys: ['users.read', 'users.manage', 'roles.manage'] },
   {
@@ -18,7 +19,14 @@ export const PERMISSION_AREAS = [
 ];
 
 // Roles whose permissions an organization may change (owner always has everything).
-export const EDITABLE_ROLES = ['admin', 'manager', 'dispatcher', 'driver', 'viewer'];
+export const EDITABLE_ROLES = [
+  'admin',
+  'manager',
+  'safety_officer',
+  'dispatcher',
+  'driver',
+  'viewer',
+];
 
 // "vehicles.read" -> "fleetPermVehiclesRead"
 export const permissionLabelKey = (key) =>
@@ -47,9 +55,13 @@ export const toggleChange = (role, permission, granted, defaults) => {
   return byDefault === granted ? { remove: true } : { upsert: { role, permission, granted } };
 };
 
+// "safety_officer" -> "fleetRoleSafetyOfficer"
+export const roleLabelKey = (role) =>
+  `fleetRole${role.replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase())}`;
+
 // Traccar user flags that match a fleet role, so Traccar's own screens agree with it.
 export const traccarFlagsForRole = (role) => ({
   readonly: role === 'viewer' || role === 'driver',
-  deviceReadonly: role === 'dispatcher' || role === 'viewer' || role === 'driver',
-  limitCommands: role === 'viewer' || role === 'driver',
+  deviceReadonly: ['dispatcher', 'safety_officer', 'viewer', 'driver'].includes(role),
+  limitCommands: ['safety_officer', 'viewer', 'driver'].includes(role),
 });

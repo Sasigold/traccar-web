@@ -7,7 +7,7 @@ import { useAsyncTask, useCatch } from '../../reactHelper';
 import { getFleetClient, unwrap } from '../../common/fleet/client';
 import { fleetRoles } from '../../common/fleet/config';
 import { applyRole } from '../../fleet/users';
-import { effectiveGranted } from '../../common/fleet/permissionsCatalog';
+import { effectiveGranted, roleLabelKey } from '../../common/fleet/permissionsCatalog';
 import {
   useFleetError,
   useFleetPermission,
@@ -40,8 +40,6 @@ const rolePermissions = async (role) => {
   const keys = new Set([...defaultRows, ...overrideRows].map((row) => row.permission));
   return [...keys].filter((key) => effectiveGranted(role, key, defaultRows, overrideRows)).sort();
 };
-
-const roleKey = (role) => `fleetRole${role.charAt(0).toUpperCase()}${role.slice(1)}`;
 
 // Shows (and lets managers change) the Viper Fleet role of a Traccar user.
 const FleetRoleSection = ({ traccarUserId }) => {
@@ -120,7 +118,7 @@ const FleetRoleSection = ({ traccarUserId }) => {
           >
             {roleOptions.map((role) => (
               <MenuItem key={role} value={role}>
-                {t(roleKey(role))}
+                {t(roleLabelKey(role))}
               </MenuItem>
             ))}
           </TextField>

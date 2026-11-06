@@ -26,6 +26,8 @@ const InspectionPage = lazy(() => import('./fleet/InspectionPage'));
 const RolesPage = lazy(() => import('./fleet/RolesPage'));
 const FleetUsersPage = lazy(() => import('./fleet/FleetUsersPage'));
 const DriverPortalPage = lazy(() => import('./fleet/DriverPortalPage'));
+const SafetyPage = lazy(() => import('./fleet/SafetyPage'));
+const DriverFilePage = lazy(() => import('./fleet/DriverFilePage'));
 const CombinedReportPage = lazy(() => import('./reports/CombinedReportPage'));
 const PositionsReportPage = lazy(() => import('./reports/PositionsReportPage'));
 const ServerPage = lazy(() => import('./settings/ServerPage'));
@@ -185,6 +187,8 @@ const Navigation = () => {
             <Route path="inspection" element={<InspectionPage />} />
             <Route path="roles" element={<RolesPage />} />
             <Route path="users" element={<FleetUsersPage />} />
+            <Route path="safety" element={<SafetyPage />} />
+            <Route path="driver-file/:id" element={<DriverFilePage />} />
           </Route>
 
           <Route path="settings">

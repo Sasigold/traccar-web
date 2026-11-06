@@ -33,6 +33,7 @@ import {
   PERMISSION_AREAS,
   areaLabelKey,
   permissionLabelKey,
+  roleLabelKey,
 } from '../common/fleet/permissionsCatalog';
 import FleetNotice from './components/FleetNotice';
 import { applyRole } from './users';
@@ -55,7 +56,6 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const roleKey = (role) => `fleetRole${role.replace(/^\w/, (c) => c.toUpperCase())}`;
 const areas = PERMISSION_AREAS.filter((area) => area.area !== 'billing');
 
 // Per-user exceptions to the role: allow, deny, or follow the role.
@@ -260,12 +260,12 @@ const FleetUsersPage = () => {
                   >
                     {roleOptions.map((role) => (
                       <MenuItem key={role} value={role}>
-                        {t(roleKey(role))}
+                        {t(roleLabelKey(role))}
                       </MenuItem>
                     ))}
                   </TextField>
                 ) : (
-                  t(roleKey(row.role))
+                  t(roleLabelKey(row.role))
                 )}
               </TableCell>
               <TableCell className={classes.nowrap}>

@@ -25,6 +25,7 @@ import {
   effectiveGranted,
   permissionLabelKey,
   toggleChange,
+  roleLabelKey,
 } from '../common/fleet/permissionsCatalog';
 import FleetNotice from './components/FleetNotice';
 
@@ -44,7 +45,6 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const roleKey = (role) => `fleetRole${role.replace(/^\w/, (c) => c.toUpperCase())}`;
 // Customers and billing belong to the platform admin area, not to an organization's roles.
 const areas = PERMISSION_AREAS.filter((area) => area.area !== 'billing');
 
@@ -137,7 +137,7 @@ const RolesPage = () => {
             <TableCell>{t('fleetPermissions')}</TableCell>
             {EDITABLE_ROLES.map((role) => (
               <TableCell key={role} className={classes.cell}>
-                {t(roleKey(role))}
+                {t(roleLabelKey(role))}
               </TableCell>
             ))}
           </TableRow>
@@ -168,7 +168,7 @@ const RolesPage = () => {
                             className={cx(isOverridden(role, permission) && classes.changed)}
                             slotProps={{
                               input: {
-                                'aria-label': `${t(roleKey(role))}: ${t(permissionLabelKey(permission))}`,
+                                'aria-label': `${t(roleLabelKey(role))}: ${t(permissionLabelKey(permission))}`,
                               },
                             }}
                           />

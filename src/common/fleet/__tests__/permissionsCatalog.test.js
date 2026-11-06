@@ -49,3 +49,11 @@ describe('permission catalog', () => {
     expect(traccarFlagsForRole('dispatcher').deviceReadonly).toBe(true);
   });
 });
+
+describe('role labels', () => {
+  it('camel-cases role names with underscores', async () => {
+    const { roleLabelKey } = await import('../permissionsCatalog');
+    expect(roleLabelKey('safety_officer')).toBe('fleetRoleSafetyOfficer');
+    expect(roleLabelKey('admin')).toBe('fleetRoleAdmin');
+  });
+});

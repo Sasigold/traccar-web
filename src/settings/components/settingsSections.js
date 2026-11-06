@@ -25,6 +25,7 @@ import CarCrashRoundedIcon from '@mui/icons-material/CarCrashRounded';
 import LocalGasStationRoundedIcon from '@mui/icons-material/LocalGasStationRounded';
 import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
 import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
+import HealthAndSafetyRoundedIcon from '@mui/icons-material/HealthAndSafetyRounded';
 import { useAdministrator, useManager, useRestriction } from '../../common/util/permissions';
 import useFeatures from '../../common/util/useFeatures';
 import { useFleetPermission } from '../../common/fleet/useFleet';
@@ -46,6 +47,7 @@ export const useSettingsSections = () => {
   const fleetCosts = useFleetPermission('costs.read');
   const fleetInspections = useFleetPermission('inspections.read');
   const fleetUsers = useFleetPermission('users.read');
+  const fleetSafety = useFleetPermission('safety.read');
 
   return useMemo(() => {
     const profilePath = `/settings/user/${userId}`;
@@ -175,6 +177,16 @@ export const useSettingsSections = () => {
             path: '/fleet/inspections',
             match: (pathname) => pathname.startsWith('/fleet/inspection'),
             visible: fleetInspections,
+          },
+          {
+            id: 'safety',
+            titleKey: 'fleetSafetyPage',
+            descriptionKey: 'fleetSafetyPageDescription',
+            icon: HealthAndSafetyRoundedIcon,
+            path: '/fleet/safety',
+            match: (pathname) =>
+              pathname.startsWith('/fleet/safety') || pathname.startsWith('/fleet/driver-file'),
+            visible: fleetSafety,
           },
           {
             id: 'costs',
@@ -323,6 +335,7 @@ export const useSettingsSections = () => {
     fleetCosts,
     fleetInspections,
     fleetUsers,
+    fleetSafety,
   ]);
 };
 

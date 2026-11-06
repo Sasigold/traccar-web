@@ -15,4 +15,12 @@ export const fleetConfig = {
 
 export const isFleetConfigured = () => Boolean(fleetConfig.url && fleetConfig.anonKey);
 
-export const fleetRoles = ['owner', 'admin', 'manager', 'dispatcher', 'driver', 'viewer'];
+export const fleetRoles = [
+  'owner',
+  'admin',
+  'manager',
+  'safety_officer',
+  'dispatcher',
+  'driver',
+  'viewer',
+];

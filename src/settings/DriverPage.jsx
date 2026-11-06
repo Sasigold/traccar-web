@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import { Link as RouterLink } from 'react-router-dom';
+import { useFleetPermission } from '../common/fleet/useFleet';
 import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded';
 import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded';
 
@@ -34,6 +37,7 @@ const DriverPage = () => {
   const [item, setItem] = useState();
 
   const fleet = useFleetAccess('driver');
+  const safety = useFleetPermission('safety.read');
   useFleetOverlay('driver', item, setItem);
 
   // Traccar first, then the fleet database; keep the cached drivers (validity tile and page)
@@ -94,6 +98,16 @@ const DriverPage = () => {
             setAttributes={setAttributes}
             showExpiry
           />
+          {item.id && safety && (
+            <Button
+              variant="outlined"
+              component={RouterLink}
+              to={`/fleet/driver-file/${item.id}`}
+              sx={{ alignSelf: 'flex-start' }}
+            >
+              {t('fleetDriverFile')}
+            </Button>
+          )}
           <DriverAssignmentSection driver={item} />
           <FleetDocumentsSection
             entity="driver"
