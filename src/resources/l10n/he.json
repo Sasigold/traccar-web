@@ -2039,5 +2039,11 @@
     "accumulatorsPageDescription": "תיקון המונים של הרכב, כדי שיתאימו למה שמוצג ברכב עצמו. המערכת תמשיך לספור מהמספר שתזינו.",
     "accumulatorsHoursHelp": "כמה שעות המנוע עבד עד היום.",
     "accumulatorsDistanceHelp": "הקילומטראז' שמוצג עכשיו בלוח המחוונים של הרכב.",
-    "linkFieldPlaceholder": "לחצו כדי לבחור"
+    "linkFieldPlaceholder": "לחצו כדי לבחור",
+    "loginWelcome": "ברוכים השבים",
+    "loginSynced": "SYNCED",
+    "loginFeatureLive": "מיקום חי",
+    "loginFeatureHistory": "היסטוריית נסיעות",
+    "loginFeatureReports": "דוחות",
+    "loginFeatureAlerts": "התראות"
 }
