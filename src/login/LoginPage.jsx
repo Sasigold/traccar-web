@@ -10,11 +10,19 @@ import {
   IconButton,
   Tooltip,
   Typography,
+  InputAdornment,
+  useTheme,
 } from '@mui/material';
 import CountryFlag from 'react-country-flag';
 import { makeStyles } from 'tss-react/mui';
+import { keyframes } from 'tss-react';
 import VpnLockIcon from '@mui/icons-material/VpnLock';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
+import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
+import LockRoundedIcon from '@mui/icons-material/LockRounded';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import { alpha } from '@mui/material/styles';
 import { ctaFill } from '../common/theme/surfaces';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -32,6 +40,20 @@ import { useCatch } from '../reactHelper';
 import ServerQrCodeDialog from '../common/components/ServerQrCodeDialog';
 import PasswordField from '../common/components/PasswordField';
 
+const rise = keyframes`
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+`;
+
+const shake = [
+  { transform: 'translateX(0)' },
+  { transform: 'translateX(-8px)' },
+  { transform: 'translateX(7px)' },
+  { transform: 'translateX(-5px)' },
+  { transform: 'translateX(3px)' },
+  { transform: 'translateX(0)' },
+];
+
 const useStyles = makeStyles()((theme) => ({
   options: {
     position: 'fixed',
@@ -47,10 +69,40 @@ const useStyles = makeStyles()((theme) => ({
       backgroundColor: theme.palette.background.paper,
     },
   },
+  optionButton: {
+    backgroundColor: theme.palette.background.paper,
+    border: `1px solid ${theme.palette.surface.border}`,
+    '&:hover': {
+      backgroundColor: theme.palette.surface.tint,
+    },
+  },
   container: {
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(2),
+    '& > *': {
+      animation: `${rise} 560ms ${theme.tokens.motion.easing.emphasized} both`,
+    },
+    // Sibling chains instead of :nth-child, which emotion flags as SSR-unsafe.
+    ...Object.fromEntries(
+      Array.from({ length: 8 }, (_, i) => [
+        `& > *${' + *'.repeat(i)}`,
+        { animationDelay: `${240 + i * 60}ms` },
+      ]),
+    ),
+    '& .MuiOutlinedInput-root': {
+      borderRadius: theme.tokens.radius.md,
+      transition: `box-shadow ${theme.tokens.motion.duration.base}ms ${theme.tokens.motion.easing.standard}`,
+      '&.Mui-focused': {
+        boxShadow: `0 0 0 4px ${alpha(theme.palette.secondary.main, 0.18)}`,
+      },
+    },
+    '& .MuiInputAdornment-positionStart': {
+      color: theme.palette.text.secondary,
+    },
+    '& .Mui-focused .MuiInputAdornment-positionStart': {
+      color: theme.palette.primary.main,
+    },
   },
   extraContainer: {
     display: 'flex',
@@ -74,19 +126,31 @@ const useStyles = makeStyles()((theme) => ({
   title: {
     fontWeight: 600,
     letterSpacing: '-0.02em',
+    marginBottom: theme.spacing(0.5),
   },
   subtitle: {
     color: theme.palette.text.secondary,
   },
   cta: {
-    height: 48,
-    fontSize: '0.9375rem',
+    height: 52,
+    marginTop: theme.spacing(1),
+    fontSize: '1rem',
+    fontWeight: 600,
+    borderRadius: theme.tokens.radius.md,
     ...ctaFill(theme),
+    '& .MuiButton-endIcon': {
+      transition: `transform ${theme.tokens.motion.duration.slow}ms ${theme.tokens.motion.easing.emphasized}`,
+    },
+    '&:hover .MuiButton-endIcon': {
+      transform: `translateX(${theme.direction === 'rtl' ? -4 : 4}px)`,
+    },
   },
 }));
 
 const LoginPage = () => {
   const { classes } = useStyles();
+  const theme = useTheme();
+  const containerRef = useRef(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const t = useTranslation();
@@ -144,6 +208,9 @@ const LoginPage = () => {
         setCodeEnabled(true);
       } else if (response.status === 401) {
         setFailed(true);
+        if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+          containerRef.current?.animate(shake, { duration: 420, easing: 'ease-out' });
+        }
       } else {
         throw Error(await response.text());
       }
@@ -186,55 +253,60 @@ const LoginPage = () => {
   }, []);
 
   return (
-    <LoginLayout>
-      <div className={classes.options}>
-        {nativeEnvironment && changeEnabled && (
-          <IconButton
-            color="primary"
-            onClick={() => navigate('/change-server')}
-            aria-label={t('settingsServer')}
-          >
-            <Tooltip
-              title={`${t('settingsServer')}: ${window.location.hostname}`}
-              open={showServerTooltip}
-              arrow
+    <LoginLayout
+      options={
+        <div className={classes.options}>
+          {nativeEnvironment && changeEnabled && (
+            <IconButton
+              color="primary"
+              className={classes.optionButton}
+              onClick={() => navigate('/change-server')}
+              aria-label={t('settingsServer')}
             >
-              <VpnLockIcon />
-            </Tooltip>
-          </IconButton>
-        )}
-        {!nativeEnvironment && (
-          <IconButton
-            color="primary"
-            onClick={() => setShowQr(true)}
-            aria-label={t('sharedQrCode')}
-          >
-            <QrCode2Icon />
-          </IconButton>
-        )}
-        {languageEnabled && (
-          <FormControl>
-            <Select
-              value={language}
-              onChange={(e) => setLocalLanguage(e.target.value)}
-              aria-label={t('loginLanguage')}
+              <Tooltip
+                title={`${t('settingsServer')}: ${window.location.hostname}`}
+                open={showServerTooltip}
+                arrow
+              >
+                <VpnLockIcon />
+              </Tooltip>
+            </IconButton>
+          )}
+          {!nativeEnvironment && (
+            <IconButton
+              color="primary"
+              className={classes.optionButton}
+              onClick={() => setShowQr(true)}
+              aria-label={t('sharedQrCode')}
             >
-              {languageList.map((it) => (
-                <MenuItem key={it.code} value={it.code}>
-                  <span className={classes.flag}>
-                    <CountryFlag countryCode={it.country} svg alt="" aria-hidden="true" />
-                  </span>
-                  {it.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
-      </div>
-      <div className={classes.container}>
+              <QrCode2Icon />
+            </IconButton>
+          )}
+          {languageEnabled && (
+            <FormControl>
+              <Select
+                value={language}
+                onChange={(e) => setLocalLanguage(e.target.value)}
+                aria-label={t('loginLanguage')}
+              >
+                {languageList.map((it) => (
+                  <MenuItem key={it.code} value={it.code}>
+                    <span className={classes.flag}>
+                      <CountryFlag countryCode={it.country} svg alt="" aria-hidden="true" />
+                    </span>
+                    {it.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+        </div>
+      }
+    >
+      <div className={classes.container} ref={containerRef}>
         <div className={classes.heading}>
           <Typography variant="h4" className={classes.title}>
-            {t('loginTitle')}
+            {t('loginWelcome')}
           </Typography>
           <Typography variant="body2" className={classes.subtitle}>
             {t('loginSubtitle')}
@@ -257,6 +329,15 @@ const LoginPage = () => {
               autoFocus={!email}
               onChange={(e) => setEmail(e.target.value)}
               helperText={failed && t('loginFailed')}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <MailOutlineRoundedIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
             <PasswordField
               required
@@ -267,6 +348,15 @@ const LoginPage = () => {
               autoComplete="current-password"
               autoFocus={!!email}
               onChange={(e) => setPassword(e.target.value)}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockRoundedIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
             {codeEnabled && (
               <TextField
@@ -285,6 +375,9 @@ const LoginPage = () => {
               variant="contained"
               color="primary"
               className={classes.cta}
+              endIcon={
+                theme.direction === 'rtl' ? <ArrowBackRoundedIcon /> : <ArrowForwardRoundedIcon />
+              }
               loading={submitting}
               disabled={submitting || !email || !password || (codeEnabled && !code)}
             >

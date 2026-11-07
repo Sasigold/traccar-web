@@ -2039,5 +2039,11 @@
     "accumulatorsPageDescription": "Correct the vehicle counters so they match what the vehicle itself shows. The system keeps counting from the number you enter.",
     "accumulatorsHoursHelp": "How many hours the engine has run so far.",
     "accumulatorsDistanceHelp": "The odometer reading shown now on the vehicle dashboard.",
-    "linkFieldPlaceholder": "Select to choose"
+    "linkFieldPlaceholder": "Select to choose",
+    "loginWelcome": "welcome back.",
+    "loginSynced": "SYNCED",
+    "loginFeatureLive": "Live location",
+    "loginFeatureHistory": "Trip history",
+    "loginFeatureReports": "Reports",
+    "loginFeatureAlerts": "Alerts"
 }
