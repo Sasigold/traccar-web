@@ -37,6 +37,7 @@ import {
   useFleetStatus,
 } from '../../common/fleet/useFleet';
 import FormSection from './FormSection';
+import { DateField } from '../../common/components/pickers';
 
 const useStyles = makeStyles()((theme) => ({
   table: {
@@ -326,17 +327,16 @@ const FleetDocumentsSection = ({ entity, traccarId, name, identifier }) => {
                   value={form.title}
                   onChange={(event) => setForm({ ...form, title: event.target.value })}
                 />
-                <TextField
+                <DateField
                   label={t('fleetIssuedAt')}
-                  type="date"
                   value={form.issued_at}
                   onChange={(event) => setForm({ ...form, issued_at: event.target.value })}
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
-                <TextField
+                <DateField
                   label={t('fleetExpiresAt')}
-                  type="date"
                   value={form.expires_at}
+                  min={form.issued_at}
                   onChange={(event) => setForm({ ...form, expires_at: event.target.value })}
                   required={Boolean(selectedType?.requires_expiry)}
                   slotProps={{ inputLabel: { shrink: true } }}

@@ -23,6 +23,7 @@ import { useRestriction } from '../../common/util/permissions';
 import { deviceEquality } from '../../common/util/deviceEquality';
 import { reportsActions } from '../../store';
 import ReportIntro from './ReportIntro';
+import { DateRangeField } from '../../common/components/pickers';
 
 const getPeriodRange = (period) => {
   const now = dayjs();
@@ -304,23 +305,26 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
             </FormControl>
           </div>
           {period === 'custom' && (
-            <div className={classes.filterItem}>
-              <TextField
-                label={t('reportFrom')}
-                type="datetime-local"
-                value={range[0] ? selectedFrom.locale('en').format('YYYY-MM-DDTHH:mm') : ''}
-                onChange={(e) => setRange([e.target.value, range[1]])}
-                fullWidth
-              />
-            </div>
-          )}
-          {period === 'custom' && (
-            <div className={classes.filterItem}>
-              <TextField
-                label={t('reportTo')}
-                type="datetime-local"
-                value={range[1] ? selectedTo.locale('en').format('YYYY-MM-DDTHH:mm') : ''}
-                onChange={(e) => setRange([range[0], e.target.value])}
+            <div className={classes.filterItem} style={{ flexGrow: 2 }}>
+              <DateRangeField
+                withTime
+                label={t('reportPeriod')}
+                from={
+                  range[0] && selectedFrom.isValid()
+                    ? selectedFrom.locale('en').format('YYYY-MM-DDTHH:mm')
+                    : ''
+                }
+                to={
+                  range[1] && selectedTo.isValid()
+                    ? selectedTo.locale('en').format('YYYY-MM-DDTHH:mm')
+                    : ''
+                }
+                onChange={(_from, _to, { from: start, to: end }) =>
+                  setRange([
+                    start ? start.toISOString() : '',
+                    end ? end.endOf('minute').toISOString() : '',
+                  ])
+                }
                 fullWidth
               />
             </div>

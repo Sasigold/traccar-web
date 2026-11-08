@@ -35,6 +35,7 @@ import {
   toIsoDate,
 } from '../billing';
 import { deleteInvoice, loadInvoiceLines, saveInvoice, setInvoiceStatus } from '../adminApi';
+import { DateField } from '../../common/components/pickers';
 
 const useStyles = makeStyles()((theme) => ({
   content: {
@@ -200,18 +201,17 @@ const InvoiceDialog = ({ initial, customers, readonly, onClose, onSaved }) => {
               disabled={!editable || Boolean(invoice.id)}
             />
           </div>
-          <TextField
-            type="date"
+          <DateField
             label={t('adminIssueDate')}
             value={invoice.issue_date || ''}
             onChange={set('issue_date')}
             disabled={!editable}
             slotProps={{ inputLabel: { shrink: true } }}
           />
-          <TextField
-            type="date"
+          <DateField
             label={t('adminDueDate')}
             value={invoice.due_date || ''}
+            min={invoice.issue_date}
             onChange={set('due_date')}
             disabled={!editable}
             slotProps={{ inputLabel: { shrink: true } }}
@@ -228,18 +228,18 @@ const InvoiceDialog = ({ initial, customers, readonly, onClose, onSaved }) => {
             }
             disabled={!editable}
           />
-          <TextField
-            type="date"
+          <DateField
             label={t('adminPeriodStart')}
             value={invoice.period_start || ''}
+            max={invoice.period_end}
             onChange={set('period_start')}
             disabled={!editable}
             slotProps={{ inputLabel: { shrink: true } }}
           />
-          <TextField
-            type="date"
+          <DateField
             label={t('adminPeriodEnd')}
             value={invoice.period_end || ''}
+            min={invoice.period_start}
             onChange={set('period_end')}
             disabled={!editable}
             slotProps={{ inputLabel: { shrink: true } }}
@@ -358,8 +358,7 @@ const InvoiceDialog = ({ initial, customers, readonly, onClose, onSaved }) => {
 
         {paying && (
           <div className={classes.payment}>
-            <TextField
-              type="date"
+            <DateField
               label={t('adminPaidAt')}
               value={payment.paid_at}
               onChange={(event) => setPayment({ ...payment, paid_at: event.target.value })}

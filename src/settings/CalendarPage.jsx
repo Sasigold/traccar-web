@@ -13,6 +13,7 @@ import { calendarsActions } from '../store';
 import { useCatch } from '../reactHelper';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import FormSection from './components/FormSection';
+import { DateTimeField } from '../common/components/pickers';
 
 const formatCalendarTime = (time) => {
   const tzid = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -137,9 +138,9 @@ const CalendarPage = () => {
             </FormControl>
             {simple ? (
               <>
-                <TextField
+                <DateTimeField
+                  clearable={false}
                   label={t('reportFrom')}
-                  type="datetime-local"
                   value={dayjs(lines[5].slice(-15)).locale('en').format('YYYY-MM-DDTHH:mm')}
                   onChange={(e) => {
                     const time = formatCalendarTime(dayjs(e.target.value, 'YYYY-MM-DDTHH:mm'));
@@ -147,9 +148,9 @@ const CalendarPage = () => {
                   }}
                   helperText={t('calendarRangeHelp')}
                 />
-                <TextField
+                <DateTimeField
+                  clearable={false}
                   label={t('reportTo')}
-                  type="datetime-local"
                   value={dayjs(lines[6].slice(-15)).locale('en').format('YYYY-MM-DDTHH:mm')}
                   onChange={(e) => {
                     const time = formatCalendarTime(dayjs(e.target.value, 'YYYY-MM-DDTHH:mm'));

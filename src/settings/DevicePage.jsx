@@ -33,6 +33,7 @@ import {
   vehicleFieldKeys,
   vehicleFields,
 } from '../common/fleet/fleetFields';
+import { DateField } from '../common/components/pickers';
 
 const DevicePage = () => {
   const t = useTranslation();
@@ -175,9 +176,8 @@ const DevicePage = () => {
               label={t('sharedCalendar')}
               helperText={t('deviceCalendarHelp')}
             />
-            <TextField
+            <DateField
               label={t('userExpirationTime')}
-              type="date"
               value={item.expirationTime ? item.expirationTime.split('T')[0] : '2099-01-01'}
               onChange={(e) => {
                 if (e.target.value) {
@@ -185,6 +185,7 @@ const DevicePage = () => {
                 }
               }}
               helperText={t('deviceExpirationHelp')}
+              clearable={false}
               disabled={!manager}
             />
             <CheckboxField

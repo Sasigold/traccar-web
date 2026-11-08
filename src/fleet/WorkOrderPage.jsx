@@ -46,6 +46,7 @@ import { VendorDialog } from './VendorsPage';
 import { workOrderStatusKey, workOrderTypeKey } from './WorkOrdersPage';
 import { ensureVehicle, money, openFleetFile, uploadFleetFile, useVendors } from './fleetData';
 import { loadMaintenanceLinks, markMaintenanceDone } from './maintenance';
+import { DateField } from '../common/components/pickers';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -335,8 +336,7 @@ const WorkOrderPage = () => {
                   </Tooltip>
                 )}
               </div>
-              <TextField
-                type="date"
+              <DateField
                 label={t('fleetWorkOrderScheduled')}
                 value={order.scheduled_at || ''}
                 onChange={(event) => set({ scheduled_at: event.target.value })}

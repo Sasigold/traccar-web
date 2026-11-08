@@ -32,6 +32,7 @@ import SettingsMenu from '../settings/components/SettingsMenu';
 import { useAsyncTask, useCatch } from '../reactHelper';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import { formatTime } from '../common/util/formatter';
+import { DateRangeField } from '../common/components/pickers';
 import exportExcel from '../common/util/exportExcel';
 import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
@@ -62,6 +63,9 @@ const useStyles = makeStyles()((theme) => ({
   },
   date: {
     minWidth: 150,
+  },
+  range: {
+    minWidth: 240,
   },
 }));
 
@@ -357,23 +361,17 @@ const PoiPage = () => {
               <>
                 {view === 'visits' && (
                   <>
-                    <TextField
+                    <DateRangeField
                       size="small"
-                      type="date"
-                      label={t('reportFrom')}
-                      value={from}
-                      onChange={(event) => setFrom(event.target.value)}
-                      className={classes.date}
-                      slotProps={{ inputLabel: { shrink: true } }}
-                    />
-                    <TextField
-                      size="small"
-                      type="date"
-                      label={t('reportTo')}
-                      value={to}
-                      onChange={(event) => setTo(event.target.value)}
-                      className={classes.date}
-                      slotProps={{ inputLabel: { shrink: true } }}
+                      label={t('reportPeriod')}
+                      from={from}
+                      to={to}
+                      onChange={(start, end) => {
+                        setFrom(start);
+                        setTo(end);
+                      }}
+                      clearable={false}
+                      className={classes.range}
                     />
                   </>
                 )}

@@ -45,6 +45,7 @@ import { useCatch } from '../reactHelper';
 import { sessionActions } from '../store';
 import { useAdministrator, useRestriction } from '../common/util/permissions';
 import fetchOrThrow from '../common/util/fetchOrThrow';
+import { DateField } from '../common/components/pickers';
 
 const deviceFields = [
   { id: 'name', name: 'sharedName' },
@@ -454,10 +455,10 @@ const PreferencesPage = () => {
           description={t('preferencesTokenHelp')}
           icon={<KeyRoundedIcon />}
         >
-          <TextField
+          <DateField
             label={t('userExpirationTime')}
-            type="date"
             value={tokenExpiration}
+            clearable={false}
             onChange={(e) => {
               setTokenExpiration(e.target.value);
               setToken(null);

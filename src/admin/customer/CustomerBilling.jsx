@@ -33,6 +33,7 @@ import {
   toIsoDate,
 } from '../billing';
 import { capitalize } from '../CustomersPage';
+import { DateField } from '../../common/components/pickers';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -242,16 +243,14 @@ const CustomerBilling = ({ customer, directory, editable }) => {
               </MenuItem>
             ))}
           </TextField>
-          <TextField
-            type="date"
+          <DateField
             label={t('adminStartDate')}
             value={form.start_date || ''}
             onChange={set('start_date')}
             disabled={!editable}
             slotProps={{ inputLabel: { shrink: true } }}
           />
-          <TextField
-            type="date"
+          <DateField
             label={t('adminNextBilling')}
             value={form.next_billing_date || ''}
             onChange={set('next_billing_date')}

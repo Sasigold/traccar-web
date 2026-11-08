@@ -18,6 +18,7 @@ import { useCatch } from '../../reactHelper';
 import { getFleetClient, unwrap } from '../../common/fleet/client';
 import { useFleetProfile } from '../../common/fleet/useFleet';
 import { ensureDriver, uploadFleetFile } from '../fleetData';
+import { DateField } from '../../common/components/pickers';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -116,7 +117,6 @@ const SafetyRecordDialog = ({ kind, driver: initialDriver, onClose, onSaved }) =
   });
 
   const valid = driverId && form.date && (kind !== 'training' || form.topic.trim());
-  const dateProps = { type: 'date', slotProps: { inputLabel: { shrink: true } } };
 
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="xs">
@@ -138,12 +138,7 @@ const SafetyRecordDialog = ({ kind, driver: initialDriver, onClose, onSaved }) =
                 </MenuItem>
               ))}
           </TextField>
-          <TextField
-            label={t('fleetExpenseDate')}
-            value={form.date}
-            onChange={set('date')}
-            {...dateProps}
-          />
+          <DateField label={t('fleetExpenseDate')} value={form.date} onChange={set('date')} />
           {kind === 'training' && (
             <>
               <TextField
@@ -163,11 +158,10 @@ const SafetyRecordDialog = ({ kind, driver: initialDriver, onClose, onSaved }) =
                 value={form.trainer}
                 onChange={set('trainer')}
               />
-              <TextField
+              <DateField
                 label={t('fleetTrainingValidUntil')}
                 value={form.valid_until}
                 onChange={set('valid_until')}
-                {...dateProps}
               />
               <FileInput
                 placeholder={t('fleetTrainingCertificate')}
@@ -232,11 +226,10 @@ const SafetyRecordDialog = ({ kind, driver: initialDriver, onClose, onSaved }) =
                 multiline
                 minRows={2}
               />
-              <TextField
+              <DateField
                 label={t('fleetReviewFollowUp')}
                 value={form.follow_up_at}
                 onChange={set('follow_up_at')}
-                {...dateProps}
               />
             </>
           )}
