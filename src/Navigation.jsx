@@ -12,6 +12,7 @@ import { useLocalization } from './common/components/LocalizationProvider';
 import fetchOrThrow from './common/util/fetchOrThrow';
 
 const NotFoundPage = lazy(() => import('./other/NotFoundPage'));
+const DashboardPage = lazy(() => import('./dashboard/DashboardPage'));
 const FleetHubPage = lazy(() => import('./fleet/FleetHubPage'));
 const ExpiriesPage = lazy(() => import('./fleet/ExpiriesPage'));
 const AlertsPage = lazy(() => import('./fleet/AlertsPage'));
@@ -164,6 +165,7 @@ const Navigation = () => {
         <Route path="/change-server" element={<ChangeServerPage />} />
         <Route path="/" element={<App />}>
           <Route index element={<MainPage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
 
           <Route path="position/:id" element={<PositionPage />} />
           <Route path="telemetry/:deviceId" element={<TelemetryPage />} />

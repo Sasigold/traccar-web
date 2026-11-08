@@ -1,6 +1,11 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { createDrivers, createFleet, createMaintenance, maintenanceFor } from './fleet.js';
-import { eventTypes, geofences, report, sampleEvent } from './reports.js';
+import { eventTypes, findEvent, geofences, report, sampleEvent } from './reports.js';
+
+const groups = [
+  { id: 1, name: 'צפון', groupId: 0, attributes: {} },
+  { id: 2, name: 'מרכז', groupId: 0, attributes: {} },
+];
 
 export const demoServer = (server) => {
   const fleet = createFleet();
@@ -63,6 +68,8 @@ export const demoServer = (server) => {
           : createMaintenance();
         break;
       case '/api/groups':
+        data = groups;
+        break;
       case '/api/calendars':
         data = [];
         break;
@@ -81,6 +88,8 @@ export const demoServer = (server) => {
         }
         if (/^\/api\/events\/\d+$/.test(url.pathname)) {
           const id = Number(url.pathname.split('/').at(-1));
+          data = findEvent(fleet, id);
+          if (data) break;
           const type = eventTypes[id % 10];
           const [position] = fleet.query(new URLSearchParams({ id: Math.floor(id / 10) }));
           if (position && type) {

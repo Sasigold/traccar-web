@@ -140,7 +140,8 @@ export const createFleet = (now = Date.now()) => {
     status: 'online',
     category: index + 1 === testDeviceId ? 'truck' : 'car',
     disabled: false,
-    groupId: 0,
+    // Two demo groups: north (1) and center (2).
+    groupId: index < 3 ? 1 : 2,
     // The test device has a tank capacity (liters) and a speed limit (knots).
     attributes: {
       ...details[index],

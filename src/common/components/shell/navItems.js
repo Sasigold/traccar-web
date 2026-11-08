@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
+import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import HexagonRoundedIcon from '@mui/icons-material/HexagonRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
@@ -45,6 +46,16 @@ export default () => {
         icon: MapRoundedIcon,
         path: '/',
         match: (pathname) => pathname === '/',
+      },
+      {
+        key: 'dashboard',
+        titleKey: 'dashboardTitle',
+        icon: SpaceDashboardRoundedIcon,
+        path: '/dashboard',
+        match: (pathname) => pathname.startsWith('/dashboard'),
+        hidden: driverRole,
+        // The phone tab bar is full; on phones the dashboard opens from the menu.
+        mobileHidden: true,
       },
       {
         key: 'reports',

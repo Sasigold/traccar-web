@@ -29,6 +29,9 @@ import VehicleProfileSummary, {
   isProfileKey,
 } from '../../common/components/telemetry/VehicleProfileSummary';
 
+// Saved dashboard layouts are edited on the dashboard itself, not as raw JSON here.
+const dashboardKeys = ['web.dashboard', 'web.dashboardDefault'];
+
 const useStyles = makeStyles()((theme) => ({
   booleanRow: {
     display: 'flex',
@@ -122,7 +125,10 @@ const EditAttributesAccordion = ({
       'timezone',
     ];
     Object.keys(attributes || [])
-      .filter((key) => !excludeAttributes.includes(key) && !isProfileKey(key))
+      .filter(
+        (key) =>
+          !excludeAttributes.includes(key) && !isProfileKey(key) && !dashboardKeys.includes(key),
+      )
       .forEach((key) => {
         const value = attributes[key];
         const type = getAttributeType(value);
