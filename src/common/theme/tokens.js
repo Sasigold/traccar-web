@@ -126,26 +126,40 @@ export const mapColors = {
   },
 };
 
-// Categorical chart series, brand colors first.
+// Data visualization (dashboard and charts). Every value is an existing token:
+// no new hues. The categorical order was chosen with the data-viz palette
+// validator (OKLab ΔE, protan/deutan simulation, adjacent and wrap-around pairs):
+// worst pair ΔE 26.7 in light mode and 25.8 in dark mode. A navy/aqua/slate brand
+// cannot meet the generic lightness/chroma bands and some slots sit under 3:1, so
+// every chart also carries a legend, direct labels, 2px surface gaps and a table
+// view. Status colors are reserved for status (BRAND.md §4) and never used as series.
+export const dataviz = {
+  light: {
+    categorical: [brandColors.navy, aqua[600], navy[600], navy[300], slate[600], slate[300]],
+    other: slate[200],
+    single: brandColors.navy,
+    accent: aqua[600],
+    track: brandColors.ice,
+    grid: surfaces.light.border,
+    axis: surfaces.light.textSecondary,
+    areaOpacity: 0.1,
+  },
+  dark: {
+    categorical: [brandColors.aqua, aqua[800], aqua[200], aqua[700], brandColors.paper, navy[500]],
+    other: slate[500],
+    single: brandColors.aqua,
+    accent: brandColors.aqua,
+    track: navy[700],
+    grid: surfaces.dark.border,
+    axis: surfaces.dark.textSecondary,
+    areaOpacity: 0.14,
+  },
+};
+
+// Categorical chart series (reports charts) follow the data-viz order.
 export const chartColors = {
-  light: [
-    brandColors.navy,
-    aqua[600],
-    brandColors.slate,
-    navy[500],
-    status.light.warning,
-    aqua[800],
-    status.light.error,
-  ],
-  dark: [
-    brandColors.aqua,
-    navy[300],
-    slate[300],
-    brandColors.ice,
-    status.dark.warning,
-    aqua[300],
-    status.dark.error,
-  ],
+  light: dataviz.light.categorical,
+  dark: dataviz.dark.categorical,
 };
 
 // Radii echo the quarter-circle corners of the Sync Point symbol.
@@ -212,6 +226,9 @@ export const type = {
     caption: ['0.75rem', 500, 1.5],
     overline: ['0.6875rem', 600, 1.5],
     button: ['0.875rem', 600, 1.5],
+    // Dashboard figures: stat tile values and the one hero number per dashboard.
+    kpi: ['1.75rem', 600, 1.15],
+    hero: ['3rem', 500, 1.05],
   },
 };
 

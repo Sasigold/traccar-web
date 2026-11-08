@@ -2,6 +2,7 @@ import {
   aqua,
   brandColors,
   chartColors,
+  dataviz,
   chrome,
   mapColors,
   navy,
@@ -75,5 +76,6 @@ export default (server, darkMode) => {
     chrome,
     surface,
     chart: chartColors[mode],
+    dataviz: dataviz[mode],
   };
 };

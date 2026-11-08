@@ -2,6 +2,7 @@ import { test, expect, axe, formatViolations, gotoReady } from './fixtures';
 
 const pages = [
   ['map', '/'],
+  ['dashboard', '/dashboard'],
   ['reports', '/reports/combined'],
   ['trips report', '/reports/trips'],
   ['preferences', '/settings/preferences'],
@@ -32,6 +33,23 @@ test('dark mode keeps AA contrast on the map screen', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('themeMode', JSON.stringify('dark')));
   await gotoReady(page, '/');
   const { violations } = await axe(page).withRules(['color-contrast']).analyze();
+  expect(formatViolations(violations)).toBe('');
+});
+
+test('dark mode keeps AA contrast on the dashboard', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('themeMode', JSON.stringify('dark')));
+  await gotoReady(page, '/dashboard');
+  await page.locator('[data-widget-id]').first().waitFor();
+  const { violations } = await axe(page).withRules(['color-contrast']).analyze();
+  expect(formatViolations(violations)).toBe('');
+});
+
+test('the dashboard in edit mode has no WCAG 2.1 AA violations', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'drag handles and dividers are desktop only');
+  await gotoReady(page, '/dashboard');
+  await page.getByRole('button', { name: 'התאמה אישית' }).click();
+  await page.locator('[role="separator"]').first().waitFor();
+  const { violations } = await axe(page).analyze();
   expect(formatViolations(violations)).toBe('');
 });
 

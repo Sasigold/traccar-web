@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { brandColors } from '../tokens';
+import { aqua, brandColors, dataviz, navy, slate, status, surfaces } from '../tokens';
 
 // Contrast ratio per WCAG 2.1.
 const luminance = (hex) => {
@@ -40,5 +40,34 @@ describe('brand palette', () => {
 
   it('aqua text on light backgrounds fails, which is why BRAND.md forbids it', () => {
     expect(contrast(brandColors.aqua, brandColors.white)).toBeLessThan(4.5);
+  });
+});
+
+describe('data visualization palette', () => {
+  const tokenValues = new Set(
+    [brandColors, navy, aqua, slate].flatMap((scale) => Object.values(scale)),
+  );
+  // Warning and error are the only operational hues outside the brand palette.
+  const statusValues = new Set(
+    Object.values(status).flatMap(({ warning, error }) => [warning, error]),
+  );
+
+  it.each(['light', 'dark'])('%s mode only uses existing token values', (mode) => {
+    const { categorical, other, single, accent, track } = dataviz[mode];
+    expect(categorical).toHaveLength(6);
+    [...categorical, other, single, accent, track].forEach((color) => {
+      expect(tokenValues.has(color), color).toBe(true);
+    });
+    expect(dataviz[mode].grid).toBe(surfaces[mode].border);
+  });
+
+  it.each(['light', 'dark'])('%s mode never uses a status color as a series', (mode) => {
+    dataviz[mode].categorical.forEach((color) => {
+      expect(statusValues.has(color), color).toBe(false);
+    });
+  });
+
+  it.each(['light', 'dark'])('%s mode has no repeated series color', (mode) => {
+    expect(new Set(dataviz[mode].categorical).size).toBe(6);
   });
 });

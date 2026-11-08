@@ -37,6 +37,71 @@ Schema and migrations live on the VPS in `/docker/viper-fleet/migrations/`; the 
 Permission keys: `users.read`, `users.manage`, `vehicles.read/write`, `drivers.read/write`,
 `assignments.write`, `documents.read/write`, `reports.read`, `audit.read`, and for the super admin area `customers.read/manage`, `billing.read/manage`.
 
+## Dashboard (`/dashboard`)
+
+A personal, customizable dashboard: the second item in the navigation rail (on phones it opens from
+the menu drawer and the command palette). Code in `src/dashboard/`; the pure parts (no React) have unit
+tests in `__tests__` folders next to them.
+
+**Layout without gaps** (`layout/`). A dashboard is a list of rows. A row has a height in units
+(40px plus the gap) and 1–6 cells whose widths always add up to 12 columns. A cell holds 1–3 widgets
+stacked on top of each other whose heights always add up to the row height. Every operation in
+`layout/operations.js` (add, remove, move beside / stacked / to a new row / swap, resize a divider, width
+and height presets, own row, duplicate) keeps both sums exact, so the grid never has a hole: enlarging a
+widget shrinks its neighbours, and cells that no longer fit move to a new row right below.
+`normalize.js` repairs any saved layout, and a property test applies thousands of random edits and checks
+the invariants after each one. `responsive.js` adapts the saved layout to the screen without changing it:
+under 960px rows that would get too narrow wrap into extra lines that are still full, and under 600px
+every widget gets its own line (KPI tiles pair up). Rows are CSS grids, so the layout follows the page
+direction (the first widget is on the right in Hebrew).
+
+**Editing.** "Customize" opens edit mode on a draft with undo / redo (Ctrl+Z / Ctrl+Shift+Z); "Done"
+saves and "Cancel" drops the draft. On wide screens with a mouse: drag a widget by its handle onto the
+edge of another (side = next to it, top / bottom = stacked, between rows = a new row, middle = swap),
+and drag the dividers between widgets and under rows; the rest reflows live with a short animation.
+Every action is also in the widget menu (size presets, move earlier / later, own row, duplicate, remove)
+and the dividers work with the arrow keys, which is how phones and keyboard users edit.
+
+**Widgets** (`widgets/catalog.js`). 33 presets in three groups, plus a custom chart:
+
+| Group | Data | Examples |
+|-------|------|----------|
+| Live fleet | Redux store (devices, positions, events) | fleet now KPIs, moving-now hero, connection status, motion (moving / idling / parked / offline), speed, fuel, last report, composition, by group, live map (one per dashboard), latest events |
+| Activity for the period | Traccar `api/reports/summary` (`daily=true` for days, trips for hours), `trips`, `stops`, `events` | activity KPIs with change against the previous period, distance over time, by vehicle / driver, engine hours, fuel, trips by hour and weekday, idling, events by type, speeding, vehicle summary table |
+| Maintenance, costs, validity | `useExpiries()` (works without the database), Traccar maintenance, fleet database views and tables | validity, maintenance due, fleet management KPIs, costs by type / month / vehicle, work orders, damage by severity, driver safety |
+
+Each chart widget is a query: dataset × measure × dimension (×"split by"), defined in
+`data/datasets.js`. The settings dialog changes any part of it and shows a live preview; the form
+switcher in the widget header offers every form that fits the data (`widgets/vizRules.js`): KPI, meter,
+donut, pie, split bar, bars, columns, stacked columns, line, area and table. Every chart also has a
+table view and Excel export. Clicking a part of a live chart lists the vehicles behind it.
+
+**Data** (`data/`). One filter row scopes every widget: period (today … last month, custom, with
+previous / next), vehicle groups (subgroups included) and auto refresh. Report requests always send
+explicit vehicle ids, in chunks of 100 with at most three requests at a time, are shared between widgets
+through one cache (`queryCache.js`) and are refused above a size limit (the widget asks for a shorter
+period or a group). While data reloads the previous chart stays on screen, faded. Fleet-database widgets
+need the matching permission (`costs.read`, `maintenance.read`, `incidents.read`, `safety.read`); when
+the database is not connected they show why instead of data.
+
+**Colors** come from `dataviz` in `src/common/theme/tokens.js` (exposed as `theme.palette.dataviz`):
+existing brand token values only, ordered with a color-blind safety validator. Status-like values
+(online / offline, expired / expiring, overdue / due) use the status colors with a label; single-series
+charts use one hue (navy in light mode, aqua in dark mode).
+
+**Saving** (`model/`). The dashboards are a compact JSON string in the user attribute
+`web.dashboard` (at most 3000 characters; the whole attributes column holds about 4000), saved 1.2 s
+after the last change and merged into the latest user object. A copy is always kept in localStorage
+(`dashboard:<userId>`), which is all that read-only users and the demo get. An administrator can publish
+the current dashboard as the organization default (server attribute `web.dashboardDefault`); users
+without a dashboard of their own start from it, and "Reset" returns to it. Built-in templates:
+Operations (the default), Activity, and Maintenance & costs. Both attributes are hidden from the raw
+attribute editors.
+
+**Adding a preset**: add an entry to `PRESETS` in `widgets/catalog.js` (a chart preset is a query plus a
+default form and size), add `dashboardW<Id>` and `dashboardW<Id>Desc` to both `he.json` and `en.json`,
+and run `npm test`; the catalog test checks the query, the form and the strings.
+
 ## Super admin area (`/admin`)
 
 A separate area for Traccar administrators (shield item in the navigation rail; the route redirects

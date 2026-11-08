@@ -50,6 +50,11 @@ tokens in `src/common/theme/tokens.js`. Deploy with `sh deploy/deploy.sh`,
 which builds and uploads `build/` into the Traccar container's web directory on the VPS
 (see `deploy/docker-compose.override.example.yml`).
 
+A customizable **dashboard** (`/dashboard`, second item in the rail) lets every user build their own
+boards from live fleet state, period activity and fleet-database widgets, in any form (KPI, donut,
+pie, bars, columns, line, area, table), with a gapless drag-and-resize layout. See the "Dashboard"
+section in [FLEET.md](FLEET.md).
+
 Custom UI strings live in `src/resources/l10n/en.json` and `he.json`. Do not run the
 `translation.yml` workflow: it force-pulls `he.json` from Transifex and would drop them.
 
