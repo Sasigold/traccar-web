@@ -10,7 +10,19 @@ const scaleFactor = 1000;
 const debugMode = process.env.NODE_ENV === 'development';
 const debugLog = (message) => debugMode && console.log(message);
 
-export default () => (next) => {
+// The device the user is looking at (selected on the map or in the list) always bypasses the
+// buffer, so its card, dials and marker stay live at the device's own rate (one update a second)
+// even when the rest of a large fleet is batched.
+const selectedOnly = (action, selectedId, key) => {
+  const selected = action.payload.filter((item) => item[key] === selectedId);
+  if (!selected.length) {
+    return [null, action];
+  }
+  const rest = action.payload.filter((item) => item[key] !== selectedId);
+  return [{ ...action, payload: selected }, rest.length ? { ...action, payload: rest } : null];
+};
+
+export default (store) => (next) => {
   const buffer = [];
   let throttled = false;
   let counter = 0;
@@ -73,8 +85,28 @@ export default () => (next) => {
     counter += 1;
 
     if (throttled) {
-      buffer.push(action);
-      return;
+      const selectedId = store.getState().devices.selectedId;
+      const key = action.type === devicesActions.update.type ? 'id' : 'deviceId';
+      const [live, buffered] = selectedId ? selectedOnly(action, selectedId, key) : [null, action];
+      if (buffered) {
+        buffer.push(buffered);
+      }
+      if (!live) {
+        return undefined;
+      }
+      // Updates buffered before the device was selected are older than this one: drop them so
+      // the next flush does not roll the device back.
+      for (let i = buffer.length - 1; i >= 0; i -= 1) {
+        if (buffer[i].type === live.type) {
+          const [, others] = selectedOnly(buffer[i], selectedId, key);
+          if (others) {
+            buffer[i] = others;
+          } else {
+            buffer.splice(i, 1);
+          }
+        }
+      }
+      return next(live);
     }
 
     if ((counter * 1000) / currentInterval > threshold) {
