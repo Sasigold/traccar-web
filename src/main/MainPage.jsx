@@ -125,6 +125,7 @@ const MainPage = () => {
   const mapOnSelect = useAttributePreference('mapOnSelect', true);
 
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
+  const cardHidden = useSelector((state) => state.devices.cardHidden);
   const positions = useSelector((state) => state.session.positions);
   const devicesLoaded = useSelector((state) => state.devices.loaded);
   const deviceCount = useSelector((state) => Object.keys(state.devices.items).length);
@@ -237,11 +238,11 @@ const MainPage = () => {
           </div>
         )}
       </div>
-      {selectedDeviceId && !features.disableStatusCard && (
+      {selectedDeviceId && !cardHidden && !features.disableStatusCard && (
         <StatusCard
           deviceId={selectedDeviceId}
           position={selectedPosition}
-          onClose={() => dispatch(devicesActions.selectId(null))}
+          onClose={() => dispatch(devicesActions.hideCard())}
           desktopPadding={panelOffset}
         />
       )}

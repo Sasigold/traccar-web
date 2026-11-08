@@ -1,19 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
+import { liveTween } from './liveTween';
 
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-const easeOut = (x) => 1 - (1 - x) ** 3;
-
-// Eases a displayed number from its previous value to the new target, so live
-// telemetry counts up or down instead of jumping. Returns the target directly
-// when the user asked for reduced motion or the value is not a number.
-export default (target, duration = 700) => {
+// Moves a displayed number from its previous value to the new target, so live telemetry counts
+// up or down instead of jumping. When readings stream in (about one a second), each one glides
+// at a constant pace over the time until the next is expected, so the needle sweeps
+// continuously as the driver accelerates; sparse readings ease out and settle (see liveTween).
+// Returns the target directly when the user asked for reduced motion or it is not a number.
+export default (target) => {
   const [value, setValue] = useState(target);
   const fromRef = useRef(target);
+  const lastChangeRef = useRef(null);
   const frameRef = useRef();
 
   useEffect(() => {
+    const now = performance.now();
+    const gap = lastChangeRef.current == null ? null : now - lastChangeRef.current;
+    lastChangeRef.current = now;
     if (typeof target !== 'number' || !Number.isFinite(target) || prefersReducedMotion()) {
       fromRef.current = target;
       setValue(target);
@@ -24,10 +29,10 @@ export default (target, duration = 700) => {
       setValue(target);
       return undefined;
     }
-    const start = performance.now();
-    const step = (now) => {
-      const progress = Math.min(1, (now - start) / duration);
-      const current = from + (target - from) * easeOut(progress);
+    const { duration, ease } = liveTween(gap);
+    const step = (time) => {
+      const progress = Math.min(1, Math.max(0, (time - now) / duration));
+      const current = from + (target - from) * ease(progress);
       fromRef.current = current;
       setValue(current);
       if (progress < 1) {
@@ -36,7 +41,7 @@ export default (target, duration = 700) => {
     };
     frameRef.current = requestAnimationFrame(step);
     return () => cancelAnimationFrame(frameRef.current);
-  }, [target, duration]);
+  }, [target]);
 
   return value;
 };

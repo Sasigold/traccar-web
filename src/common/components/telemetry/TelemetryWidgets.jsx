@@ -54,7 +54,7 @@ const useStyles = makeStyles()((theme) => ({
     insetBlock: 0,
     insetInlineStart: 0,
     borderRadius: theme.tokens.radius.pill,
-    transition: `width 900ms ${theme.tokens.motion.easing.emphasized}, background-color ${theme.tokens.motion.duration.slow}ms ease`,
+    transition: `background-color ${theme.tokens.motion.duration.slow}ms ease`,
   },
   barMarker: {
     position: 'absolute',
@@ -89,7 +89,7 @@ const useStyles = makeStyles()((theme) => ({
   batteryFill: {
     height: '100%',
     borderRadius: 3,
-    transition: `width 900ms ${theme.tokens.motion.easing.emphasized}, background-color ${theme.tokens.motion.duration.slow}ms ease`,
+    transition: `background-color ${theme.tokens.motion.duration.slow}ms ease`,
   },
   charging: {
     animation: `${charge} 1.6s ease-in-out infinite`,
@@ -348,9 +348,13 @@ export const useLevelColor = () => {
   };
 };
 
+// Level bars and the battery fill follow the same live animation as the dials.
+const useAnimatedRatio = (ratio) =>
+  Math.min(1, Math.max(0, useAnimatedNumber(Number.isFinite(ratio) ? ratio : 0)));
+
 export const LevelBar = ({ ratio, color, marker }) => {
   const { classes, theme } = useStyles();
-  const safe = Math.min(1, Math.max(0, Number.isFinite(ratio) ? ratio : 0));
+  const safe = useAnimatedRatio(ratio);
   return (
     <div className={classes.bar} aria-hidden>
       <div
@@ -366,7 +370,7 @@ export const LevelBar = ({ ratio, color, marker }) => {
 
 export const BatteryGlyph = ({ ratio, color, charging }) => {
   const { classes, cx } = useStyles();
-  const safe = Math.min(1, Math.max(0, Number.isFinite(ratio) ? ratio : 0));
+  const safe = useAnimatedRatio(ratio);
   return (
     <span className={classes.battery} style={{ direction: 'ltr' }} aria-hidden>
       <span className={classes.batteryBody}>

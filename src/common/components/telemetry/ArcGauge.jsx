@@ -44,7 +44,7 @@ const useStyles = makeStyles()((theme, { size, height }) => ({
   value: {
     fill: 'none',
     strokeLinecap: 'round',
-    transition: `stroke-dashoffset 900ms ${theme.tokens.motion.easing.emphasized}, stroke ${theme.tokens.motion.duration.slow}ms ease`,
+    transition: `stroke ${theme.tokens.motion.duration.slow}ms ease`,
   },
   zone: {
     fill: 'none',
@@ -66,7 +66,6 @@ const useStyles = makeStyles()((theme, { size, height }) => ({
   needle: {
     transformOrigin: `${CENTER}px ${CENTER}px`,
     transformBox: 'view-box',
-    transition: `transform 900ms ${theme.tokens.motion.easing.emphasized}`,
   },
   needleBody: {
     fill: theme.palette.primary.main,
@@ -126,10 +125,13 @@ const ArcGauge = ({
   const { classes, cx, theme } = useStyles({ size, height });
 
   const numeric = typeof value === 'number' && Number.isFinite(value) ? value : null;
-  const clamped = numeric == null ? min : Math.min(max, Math.max(min, numeric));
+  // Needle, arc and number all follow one animated value, so they move together and stream
+  // continuously when readings arrive every second (see useAnimatedNumber).
+  const animated = useAnimatedNumber(numeric);
+  const shown = numeric == null ? null : animated;
+  const clamped = shown == null ? min : Math.min(max, Math.max(min, shown));
   const ratio = max > min ? (clamped - min) / (max - min) : 0;
   const angle = start + ratio * sweep;
-  const animated = useAnimatedNumber(numeric);
 
   const toAngle = (v) => start + ((Math.min(max, Math.max(min, v)) - min) / (max - min)) * sweep;
   const fill = color || theme.palette.geometry.main;
