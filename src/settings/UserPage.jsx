@@ -39,6 +39,7 @@ import { map } from '../map/core/MapView';
 import useSettingsStyles from './common/useSettingsStyles';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import FormSection from './components/FormSection';
+import { DateField } from '../common/components/pickers';
 
 const UserPage = () => {
   const { classes } = useSettingsStyles();
@@ -370,9 +371,8 @@ const UserPage = () => {
             </Button>
           </FormSection>
           <FormSection title={t('sharedPermissions')} description={t('userPermissionsHelp')}>
-            <TextField
+            <DateField
               label={t('userExpirationTime')}
-              type="date"
               value={item.expirationTime ? item.expirationTime.split('T')[0] : '2099-01-01'}
               onChange={(e) => {
                 if (e.target.value) {
@@ -380,6 +380,7 @@ const UserPage = () => {
                 }
               }}
               helperText={t('userExpirationHelp')}
+              clearable={false}
               disabled={!manager}
             />
             <TextField

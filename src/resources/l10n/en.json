@@ -2306,5 +2306,19 @@
     "dashboardWCustomDesc": "Choose any data, grouping and display",
     "dashboardMCosts": "Costs",
     "dashboardMWorkOrderCost": "Work order cost",
-    "dashboardMRepairCost": "Repair cost"
+    "dashboardMRepairCost": "Repair cost",
+    "pickerClear": "Clear",
+    "pickerNow": "Now",
+    "pickerDone": "Done",
+    "pickerPreviousMonth": "Previous month",
+    "pickerNextMonth": "Next month",
+    "pickerPrevious": "Previous",
+    "pickerNext": "Next",
+    "pickerSelectStart": "Select a start date",
+    "pickerSelectEnd": "Select an end date",
+    "pickerStartTime": "Start time",
+    "pickerEndTime": "End time",
+    "pickerLast7Days": "Last 7 days",
+    "pickerLast30Days": "Last 30 days",
+    "pickerPeriod": "Period"
 }

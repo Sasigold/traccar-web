@@ -53,6 +53,7 @@ import {
   useFleetRows,
   useFleetVehicles,
 } from './stage5Data';
+import { DateTimeField } from '../common/components/pickers';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -201,8 +202,7 @@ const JobDialog = ({ job, pois, vehicles, drivers, onClose, onSaved }) => {
     </TextField>
   );
   const dateField = (key, labelKey) => (
-    <TextField
-      type="datetime-local"
+    <DateTimeField
       label={t(labelKey)}
       value={localInput(form[key])}
       onChange={(event) => setForm({ ...form, [key]: fromInput(event.target.value) })}

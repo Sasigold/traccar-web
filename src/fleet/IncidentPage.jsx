@@ -50,6 +50,7 @@ import {
   openFleetFile,
   uploadFleetFile,
 } from './fleetData';
+import { DateField, DateTimeField } from '../common/components/pickers';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -360,8 +361,8 @@ const IncidentPage = () => {
     />
   );
 
-  const claimField = (key, labelKey, props = {}) => (
-    <TextField
+  const claimField = (key, labelKey, props = {}, Field = TextField) => (
+    <Field
       label={t(labelKey)}
       value={claim[key] ?? ''}
       onChange={(event) => setClaim({ ...claim, [key]: event.target.value })}
@@ -370,7 +371,6 @@ const IncidentPage = () => {
   );
 
   const valid = incident && deviceId && devices[deviceId] && incident.occurred_at;
-  const dateProps = { type: 'date', slotProps: { inputLabel: { shrink: true } } };
   const numberProps = { type: 'number', slotProps: { htmlInput: { dir: 'ltr', step: 'any' } } };
 
   return (
@@ -406,8 +406,7 @@ const IncidentPage = () => {
                   </MenuItem>
                 ))}
               </TextField>
-              <TextField
-                type="datetime-local"
+              <DateTimeField
                 label={t('fleetIncidentOccurred')}
                 value={incident.occurred_at}
                 onChange={(event) => set({ occurred_at: event.target.value })}
@@ -601,7 +600,7 @@ const IncidentPage = () => {
               {claimField('claim_number', 'fleetIncidentClaimNumber', {
                 slotProps: { htmlInput: { dir: 'ltr' } },
               })}
-              {claimField('filed_at', 'fleetIncidentClaimFiledOn', dateProps)}
+              {claimField('filed_at', 'fleetIncidentClaimFiledOn', {}, DateField)}
               <TextField
                 select
                 label={t('deviceStatus')}
@@ -616,7 +615,7 @@ const IncidentPage = () => {
               </TextField>
               {claimField('deductible', 'fleetIncidentDeductible', numberProps)}
               {claimField('approved_amount', 'fleetIncidentApproved', numberProps)}
-              {claimField('paid_at', 'fleetIncidentPaid', dateProps)}
+              {claimField('paid_at', 'fleetIncidentPaid', {}, DateField)}
               {claimField('notes', 'fleetNotes', {
                 className: classes.full,
                 multiline: true,

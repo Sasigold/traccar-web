@@ -10,6 +10,7 @@ import fetchOrThrow from '../common/util/fetchOrThrow';
 import FormSection from './components/FormSection';
 import FormPage from './components/FormPage';
 import SaveBar from './components/SaveBar';
+import { DateTimeField } from '../common/components/pickers';
 
 const SharePage = () => {
   const navigate = useNavigate();
@@ -52,13 +53,12 @@ const SharePage = () => {
     >
       <FormSection title={t('formSectionBasic')}>
         <TextField
-          value={item.name}
+          value={item?.name || ''}
           label={t(type === 'group' ? 'groupDialog' : 'sharedDevice')}
           disabled
         />
-        <TextField
+        <DateTimeField
           label={t('userExpirationTime')}
-          type="datetime-local"
           value={expiration}
           onChange={(e) => setExpiration(e.target.value)}
           helperText={t('shareExpirationHelp')}

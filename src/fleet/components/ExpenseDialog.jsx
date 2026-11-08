@@ -16,6 +16,7 @@ import { useCatch } from '../../reactHelper';
 import { getFleetClient, unwrap } from '../../common/fleet/client';
 import { useFleetProfile } from '../../common/fleet/useFleet';
 import { ensureVehicle, uploadFleetFile } from '../fleetData';
+import { DateField } from '../../common/components/pickers';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -124,8 +125,7 @@ const ExpenseDialog = ({ onClose, onSaved }) => {
               </MenuItem>
             ))}
           </TextField>
-          <TextField
-            type="date"
+          <DateField
             label={t('fleetExpenseDate')}
             value={form.occurred_at}
             onChange={set('occurred_at')}

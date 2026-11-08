@@ -3,6 +3,7 @@ import { makeStyles } from 'tss-react/mui';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import FormSection from '../../settings/components/FormSection';
 import ExpiryBadge from './ExpiryBadge';
+import { DateField } from '../../common/components/pickers';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -97,8 +98,7 @@ const FleetFieldsSection = ({
       case 'date':
         return (
           <div key={field.key} className={classes.dateRow}>
-            <TextField
-              type="date"
+            <DateField
               label={label}
               value={value || ''}
               onChange={(event) => update(field.key, event.target.value)}

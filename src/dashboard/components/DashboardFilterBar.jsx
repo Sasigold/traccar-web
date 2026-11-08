@@ -13,7 +13,6 @@ import {
   MenuItem,
   OutlinedInput,
   Select,
-  TextField,
   Tooltip,
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
@@ -27,6 +26,7 @@ import { PERIODS, periodRange, shiftRange } from '../data/periods';
 import { REFRESH_OPTIONS } from '../model/schema';
 import { useDashboardData, useLastSynced } from '../data/DashboardDataContext';
 import { PERIOD_KEYS, periodLabel } from './periodLabel';
+import { DateRangeField } from '../../common/components/pickers';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -231,19 +231,13 @@ const DashboardFilterBar = ({ filters, refresh, onFilters, onRefresh }) => {
         <DialogTitle>{t('reportCustom')}</DialogTitle>
         <DialogContent>
           <div className={classes.fields}>
-            <TextField
-              type="datetime-local"
-              label={t('reportFrom')}
-              value={custom?.from ?? ''}
-              onChange={(event) => setCustom((value) => ({ ...value, from: event.target.value }))}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-            <TextField
-              type="datetime-local"
-              label={t('reportTo')}
-              value={custom?.to ?? ''}
-              onChange={(event) => setCustom((value) => ({ ...value, to: event.target.value }))}
-              slotProps={{ inputLabel: { shrink: true } }}
+            <DateRangeField
+              withTime
+              label={t('reportPeriod')}
+              from={custom?.from ?? ''}
+              to={custom?.to ?? ''}
+              onChange={(from, to) => setCustom({ from, to })}
+              fullWidth
             />
           </div>
         </DialogContent>
@@ -259,7 +253,7 @@ const DashboardFilterBar = ({ filters, refresh, onFilters, onRefresh }) => {
                 ...filters,
                 period: 'custom',
                 from: dayjs(custom.from).toISOString(),
-                to: dayjs(custom.to).toISOString(),
+                to: dayjs(custom.to).endOf('minute').toISOString(),
               });
               setCustom(null);
             }}

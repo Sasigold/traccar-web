@@ -20,6 +20,7 @@ import { useFleetProfile } from '../../common/fleet/useFleet';
 import { fromLocalInput, toLocalInput } from '../../common/fleet/incidents';
 import { ensureDriver, ensureVehicle, uploadFleetFile } from '../fleetData';
 import { whoDrove } from '../safetyData';
+import { DateField, DateTimeField } from '../../common/components/pickers';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -154,10 +155,10 @@ const ViolationDialog = ({ onClose, onSaved }) => {
                 </MenuItem>
               ))}
           </TextField>
-          <TextField
-            type="datetime-local"
+          <DateTimeField
             label={t('fleetIncidentOccurred')}
             value={form.occurred_at}
+            minuteStep={1}
             onChange={set('occurred_at')}
             slotProps={{ inputLabel: { shrink: true } }}
           />
@@ -223,8 +224,7 @@ const ViolationDialog = ({ onClose, onSaved }) => {
             onChange={set('points')}
             slotProps={{ htmlInput: { dir: 'ltr' } }}
           />
-          <TextField
-            type="date"
+          <DateField
             label={t('fleetViolationDue')}
             value={form.due_at}
             onChange={set('due_at')}

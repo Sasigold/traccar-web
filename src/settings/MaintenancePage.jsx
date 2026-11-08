@@ -19,6 +19,7 @@ import {
 import { useTranslation } from '../common/components/LocalizationProvider';
 import usePositionAttributes from '../common/attributes/usePositionAttributes';
 import SettingsMenu from './components/SettingsMenu';
+import { DateField } from '../common/components/pickers';
 import FormSection from './components/FormSection';
 
 const MaintenancePage = () => {
@@ -105,15 +106,31 @@ const MaintenancePage = () => {
               </Select>
               <FormHelperText>{t('maintenanceTypeHelp')}</FormHelperText>
             </FormControl>
-            <TextField
-              type={item.type?.endsWith('Time') ? 'date' : 'number'}
-              value={rawToValue(true, item.start) || ''}
-              onChange={(e) => setItem({ ...item, start: valueToRaw(true, e.target.value) })}
-              label={
-                labels.start ? `${t('maintenanceStart')} (${labels.start})` : t('maintenanceStart')
-              }
-              helperText={t('maintenanceStartHelp')}
-            />
+            {item.type?.endsWith('Time') ? (
+              <DateField
+                value={rawToValue(true, item.start) || ''}
+                onChange={(e) => setItem({ ...item, start: valueToRaw(true, e.target.value) })}
+                label={
+                  labels.start
+                    ? `${t('maintenanceStart')} (${labels.start})`
+                    : t('maintenanceStart')
+                }
+                helperText={t('maintenanceStartHelp')}
+                clearable={false}
+              />
+            ) : (
+              <TextField
+                type="number"
+                value={rawToValue(true, item.start) || ''}
+                onChange={(e) => setItem({ ...item, start: valueToRaw(true, e.target.value) })}
+                label={
+                  labels.start
+                    ? `${t('maintenanceStart')} (${labels.start})`
+                    : t('maintenanceStart')
+                }
+                helperText={t('maintenanceStartHelp')}
+              />
+            )}
             <TextField
               type="number"
               value={rawToValue(false, item.period) || ''}

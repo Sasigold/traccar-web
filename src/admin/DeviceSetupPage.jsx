@@ -49,6 +49,7 @@ import {
   setOdometer,
   syncComputedAttributes,
 } from './adminApi';
+import { DateField } from '../common/components/pickers';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -355,8 +356,7 @@ const DeviceSetupPage = () => {
                   disabled={!access.customersManage}
                 />
               </div>
-              <TextField
-                type="date"
+              <DateField
                 label={t('adminInstalledAt')}
                 value={registry.installed_at || ''}
                 onChange={(event) => setReg('installed_at', event.target.value)}

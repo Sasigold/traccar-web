@@ -2306,5 +2306,19 @@
     "dashboardWCustomDesc": "בחרו כל נתון, חלוקה ותצוגה",
     "dashboardMCosts": "עלויות",
     "dashboardMWorkOrderCost": "עלות הזמנות עבודה",
-    "dashboardMRepairCost": "עלות תיקונים"
+    "dashboardMRepairCost": "עלות תיקונים",
+    "pickerClear": "ניקוי",
+    "pickerNow": "עכשיו",
+    "pickerDone": "אישור",
+    "pickerPreviousMonth": "החודש הקודם",
+    "pickerNextMonth": "החודש הבא",
+    "pickerPrevious": "הקודם",
+    "pickerNext": "הבא",
+    "pickerSelectStart": "בחרו תאריך התחלה",
+    "pickerSelectEnd": "בחרו תאריך סיום",
+    "pickerStartTime": "שעת התחלה",
+    "pickerEndTime": "שעת סיום",
+    "pickerLast7Days": "7 הימים האחרונים",
+    "pickerLast30Days": "30 הימים האחרונים",
+    "pickerPeriod": "תקופה"
 }
