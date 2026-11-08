@@ -5,6 +5,9 @@ const { reducer, actions } = createSlice({
   initialState: {
     items: {},
     selectedId: null,
+    // Closing the vehicle card hides it but keeps the vehicle selected, so the map keeps
+    // following it. Selecting a vehicle (again) shows the card.
+    cardHidden: false,
     loaded: false,
   },
   reducers: {
@@ -19,6 +22,10 @@ const { reducer, actions } = createSlice({
     selectId(state, action) {
       state.selectTime = Date.now();
       state.selectedId = action.payload;
+      state.cardHidden = false;
+    },
+    hideCard(state) {
+      state.cardHidden = true;
     },
     remove(state, action) {
       delete state.items[action.payload];

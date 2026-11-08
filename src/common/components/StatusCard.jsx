@@ -32,6 +32,7 @@ import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded';
 import { glass, statusColor } from '../theme/surfaces';
 import DeviceTile from './brand/DeviceTile';
 import TelemetryStrip from './telemetry/TelemetryStrip';
+import { setStatusCardElement, statusCardMoved } from './statusCardArea';
 import { useTranslation } from './LocalizationProvider';
 import RemoveDialog from './RemoveDialog';
 import PositionValue from './PositionValue';
@@ -292,8 +293,9 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
             enableResizing={false}
             dragHandleClassName="draggable-header"
             style={{ position: 'relative' }}
+            onDragStop={statusCardMoved}
           >
-            <Card elevation={0} className={classes.card}>
+            <Card elevation={0} className={classes.card} ref={setStatusCardElement}>
               {deviceImage ? (
                 <CardMedia
                   className={cx('draggable-header', classes.media)}

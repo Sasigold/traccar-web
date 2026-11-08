@@ -116,6 +116,11 @@ export const deviceIconKey = (category, moving) => {
   if (moving && topDownShapes.hasOwnProperty(key)) {
     return `${topDownShapes[key]}TopDown`;
   }
+  // A tracker without a vehicle type is still, in a fleet, almost always a car: drive it as one
+  // rather than sliding a map pin along the road.
+  if (moving && key === 'default') {
+    return 'carTopDown';
+  }
   return moving && movingCategories.has(key) ? `${key}Moving` : key;
 };
 

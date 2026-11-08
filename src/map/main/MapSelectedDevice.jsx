@@ -4,8 +4,11 @@ import { useSelector } from 'react-redux';
 import { Button } from '@mui/material';
 import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
 import { useTranslation } from '../../common/components/LocalizationProvider';
-import useFeatures from '../../common/util/useFeatures';
-import dimensions from '../../common/theme/dimensions';
+import {
+  getStatusCardRect,
+  subscribeStatusCard,
+  uncoveredOffset,
+} from '../../common/components/statusCardArea';
 import { map } from '../core/MapView';
 import { usePrevious } from '../../reactHelper';
 import { useAttributePreference } from '../../common/util/preferences';
@@ -17,11 +20,11 @@ import { prefersReducedMotion } from '../core/movingIcon';
 // the vehicle so it stays at the same spot on screen, frame by frame, in step with the marker's
 // glide (both are fed the same fixes, see motion.js). Zooming and rotating keep the lock; dragging
 // the map with one finger or the mouse releases it; the "back to vehicle" button that then
-// appears (or selecting the vehicle again) re-locks.
+// appears (or selecting the vehicle again) re-locks. Closing the vehicle card keeps the lock: the
+// vehicle moves to the middle of the map, and stays clear of the card while it is open.
 // With the "map follows the selected vehicle" preference off, the map only centers once.
 const MapSelectedDevice = () => {
   const t = useTranslation();
-  const features = useFeatures();
   const currentTime = useSelector((state) => state.devices.selectTime);
   const currentId = useSelector((state) => state.devices.selectedId);
   const previousTime = usePrevious(currentTime);
@@ -32,16 +35,14 @@ const MapSelectedDevice = () => {
 
   const position = useSelector((state) => state.session.positions[currentId]);
 
-  // The vehicle sits above the true center so the status card does not cover it.
-  const offsetY = features.disableStatusCard ? 0 : -dimensions.popupMapOffset / 2;
-
   const followingRef = useRef(false);
   const trackRef = useRef(null);
   const frameRef = useRef(null);
-  const offsetRef = useRef(offsetY);
+  // Vertical screen offset of the followed vehicle from the map's center: the middle of the part
+  // of the map the vehicle card leaves uncovered, wherever the card sits (see statusCardArea).
+  const offsetRef = useRef(0);
   const pointerDownRef = useRef(false);
   const [released, setReleased] = useState(false);
-  offsetRef.current = offsetY;
 
   // Put the followed vehicle back on its spot: easeTo for a soft settle after a gesture or the
   // initial fly-in, jumpTo for the per-frame glide.
@@ -88,6 +89,32 @@ const MapSelectedDevice = () => {
     };
     frameRef.current = requestAnimationFrame(step);
   };
+
+  const measureOffset = () =>
+    uncoveredOffset(map.getContainer().getBoundingClientRect(), getStatusCardRect());
+
+  // The card opened, closed, grew or was dragged: move the followed vehicle into the uncovered
+  // part of the map.
+  useEffect(() => {
+    const update = () => {
+      const next = measureOffset();
+      if (Math.abs(next - offsetRef.current) < 1) {
+        return;
+      }
+      offsetRef.current = next;
+      if (followingRef.current && trackRef.current && !map.isMoving() && !pointerDownRef.current) {
+        centerOn(shownCoordinates(), prefersReducedMotion() ? 0 : 300);
+        startLoop();
+      }
+    };
+    const unsubscribe = subscribeStatusCard(update);
+    window.addEventListener('resize', update);
+    return () => {
+      unsubscribe();
+      window.removeEventListener('resize', update);
+    };
+    // eslint-disable-next-line @eslint-react/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const onDragStart = (event) => {
@@ -151,6 +178,7 @@ const MapSelectedDevice = () => {
     }
     const selected = currentId !== previousId || currentTime !== previousTime;
     if (selected) {
+      offsetRef.current = measureOffset();
       followingRef.current = mapFollow;
       setReleased(false);
       trackRef.current = createTrack(position);
@@ -159,7 +187,7 @@ const MapSelectedDevice = () => {
         {
           center: toMapCoordinates(position.longitude, position.latitude),
           zoom: Math.max(map.getZoom(), selectZoom),
-          offset: [0, offsetY],
+          offset: [0, offsetRef.current],
         },
         { followSettle: true },
       );
@@ -170,7 +198,7 @@ const MapSelectedDevice = () => {
       }
     }
     // eslint-disable-next-line @eslint-react/exhaustive-deps
-  }, [currentId, previousId, currentTime, previousTime, mapFollow, position, selectZoom, offsetY]);
+  }, [currentId, previousId, currentTime, previousTime, mapFollow, position, selectZoom]);
 
   const relock = () => {
     followingRef.current = true;
