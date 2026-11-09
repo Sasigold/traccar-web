@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { test, expect, gotoReady } from './fixtures';
 import { fakeFleet, writeMode } from './fakeFleet';
 
@@ -166,4 +167,86 @@ test('a question from Ctrl+K: the data comes from tools run here, the answer has
 
   await panel.getByRole('link', { name: /פתיחה כדוח/ }).click();
   await expect(page).toHaveURL(/\/reports\/summary\?from=.*deviceId=1/);
+});
+
+test('a photo of the vehicle license fills the form, and nothing is saved until Save', async ({
+  page,
+}) => {
+  await writeMode(page);
+  const sent = [];
+  await fakeFleet(page, {
+    users: { 1: manager },
+    rpc: { fleet_features: ['ai'] },
+    functions: {
+      'fleet-ai/extract': (body) => {
+        sent.push(body);
+        return {
+          fields: {
+            plate_number: '1234567',
+            test_expiry: '2027-03-01',
+            make: 'Ford',
+            model: 'Transit Custom',
+            model_year: 2022,
+            vin: null,
+            owner_name: 'הובלות הצפון',
+          },
+          unsure: ['test_expiry'],
+        };
+      },
+    },
+  });
+  const writes = [];
+  page.on('request', (request) => {
+    if (request.method() === 'PUT' && /\/api\/devices\/1$/.test(request.url())) writes.push(1);
+  });
+  await gotoReady(page, '/settings/device/1');
+  await page.getByLabel('סריקת רישיון רכב').setInputFiles({
+    name: 'license.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('iVBORw0KGgo=', 'base64'),
+  });
+  const dialog = page.getByRole('dialog', { name: 'סריקת רישיון רכב' });
+  await expect(dialog.getByRole('status')).toHaveText(/בדקו את 1 השדות המסומנים/);
+  await expect(dialog.getByRole('row', { name: /תוקף טסט/ }).getByText('לבדוק')).toBeVisible();
+  expect(sent[0]).toMatchObject({ kind: 'vehicle_license', media_type: 'image/png' });
+  await dialog.getByRole('button', { name: 'מילוי הטופס' }).click();
+  await expect(page.locator('input[value="Transit Custom"]')).toBeVisible();
+  expect(writes).toHaveLength(0);
+});
+
+test('a garage invoice becomes the work order lines', async ({ page }) => {
+  await writeMode(page);
+  await fakeFleet(page, {
+    users: { 1: manager },
+    rpc: { fleet_features: ['ai', 'workOrders'] },
+    functions: {
+      'fleet-ai/extract': () => ({
+        fields: {
+          vendor_name: 'מוסך הצפון',
+          invoice_number: 'A-77',
+          date: '2026-11-05',
+          plate_number: '1234567',
+          odometer: 84000,
+          lines: [
+            { description: 'רפידות בלם', kind: 'part', quantity: 2, amount: 400 },
+            { description: 'עבודה', kind: 'labor', quantity: 1, amount: 250 },
+          ],
+          subtotal: 650,
+          vat: 110.5,
+          total: 760.5,
+        },
+        unsure: [],
+      }),
+    },
+  });
+  await gotoReady(page, '/fleet/work-order');
+  await page.getByLabel('סריקת חשבונית מוסך').setInputFiles({
+    name: 'invoice.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-1.4'),
+  });
+  await page.getByRole('dialog').getByRole('button', { name: 'מילוי הטופס' }).click();
+  await expect(page.locator('input[value="רפידות בלם"]')).toBeVisible();
+  await expect(page.locator('input[value="עבודה"]')).toBeVisible();
+  await expect(page.getByLabel('מספר חשבונית')).toHaveValue('A-77');
 });

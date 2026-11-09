@@ -17,6 +17,8 @@ import {
   Typography,
 } from '@mui/material';
 import ResponsiveTable from '../common/components/table/ResponsiveTable';
+import ScanDocumentButton from './components/ScanDocumentButton';
+import { invoiceValues } from '../common/fleet/documentScan';
 import { makeStyles } from 'tss-react/mui';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
@@ -491,6 +493,23 @@ const WorkOrderPage = () => {
               {t('fleetWorkOrderTotal')}: {money(itemsTotal(items))}
             </Typography>
             <div className={classes.grid}>
+              {canWrite && (
+                <ScanDocumentButton
+                  kind="garage_invoice"
+                  label={t('scanGarageInvoice')}
+                  onApply={({ fields }, file) => {
+                    // AI-04: the invoice's lines replace empty lines; the photo becomes the
+                    // order's invoice file. Saved only with the order.
+                    const scanned = invoiceValues(fields);
+                    setItems((current) => [
+                      ...current.filter((line) => line.description.trim()),
+                      ...scanned.lines,
+                    ]);
+                    if (scanned.invoiceNumber) set({ invoice_number: scanned.invoiceNumber });
+                    setInvoice(file);
+                  }}
+                />
+              )}
               <TextField
                 label={t('fleetInvoiceNumber')}
                 value={order.invoice_number || ''}

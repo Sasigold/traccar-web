@@ -19,6 +19,8 @@ import FleetDocumentsSection from './components/FleetDocumentsSection';
 import DriverAssignmentSection from '../fleet/components/DriverAssignmentSection';
 import HistorySection from '../fleet/components/HistorySection';
 import FleetFieldsSection from '../fleet/components/FleetFieldsSection';
+import ScanDocumentButton from '../fleet/components/ScanDocumentButton';
+import { driverValues } from '../common/fleet/documentScan';
 import { digitsOf } from '../common/util/israeliFields';
 import {
   driverExpiryFields,
@@ -115,6 +117,21 @@ const DriverPage = () => {
             attributes={item.attributes}
             setAttributes={setAttributes}
             showExpiry
+            actions={
+              <ScanDocumentButton
+                kind="driver_license"
+                label={t('scanDriverLicense')}
+                onApply={({ fields }) => {
+                  // AI-04: a scanned driving license fills the license (not saved yet).
+                  const { values, name } = driverValues(fields, item);
+                  setItem({
+                    ...item,
+                    ...(name ? { name } : {}),
+                    attributes: { ...item.attributes, ...values },
+                  });
+                }}
+              />
+            }
           />
           {item.id && safety && (
             <Button

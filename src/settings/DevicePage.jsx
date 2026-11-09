@@ -24,6 +24,8 @@ import { saveFleetRecord, useFleetAccess, useFleetOverlay } from '../fleet/fleet
 import FleetDocumentsSection from './components/FleetDocumentsSection';
 import HistorySection from '../fleet/components/HistorySection';
 import FleetFieldsSection from '../fleet/components/FleetFieldsSection';
+import ScanDocumentButton from '../fleet/components/ScanDocumentButton';
+import { vehicleValues } from '../common/fleet/documentScan';
 import { looksLikeBadImei, samePlate } from '../common/util/israeliFields';
 import MaintenanceStatusSection from '../fleet/components/MaintenanceStatusSection';
 import {
@@ -70,6 +72,22 @@ const DevicePage = () => {
   });
 
   const setAttributes = (attributes) => setItem({ ...item, attributes });
+
+  // AI-04: a scanned vehicle license or policy fills the vehicle's fields (not saved yet). A
+  // document of another vehicle is said and not applied.
+  const applyScan = (kind, fields) => {
+    const { values, otherVehicle } = vehicleValues(kind, fields, item.attributes || {});
+    if (otherVehicle) {
+      dispatch(
+        messagesActions.push({
+          message: t('scanOtherVehicle').replace('{0}', fields.plate_number),
+          severity: 'warning',
+        }),
+      );
+      return;
+    }
+    setAttributes({ ...item.attributes, ...values });
+  };
 
   const fleet = useFleetAccess('vehicle');
   useFleetOverlay('vehicle', item, setItem);
@@ -149,7 +167,14 @@ const DevicePage = () => {
             setAttributes={setAttributes}
             duplicateOf={plateTakenBy}
             actions={
-              <GovRegistryButton attributes={item.attributes} setAttributes={setAttributes} />
+              <>
+                <ScanDocumentButton
+                  kind="vehicle_license"
+                  label={t('scanVehicleLicense')}
+                  onApply={({ fields }) => applyScan('vehicle_license', fields)}
+                />
+                <GovRegistryButton attributes={item.attributes} setAttributes={setAttributes} />
+              </>
             }
           />
           <FleetFieldsSection
@@ -160,6 +185,13 @@ const DevicePage = () => {
             attributes={item.attributes}
             setAttributes={setAttributes}
             showExpiry
+            actions={
+              <ScanDocumentButton
+                kind="insurance"
+                label={t('scanInsurance')}
+                onApply={({ fields }) => applyScan('insurance', fields)}
+              />
+            }
           />
           {item.id && <MaintenanceStatusSection deviceId={item.id} />}
           <FormSection title={t('formSectionMore')}>
