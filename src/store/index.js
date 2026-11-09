@@ -45,7 +45,12 @@ export { reportsActions } from './reports';
 export { fleetActions } from './fleet';
 export { commandsActions } from './commands';
 
-export default configureStore({
-  reducer,
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(throttleMiddleware),
-});
+// A store of the app's shape; tests create their own with a starting state (FND-07).
+export const createAppStore = (preloadedState) =>
+  configureStore({
+    reducer,
+    preloadedState,
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(throttleMiddleware),
+  });
+
+export default createAppStore();
