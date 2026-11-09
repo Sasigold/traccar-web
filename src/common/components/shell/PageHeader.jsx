@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { Breadcrumbs, IconButton, Link, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -82,6 +83,12 @@ const PageHeader = ({ breadcrumbs, title, description, actions, onOpenMenu, back
 
   const crumbs = breadcrumbs || [];
   const resolvedTitle = title ?? (crumbs.length ? t(crumbs[crumbs.length - 1]) : '');
+  // LIV-16: the browser tab says which screen this is.
+  useEffect(() => {
+    if (typeof resolvedTitle === 'string' && resolvedTitle) {
+      document.title = `${resolvedTitle} · viper fleet`;
+    }
+  }, [resolvedTitle]);
   const parents = crumbs.slice(0, -1);
 
   return (
@@ -117,7 +124,7 @@ const PageHeader = ({ breadcrumbs, title, description, actions, onOpenMenu, back
             )}
           </Breadcrumbs>
         )}
-        <Typography variant={desktop ? 'h4' : 'h6'} className={classes.title} noWrap>
+        <Typography variant={desktop ? 'h4' : 'h6'} component="h1" className={classes.title} noWrap>
           {resolvedTitle}
         </Typography>
         {desktop && description && (

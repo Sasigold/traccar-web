@@ -3382,5 +3382,7 @@
     "shortcutEscape": "סגירה, או ביטול הבחירה במפה",
     "shortcutReplayPlay": "בשחזור מסלול: הפעלה והשהיה",
     "shortcutReplayStep": "בשחזור מסלול: נקודה קדימה או אחורה",
-    "shortcutReplayMinute": "בשחזור מסלול: דקה קדימה או אחורה"
+    "shortcutReplayMinute": "בשחזור מסלול: דקה קדימה או אחורה",
+    "shellSkipToContent": "דילוג לתוכן",
+    "mapLiveTitle": "מפה חיה"
 }

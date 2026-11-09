@@ -88,6 +88,12 @@ const useStyles = makeStyles()((theme, { collapsed }) => ({
       outlineOffset: 2,
     },
   },
+  listItem: {
+    listStyle: 'none',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: collapsed ? 'center' : 'stretch',
+  },
   itemIcon: {
     minWidth: 0,
     width: 24,
@@ -146,18 +152,13 @@ const NavRail = () => {
           <BrandLogo variant="reverse" height={34} />
         )}
       </div>
-      <List
-        component="nav"
-        aria-label={t('shellNavigation')}
-        className={classes.list}
-        disablePadding
-      >
+      {/* LIV-16: a plain list inside the one navigation landmark. */}
+      <List className={classes.list} disablePadding>
         {items.map((item) => {
           const Icon = item.icon;
           const selected = item.match(location.pathname);
           const button = (
             <ListItemButton
-              key={item.key}
               component={Link}
               to={item.path}
               selected={selected}
@@ -170,12 +171,16 @@ const NavRail = () => {
               {!collapsed && <ListItemText primary={t(item.titleKey)} className={classes.label} />}
             </ListItemButton>
           );
-          return collapsed ? (
-            <Tooltip key={item.key} title={t(item.titleKey)} placement={tooltipPlacement}>
-              {button}
-            </Tooltip>
-          ) : (
-            button
+          return (
+            <li key={item.key} className={classes.listItem}>
+              {collapsed ? (
+                <Tooltip title={t(item.titleKey)} placement={tooltipPlacement}>
+                  {button}
+                </Tooltip>
+              ) : (
+                button
+              )}
+            </li>
           );
         })}
       </List>

@@ -189,6 +189,11 @@ const MainPage = () => {
     }
   }, [driverRole, navigate]);
 
+  // LIV-16: the browser tab names the screen.
+  useEffect(() => {
+    document.title = `${t('mapLiveTitle')} · viper fleet`;
+  }, [t]);
+
   useEffect(() => {
     if (selectedDeviceId) {
       rememberDevice(selectedDeviceId);

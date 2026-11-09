@@ -3382,5 +3382,7 @@
     "shortcutEscape": "Close, or clear the map selection",
     "shortcutReplayPlay": "In route replay: play and pause",
     "shortcutReplayStep": "In route replay: a point forward or back",
-    "shortcutReplayMinute": "In route replay: a minute forward or back"
+    "shortcutReplayMinute": "In route replay: a minute forward or back",
+    "shellSkipToContent": "Skip to content",
+    "mapLiveTitle": "Live map"
 }

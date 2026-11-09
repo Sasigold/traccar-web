@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import SocketController from './SocketController';
@@ -13,6 +13,7 @@ import MotionController from './main/MotionController';
 import TermsDialog from './common/components/TermsDialog';
 import Loader from './common/components/Loader';
 import AppShell from './common/components/shell/AppShell';
+import RouteProgress from './common/components/shell/RouteProgress';
 import PageErrorBoundary from './common/components/PageErrorBoundary';
 import fetchOrThrow, { UNAUTHORIZED_EVENT } from './common/util/fetchOrThrow';
 
@@ -96,7 +97,9 @@ const App = () => {
       <MotionController />
       <AppShell>
         <PageErrorBoundary>
-          <Outlet />
+          <Suspense fallback={<RouteProgress />}>
+            <Outlet />
+          </Suspense>
         </PageErrorBoundary>
       </AppShell>
     </>

@@ -1,4 +1,6 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useTranslation } from '../LocalizationProvider';
 import { useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
@@ -40,6 +42,22 @@ const useStyles = makeStyles()((theme) => ({
       gridTemplateColumns: 'auto minmax(0, 1fr)',
     },
   },
+  skip: {
+    position: 'fixed',
+    top: theme.spacing(1),
+    insetInlineStart: theme.spacing(1),
+    zIndex: theme.zIndex.tooltip,
+    padding: theme.spacing(1, 2),
+    borderRadius: theme.tokens.radius.pill,
+    backgroundColor: theme.palette.cta.main,
+    color: theme.palette.cta.contrastText,
+    fontWeight: 600,
+    textDecoration: 'none',
+    transform: 'translateY(-200%)',
+    '&:focus': {
+      transform: 'none',
+    },
+  },
   content: {
     position: 'relative',
     flex: 1,
@@ -70,6 +88,25 @@ const AppShell = ({ children }) => {
   const [eventsOpen, setEventsOpen] = useState(false);
   const [railCollapsed, setRailCollapsed] = usePersistedState('navRailCollapsed', false);
   const aiAvailable = useAiAvailable();
+  const t = useTranslation();
+
+  // LIV-16: after moving to another screen, the focus goes to its title, not the menu item.
+  const { pathname } = useLocation();
+  const firstRouteRef = useRef(true);
+  useEffect(() => {
+    if (firstRouteRef.current) {
+      firstRouteRef.current = false;
+      return undefined;
+    }
+    const frame = requestAnimationFrame(() => {
+      const heading = document.querySelector('#main-content h1');
+      if (heading) {
+        heading.setAttribute('tabindex', '-1');
+        heading.focus({ preventScroll: true });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [pathname]);
   // The assistant keeps its conversation while closed; null until first opened.
   const [assistant, setAssistant] = useState(null);
   const openAssistant = useCallback(
@@ -153,10 +190,16 @@ const AppShell = ({ children }) => {
   return (
     <ShellContext value={value}>
       <div className={cx(classes.root, showRail && classes.withRail)} style={vars}>
+        {/* LIV-16: the first stop of the keyboard. */}
+        <a href="#main-content" className={classes.skip}>
+          {t('shellSkipToContent')}
+        </a>
         {showRail && <NavRail />}
         <TopBar />
         <ImpersonationBanner />
         <main
+          id="main-content"
+          tabIndex={-1}
           className={classes.content}
           style={showTabs ? undefined : { paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         >
