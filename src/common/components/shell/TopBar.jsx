@@ -98,6 +98,11 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
+// The shortcut's name on this computer.
+const isMac =
+  typeof navigator !== 'undefined' &&
+  /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+
 const TopBar = () => {
   const { classes } = useStyles();
   const theme = useTheme();
@@ -124,7 +129,8 @@ const TopBar = () => {
         <ButtonBase className={classes.trigger} onClick={openPalette}>
           <SearchRoundedIcon fontSize="small" />
           <span className={classes.triggerText}>{t('shellCommandPalette')}</span>
-          <span className={classes.kbd}>Ctrl K</span>
+          {/* LIV-15: the shortcut as the keyboard shows it. */}
+          <span className={classes.kbd}>{isMac ? '⌘K' : 'Ctrl K'}</span>
         </ButtonBase>
       ) : (
         <div className={classes.spacer} />

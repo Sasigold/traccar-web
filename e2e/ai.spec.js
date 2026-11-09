@@ -151,7 +151,7 @@ test('a question from Ctrl+K: the data comes from tools run here, the answer has
   await gotoReady(page, '/');
   await page.keyboard.press('Control+k');
   await page.keyboard.type('מי נסע הכי הרבה השבוע?');
-  await page.getByRole('button', { name: /שאלה ל-AI/ }).click();
+  await page.getByRole('option', { name: /שאלה ל-AI/ }).click();
 
   const panel = page.getByRole('dialog', { name: 'שאלה על הצי' });
   await expect(panel.getByText('Delivery Van נסע הכי הרבה השבוע.')).toBeVisible();

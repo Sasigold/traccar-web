@@ -9,6 +9,7 @@ import NavRail from './NavRail';
 import TopBar from './TopBar';
 import MobileTabs from './MobileTabs';
 import CommandPalette from './CommandPalette';
+import ShortcutsDialog from './ShortcutsDialog';
 import EventsDrawer from './EventsDrawer';
 import AlertBanner from './AlertBanner';
 import ImpersonationBanner from './ImpersonationBanner';
@@ -65,6 +66,7 @@ const AppShell = ({ children }) => {
   const chromeVisible = !features.disableTabs;
 
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [eventsOpen, setEventsOpen] = useState(false);
   const [railCollapsed, setRailCollapsed] = usePersistedState('navRailCollapsed', false);
   const aiAvailable = useAiAvailable();
@@ -83,6 +85,12 @@ const AppShell = ({ children }) => {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
+      // LIV-15: "?" opens the list of shortcuts.
+      if (event.key === '?' && !isEditable(event.target) && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        setShortcutsOpen(true);
+        return;
+      }
       const key = event.key?.toLowerCase();
       const command = key === 'k' && (event.ctrlKey || event.metaKey);
       const slash = event.key === '/' && !event.ctrlKey && !event.metaKey && !event.altKey;
@@ -167,6 +175,7 @@ const AppShell = ({ children }) => {
           />
         )}
         <CommandPalette open={paletteOpen} onClose={closePalette} />
+        <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
         {assistant && aiAvailable && (
           <Suspense fallback={null}>
             <AssistantPanel

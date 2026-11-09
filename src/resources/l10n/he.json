@@ -3371,5 +3371,16 @@
     "mapSwitchLayer": "החלפת שכבה",
     "mapSearchNotFound": "לא נמצא מקום בשם הזה",
     "cardNoVideo": "המכשיר הזה לא תומך בווידאו חי",
-    "cardNoPosition": "לרכב הזה עדיין אין מיקום. הוא יופיע במפה אחרי הדיווח הראשון של המכשיר."
+    "cardNoPosition": "לרכב הזה עדיין אין מיקום. הוא יופיע במפה אחרי הדיווח הראשון של המכשיר.",
+    "shellVehicleActions": "פעולות על {0}",
+    "shellFollow": "מעקב במפה",
+    "shellCallDriver": "התקשרות לנהג",
+    "shellResultCount": "{0} תוצאות",
+    "shortcutsTitle": "קיצורי מקלדת",
+    "shortcutPalette": "חיפוש ומעבר מהיר",
+    "shortcutHelp": "רשימת הקיצורים",
+    "shortcutEscape": "סגירה, או ביטול הבחירה במפה",
+    "shortcutReplayPlay": "בשחזור מסלול: הפעלה והשהיה",
+    "shortcutReplayStep": "בשחזור מסלול: נקודה קדימה או אחורה",
+    "shortcutReplayMinute": "בשחזור מסלול: דקה קדימה או אחורה"
 }

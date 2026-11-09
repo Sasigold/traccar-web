@@ -21,6 +21,11 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import SmartToyRoundedIcon from '@mui/icons-material/SmartToyRounded';
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
+import MyLocationRoundedIcon from '@mui/icons-material/MyLocationRounded';
+import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
+import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded';
+import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded';
+import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import { useLivePositions } from '../../fleet/usePrivacy';
 import { devicesActions } from '../../../store';
 import { useTranslation } from '../LocalizationProvider';
@@ -103,8 +108,15 @@ const useStyles = makeStyles()((theme) => ({
     borderRadius: theme.tokens.radius.md,
     marginInline: 0,
     gap: theme.spacing(1),
-    '&.Mui-selected': {
+    '&.Mui-selected, &.Mui-selected:hover, &.Mui-selected.Mui-focusVisible': {
       backgroundColor: alpha(theme.palette.primary.main, 0.1),
+    },
+    // On the highlight's tint the secondary line takes the darker shade (WCAG 1.4.3).
+    '&.Mui-selected .MuiListItemText-secondary': {
+      color: theme.palette.surface.textSecondaryOnTint,
+    },
+    '&.Mui-selected mark': {
+      color: theme.palette.text.primary,
     },
     '&.Mui-selected::before': {
       display: 'none',
@@ -112,6 +124,14 @@ const useStyles = makeStyles()((theme) => ({
   },
   entry: {
     listStyle: 'none',
+  },
+  srOnly: {
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    overflow: 'hidden',
+    clip: 'rect(0 0 0 0)',
+    whiteSpace: 'nowrap',
   },
   empty: {
     listStyle: 'none',
@@ -235,6 +255,54 @@ const CommandPalette = ({ open, onClose }) => {
         title: t('deviceTitle'),
         entries: found.map((item) => deviceEntry(item.device, item.match)),
       });
+      // LIV-15: one vehicle found: what can be done with it, right here.
+      if (found.length === 1) {
+        const { device } = found[0];
+        const phone = drivers[positions[device.id]?.attributes?.driverUniqueId]?.attributes?.phone;
+        deviceSections.push({
+          key: 'deviceActions',
+          title: t('shellVehicleActions').replace('{0}', device.name),
+          entries: [
+            {
+              id: `follow-${device.id}`,
+              title: t('shellFollow'),
+              icon: MyLocationRoundedIcon,
+              onSelect: () => {
+                dispatch(devicesActions.selectId(device.id));
+                navigate('/');
+              },
+            },
+            {
+              id: `replay-${device.id}`,
+              title: t('cardReplayToday'),
+              icon: RouteRoundedIcon,
+              onSelect: () => navigate(`/replay?deviceId=${device.id}`),
+            },
+            {
+              id: `dials-${device.id}`,
+              title: t('cardLiveDials'),
+              icon: SpeedRoundedIcon,
+              onSelect: () => navigate(`/telemetry/${device.id}`),
+            },
+            {
+              id: `card-${device.id}`,
+              title: t('vehicleCard'),
+              icon: DirectionsCarRoundedIcon,
+              onSelect: () => navigate(`/fleet/vehicle/${device.id}`),
+            },
+            ...(phone
+              ? [
+                  {
+                    id: `call-${device.id}`,
+                    title: t('shellCallDriver'),
+                    icon: PhoneRoundedIcon,
+                    onSelect: () => window.open(`tel:${phone}`),
+                  },
+                ]
+              : []),
+          ],
+        });
+      }
     } else {
       const recent = recentDeviceIds()
         .map((id) => devices[id])
@@ -471,15 +539,35 @@ const CommandPalette = ({ open, onClose }) => {
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={handleKeyDown}
           autoFocus
-          inputProps={{ 'aria-label': t('shellCommandPalette') }}
+          inputProps={{
+            'aria-label': t('shellCommandPalette'),
+            // LIV-15: a combobox over the results, so screen readers follow the highlight.
+            role: 'combobox',
+            'aria-expanded': true,
+            'aria-controls': 'command-palette-results',
+            'aria-autocomplete': 'list',
+            'aria-activedescendant': flat[highlighted]
+              ? `command-${flat[highlighted].id}`
+              : undefined,
+          }}
         />
         <span className={classes.kbd}>Esc</span>
       </div>
-      <List ref={listRef} className={classes.list} disablePadding>
+      <Typography component="div" role="status" className={classes.srOnly}>
+        {t('shellResultCount').replace('{0}', flat.length)}
+      </Typography>
+      <List
+        ref={listRef}
+        className={classes.list}
+        disablePadding
+        id="command-palette-results"
+        role="listbox"
+        aria-label={t('shellCommandPalette')}
+      >
         {groups.map((group) => (
-          <li key={group.key}>
-            <ul style={{ padding: 0 }}>
-              <ListSubheader className={classes.subheader} disableSticky>
+          <li key={group.key} role="presentation">
+            <ul style={{ padding: 0 }} role="group" aria-label={group.title}>
+              <ListSubheader className={classes.subheader} disableSticky role="presentation">
                 {group.title}
               </ListSubheader>
               {group.entries.map((entry) => {
@@ -488,8 +576,11 @@ const CommandPalette = ({ open, onClose }) => {
                 const Icon = entry.icon;
                 const device = entry.device;
                 return (
-                  <li key={entry.id} className={classes.entry}>
+                  <li key={entry.id} className={classes.entry} role="presentation">
                     <ListItemButton
+                      id={`command-${entry.id}`}
+                      role="option"
+                      aria-selected={index === highlighted}
                       className={classes.item}
                       selected={index === highlighted}
                       data-highlighted={index === highlighted ? 'true' : undefined}
@@ -519,7 +610,12 @@ const CommandPalette = ({ open, onClose }) => {
           </li>
         ))}
         {flat.length === 0 && (
-          <Typography component="li" className={cx(classes.empty)} variant="body2">
+          <Typography
+            component="li"
+            role="presentation"
+            className={cx(classes.empty)}
+            variant="body2"
+          >
             {t('shellNoResults')}
           </Typography>
         )}

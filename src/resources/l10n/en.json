@@ -3371,5 +3371,16 @@
     "mapSwitchLayer": "Switch layer",
     "mapSearchNotFound": "No place by that name",
     "cardNoVideo": "This device does not support live video",
-    "cardNoPosition": "This vehicle has no location yet. It appears on the map after the device's first report."
+    "cardNoPosition": "This vehicle has no location yet. It appears on the map after the device's first report.",
+    "shellVehicleActions": "Actions on {0}",
+    "shellFollow": "Follow on the map",
+    "shellCallDriver": "Call the driver",
+    "shellResultCount": "{0} results",
+    "shortcutsTitle": "Keyboard shortcuts",
+    "shortcutPalette": "Search and go anywhere",
+    "shortcutHelp": "This list",
+    "shortcutEscape": "Close, or clear the map selection",
+    "shortcutReplayPlay": "In route replay: play and pause",
+    "shortcutReplayStep": "In route replay: a point forward or back",
+    "shortcutReplayMinute": "In route replay: a minute forward or back"
 }
