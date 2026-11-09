@@ -71,7 +71,10 @@ test('a driver lands in the driver area and sends a morning check for their own 
   await expect(page.getByLabel('נהג')).toHaveCount(0);
   await expect(page.getByLabel('רכב')).toHaveCount(0);
 
-  await page.getByRole('group', { name: 'צמיגים' }).getByRole('button', { name: 'תקין', exact: true }).click();
+  await page
+    .getByRole('group', { name: 'צמיגים' })
+    .getByRole('button', { name: 'תקין', exact: true })
+    .click();
   await page.getByRole('button', { name: 'שליחת הבדיקה' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'הבדיקה נשלחה' })).toBeVisible();
   const inspection = writes.find((write) => write.name === 'inspections');
