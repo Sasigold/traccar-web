@@ -3358,5 +3358,6 @@
     "impersonateReasonHelp": "For example: checking a problem reported in the trips report",
     "impersonateGo": "Log in",
     "impersonateBanner": "You are logged in as {0} (from {1}'s account). Everything you do here is recorded.",
-    "impersonateBack": "Back to my account"
+    "impersonateBack": "Back to my account",
+    "sharedShow": "Show"
 }

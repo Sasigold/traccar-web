@@ -3358,5 +3358,6 @@
     "impersonateReasonHelp": "למשל: בדיקת תקלה שדווחה בדוח הנסיעות",
     "impersonateGo": "כניסה",
     "impersonateBanner": "אתם מחוברים בתור {0} (נכנסתם מהחשבון של {1}). כל פעולה כאן נרשמת.",
-    "impersonateBack": "חזרה לחשבון שלי"
+    "impersonateBack": "חזרה לחשבון שלי",
+    "sharedShow": "הצגה"
 }
