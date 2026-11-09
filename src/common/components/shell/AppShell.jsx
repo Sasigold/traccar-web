@@ -8,7 +8,6 @@ import ShellContext from './ShellContext';
 import NavRail from './NavRail';
 import TopBar from './TopBar';
 import MobileTabs from './MobileTabs';
-import MobileDrawer from './MobileDrawer';
 import CommandPalette from './CommandPalette';
 import EventsDrawer from './EventsDrawer';
 import AlertBanner from './AlertBanner';
@@ -62,7 +61,6 @@ const AppShell = ({ children }) => {
 
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [eventsOpen, setEventsOpen] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [railCollapsed, setRailCollapsed] = usePersistedState('navRailCollapsed', false);
 
   const openPalette = useCallback(() => setPaletteOpen(true), []);
@@ -133,7 +131,7 @@ const AppShell = ({ children }) => {
     <ShellContext value={value}>
       <div className={cx(classes.root, showRail && classes.withRail)} style={vars}>
         {showRail && <NavRail />}
-        <TopBar onOpenDrawer={() => setDrawerOpen(true)} />
+        <TopBar />
         <main
           className={classes.content}
           style={showTabs ? undefined : { paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
@@ -141,9 +139,6 @@ const AppShell = ({ children }) => {
           {children}
         </main>
         {showTabs && <MobileTabs />}
-        {!desktop && chromeVisible && (
-          <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-        )}
         {!features.disableEvents && <EventsDrawer open={eventsOpen} onClose={closeEvents} />}
         {!features.disableEvents && (
           <AlertBanner

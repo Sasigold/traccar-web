@@ -180,7 +180,7 @@ test('another user signing in on the same tab never gets the first user’s flee
 
   // Sign out from the user menu, then Dana signs in on the same tab.
   if (testInfo.project.name === 'mobile') {
-    await page.getByRole('banner').getByRole('button', { name: 'פתיחת התפריט' }).click();
+    await page.getByRole('button', { name: 'עוד' }).click();
     await page.getByRole('button', { name: 'יציאה' }).click();
   } else {
     await page.getByRole('button', { name: 'Demo' }).click();

@@ -3144,5 +3144,8 @@
     "replayForwardMinute": "דקה קדימה",
     "replaySpeed": "מהירות השחזור",
     "replayTimeline": "ציר הזמן של המסלול",
-    "replayEmpty": "אין מיקומים בתקופה הזו. נסו תקופה אחרת."
+    "replayEmpty": "אין מיקומים בתקופה הזו. נסו תקופה אחרת.",
+    "shellMore": "עוד",
+    "sheetExpand": "הרחבת הכרטיס",
+    "sheetCollapse": "כיווץ הכרטיס"
 }

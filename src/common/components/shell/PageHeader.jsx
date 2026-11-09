@@ -1,4 +1,4 @@
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { Breadcrumbs, IconButton, Link, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
@@ -7,6 +7,7 @@ import BackIcon from '../BackIcon';
 import { useTranslation } from '../LocalizationProvider';
 import { useConfirm } from '../confirm/ConfirmProvider';
 import { goBack, useLeaveGuard } from '../confirm/unsavedChanges';
+import useNavItems from './navItems';
 
 const crumbLinks = {
   settingsTitle: '/settings',
@@ -75,6 +76,9 @@ const PageHeader = ({ breadcrumbs, title, description, actions, onOpenMenu, back
   const leave = useLeaveGuard(useConfirm(), t);
 
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
+  // LIV-09: a tab's own page has no way back; the arrow is for pages deeper in.
+  const location = useLocation();
+  const destination = useNavItems().some((item) => item.path === location.pathname);
 
   const crumbs = breadcrumbs || [];
   const resolvedTitle = title ?? (crumbs.length ? t(crumbs[crumbs.length - 1]) : '');
@@ -82,7 +86,7 @@ const PageHeader = ({ breadcrumbs, title, description, actions, onOpenMenu, back
 
   return (
     <header className={classes.root}>
-      {(!desktop || back) && (
+      {((!desktop && !destination) || back) && (
         <IconButton
           edge="start"
           onClick={() => leave(() => (backTo != null ? navigate(backTo) : goBack(navigate)))}

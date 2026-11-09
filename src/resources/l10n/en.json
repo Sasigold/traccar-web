@@ -3144,5 +3144,8 @@
     "replayForwardMinute": "Forward a minute",
     "replaySpeed": "Replay speed",
     "replayTimeline": "Route timeline",
-    "replayEmpty": "No locations in this period. Try another period."
+    "replayEmpty": "No locations in this period. Try another period.",
+    "shellMore": "More",
+    "sheetExpand": "Expand the card",
+    "sheetCollapse": "Collapse the card"
 }

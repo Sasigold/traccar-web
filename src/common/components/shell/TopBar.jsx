@@ -2,7 +2,6 @@ import { useSelector } from 'react-redux';
 import { ButtonBase, IconButton, Tooltip, useMediaQuery } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import BrandLogo from '../brand/BrandLogo';
 import useFeatures from '../../util/useFeatures';
@@ -99,7 +98,7 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const TopBar = ({ onOpenDrawer }) => {
+const TopBar = () => {
   const { classes } = useStyles();
   const theme = useTheme();
   const t = useTranslation();
@@ -111,11 +110,6 @@ const TopBar = ({ onOpenDrawer }) => {
 
   return (
     <header className={`${classes.root} app-topbar`}>
-      {!desktop && chromeVisible && (
-        <IconButton edge="start" onClick={onOpenDrawer} aria-label={t('shellOpenMenu')}>
-          <MenuRoundedIcon />
-        </IconButton>
-      )}
       {!desktop &&
         (logo ? (
           <img className={classes.logoImage} src={logo} alt="" />
@@ -146,8 +140,10 @@ const TopBar = ({ onOpenDrawer }) => {
         )}
         <EnvironmentBadge />
         <SocketStatusPill />
-        {!features.disableEvents && <NotificationsButton />}
-        <ThemeToggle />
+        {/* LIV-09: on a phone the alerts are a tab, and the color theme is in "More". Without the
+            tabs (disableTabs) the bar keeps them. */}
+        {!features.disableEvents && (desktop || !chromeVisible) && <NotificationsButton />}
+        {(desktop || !chromeVisible) && <ThemeToggle />}
         {desktop && <LanguageMenu />}
         {desktop && <UserMenu />}
       </div>

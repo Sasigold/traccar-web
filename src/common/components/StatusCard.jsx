@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { Rnd } from 'react-rnd';
+import BottomSheet from './BottomSheet';
 import {
   Alert,
   Button,
@@ -17,6 +18,7 @@ import {
   Tooltip,
   ListItemIcon,
   ListItemText,
+  useMediaQuery,
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
@@ -226,6 +228,19 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     },
     transform: 'translateX(-50%)',
   },
+  sheetRoot: {
+    [theme.breakpoints.down('md')]: {
+      left: 0,
+      right: 0,
+      bottom: 'var(--shell-bottom, 0px)',
+      transform: 'none',
+    },
+  },
+  sheetCard: {
+    width: '100%',
+    maxWidth: 'none',
+    borderRadius: `${theme.tokens.radius.xl}px ${theme.tokens.radius.xl}px 0 0`,
+  },
 }));
 
 const StatusCard = ({
@@ -237,6 +252,7 @@ const StatusCard = ({
   desktopPadding = '0px',
 }) => {
   const { classes, cx, theme } = useStyles({ desktopPadding });
+  const phone = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   const t = useTranslation();
 
@@ -328,158 +344,177 @@ const StatusCard = ({
     </div>
   );
 
+  const top = (handleClass) =>
+    deviceImage ? (
+      <CardMedia
+        className={cx(handleClass, classes.media)}
+        image={`api/media/${device.uniqueId}/${deviceImage}`}
+      >
+        {header}
+      </CardMedia>
+    ) : (
+      <div className={handleClass}>{header}</div>
+    );
+
+  const details = (
+    <>
+      {privacy && (
+        <Alert severity="info" icon={<VisibilityOffRoundedIcon />} className={classes.privacy}>
+          {t(privacy === 'private' ? 'privacyHiddenPrivate' : 'privacyHiddenHours')}
+        </Alert>
+      )}
+      {position && <TelemetryStrip position={position} device={device} />}
+      {position && (
+        <div className={classes.content}>
+          {positionItems
+            .split(',')
+            .filter(
+              (key) =>
+                key !== 'dtcs' &&
+                (position.hasOwnProperty(key) || position.attributes.hasOwnProperty(key)),
+            )
+            .map((key) => (
+              <div className={classes.row} key={key}>
+                <span className={classes.rowLabel}>{positionAttributes[key]?.name || key}</span>
+                <span className={classes.rowValue}>
+                  <PositionValue
+                    position={position}
+                    property={position.hasOwnProperty(key) ? key : null}
+                    attribute={position.hasOwnProperty(key) ? null : key}
+                  />
+                </span>
+              </div>
+            ))}
+          {faultCodes(position).length > 0 && (
+            <div className={classes.row}>
+              <span className={classes.rowLabel}>{t('fleetFaultCodes')}</span>
+              <span className={classes.rowValue}>
+                <FaultCodes position={position} />
+              </span>
+            </div>
+          )}
+          <Link
+            component={RouterLink}
+            to={`/position/${position.id}`}
+            underline="hover"
+            className={classes.details}
+          >
+            {t('sharedShowDetails')}
+          </Link>
+        </div>
+      )}
+      {driverName && (
+        <div className={classes.driverLine}>
+          <PersonRoundedIcon fontSize="inherit" />
+          {t('cardDriverName').replace('{0}', driverName)}
+        </div>
+      )}
+      <FocusedEventBanner deviceId={deviceId} />
+      <CommandStatus deviceId={deviceId} />
+    </>
+  );
+
+  const actionsBlock = (
+    <>
+      <div className={classes.actions}>
+        {moving ? (
+          <ButtonBase
+            className={classes.action}
+            onClick={() => navigate(`/replay?deviceId=${deviceId}`)}
+            disabled={disableActions || !position}
+          >
+            <RouteRoundedIcon fontSize="small" />
+            {t('cardReplay')}
+          </ButtonBase>
+        ) : (
+          <ButtonBase
+            className={classes.action}
+            onClick={() => navigate(`/telemetry/${deviceId}`)}
+            disabled={disableActions || !position}
+          >
+            <SpeedRoundedIcon fontSize="small" />
+            {t('cardDials')}
+          </ButtonBase>
+        )}
+        <ButtonBase
+          className={classes.action}
+          onClick={() => setCommandOpen(true)}
+          disabled={disableActions}
+          aria-haspopup="dialog"
+        >
+          <SendRoundedIcon fontSize="small" />
+          {t('cardCommand')}
+        </ButtonBase>
+        <Tooltip
+          title={!driverName ? t('cardNoDriver') : !driverPhone ? t('cardNoDriverPhone') : ''}
+          describeChild
+        >
+          <span style={{ display: 'grid' }}>
+            <ButtonBase
+              className={classes.action}
+              onClick={(e) => setDriverAnchor(e.currentTarget)}
+              disabled={!driverPhone}
+              aria-haspopup="menu"
+            >
+              <PhoneRoundedIcon fontSize="small" />
+              {t('cardDriver')}
+            </ButtonBase>
+          </span>
+        </Tooltip>
+        <ButtonBase
+          className={classes.action}
+          onClick={(e) => setAnchorEl(e.currentTarget)}
+          aria-haspopup="menu"
+          aria-label={t('sharedExtra')}
+        >
+          <MoreHorizRoundedIcon fontSize="small" />
+          {t('cardMore')}
+        </ButtonBase>
+      </div>
+      <Button
+        variant="contained"
+        className={classes.primaryAction}
+        startIcon={moving ? <SpeedRoundedIcon /> : <RouteRoundedIcon />}
+        onClick={() => navigate(moving ? `/telemetry/${deviceId}` : `/replay?deviceId=${deviceId}`)}
+        disabled={disableActions || !position}
+      >
+        {moving ? t('cardLiveDials') : t('cardReplayToday')}
+      </Button>
+    </>
+  );
+
   return (
     <>
-      <div className={classes.root}>
-        {device && (
-          <Rnd
-            default={{ x: 0, y: 0, width: 'auto', height: 'auto' }}
-            enableResizing={false}
-            dragHandleClassName="draggable-header"
-            style={{ position: 'relative' }}
-            onDragStop={statusCardMoved}
-          >
-            <Card elevation={0} className={classes.card} ref={setStatusCardElement}>
-              {deviceImage ? (
-                <CardMedia
-                  className={cx('draggable-header', classes.media)}
-                  image={`api/media/${device.uniqueId}/${deviceImage}`}
-                >
-                  {header}
-                </CardMedia>
-              ) : (
-                <div className="draggable-header">{header}</div>
-              )}
-              {privacy && (
-                <Alert
-                  severity="info"
-                  icon={<VisibilityOffRoundedIcon />}
-                  className={classes.privacy}
-                >
-                  {t(privacy === 'private' ? 'privacyHiddenPrivate' : 'privacyHiddenHours')}
-                </Alert>
-              )}
-              {position && <TelemetryStrip position={position} device={device} />}
-              {position && (
-                <div className={classes.content}>
-                  {positionItems
-                    .split(',')
-                    .filter(
-                      (key) =>
-                        key !== 'dtcs' &&
-                        (position.hasOwnProperty(key) || position.attributes.hasOwnProperty(key)),
-                    )
-                    .map((key) => (
-                      <div className={classes.row} key={key}>
-                        <span className={classes.rowLabel}>
-                          {positionAttributes[key]?.name || key}
-                        </span>
-                        <span className={classes.rowValue}>
-                          <PositionValue
-                            position={position}
-                            property={position.hasOwnProperty(key) ? key : null}
-                            attribute={position.hasOwnProperty(key) ? null : key}
-                          />
-                        </span>
-                      </div>
-                    ))}
-                  {faultCodes(position).length > 0 && (
-                    <div className={classes.row}>
-                      <span className={classes.rowLabel}>{t('fleetFaultCodes')}</span>
-                      <span className={classes.rowValue}>
-                        <FaultCodes position={position} />
-                      </span>
-                    </div>
-                  )}
-                  <Link
-                    component={RouterLink}
-                    to={`/position/${position.id}`}
-                    underline="hover"
-                    className={classes.details}
-                  >
-                    {t('sharedShowDetails')}
-                  </Link>
-                </div>
-              )}
-              {driverName && (
-                <div className={classes.driverLine}>
-                  <PersonRoundedIcon fontSize="inherit" />
-                  {t('cardDriverName').replace('{0}', driverName)}
-                </div>
-              )}
-              <FocusedEventBanner deviceId={deviceId} />
-              <CommandStatus deviceId={deviceId} />
-              <div className={classes.actions}>
-                {moving ? (
-                  <ButtonBase
-                    className={classes.action}
-                    onClick={() => navigate(`/replay?deviceId=${deviceId}`)}
-                    disabled={disableActions || !position}
-                  >
-                    <RouteRoundedIcon fontSize="small" />
-                    {t('cardReplay')}
-                  </ButtonBase>
-                ) : (
-                  <ButtonBase
-                    className={classes.action}
-                    onClick={() => navigate(`/telemetry/${deviceId}`)}
-                    disabled={disableActions || !position}
-                  >
-                    <SpeedRoundedIcon fontSize="small" />
-                    {t('cardDials')}
-                  </ButtonBase>
-                )}
-                <ButtonBase
-                  className={classes.action}
-                  onClick={() => setCommandOpen(true)}
-                  disabled={disableActions}
-                  aria-haspopup="dialog"
-                >
-                  <SendRoundedIcon fontSize="small" />
-                  {t('cardCommand')}
-                </ButtonBase>
-                <Tooltip
-                  title={
-                    !driverName ? t('cardNoDriver') : !driverPhone ? t('cardNoDriverPhone') : ''
-                  }
-                  describeChild
-                >
-                  <span style={{ display: 'grid' }}>
-                    <ButtonBase
-                      className={classes.action}
-                      onClick={(e) => setDriverAnchor(e.currentTarget)}
-                      disabled={!driverPhone}
-                      aria-haspopup="menu"
-                    >
-                      <PhoneRoundedIcon fontSize="small" />
-                      {t('cardDriver')}
-                    </ButtonBase>
-                  </span>
-                </Tooltip>
-                <ButtonBase
-                  className={classes.action}
-                  onClick={(e) => setAnchorEl(e.currentTarget)}
-                  aria-haspopup="menu"
-                  aria-label={t('sharedExtra')}
-                >
-                  <MoreHorizRoundedIcon fontSize="small" />
-                  {t('cardMore')}
-                </ButtonBase>
-              </div>
-              <Button
-                variant="contained"
-                className={classes.primaryAction}
-                startIcon={moving ? <SpeedRoundedIcon /> : <RouteRoundedIcon />}
-                onClick={() =>
-                  navigate(moving ? `/telemetry/${deviceId}` : `/replay?deviceId=${deviceId}`)
-                }
-                disabled={disableActions || !position}
+      <div className={cx(classes.root, phone && classes.sheetRoot)}>
+        {device &&
+          (phone ? (
+            // LIV-09: on a phone the card is a sheet at the bottom: a peek with the name, the
+            // status and the actions, then half and full height for the details.
+            <Card elevation={0} className={cx(classes.card, classes.sheetCard)}>
+              <BottomSheet
+                sheetRef={setStatusCardElement}
+                topInset={theme.dimensions.topBarHeightMobile + 8}
+                handle={top()}
+                peek={actionsBlock}
               >
-                {moving ? t('cardLiveDials') : t('cardReplayToday')}
-              </Button>
+                {details}
+              </BottomSheet>
             </Card>
-          </Rnd>
-        )}
+          ) : (
+            <Rnd
+              default={{ x: 0, y: 0, width: 'auto', height: 'auto' }}
+              enableResizing={false}
+              dragHandleClassName="draggable-header"
+              style={{ position: 'relative' }}
+              onDragStop={statusCardMoved}
+            >
+              <Card elevation={0} className={classes.card} ref={setStatusCardElement}>
+                {top('draggable-header')}
+                {details}
+                {actionsBlock}
+              </Card>
+            </Rnd>
+          ))}
       </div>
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
         {!user.temporary && (

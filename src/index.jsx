@@ -35,8 +35,8 @@ root.render(
                   <TelemetryRoute />
                   <UnsavedChangesGuard />
                   <Navigation />
+                  <MessageHandler />
                 </BrowserRouter>
-                <MessageHandler />
                 <NativeInterface />
               </ServerProvider>
             </ConfirmProvider>
