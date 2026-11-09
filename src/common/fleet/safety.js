@@ -56,7 +56,7 @@ const tripAt = (trips, deviceId, moment) =>
 export const scoreDrivers = (
   trips,
   events,
-  { weights = DEFAULT_SCORE_WEIGHTS, fallbackDriver = () => null } = {},
+  { weights = DEFAULT_SCORE_WEIGHTS, fallbackDriver = () => null, excluded = null } = {},
 ) => {
   const drivers = new Map();
   const entry = (key) => {
@@ -75,7 +75,8 @@ export const scoreDrivers = (
   });
   events.forEach((event) => {
     const category = eventCategory(event);
-    if (!category) {
+    // SAF-01: an event dismissed in the safety inbox does not count.
+    if (!category || excluded?.has(event.id)) {
       return;
     }
     const moment = time(event.eventTime);

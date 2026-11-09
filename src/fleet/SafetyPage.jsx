@@ -23,6 +23,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import HealthAndSafetyRoundedIcon from '@mui/icons-material/HealthAndSafetyRounded';
+import InboxRoundedIcon from '@mui/icons-material/InboxRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedInRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
@@ -195,11 +196,24 @@ const SafetyPage = () => {
       const to = new Date();
       const from = new Date(to - days * 86400000);
       const ids = deviceIds ? deviceIds.split(',') : [];
-      const [data, assignments] = await Promise.all([
+      const [data, assignments, dismissed] = await Promise.all([
         loadDriving(ids, from, to, signal),
         loadAssignments(),
+        // SAF-01: events dismissed in the safety inbox leave the score.
+        getFleetClient()
+          .from('safety_event_reviews')
+          .select('traccar_event_id')
+          .eq('status', 'dismissed')
+          .gte('occurred_at', from.toISOString())
+          .then(
+            ({ data: rows }) => new Set((rows || []).map((row) => Number(row.traccar_event_id))),
+          ),
       ]);
-      setDriving({ ...data, resolve: assignmentResolver(assignments, driversById) });
+      setDriving({
+        ...data,
+        dismissed,
+        resolve: assignmentResolver(assignments, driversById),
+      });
     },
     [canRead, view, days, deviceIds, driversById],
   );
@@ -243,6 +257,7 @@ const SafetyPage = () => {
     return scoreDrivers(driving.trips, driving.events, {
       weights: settings.weights,
       fallbackDriver: driving.resolve,
+      excluded: driving.dismissed,
     });
   }, [driving, settings]);
 
@@ -382,6 +397,14 @@ const SafetyPage = () => {
           ))}
         </TextField>
       )}
+      <Button
+        size="small"
+        startIcon={<InboxRoundedIcon />}
+        component={RouterLink}
+        to="/fleet/safety/inbox"
+      >
+        {t('safetyInboxTitle')}
+      </Button>
       <Button
         size="small"
         startIcon={<AssignmentTurnedInRoundedIcon />}

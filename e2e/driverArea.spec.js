@@ -8,6 +8,15 @@ const tables = {
   current_assignments: [
     { driver_id: 'd1', vehicle_id: 'veh1', traccar_device_id: 1, plate_number: '12-345-67' },
   ],
+  safety_event_reviews: [
+    {
+      id: 'sr1',
+      category: 'hardBraking',
+      occurred_at: '2026-11-08T07:30:00Z',
+      traccar_device_id: 1,
+      note: 'בלימה חדה ליד הצומת',
+    },
+  ],
   inspection_templates: [
     {
       id: 'tpl1',
@@ -257,4 +266,20 @@ test('a failed critical item stops the driver, with a photo and a comment', asyn
   expect(fleet.tables.inspections[0]).toMatchObject({ result: 'fail', driver_id: 'd1' });
   expect(fleet.tables.issues[0]).toMatchObject({ severity: 'critical', title: 'בלמים' });
   expect([...fleet.files.keys()][0]).toMatch(/^o1\/inspections\/.*brakes\.png$/);
+});
+
+// SAF-01: an event the manager sent for a self-review: what happened, one question, understood.
+test('the driver answers a self-review in 30 seconds', async ({ page }) => {
+  const writes = await mockFleet(page);
+  await gotoReady(page, '/driver');
+  const card = page.getByRole('heading', { name: 'לבדיקה עצמית (1)' });
+  await expect(card).toBeVisible();
+  await expect(page.getByText('בלימה חדה ליד הצומת')).toBeVisible();
+  const done = page.getByRole('button', { name: 'הבנתי' });
+  await expect(done).toBeDisabled();
+  await page.getByRole('radio', { name: 'טעות שלי, אשים לב' }).check();
+  await done.click();
+  await expect
+    .poll(() => writes.find((write) => write.name === 'safety_driver_ack')?.body)
+    .toEqual({ p_id: 'sr1', p_answer: 'my_mistake' });
 });

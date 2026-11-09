@@ -23,6 +23,7 @@ import FleetNotice from './components/FleetNotice';
 import DriverJobsCard from './components/DriverJobsCard';
 import DriverPrivacyCard from './components/DriverPrivacyCard';
 import DriverSafetyCard from './components/DriverSafetyCard';
+import DriverSelfReviewCard from './components/DriverSelfReviewCard';
 import { incidentKey } from './IncidentsPage';
 
 const useStyles = makeStyles()((theme) => ({
@@ -230,6 +231,7 @@ const DriverPortalPage = () => {
 
             <DriverPrivacyCard driverId={data.driver.id} hasVehicle={Boolean(data.assignment)} />
 
+            <DriverSelfReviewCard />
             <DriverSafetyCard driverId={data.driver.id} />
 
             <Paper elevation={0} className={classes.card}>

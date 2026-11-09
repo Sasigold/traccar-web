@@ -42,6 +42,7 @@ const VehicleWizardPage = lazy(() => import('./fleet/VehicleWizardPage'));
 const SafetyOfficerPage = lazy(() => import('./fleet/SafetyOfficerPage'));
 const PrivacyPage = lazy(() => import('./fleet/PrivacyPage'));
 const AiSettingsPage = lazy(() => import('./fleet/AiSettingsPage'));
+const SafetyInboxPage = lazy(() => import('./fleet/SafetyInboxPage'));
 const DriverFilePage = lazy(() => import('./fleet/DriverFilePage'));
 const PoiPage = lazy(() => import('./fleet/PoiPage'));
 const DispatchPage = lazy(() => import('./fleet/DispatchPage'));
@@ -228,6 +229,7 @@ const Navigation = () => {
             <Route path="roles" element={<RolesPage />} />
             <Route path="users" element={<FleetUsersPage />} />
             <Route path="safety" element={<SafetyPage />} />
+            <Route path="safety/inbox" element={<SafetyInboxPage />} />
             <Route path="safety-officer" element={<SafetyOfficerPage />} />
             <Route path="driver-file/:id" element={<DriverFilePage />} />
             <Route path="poi" element={<PoiPage />} />
