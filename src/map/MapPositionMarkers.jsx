@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { map } from './core/MapView';
 import MapMarkers from './MapMarkers';
@@ -6,6 +6,7 @@ import { formatTime, getStatusColor } from '../common/util/formatter';
 import { deviceIconKey, isDeviceMoving, isHeadingIcon } from './core/preloadImages';
 import { useAttributePreference } from '../common/util/preferences';
 import { fromMapCoordinates } from './core/mapUtil';
+import { useStableArray } from '../common/util/stableArray';
 
 const SMOOTH_LIMIT = 300;
 
@@ -43,8 +44,12 @@ const MapPositionMarkers = ({
     return () => map.off('click', onMapClickCallback);
   }, [onMapClickCallback]);
 
-  // Built once per new fix (not per animation frame): MapMarkers glides between them.
+  // Built once per new fix (not per animation frame): MapMarkers glides between them. A marker
+  // whose position and vehicle did not change is reused, so when only the selected vehicle
+  // reports (once a second, ahead of the throttle) the rest of the fleet's source is untouched.
+  const cacheRef = useRef(new WeakMap());
   const markers = useMemo(() => {
+    const cache = cacheRef.current;
     const buildMarker = (position) => {
       const device = devices[position.deviceId];
       let showDirection;
@@ -84,16 +89,38 @@ const MapPositionMarkers = ({
       };
     };
 
-    return positions.filter((it) => devices.hasOwnProperty(it.deviceId)).map(buildMarker);
-  }, [positions, devices, directionType, showStatus, selectedPosition, titleField]);
+    const flags = `${directionType}|${showStatus}|${titleField}`;
+    const cachedMarker = (position) => {
+      const device = devices[position.deviceId];
+      const directed = selectedPosition?.id === position.id;
+      const entry = cache.get(position);
+      if (
+        entry &&
+        entry.device === device &&
+        entry.directed === directed &&
+        entry.flags === flags
+      ) {
+        return entry.marker;
+      }
+      const marker = buildMarker(position);
+      cache.set(position, { device, directed, flags, marker });
+      return marker;
+    };
 
-  const otherMarkers = useMemo(
-    () => markers.filter((it) => it.deviceId !== selectedDeviceId),
-    [markers, selectedDeviceId],
+    return positions.filter((it) => devices.hasOwnProperty(it.deviceId)).map(cachedMarker);
+  }, [positions, devices, selectedPosition, directionType, showStatus, titleField]);
+
+  const otherMarkers = useStableArray(
+    useMemo(
+      () => markers.filter((it) => it.deviceId !== selectedDeviceId),
+      [markers, selectedDeviceId],
+    ),
   );
-  const selectedMarkers = useMemo(
-    () => markers.filter((it) => it.deviceId === selectedDeviceId),
-    [markers, selectedDeviceId],
+  const selectedMarkers = useStableArray(
+    useMemo(
+      () => markers.filter((it) => it.deviceId === selectedDeviceId),
+      [markers, selectedDeviceId],
+    ),
   );
   // Gliding every marker costs a map update per frame; above this many it is switched off.
   const glide = Boolean(smooth) && markers.length <= SMOOTH_LIMIT;

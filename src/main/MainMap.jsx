@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useDispatch } from 'react-redux';
@@ -20,6 +20,7 @@ import MapRuler from '../map/control/MapRuler';
 import MapFitFleet from '../map/control/MapFitFleet';
 import MapFocusedEvent from '../map/main/MapFocusedEvent';
 import useFeatures from '../common/util/useFeatures';
+import { useStableArray } from '../common/util/stableArray';
 
 const MainMap = ({ filteredPositions, selectedPosition }) => {
   const theme = useTheme();
@@ -30,6 +31,10 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
   const features = useFeatures();
 
   const [rulerActive, setRulerActive] = useState(false);
+
+  const deviceIds = useStableArray(
+    useMemo(() => filteredPositions.map((position) => position.deviceId), [filteredPositions]),
+  );
 
   const onMarkerClick = useCallback(
     (_, deviceId) => {
@@ -64,7 +69,7 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
         <MapOverlay />
         <MapGeofence />
         <MapAccuracy positions={filteredPositions} />
-        <MapLiveRoutes deviceIds={filteredPositions.map((p) => p.deviceId)} />
+        <MapLiveRoutes deviceIds={deviceIds} />
         <PoiMap />
         <MapPositionMarkers
           positions={filteredPositions}

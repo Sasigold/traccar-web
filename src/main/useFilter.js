@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import dayjs from 'dayjs';
 import { activityGroup, activityOf } from '../common/util/activity';
 import { deviceSearchFields, matchDevice, tokenizeSearch } from '../common/util/deviceSearch';
+import { sameItems } from '../common/util/stableArray';
 
 export default (
   keyword,
@@ -16,6 +17,10 @@ export default (
   const groups = useSelector((state) => state.groups.items);
   const devices = useSelector((state) => state.devices.items);
   const drivers = useSelector((state) => state.drivers.items);
+  // The last results: unchanged lists are not set again, so the list and the map skip a render
+  // when, for example, only the selected vehicle reported.
+  const lastDevicesRef = useRef(null);
+  const lastPositionsRef = useRef(null);
 
   useEffect(() => {
     const deviceGroups = (device) => {
@@ -83,12 +88,17 @@ export default (
         }
         break;
     }
-    setFilteredDevices(filtered);
-    setFilteredPositions(
-      filterMap
-        ? filtered.map((device) => positions[device.id]).filter(Boolean)
-        : Object.values(positions),
-    );
+    if (!sameItems(lastDevicesRef.current, filtered)) {
+      lastDevicesRef.current = filtered;
+      setFilteredDevices(filtered);
+    }
+    const shownPositions = filterMap
+      ? filtered.map((device) => positions[device.id]).filter(Boolean)
+      : Object.values(positions);
+    if (!sameItems(lastPositionsRef.current, shownPositions)) {
+      lastPositionsRef.current = shownPositions;
+      setFilteredPositions(shownPositions);
+    }
   }, [
     keyword,
     filter,
