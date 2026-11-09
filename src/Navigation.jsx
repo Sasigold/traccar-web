@@ -41,6 +41,7 @@ const VehiclePage = lazy(() => import('./fleet/VehiclePage'));
 const VehicleWizardPage = lazy(() => import('./fleet/VehicleWizardPage'));
 const SafetyOfficerPage = lazy(() => import('./fleet/SafetyOfficerPage'));
 const PrivacyPage = lazy(() => import('./fleet/PrivacyPage'));
+const AiSettingsPage = lazy(() => import('./fleet/AiSettingsPage'));
 const DriverFilePage = lazy(() => import('./fleet/DriverFilePage'));
 const PoiPage = lazy(() => import('./fleet/PoiPage'));
 const DispatchPage = lazy(() => import('./fleet/DispatchPage'));
@@ -236,6 +237,7 @@ const Navigation = () => {
             <Route path="integrations" element={<IntegrationsPage />} />
             <Route path="integrations/api" element={<ApiDocsPage />} />
             <Route path="privacy" element={<PrivacyPage />} />
+            <Route path="ai" element={<AiSettingsPage />} />
             <Route path="vehicles" element={<DevicesPage />} />
             <Route path="vehicle/new" element={<VehicleWizardPage />} />
             <Route path="vehicle/:id" element={<VehiclePage />} />

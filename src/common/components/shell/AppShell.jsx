@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
@@ -11,6 +11,10 @@ import MobileTabs from './MobileTabs';
 import CommandPalette from './CommandPalette';
 import EventsDrawer from './EventsDrawer';
 import AlertBanner from './AlertBanner';
+import { useAiAvailable } from '../../fleet/useAi';
+
+// AI-01: loaded the first time it is opened.
+const AssistantPanel = lazy(() => import('../assistant/AssistantPanel'));
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -62,6 +66,13 @@ const AppShell = ({ children }) => {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [eventsOpen, setEventsOpen] = useState(false);
   const [railCollapsed, setRailCollapsed] = usePersistedState('navRailCollapsed', false);
+  const aiAvailable = useAiAvailable();
+  // The assistant keeps its conversation while closed; null until first opened.
+  const [assistant, setAssistant] = useState(null);
+  const openAssistant = useCallback(
+    (question) => setAssistant({ open: true, question: question || null }),
+    [],
+  );
 
   const openPalette = useCallback(() => setPaletteOpen(true), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
@@ -94,6 +105,7 @@ const AppShell = ({ children }) => {
       railCollapsed,
       toggleRail,
       chromeVisible,
+      openAssistant: aiAvailable ? openAssistant : null,
     }),
     [
       paletteOpen,
@@ -105,6 +117,8 @@ const AppShell = ({ children }) => {
       railCollapsed,
       toggleRail,
       chromeVisible,
+      aiAvailable,
+      openAssistant,
     ],
   );
 
@@ -151,6 +165,15 @@ const AppShell = ({ children }) => {
           />
         )}
         <CommandPalette open={paletteOpen} onClose={closePalette} />
+        {assistant && aiAvailable && (
+          <Suspense fallback={null}>
+            <AssistantPanel
+              open={assistant.open}
+              initialQuestion={assistant.question}
+              onClose={() => setAssistant((current) => ({ ...current, open: false }))}
+            />
+          </Suspense>
+        )}
       </div>
     </ShellContext>
   );

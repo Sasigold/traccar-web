@@ -20,6 +20,7 @@ import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import SmartToyRoundedIcon from '@mui/icons-material/SmartToyRounded';
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
 import { useLivePositions } from '../../fleet/usePrivacy';
 import { devicesActions } from '../../../store';
 import { useTranslation } from '../LocalizationProvider';
@@ -140,7 +141,7 @@ const CommandPalette = ({ open, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  const { openEvents } = useShell();
+  const { openEvents, openAssistant } = useShell();
 
   const devices = useSelector((state) => state.devices.items);
   const positions = useLivePositions();
@@ -365,10 +366,34 @@ const CommandPalette = ({ open, onClose }) => {
       },
     ].filter((entry) => matches(entry.title));
 
+    // AI-01: what was typed can go to the fleet assistant as a question.
+    const askEntries =
+      openAssistant && query.trim().length >= 3
+        ? [
+            {
+              id: 'ai-ask',
+              title: t('assistantAsk').replace('{0}', query.trim()),
+              icon: AutoAwesomeRoundedIcon,
+              onSelect: () => openAssistant(query.trim()),
+            },
+          ]
+        : openAssistant && !query.trim()
+          ? [
+              {
+                id: 'ai-open',
+                title: t('assistantTitle'),
+                icon: AutoAwesomeRoundedIcon,
+                onSelect: () => openAssistant(),
+              },
+            ]
+          : [];
+
+    // Last, so Enter still opens the vehicle or the screen that was searched for.
     return [
       ...deviceSections,
       { key: 'navigation', title: t('shellNavigation'), entries: navigationEntries },
       { key: 'actions', title: t('shellActions'), entries: actionEntries },
+      { key: 'assistant', title: t('assistantSection'), entries: askEntries },
     ].filter((group) => group.entries.length > 0);
   }, [
     open,
@@ -393,6 +418,7 @@ const CommandPalette = ({ open, onClose }) => {
     toggle,
     openEvents,
     logout,
+    openAssistant,
   ]);
 
   const flat = useMemo(() => groups.flatMap((group) => group.entries), [groups]);

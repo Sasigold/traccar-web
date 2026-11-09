@@ -1,4 +1,5 @@
 import AccessibilityNewRoundedIcon from '@mui/icons-material/AccessibilityNewRounded';
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
 import PrivacyTipRoundedIcon from '@mui/icons-material/PrivacyTipRounded';
 import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedInRounded';
 import { useMemo } from 'react';
@@ -63,6 +64,7 @@ const useSectionCatalog = () => {
   const fleetDrivers = useFleetPermission('drivers.read');
   const fleetIntegrations = useFleetPermission('integrations.manage');
   const fleetPrivacy = useFleetPermission('privacy.manage');
+  const fleetUsersManage = useFleetPermission('users.manage');
   // ADM-08: areas whose tables this fleet database does not have are not offered.
   const fleetFeatures = useFleetFeatures();
 
@@ -181,6 +183,16 @@ const useSectionCatalog = () => {
             path: '/fleet/privacy',
             match: (pathname) => pathname.startsWith('/fleet/privacy'),
             visible: fleetPrivacy && has('privacy'),
+          },
+          {
+            id: 'ai',
+            titleKey: 'aiSettingsPage',
+            descriptionKey: 'aiSettingsDescription',
+            icon: AutoAwesomeRoundedIcon,
+            path: '/fleet/ai',
+            match: (pathname) => pathname.startsWith('/fleet/ai'),
+            // AI-01..04: only where the fleet database has it (unknown is no).
+            visible: fleetUsersManage && Boolean(fleetFeatures?.includes('ai')),
           },
           {
             id: 'server',
@@ -478,6 +490,7 @@ const useSectionCatalog = () => {
     fleetDrivers,
     fleetIntegrations,
     fleetPrivacy,
+    fleetUsersManage,
     fleetFeatures,
   ]);
 };

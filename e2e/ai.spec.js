@@ -99,3 +99,71 @@ test('without AI the library still explains known codes', async ({ page, isMobil
   await expect(dialog.getByRole('heading', { name: 'יעילות הממיר הקטליטי נמוכה' })).toBeVisible();
   await expect(dialog.getByText('קוד לא מוכר')).toBeVisible();
 });
+
+test('a question from Ctrl+K: the data comes from tools run here, the answer has a table', async ({
+  page,
+}) => {
+  await writeMode(page);
+  const asks = [];
+  const period = { from: '2026-11-01T00:00:00.000Z', to: '2026-11-08T00:00:00.000Z' };
+  await fakeFleet(page, {
+    users: { 1: manager },
+    rpc: { fleet_features: ['ai'] },
+    functions: {
+      'fleet-ai/ask': (body) => {
+        asks.push(body);
+        if (asks.length === 1) {
+          return {
+            stop_reason: 'tool_use',
+            content: [
+              { type: 'tool_use', id: 't1', name: 'list_vehicles', input: {} },
+              {
+                type: 'tool_use',
+                id: 't2',
+                name: 'fleet_summary',
+                input: { period, vehicle_ids: [1] },
+              },
+            ],
+          };
+        }
+        return {
+          stop_reason: 'end_turn',
+          content: [
+            { type: 'text', text: 'Delivery Van נסע הכי הרבה השבוע.' },
+            {
+              type: 'tool_use',
+              id: 't3',
+              name: 'show_table',
+              input: { columns: ['רכב', 'ק"מ'], rows: [['Delivery Van', '412']] },
+            },
+            {
+              type: 'tool_use',
+              id: 't4',
+              name: 'suggest_followups',
+              input: { questions: ['ומי נסע הכי מעט?'] },
+            },
+          ],
+        };
+      },
+    },
+  });
+  await gotoReady(page, '/');
+  await page.keyboard.press('Control+k');
+  await page.keyboard.type('מי נסע הכי הרבה השבוע?');
+  await page.getByRole('button', { name: /שאלה ל-AI/ }).click();
+
+  const panel = page.getByRole('dialog', { name: 'שאלה על הצי' });
+  await expect(panel.getByText('Delivery Van נסע הכי הרבה השבוע.')).toBeVisible();
+  await expect(panel.getByRole('cell', { name: '412' })).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'ומי נסע הכי מעט?' })).toBeVisible();
+
+  // The second call carries what the tools found, with the user's own data.
+  expect(asks).toHaveLength(2);
+  const results = asks[1].messages.at(-1).content;
+  expect(results.map((result) => result.tool_use_id)).toEqual(['t1', 't2']);
+  expect(results[0].content).toContain('Delivery Van');
+  expect(results[1].is_error).toBeFalsy();
+
+  await panel.getByRole('link', { name: /פתיחה כדוח/ }).click();
+  await expect(page).toHaveURL(/\/reports\/summary\?from=.*deviceId=1/);
+});
