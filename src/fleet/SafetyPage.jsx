@@ -1,6 +1,6 @@
 import { useMemo, useReducer, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import {
   Alert,
   Button,
@@ -159,7 +159,10 @@ const SafetyPage = () => {
   const devices = useSelector((state) => state.devices.items);
   const drivers = useSelector((state) => state.drivers.items);
 
-  const [view, setView] = useState('scores');
+  const [searchParams] = useSearchParams();
+  const [view, setView] = useState(() =>
+    views.includes(searchParams.get('view')) ? searchParams.get('view') : 'scores',
+  );
   const [days, setDays] = useState(30);
   const [reloadKey, reload] = useReducer((k) => k + 1, 0);
   const [settings, setSettings] = useState(null);

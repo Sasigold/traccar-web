@@ -59,7 +59,7 @@ const FocusDialog = ({ config, onClose }) => {
   const [ref, size] = useElementSize();
   const caption = useWidgetCaption(config ?? { preset: 'custom' });
   const preset = presetOf(config?.preset);
-  const tableable = ['chart', 'expiries', 'maintenance'].includes(preset?.kind);
+  const tableable = ['chart', 'expiries', 'maintenance', 'attention'].includes(preset?.kind);
   return (
     <Dialog
       open={Boolean(config)}

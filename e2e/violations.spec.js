@@ -99,3 +99,16 @@ test('a ticket counts down to its transfer deadline and edits in place', async (
   await page.getByRole('button', { name: 'דוחות לפי נהג' }).click();
   await expect(page.getByRole('row', { name: /דנה לוי/ })).toContainText('₪');
 });
+
+test('a ticket near its deadline shows on the dashboard and opens the tickets', async ({
+  page,
+}) => {
+  await mockFleet(page, []);
+  await gotoReady(page, '/dashboard');
+  const widget = page.getByRole('region', { name: 'צריך טיפול עכשיו' });
+  const item = widget.getByRole('link', { name: /דנה לוי.*דוח להסבה לנהג, המועד בעוד 10 ימים/ });
+  await expect(item).toContainText('חשוב');
+  await item.click();
+  await expect(page).toHaveURL(/\/fleet\/safety\?view=violations/);
+  await expect(page.getByRole('row', { name: /9001234567|דנה לוי/ })).toBeVisible();
+});

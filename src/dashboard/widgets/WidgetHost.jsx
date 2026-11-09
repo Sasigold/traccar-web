@@ -33,6 +33,7 @@ import ErrorBoundary from '../../ErrorBoundary';
 import KpiGroupWidget from './special/KpiGroupWidget';
 import HeroWidget from './special/HeroWidget';
 import LiveMapWidget from './special/LiveMapWidget';
+import AttentionWidget from './special/AttentionWidget';
 import {
   EventFeedWidget,
   ExpiriesWidget,
@@ -85,6 +86,8 @@ export const WidgetBody = ({ config, width, height, size, table, onSelect, expor
       );
     case 'map':
       return <LiveMapWidget />;
+    case 'attention':
+      return <AttentionWidget width={width} height={height} table={table} />;
     case 'feed':
       return <EventFeedWidget height={height} />;
     case 'table':

@@ -13,6 +13,7 @@ export const TEMPLATES = {
     period: 'today',
     rows: [
       [3, [12, 'fleetKpis']],
+      [5, [12, 'attention']],
       [9, [8, 'liveMap'], [4, ['fleetStatus', 5], ['motionState', 4]]],
       [6, [4, 'speedDistribution'], [4, 'lastReport'], [4, 'expiries']],
     ],

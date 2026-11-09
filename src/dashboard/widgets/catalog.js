@@ -20,6 +20,17 @@ const chart = (id, category, query, viz, size = { w: 4, h: 6 }, extra = {}) => (
 
 export const PRESETS = [
   // ─── live ────────────────────────────────────────────────────────────────
+  // REP-24: the one list a dispatcher acts on first.
+  {
+    id: 'attention',
+    category: 'live',
+    kind: 'attention',
+    titleKey: 'dashboardWAttention',
+    size: { w: 12, h: 5 },
+    min: { w: 4, h: 4 },
+    mobileH: 8,
+    singleton: true,
+  },
   {
     id: 'fleetKpis',
     category: 'live',
