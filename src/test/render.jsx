@@ -1,6 +1,8 @@
 import { act, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { createQueryClient } from '../common/data/queryClient';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { createAppStore } from '../store';
 import { LocalizationProvider } from '../common/components/LocalizationProvider';
@@ -31,17 +33,19 @@ export const renderApp = async (ui, { state, route = '/', path = '*', history = 
   await act(async () => {
     result = render(
       <Provider store={store}>
-        <LocalizationProvider>
-          <AppThemeProvider>
-            <MemoryRouter initialEntries={[...history, route]} initialIndex={history.length}>
-              <LocationProbe />
-              <Routes>
-                <Route path={path} element={ui} />
-                <Route path="*" element={<div data-testid="elsewhere" />} />
-              </Routes>
-            </MemoryRouter>
-          </AppThemeProvider>
-        </LocalizationProvider>
+        <QueryClientProvider client={createQueryClient({ retry: false })}>
+          <LocalizationProvider>
+            <AppThemeProvider>
+              <MemoryRouter initialEntries={[...history, route]} initialIndex={history.length}>
+                <LocationProbe />
+                <Routes>
+                  <Route path={path} element={ui} />
+                  <Route path="*" element={<div data-testid="elsewhere" />} />
+                </Routes>
+              </MemoryRouter>
+            </AppThemeProvider>
+          </LocalizationProvider>
+        </QueryClientProvider>
       </Provider>,
     );
   });

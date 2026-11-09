@@ -1,5 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import queryClient from './common/data/queryClient';
 import { Provider } from 'react-redux';
 import { CssBaseline, StyledEngineProvider } from '@mui/material';
 import store from './store';
@@ -25,24 +27,26 @@ const root = createRoot(document.getElementById('root'));
 root.render(
   <ErrorBoundary>
     <Provider store={store}>
-      <LocalizationProvider>
-        <StyledEngineProvider injectFirst>
-          <AppThemeProvider>
-            <CssBaseline enableColorScheme />
-            <ConfirmProvider>
-              <ServerProvider>
-                <BrowserRouter basename={new URL(document.baseURI).pathname}>
-                  <TelemetryRoute />
-                  <UnsavedChangesGuard />
-                  <Navigation />
-                  <MessageHandler />
-                </BrowserRouter>
-                <NativeInterface />
-              </ServerProvider>
-            </ConfirmProvider>
-          </AppThemeProvider>
-        </StyledEngineProvider>
-      </LocalizationProvider>
+      <QueryClientProvider client={queryClient}>
+        <LocalizationProvider>
+          <StyledEngineProvider injectFirst>
+            <AppThemeProvider>
+              <CssBaseline enableColorScheme />
+              <ConfirmProvider>
+                <ServerProvider>
+                  <BrowserRouter basename={new URL(document.baseURI).pathname}>
+                    <TelemetryRoute />
+                    <UnsavedChangesGuard />
+                    <Navigation />
+                    <MessageHandler />
+                  </BrowserRouter>
+                  <NativeInterface />
+                </ServerProvider>
+              </ConfirmProvider>
+            </AppThemeProvider>
+          </StyledEngineProvider>
+        </LocalizationProvider>
+      </QueryClientProvider>
     </Provider>
   </ErrorBoundary>,
 );

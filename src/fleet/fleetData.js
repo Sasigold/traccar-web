@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
+import { useFleetQuery } from '../common/data/fleetQuery';
 import { getFleetClient, unwrap } from '../common/fleet/client';
-import { useAsyncTask } from '../reactHelper';
 import { saveFleetRecord } from './fleetRecords';
 import { getFormatLocale } from '../common/util/formatter';
 
@@ -62,37 +62,37 @@ export const ensureDriver = async (driver, profile) => {
 };
 
 // vehicles.id -> { traccarId, plate }, for showing database rows by their Traccar vehicle.
+const EMPTY = {};
 export const useVehicleIndex = (enabled) => {
-  const [index, setIndex] = useState({});
-  useAsyncTask(async () => {
-    if (!enabled) {
-      return;
-    }
-    const rows = unwrap(
-      await getFleetClient().from('vehicles').select('id, traccar_device_id, plate_number'),
-    );
-    setIndex(
-      Object.fromEntries(
-        (rows || []).map((row) => [
-          row.id,
-          { traccarId: row.traccar_device_id, plate: row.plate_number },
-        ]),
-      ),
-    );
-  }, [enabled]);
-  return index;
+  const { data } = useFleetQuery(
+    'vehicles',
+    ['index'],
+    (client) => client.from('vehicles').select('id, traccar_device_id, plate_number'),
+    { enabled },
+  );
+  return useMemo(
+    () =>
+      data
+        ? Object.fromEntries(
+            data.map((row) => [
+              row.id,
+              { traccarId: row.traccar_device_id, plate: row.plate_number },
+            ]),
+          )
+        : EMPTY,
+    [data],
+  );
 };
 
+const NONE = [];
 export const useVendors = (enabled, reloadKey = 0) => {
-  const [vendors, setVendors] = useState([]);
-  useAsyncTask(async () => {
-    void reloadKey;
-    if (!enabled) {
-      return;
-    }
-    setVendors(unwrap(await getFleetClient().from('vendors').select('*').order('name')) || []);
-  }, [enabled, reloadKey]);
-  return vendors;
+  const { data } = useFleetQuery(
+    'vendors',
+    ['all'],
+    (client) => client.from('vendors').select('*').order('name'),
+    { enabled, reloadKey },
+  );
+  return (enabled && data) || NONE;
 };
 
 export const money = (value) =>
