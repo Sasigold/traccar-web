@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
+import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded';
 import { alpha } from '@mui/material/styles';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
@@ -481,6 +482,19 @@ const StatusCard = ({
         )}
       </div>
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+        {!user.temporary && (
+          <MenuItem
+            onClick={() => {
+              setAnchorEl(null);
+              navigate(`/fleet/vehicle/${deviceId}`);
+            }}
+          >
+            <ListItemIcon>
+              <BadgeRoundedIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{t('vehicleCard')}</ListItemText>
+          </MenuItem>
+        )}
         <MenuItem
           onClick={() => {
             setAnchorEl(null);

@@ -26,6 +26,16 @@ login (Traccar administrators become fleet `admin`, the very first user becomes 
 - `src/settings/FleetDocumentsPage.jsx` - `/settings/fleet-documents`, all documents by expiry.
 - `src/settings/components/FleetRoleSection.jsx` - fleet role + permissions card on the user page.
 
+## Vehicle card
+
+`/fleet/vehicle/:id` (Traccar device id; from the vehicle list, the map card's menu and the palette) shows one
+vehicle at a glance (`src/fleet/VehiclePage.jsx`): the plate, live state and the assigned driver; tiles for
+this month's distance (Traccar summary report), this month's cost (`vehicle_monthly_costs`), open work orders,
+the next maintenance (Traccar maintenance plan) and the nearest validity date; and tabs for overview,
+maintenance (plan and work orders), damage, checks, costs by month, documents and change history. The live
+location follows the privacy rules. Editing stays in the vehicle form (`/settings/device/:id`). The tile rules
+are in `src/common/fleet/vehicle360.js` (unit-tested).
+
 ## Driver area
 
 A driver (fleet role `driver`) starts in the driver area, once per session, and it is their first tab. The

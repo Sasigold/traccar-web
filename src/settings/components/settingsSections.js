@@ -320,7 +320,7 @@ const useSectionCatalog = () => {
             icon: DnsRoundedIcon,
             path: '/fleet/vehicles',
             match: (pathname) =>
-              pathname.startsWith('/fleet/vehicles') ||
+              pathname.startsWith('/fleet/vehicle') ||
               pathname.startsWith('/settings/device') ||
               pathname.startsWith('/settings/accumulators'),
             visible: !readonly,

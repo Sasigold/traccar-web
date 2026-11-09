@@ -20,9 +20,15 @@ const NotificationsButton = () => {
   return (
     <Tooltip title={t('sharedNotifications')}>
       <IconButton onClick={openEvents} aria-label={label}>
-        <Badge badgeContent={count} max={99} color="error">
+        {/* The count is in the label. The badge is drawn only while there is one: MUI keeps
+            the last number in a scaled-away badge, and that text would contradict the label. */}
+        {count ? (
+          <Badge badgeContent={count} max={99} color="error">
+            <NotificationsRoundedIcon />
+          </Badge>
+        ) : (
           <NotificationsRoundedIcon />
-        </Badge>
+        )}
       </IconButton>
     </Tooltip>
   );

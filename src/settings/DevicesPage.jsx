@@ -1,6 +1,6 @@
 import { useCallback, useReducer, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   TableRow,
   TableCell,
@@ -9,6 +9,7 @@ import {
   FormControlLabel,
   Switch,
   Typography,
+  Link,
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
@@ -213,7 +214,9 @@ const DevicesPage = () => {
                 <TableCell>
                   <span className={classes.name}>
                     <DeviceTile category={item.category} status={item.status} size={32} />
-                    {item.name}
+                    <Link component={RouterLink} to={`/fleet/vehicle/${item.id}`}>
+                      {item.name}
+                    </Link>
                   </span>
                 </TableCell>
                 <TableCell>
