@@ -229,6 +229,18 @@ recipients; nothing is sent until a sender with provider keys exists.
 - **Copy to the database** (card on `/fleet`, needs `vehicles.write` or `drivers.write`) copies every card
   with stage 0 details; it only fills values, never clears what the database already has.
 
+## Government vehicle registry (data.gov.il)
+
+The Ministry of Transport's open registry (`private-and-commercial-vehicles`, no key, CORS open) is read
+straight from the browser (`src/common/fleet/govRegistry.js`; resource ids from `package_show`, the known
+ids as a fallback).
+
+- **Vehicle card**: "מילוי מהמאגר הממשלתי" next to the details looks the plate up and shows what would
+  change (make, model, year, VIN, fuel, ownership, test expiry) before filling the card. Nothing is saved
+  until the card is.
+- **Validity page**: "עדכון תוקף טסט מהמאגר" checks every vehicle with a plate and moves its test expiry
+  to the registry's `tokef_dt`, saved like a card save (Traccar, then the database).
+
 ## Roadmap stages 2-4
 
 All fleet database screens live under `/fleet` (code in `src/fleet/`, pure logic with unit tests in

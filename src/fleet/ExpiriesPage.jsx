@@ -13,6 +13,7 @@ import { formatTime } from '../common/util/formatter';
 import exportExcel from '../common/util/exportExcel';
 import ExpiryBadge, { statusLabelKey, useDaysText } from './components/ExpiryBadge';
 import useExpiries from './useExpiries';
+import GovRegistrySync from './components/GovRegistrySync';
 import { useFleetLabel } from '../common/fleet/useFleet';
 
 const useStyles = makeStyles()((theme) => ({
@@ -144,6 +145,7 @@ const ExpiriesPage = () => {
             search={{ value: search, onChange: setSearch }}
             count={filtered.length}
             exportHandler={handleExport}
+            actions={<GovRegistrySync />}
             filters={[
               ...statusFilters.map((key) =>
                 chip(key, status === key, t(statusFilterLabel[key]), () =>

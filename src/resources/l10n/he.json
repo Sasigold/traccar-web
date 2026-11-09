@@ -2433,5 +2433,18 @@
     "reportEmptyTitle": "אין נתונים לתקופה הזו",
     "reportEmptyText": "לא נמצאו רשומות לרכבים ולתקופה שנבחרו.",
     "reportEmptyExtend": "הרחבה ל-30 הימים האחרונים",
-    "reportLimitNote": "מוצגות {0} השורות הראשונות מתוך {1}. הייצוא כולל את כולן."
+    "reportLimitNote": "מוצגות {0} השורות הראשונות מתוך {1}. הייצוא כולל את כולן.",
+    "govRegistryFill": "מילוי מהמאגר הממשלתי",
+    "govRegistryNeedPlate": "יש להזין מספר רישוי תקין",
+    "govRegistryTitle": "פרטי הרכב במאגר משרד התחבורה",
+    "govRegistryNotFound": "מספר הרישוי לא נמצא במאגר.",
+    "govRegistryUpToDate": "פרטי הרכב כבר תואמים למאגר.",
+    "govRegistryField": "שדה",
+    "govRegistryCurrent": "בכרטיס",
+    "govRegistryNew": "במאגר",
+    "govRegistryApply": "עדכון הכרטיס",
+    "govRegistrySync": "עדכון תוקף טסט מהמאגר",
+    "govRegistrySyncText": "התאריכים של {0} רכבים עם מספר רישוי ייבדקו מול מאגר משרד התחבורה, ותוקף הטסט יעודכן היכן שהוא שונה.",
+    "govRegistrySyncStart": "עדכון",
+    "govRegistrySyncDone": "עודכנו {0} מתוך {1} רכבים. לא נמצאו במאגר: {2}. שגיאות: {3}."
 }

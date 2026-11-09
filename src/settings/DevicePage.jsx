@@ -34,6 +34,7 @@ import {
   vehicleFields,
 } from '../common/fleet/fleetFields';
 import { DateField } from '../common/components/pickers';
+import GovRegistryButton from '../fleet/components/GovRegistryButton';
 
 const DevicePage = () => {
   const t = useTranslation();
@@ -120,6 +121,9 @@ const DevicePage = () => {
             fields={[...vehicleFields, notesField]}
             attributes={item.attributes}
             setAttributes={setAttributes}
+            actions={
+              <GovRegistryButton attributes={item.attributes} setAttributes={setAttributes} />
+            }
           />
           <FleetFieldsSection
             title={t('fleetVehicleValidity')}

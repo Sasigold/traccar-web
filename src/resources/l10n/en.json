@@ -2433,5 +2433,18 @@
     "reportEmptyTitle": "Nothing for this period",
     "reportEmptyText": "No records for the chosen vehicles and period.",
     "reportEmptyExtend": "Show the last 30 days",
-    "reportLimitNote": "Showing the first {0} of {1} rows. The export includes them all."
+    "reportLimitNote": "Showing the first {0} of {1} rows. The export includes them all.",
+    "govRegistryFill": "Fill from the government registry",
+    "govRegistryNeedPlate": "Enter a valid plate number first",
+    "govRegistryTitle": "Ministry of Transport registry",
+    "govRegistryNotFound": "This plate number is not in the registry.",
+    "govRegistryUpToDate": "The card already matches the registry.",
+    "govRegistryField": "Field",
+    "govRegistryCurrent": "On the card",
+    "govRegistryNew": "In the registry",
+    "govRegistryApply": "Update the card",
+    "govRegistrySync": "Update test dates from the registry",
+    "govRegistrySyncText": "The test dates of {0} vehicles with a plate number are checked against the Ministry of Transport registry and updated where they differ.",
+    "govRegistrySyncStart": "Update",
+    "govRegistrySyncDone": "Updated {0} of {1} vehicles. Not in the registry: {2}. Errors: {3}."
 }

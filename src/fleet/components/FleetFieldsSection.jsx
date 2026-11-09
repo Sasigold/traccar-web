@@ -41,6 +41,7 @@ const FleetFieldsSection = ({
   attributes,
   setAttributes,
   showExpiry,
+  actions,
 }) => {
   const { classes } = useStyles();
   const t = useTranslation();
@@ -146,7 +147,7 @@ const FleetFieldsSection = ({
   };
 
   return (
-    <FormSection title={title} description={description} icon={icon}>
+    <FormSection title={title} description={description} icon={icon} actions={actions}>
       <div className={classes.grid}>{fields.map(renderField)}</div>
     </FormSection>
   );
