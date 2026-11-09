@@ -59,11 +59,52 @@ jobs:
       env:
         VITE_FLEET_URL: ${{ vars.PRODUCTION_FLEET_URL || 'https://viper-fleet-api.srv2122641.hstgr.cloud' }}
         VITE_FLEET_ANON_KEY: ${{ vars.PRODUCTION_FLEET_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzkzODAyMjQ4LCJleHAiOjE5NTE0ODIyNDh9.2VsAyl2IFUy3QarPwReLOwcKhSthi62FZIyxs5YyrxU' }}
+        # FND-06: error reports and analytics, off while these variables are empty (none secret).
+        VITE_ERROR_DSN: ${{ vars.PRODUCTION_ERROR_DSN }}
+        VITE_ANALYTICS_PROVIDER: ${{ vars.PRODUCTION_ANALYTICS_PROVIDER }}
+        VITE_ANALYTICS_URL: ${{ vars.PRODUCTION_ANALYTICS_URL }}
+        VITE_ANALYTICS_SITE: ${{ vars.PRODUCTION_ANALYTICS_SITE }}
+    # FND-06: source maps (made only with an error service) never go to the site; they are kept
+    # as their own artifact for the upload job below.
+    - run: sh deploy/sourcemaps.sh split
     - uses: actions/upload-artifact@v7
       with:
         name: web-build-production
         path: build
         retention-days: 30
+    - uses: actions/upload-artifact@v7
+      if: hashFiles('sourcemaps/**') != ''
+      with:
+        name: sourcemaps-production
+        path: sourcemaps
+        retention-days: 7
+
+  sourcemaps:
+    # FND-06: the private source maps go to the error service, for readable stack traces. This
+    # job holds only the error service's token (secret ERROR_AUTH_TOKEN), never the server key,
+    # and runs only when ERROR_SOURCEMAPS_URL and PRODUCTION_ERROR_PROJECT are set.
+    needs: build
+    if: vars.PRODUCTION_ERROR_DSN != '' && vars.ERROR_SOURCEMAPS_URL != '' && vars.PRODUCTION_ERROR_PROJECT != ''
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+    - uses: actions/download-artifact@v7
+      with:
+        name: web-build-production
+        path: build
+    - uses: actions/download-artifact@v7
+      with:
+        name: sourcemaps-production
+        path: sourcemaps
+    - run: sh deploy/sourcemaps.sh upload
+      env:
+        SENTRY_URL: ${{ vars.ERROR_SOURCEMAPS_URL }}
+        SENTRY_ORG: ${{ vars.ERROR_SOURCEMAPS_ORG }}
+        SENTRY_PROJECT: ${{ vars.PRODUCTION_ERROR_PROJECT }}
+        SENTRY_AUTH_TOKEN: ${{ secrets.ERROR_AUTH_TOKEN }}
 
   deploy:
     # No npm here: third-party packages never run next to the server key.

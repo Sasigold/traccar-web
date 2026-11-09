@@ -3,6 +3,8 @@
 // would show an error. Instead the page reloads once to pick up the new build; a second failure
 // within a minute shows the error as usual, so a real outage never loops.
 
+import { countEvent } from '../telemetry/metrics';
+
 const KEY = 'vfStaleReloadAt';
 const WINDOW = 60000;
 
@@ -36,6 +38,7 @@ export const reloadForNewBuild = ({ storage, reload, now = Date.now() }) => {
 // Vite fires vite:preloadError when a lazy page's file cannot be loaded.
 export const installStaleBuildRecovery = (target = window) => {
   target.addEventListener('vite:preloadError', (event) => {
+    countEvent('chunk_load_error');
     if (
       reloadForNewBuild({
         storage: target.sessionStorage,

@@ -238,6 +238,16 @@ today Morning (Green Invoice). No direct connection to the Tax Authority is buil
 - *Not yet.* iCount and Rivhit (the provider is one row, ready for another adapter), credit invoices from
   here, and a clearing company other than Morning's.
 
+**Interface health (`/admin/health`, FND-06).** Web vitals (p75 per release, with the good / needs
+improvement / slow thresholds), long tasks and the operational counters (socket drops, fleet-token
+failures, chunk-load errors, Supabase and Traccar error codes) that browsers send. Migration
+`20261113100000_client_metrics.sql` (tests in `client_metrics.test.sql`): `client_metrics` is written only
+through `record_client_metrics(release, environment, batch)`, which checks every value, records the
+organization but never the user, and accepts 500 rows per user per hour; `client_metrics_overview(days)`
+answers platform administrators only; a nightly job keeps 30 days. Error reports (Sentry or GlitchTip) and
+product analytics (Umami, Plausible or PostHog) are separate and off until the build sets them:
+`docs/OBSERVABILITY.md`.
+
 **Database.** `supabase/migrations/20261104120000_super_admin.sql` adds `customers`, `customer_users`,
 `device_registry`, `device_assignment_history`, `billing_plans`, `billing_subscriptions`,
 `billing_invoices`, `billing_invoice_lines`, the views `billing_invoices_view` and

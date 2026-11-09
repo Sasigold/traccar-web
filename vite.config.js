@@ -7,6 +7,7 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { buildEnvProblems } from './src/common/fleet/buildEnv.js';
 import { releaseFile } from './src/common/util/release.js';
+import { telemetryEnvProblems } from './src/common/telemetry/config.js';
 
 // FND-05: the build says which release it is, "1.0.0+<commit>", in the app (Preferences) and in
 // version.json next to index.html (the deploy check reads it).
@@ -33,9 +34,11 @@ const brand = {
 };
 
 export default defineConfig(({ command, mode }) => {
+  const viteEnv = loadEnv(mode, process.cwd(), 'VITE_');
   // FND-04: a production or staging build says which fleet database it talks to.
+  // FND-06: and its error and analytics settings, when given, must be usable.
   if (command === 'build') {
-    const problems = buildEnvProblems(mode, loadEnv(mode, process.cwd(), 'VITE_'));
+    const problems = [...buildEnvProblems(mode, viteEnv), ...telemetryEnvProblems(viteEnv)];
     if (problems.length) {
       throw new Error(`Build environment (${mode}):\n- ${problems.join('\n- ')}`);
     }
@@ -43,7 +46,7 @@ export default defineConfig(({ command, mode }) => {
   const release = releaseFile({
     version: pkg.version,
     sha: commit(),
-    environment: loadEnv(mode, process.cwd(), 'VITE_').VITE_APP_ENV || mode,
+    environment: viteEnv.VITE_APP_ENV || mode,
     builtAt: new Date().toISOString(),
   });
   return {
@@ -63,6 +66,10 @@ export default defineConfig(({ command, mode }) => {
     },
     build: {
       outDir: 'build',
+      // FND-06: with an error service, source maps are made for it but never linked from the
+      // scripts; the deploy moves them out of build/ (they are uploaded to the error service, not
+      // served), so stack traces are readable there and the source stays private.
+      sourcemap: viteEnv.VITE_ERROR_DSN ? 'hidden' : false,
       chunkSizeWarningLimit: 1100,
       rolldownOptions: {
         output: {
@@ -113,6 +120,8 @@ export default defineConfig(({ command, mode }) => {
         injectRegister: false,
         includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon-180x180.png'],
         workbox: {
+          // The service worker is ours to debug locally; no map is shipped for it (FND-06).
+          sourcemap: false,
           navigateFallbackDenylist: [/\/api(\/|$)/],
           globPatterns: ['**/*.{js,css,html,woff,woff2,mp3}'],
         },

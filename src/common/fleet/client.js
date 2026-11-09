@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { fleetConfig } from './config';
 import { getFreshFleetAccessToken } from './session';
 import { ApiError } from '../util/apiError';
+import { countEvent, counterName } from '../telemetry/metrics';
 
 let client = null;
 
@@ -22,9 +23,15 @@ export const getFleetClient = () => {
 export const unwrap = ({ data, error, status }) => {
   if (error) {
     const message = error.message || String(error);
+    const kind = !status && /failed to fetch|network/i.test(message) ? 'network' : undefined;
+    // FND-06: Supabase error codes, counted (fleet_error.42501, fleet_error.pgrst301...). A
+    // cancelled request is not an error.
+    if (!/abort/i.test(`${error.name || ''} ${message}`)) {
+      countEvent(counterName('fleet_error', error.code || kind || status));
+    }
     throw new ApiError({
       status: status || undefined,
-      kind: !status && /failed to fetch|network/i.test(message) ? 'network' : undefined,
+      kind,
       code: error.code ? String(error.code) : undefined,
       endpoint: 'fleet',
       detail: [message, error.details, error.hint].filter(Boolean).join('\n'),

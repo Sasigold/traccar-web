@@ -1,5 +1,7 @@
 import React from 'react';
 import { isChunkLoadError, reloadForNewBuild } from './common/util/staleBuild';
+import { countEvent } from './common/telemetry/metrics';
+import { reportError } from './common/telemetry/install';
 
 // Catches a render error so it does not take the whole app down. `fallback(error, reset)`
 // renders the replacement; `resetKey` (for example the page address) clears the error when it
@@ -25,8 +27,12 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, info) {
     // A page's file from an older build is gone (FND-05): reload once to get the new build.
+    const chunk = isChunkLoadError(error);
+    if (chunk) {
+      countEvent('chunk_load_error');
+    }
     if (
-      isChunkLoadError(error) &&
+      chunk &&
       reloadForNewBuild({
         storage: window.sessionStorage,
         reload: () => window.location.reload(),
@@ -34,8 +40,10 @@ class ErrorBoundary extends React.Component {
     ) {
       return;
     }
-    // For support: the details stay in the console.
+    // For support: the details stay in the console, and go to the error service when the build
+    // has one (FND-06).
     console.error(error, info?.componentStack);
+    reportError(error, 'boundary');
   }
 
   render() {

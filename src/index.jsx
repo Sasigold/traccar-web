@@ -11,9 +11,13 @@ import ServerProvider from './ServerProvider';
 import ErrorBoundary from './ErrorBoundary';
 import AppThemeProvider from './AppThemeProvider';
 import { installStaleBuildRecovery } from './common/util/staleBuild';
+import { installTelemetry } from './common/telemetry/install';
+import TelemetryRoute from './common/telemetry/TelemetryRoute';
 
 // FND-05: a tab from before a deploy reloads once instead of showing an error.
 installStaleBuildRecovery();
+// FND-06: error reports, web vitals, counters and analytics, each off unless the build sets it.
+installTelemetry();
 
 const root = createRoot(document.getElementById('root'));
 root.render(
@@ -25,6 +29,7 @@ root.render(
             <CssBaseline enableColorScheme />
             <ServerProvider>
               <BrowserRouter basename={new URL(document.baseURI).pathname}>
+                <TelemetryRoute />
                 <Navigation />
               </BrowserRouter>
               <MessageHandler />

@@ -19,6 +19,7 @@ import fetchOrThrow from './common/util/fetchOrThrow';
 import { backfillRange, reconnectDelay } from './common/util/reconnect';
 import { chunk } from './dashboard/data/reportFetch';
 import { RECONNECT_NOW_EVENT } from './common/components/shell/SocketStatusPill';
+import { countEvent } from './common/telemetry/metrics';
 
 const logoutCode = 4000;
 // The last-message time is stored at most this often (the pill shows minutes).
@@ -162,6 +163,9 @@ const SocketController = () => {
 
     socket.onopen = () => {
       const missedSince = attemptRef.current > 0 ? lastMessageRef.current : null;
+      if (attemptRef.current > 0) {
+        countEvent('socket_reconnect');
+      }
       attemptRef.current = 0;
       dispatch(sessionActions.updateSocket(true));
       socket.send(JSON.stringify({ logs: includeLogsRef.current }));
@@ -174,6 +178,7 @@ const SocketController = () => {
     socket.onclose = async (event) => {
       dispatch(sessionActions.updateSocket(false));
       if (event.code === logoutCode) return;
+      countEvent('socket_disconnect');
       try {
         const devicesResponse = await fetch('api/devices');
         if (socketRef.current !== socket) return;

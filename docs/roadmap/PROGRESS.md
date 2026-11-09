@@ -3,7 +3,7 @@
 הקובץ הזה הוא נקודת ההמשך. מי שממשיך את הפיתוח (אדם או סוכן AI) קורא אותו קודם, ואחר כך את
 `docs/roadmap/ITEMS.md`, שבו כל 213 הפריטים של דוח הסקירה עם המצב של כל אחד.
 
-עודכן: 9 בנובמבר 2026, אחרי FND-05 (commit `28e8ef3`), ב-PR #25 שממוזג ל-`main`.
+עודכן: 9 בנובמבר 2026, אחרי FND-06 (commit `FND-06_COMMIT`), בענף `claude/clever-edison-f9609a`.
 
 ## ההוראה של הבעלים
 
@@ -16,15 +16,10 @@
 
 סדר הביצוע הוא מפת הדרכים של הדוח. שלב "1 עד 3 חודשים" כמעט הסתיים; נשארו בו:
 
-1. **FND-06, תצפיתיות.** דיווח שגיאות (`release` כבר קיים: `1.0.0+<commit>` ב-`version.json` וב-
-   `import.meta.env.VITE_APP_VERSION`), web-vitals ו-long tasks, מונים תפעוליים (ניתוקי socket, כשלי
-   טוקן, שגיאות טעינת chunks, שגיאות Supabase), ואנליטיקת מוצר. **צריך החלטה של הבעלים לפני שמתחילים:**
-   GlitchTip על ה-VPS או Sentry, ואיזו אנליטיקה (Umami, Plausible, PostHog או בלי). בלי החלטה: לבנות
-   שכבה שמתחברת לשניהם, כבויה כברירת מחדל, בלי סודות בקוד.
-2. **FND-07, בדיקות לקוד המסוכן.** כבר יש: בדיקות RLS ב-`supabase/tests/*.test.sql` שרצות ב-CI. חסר:
+1. **FND-07, בדיקות לקוד המסוכן.** כבר יש: בדיקות RLS ב-`supabase/tests/*.test.sql` שרצות ב-CI. חסר:
    בדיקות React Testing Library לרשימה, לפרטים ולשמירה; בדיקות יחידה ל-`session.js`, ל-socket ול-throttle;
    מצב כתיבה לשרת הדמו עם traccar-auth מזויף ותרחישים מלאים; פרופיל ביצועים של 2,000 רכבים.
-3. **ARC-06, שכבת נתונים משותפת.** TanStack Query גם ל-Traccar וגם ל-Supabase, `signal` מחובר ל-
+2. **ARC-06, שכבת נתונים משותפת.** TanStack Query גם ל-Traccar וגם ל-Supabase, `signal` מחובר ל-
    `.abortSignal()`, `invalidateQueries` במקום `reloadKey`, מפתחות עם `orgId`. מעבר הדרגתי.
 
 אחריהם, לפי הדוח:
@@ -45,6 +40,9 @@
 - **ISR-04:** קצין בטיחות חיצוני לכמה ארגונים, ופענוח קובצי טכוגרף.
 - **REP-08:** תזמון חודשי (יש יומי ושבועי).
 - **FND-04:** תצוגה מקדימה לכל PR (היה אופציונלי).
+- **FND-06:** הקוד מוכן ומחכה להחלטות של הבעלים (ראו למטה). מדדי הדפדפן והמונים כבר נשלחים למסד הצי
+  ונראים ב-`/admin/health`. אפשר להוסיף בעתיד: אירועי שימוש לפעולות מפתח (`trackEvent` ב-
+  `src/common/telemetry/install.js` מוכן), פירוק מדדים לפי מסך, והתראה כשמונה קופץ אחרי פריסה.
 
 ## מה מחכה לבעלים (לא בקוד)
 
@@ -57,6 +55,11 @@
 5. מפתחות ספקי השליחה (OPS-01) במסך ערוצי השליחה.
 6. Morning: מפתח API, חיבור לרשות המסים, Cardcom ו-`BILLING_DOCUMENTS_URL` לתשלום באשראי.
 7. הגדרות בשרת Traccar: `database.historyDays` וסינון דוחות מתוזמנים (SEC-02, SEC-12).
+8. תצפיתיות (FND-06, `docs/OBSERVABILITY.md`): להחליט GlitchTip על ה-VPS או Sentry, ואיזו אנליטיקה
+   (Umami, Plausible, PostHog או בלי). אחר כך משתני `STAGING_ERROR_DSN` / `PRODUCTION_ERROR_DSN`,
+   `*_ANALYTICS_PROVIDER/URL/SITE`, ולמפות המקור: `ERROR_SOURCEMAPS_URL`, `ERROR_SOURCEMAPS_ORG`,
+   `*_ERROR_PROJECT` והסוד `ERROR_AUTH_TOKEN`. עם אנליטיקה: שורה בהודעת הפרטיות. עם CSP (SEC-10):
+   להוסיף את שני השירותים ל-`connect-src`.
 
 ## איך עובדים כאן
 
@@ -74,6 +77,8 @@
   e2e מזייפות אותו עם `FLEET` מ-`e2e/fixtures.js` (traccar-auth שמחזיר הרשאות, ותשובות PostgREST).
   משתמש הדמו לקריאה בלבד; לבדיקת כתיבה מזייפים את `api/session` עם `readonly: false`.
 - **סביבות ופריסה:** `deploy/STAGING.md` (סביבות, staging, גרסאות וחזרה לאחור).
+- **תצפיתיות:** `docs/OBSERVABILITY.md`. מונה חדש: `countEvent('name')` מ-`src/common/telemetry/metrics.js`
+  (בלי פרטים אישיים בשם), ולהוסיף לו תווית ב-`ClientHealthPage.jsx`.
 - **build:** צריך `VITE_FLEET_URL` ו-`VITE_FLEET_ANON_KEY` (בלי ברירת מחדל של ייצור, FND-04).
 - **סודות:** רק ב-Vault (פונקציות `*_set_secret` שרק מנהלי הפלטפורמה מריצים), אף פעם לא בטבלאות, במשתני
   סביבה של הקוד או בגיט. אין גישת SSH לשרת מהסביבה הזו; פעולות בשרת עוברות דרך ה-workflows.
