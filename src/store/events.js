@@ -6,8 +6,11 @@ const { reducer, actions } = createSlice({
     items: [],
   },
   reducers: {
+    // Newest first; an event that is already listed (live and back-filled) is not added twice.
     add(state, action) {
-      state.items.unshift(...action.payload);
+      const known = new Set(state.items.map((item) => item.id));
+      const fresh = action.payload.filter((item) => item.id == null || !known.has(item.id));
+      state.items.unshift(...fresh);
       state.items.splice(50);
     },
     delete(state, action) {

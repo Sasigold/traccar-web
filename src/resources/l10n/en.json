@@ -2335,5 +2335,12 @@
     "mapCtrlKilometers": "km",
     "mapCtrlMiles": "mi",
     "mapCtrlFeet": "ft",
-    "mapCtrlNauticalMiles": "nm"
+    "mapCtrlNauticalMiles": "nm",
+    "mapSynced": "Synced · {0}",
+    "mapQuiet": "Last update {0}",
+    "mapQuietHint": "No new data in the last two minutes",
+    "mapRetryIn": "Disconnected · retrying in {0} s",
+    "mapRetrying": "Reconnecting…",
+    "mapRetryNow": "Click to retry now",
+    "mapOffline": "No internet connection"
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { devicesActions, messagesActions, sessionActions } from './store';
 import { useCatchCallback, useAsyncTask } from './reactHelper';
@@ -13,8 +13,13 @@ import {
   nativePostMessage,
 } from './common/components/NativeInterface';
 import fetchOrThrow from './common/util/fetchOrThrow';
+import { backfillRange, reconnectDelay } from './common/util/reconnect';
+import { chunk } from './dashboard/data/reportFetch';
+import { RECONNECT_NOW_EVENT } from './common/components/shell/SocketStatusPill';
 
 const logoutCode = 4000;
+// The last-message time is stored at most this often (the pill shows minutes).
+const ACTIVITY_STEP_MS = 5000;
 
 let alarmAudio;
 const playAlarm = () => {
@@ -22,11 +27,13 @@ const playAlarm = () => {
     alarmAudio = new Audio(alarm);
   }
   alarmAudio.currentTime = 0;
-  alarmAudio.play();
+  // Browsers block sound until the user has interacted with the page; don't throw on that.
+  alarmAudio.play()?.catch?.(() => {});
 };
 
 const SocketController = () => {
   const dispatch = useDispatch();
+  const store = useStore();
   const navigate = useNavigate();
 
   const authenticated = useSelector((state) => Boolean(state.session.user));
@@ -34,6 +41,9 @@ const SocketController = () => {
 
   const socketRef = useRef();
   const reconnectTimeoutRef = useRef();
+  const attemptRef = useRef(0);
+  const lastMessageRef = useRef(null);
+  const lastStoredRef = useRef(0);
 
   const clearReconnectTimeout = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -84,6 +94,48 @@ const SocketController = () => {
 
   const connectSocketRef = useRef();
 
+  const markActivity = useCallback(() => {
+    const now = Date.now();
+    lastMessageRef.current = now;
+    if (now - lastStoredRef.current >= ACTIVITY_STEP_MS) {
+      lastStoredRef.current = now;
+      dispatch(sessionActions.updateLastMessage(now));
+    }
+  }, [dispatch]);
+
+  // Events (alarms included) raised while the socket was down are not replayed by Traccar; fetch
+  // them from the events report once the connection is back.
+  const backfillEvents = useCallback(
+    async (since) => {
+      const range = backfillRange(since);
+      const deviceIds = Object.keys(store.getState().devices.items);
+      if (!range || !deviceIds.length) {
+        return;
+      }
+      try {
+        const events = [];
+        for (const ids of chunk(deviceIds.slice(0, 1000))) {
+          const query = new URLSearchParams({ ...range });
+          ids.forEach((id) => query.append('deviceId', id));
+          query.append('type', 'allEvents');
+          const response = await fetch(`api/reports/events?${query.toString()}`, {
+            headers: { Accept: 'application/json' },
+          });
+          if (response.ok) {
+            events.push(...(await response.json()));
+          }
+        }
+        if (events.length) {
+          events.sort((a, b) => Date.parse(b.eventTime) - Date.parse(a.eventTime));
+          handleEventsRef.current(events.slice(0, 50));
+        }
+      } catch {
+        // best effort: the live feed continues either way
+      }
+    },
+    [store],
+  );
+
   const connectSocket = useCallback(() => {
     clearReconnectTimeout();
     if (socketRef.current && socketRef.current.readyState !== WebSocket.CLOSED) {
@@ -95,8 +147,14 @@ const SocketController = () => {
     socketRef.current = socket;
 
     socket.onopen = () => {
+      const missedSince = attemptRef.current > 0 ? lastMessageRef.current : null;
+      attemptRef.current = 0;
       dispatch(sessionActions.updateSocket(true));
       socket.send(JSON.stringify({ logs: includeLogsRef.current }));
+      markActivity();
+      if (missedSince) {
+        backfillEvents(missedSince);
+      }
     };
 
     socket.onclose = async (event) => {
@@ -121,13 +179,17 @@ const SocketController = () => {
       }
       if (socketRef.current !== socket) return;
       clearReconnectTimeout();
+      const delay = reconnectDelay(attemptRef.current);
+      attemptRef.current += 1;
+      dispatch(sessionActions.updateReconnectAt(Date.now() + delay));
       reconnectTimeoutRef.current = setTimeout(() => {
         reconnectTimeoutRef.current = null;
         connectSocketRef.current?.();
-      }, 60000);
+      }, delay);
     };
 
     socket.onmessage = (event) => {
+      markActivity();
       const data = JSON.parse(event.data);
       if (data.devices) {
         dispatch(devicesActions.update(data.devices));
@@ -142,7 +204,7 @@ const SocketController = () => {
         dispatch(sessionActions.updateLogs(data.logs));
       }
     };
-  }, [clearReconnectTimeout, dispatch, navigate]);
+  }, [clearReconnectTimeout, dispatch, navigate, markActivity, backfillEvents]);
 
   connectSocketRef.current = connectSocket;
 
@@ -211,9 +273,15 @@ const SocketController = () => {
         reconnectIfNeeded();
       }
     };
+    const reconnectNow = () => {
+      attemptRef.current = 0;
+      connectSocket();
+    };
     window.addEventListener('online', reconnectIfNeeded);
+    window.addEventListener(RECONNECT_NOW_EVENT, reconnectNow);
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
+      window.removeEventListener(RECONNECT_NOW_EVENT, reconnectNow);
       window.removeEventListener('online', reconnectIfNeeded);
       document.removeEventListener('visibilitychange', onVisibility);
     };

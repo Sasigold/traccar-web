@@ -6,6 +6,9 @@ const { reducer, actions } = createSlice({
     server: null,
     user: null,
     socket: null,
+    // Time of the last socket message (ms), and of the next reconnect attempt while disconnected.
+    lastMessageAt: null,
+    reconnectAt: null,
     includeLogs: false,
     logs: [],
     positions: {},
@@ -20,6 +23,15 @@ const { reducer, actions } = createSlice({
     },
     updateSocket(state, action) {
       state.socket = action.payload;
+      if (action.payload) {
+        state.reconnectAt = null;
+      }
+    },
+    updateLastMessage(state, action) {
+      state.lastMessageAt = action.payload;
+    },
+    updateReconnectAt(state, action) {
+      state.reconnectAt = action.payload;
     },
     enableLogs(state, action) {
       state.includeLogs = action.payload;

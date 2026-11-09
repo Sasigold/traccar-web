@@ -2335,5 +2335,12 @@
     "mapCtrlKilometers": "ק״מ",
     "mapCtrlMiles": "מייל",
     "mapCtrlFeet": "רגל",
-    "mapCtrlNauticalMiles": "מייל ימי"
+    "mapCtrlNauticalMiles": "מייל ימי",
+    "mapSynced": "מסונכרן · {0}",
+    "mapQuiet": "עדכון אחרון {0}",
+    "mapQuietHint": "לא הגיע מידע חדש בשתי הדקות האחרונות",
+    "mapRetryIn": "מנותק · ניסיון נוסף בעוד {0} שנ׳",
+    "mapRetrying": "מתחבר מחדש…",
+    "mapRetryNow": "לחצו כדי לנסות עכשיו",
+    "mapOffline": "אין חיבור לאינטרנט"
 }
