@@ -229,6 +229,30 @@ recipients; nothing is sent until a sender with provider keys exists.
 - **Copy to the database** (card on `/fleet`, needs `vehicles.write` or `drivers.write`) copies every card
   with stage 0 details; it only fills values, never clears what the database already has.
 
+## Sending alerts (WhatsApp, SMS, email)
+
+`supabase/migrations/20261110130000_messaging.sql`. Expiry alerts (and later other kinds) are queued in
+`notification_deliveries` for every active recipient; every minute `messaging_dispatch()` sends what is due
+through pg_net and `messaging_collect()` reads the answers.
+
+- **Set up** in Service management → Sending channels (`/admin/messaging`, platform admins): the provider,
+  the sender and the key of each channel, then a test message. Keys go to Supabase Vault
+  (`messaging_<channel>`) through `messaging_set_secret` and are never readable through the API.
+  - WhatsApp: Meta WhatsApp Business Platform. Sender = the phone number id; key = a permanent access
+    token; template = an approved Hebrew **utility** template whose body has one parameter (`{{1}}`) that
+    receives the message text, e.g. "תזכורת מ-viper fleet: {{1}}".
+  - SMS: Vonage (key `api_key:api_secret`, sender = name or number).
+  - Email: Resend (key = API key, sender = `viper fleet <alerts@your-domain>`; the domain must be verified).
+  - Any channel can instead post JSON (`channel`, `to`, `subject`, `text`, `kind`, `id`) to a webhook with a
+    bearer token, for another SMS gateway or an automation (Make, Zapier).
+- **Rules**: numbers are sent as international digits (0501234567 → 972501234567); opted-out addresses
+  (`messaging_optouts`) are skipped; a failure retries after 1, 2, 4 and 8 minutes and is marked failed after
+  5 attempts; each message keeps its status, the provider's message id and the last error (shown in the
+  delivery log on the expiry alerts page). Alerts are not marketing; `alert_recipients.marketing_consent`
+  is there for marketing messages, which need prior consent (Communications Law, section 30A).
+- **Not yet**: delivery and read receipts (provider webhooks), replies and two-way conversations with
+  drivers.
+
 ## Government vehicle registry (data.gov.il)
 
 The Ministry of Transport's open registry (`private-and-commercial-vehicles`, no key, CORS open) is read

@@ -49,6 +49,7 @@ import {
   acknowledgeAlerts,
   alertChannels,
   alertKinds,
+  isPhoneChannel,
   loadOpenAlerts,
   validRecipientAddress,
 } from './alerts';
@@ -149,8 +150,9 @@ const AlertsPage = () => {
   const saveRecipient = useCatch(async () => {
     const client = getFleetClient();
     const { id, ...values } = editing;
-    const address =
-      values.channel === 'whatsapp' ? values.address.replace(/[\s-]/g, '') : values.address.trim();
+    const address = isPhoneChannel(values.channel)
+      ? values.address.replace(/[\s-]/g, '')
+      : values.address.trim();
     const payload = { ...values, address, name: values.name.trim() };
     if (id) {
       unwrap(await client.from('alert_recipients').update(payload).eq('id', id));
@@ -418,7 +420,7 @@ const AlertsPage = () => {
               <TextField
                 label={t(editing.channel === 'email' ? 'userEmail' : 'fleetRecipientPhone')}
                 helperText={
-                  editing.channel === 'whatsapp' ? t('fleetRecipientPhoneHint') : undefined
+                  isPhoneChannel(editing.channel) ? t('fleetRecipientPhoneHint') : undefined
                 }
                 value={editing.address}
                 onChange={(event) => setEditing({ ...editing, address: event.target.value })}

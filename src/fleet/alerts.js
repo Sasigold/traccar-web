@@ -27,12 +27,14 @@ export const acknowledgeAlerts = async (ids, profileId) =>
   );
 
 export const alertKinds = ['document_expiry', 'maintenance', 'report'];
-export const alertChannels = ['whatsapp', 'email'];
+export const alertChannels = ['whatsapp', 'sms', 'email'];
 
-// WhatsApp needs an international number (+972...), email a plausible address.
+// WhatsApp and SMS need an international number (+972...), email a plausible address.
+export const isPhoneChannel = (channel) => channel === 'whatsapp' || channel === 'sms';
+
 export const validRecipientAddress = (channel, address) => {
   const value = (address || '').trim();
-  if (channel === 'whatsapp') {
+  if (isPhoneChannel(channel)) {
     return /^\+[1-9]\d{7,14}$/.test(value.replace(/[\s-]/g, ''));
   }
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);

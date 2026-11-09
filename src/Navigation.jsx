@@ -99,6 +99,7 @@ const DeviceSetupPage = lazy(() => import('./admin/DeviceSetupPage'));
 const AdminUsersPage = lazy(() => import('./admin/AdminUsersPage'));
 const BillingPage = lazy(() => import('./admin/BillingPage'));
 const PlansPage = lazy(() => import('./admin/PlansPage'));
+const MessagingPage = lazy(() => import('./admin/MessagingPage'));
 
 const Navigation = () => {
   const dispatch = useDispatch();
@@ -259,6 +260,7 @@ const Navigation = () => {
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="billing" element={<BillingPage />} />
             <Route path="plans" element={<PlansPage />} />
+            <Route path="messaging" element={<MessagingPage />} />
           </Route>
 
           <Route path="reports">

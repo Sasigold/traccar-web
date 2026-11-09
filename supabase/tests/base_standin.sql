@@ -44,12 +44,38 @@ grant select, insert, update, delete on storage.objects to authenticated;
 create schema if not exists net;
 create table if not exists net.http_request_queue (id bigserial primary key, url text, params jsonb);
 create table if not exists net._http_response (
-  id bigint primary key, status_code integer, content text, created timestamptz default now()
+  id bigint primary key, status_code integer, content_type text, headers jsonb, content text,
+  timed_out boolean, error_msg text, created timestamptz default now()
 );
 create or replace function net.http_get(
   url text, params jsonb default '{}', headers jsonb default '{}', timeout_milliseconds integer default 5000
 ) returns bigint
 language sql as $$ insert into net.http_request_queue (url, params) values ($1, $2) returning id $$;
+
+create table if not exists net.http_post_queue (
+  id bigint primary key, url text, body jsonb, headers jsonb
+);
+create or replace function net.http_post(
+  url text, body jsonb default '{}', params jsonb default '{}', headers jsonb default '{}',
+  timeout_milliseconds integer default 5000
+) returns bigint
+language plpgsql as $$
+declare
+  new_id bigint;
+begin
+  insert into net.http_request_queue (url, params) values (url, params) returning id into new_id;
+  insert into net.http_post_queue (id, url, body, headers) values (new_id, url, body, headers);
+  return new_id;
+end $$;
+
+-- Supabase Vault stand-in (secrets stored in clear here, encrypted in production).
+create schema if not exists vault;
+create table if not exists vault.secrets (id uuid primary key default gen_random_uuid(), name text unique, secret text);
+create or replace view vault.decrypted_secrets as select id, name, secret as decrypted_secret from vault.secrets;
+create or replace function vault.create_secret(new_secret text, new_name text default null) returns uuid
+language sql as $$ insert into vault.secrets (name, secret) values (new_name, new_secret) returning id $$;
+create or replace function vault.update_secret(secret_id uuid, new_secret text default null) returns void
+language sql as $$ update vault.secrets set secret = new_secret where id = secret_id $$;
 
 -- pg_cron stand-in (the extension itself is not installed locally).
 create schema if not exists cron;
