@@ -1726,7 +1726,7 @@
     "fleetJobNavigate": "ניווט",
     "fleetJobTracking": "קישור מעקב ללקוח",
     "fleetJobTrackingCreate": "יצירת קישור",
-    "fleetJobTrackingExplain": "הקישור מציג ללקוח את מיקום הרכב בלבד, ופג בסוף חלון ההגעה.",
+    "fleetJobTrackingExplain": "הקישור מציג ללקוח את מיקום הרכב בלבד. הוא פג שעה אחרי סוף חלון ההגעה, ולכל היותר 12 שעות אחרי שנוצר, ומפסיק להופיע כשהמשימה נסגרת.",
     "fleetJobTrackingNoVehicle": "צריך לשייך למשימה רכב עם מכשיר מעקב.",
     "fleetJobTrackingMessage": "הודעה ללקוח",
     "fleetJobTrackingGreeting": "שלום {0}, הרכב שלנו בדרך אליך.",

@@ -12,9 +12,11 @@ const REFRESH_INTERVAL_MS = 30 * 60 * 1000;
 const FleetController = () => {
   const dispatch = useDispatch();
   const userId = useSelector((state) => state.session.user?.id);
+  // Share-link users never get a fleet database session (it would be organization-wide).
+  const temporary = useSelector((state) => Boolean(state.session.user?.temporary));
 
   useEffect(() => {
-    if (!isFleetConfigured()) {
+    if (!isFleetConfigured() || temporary) {
       dispatch(fleetActions.disabled());
       return undefined;
     }
@@ -54,7 +56,7 @@ const FleetController = () => {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [userId, dispatch]);
+  }, [userId, temporary, dispatch]);
 
   return null;
 };

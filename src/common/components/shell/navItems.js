@@ -29,6 +29,7 @@ export default () => {
   const admin = useAdministrator();
   // Fleet role "driver" gets the driver portal (roadmap 4.6) instead of the fleet screens.
   const driverRole = useSelector((state) => state.fleet.profile?.role === 'driver');
+  const temporary = useSelector((state) => Boolean(state.session.user?.temporary));
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
   const devices = useSelector((state) => state.devices.items);
 
@@ -109,6 +110,6 @@ export default () => {
         match: (pathname) => pathname.startsWith('/admin'),
         hidden: !admin,
       },
-    ].filter((item) => !item.hidden);
-  }, [readonly, disableReports, admin, driverRole, selectedDeviceId, devices]);
+    ].filter((item) => !item.hidden && (!temporary || item.key === 'map'));
+  }, [readonly, disableReports, admin, driverRole, temporary, selectedDeviceId, devices]);
 };

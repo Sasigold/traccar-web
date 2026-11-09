@@ -1726,7 +1726,7 @@
     "fleetJobNavigate": "Navigate",
     "fleetJobTracking": "Customer tracking link",
     "fleetJobTrackingCreate": "Create link",
-    "fleetJobTrackingExplain": "The link shows the customer only the vehicle's location and expires at the end of the arrival window.",
+    "fleetJobTrackingExplain": "The link shows the customer only where the vehicle is. It expires an hour after the arrival window ends, at most 12 hours after it was created, and is removed when the job is closed.",
     "fleetJobTrackingNoVehicle": "Assign a vehicle with a tracking device to the job first.",
     "fleetJobTrackingMessage": "Message to the customer",
     "fleetJobTrackingGreeting": "Hello {0}, our vehicle is on its way.",

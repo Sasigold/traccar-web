@@ -1,4 +1,4 @@
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import SocketController from './SocketController';
 import CachingController from './CachingController';
@@ -49,6 +49,11 @@ const App = () => {
 
   if (user == null) {
     return <Loader />;
+  }
+  // A share link (for example a customer tracking link) signs in a temporary user: it gets the
+  // live map of the shared vehicle and nothing else.
+  if (user.temporary && location.pathname !== '/') {
+    return <Navigate to="/" replace />;
   }
   if (termsUrl && !user.attributes.termsAccepted) {
     return <TermsDialog open onCancel={() => navigate('/login')} onAccept={() => acceptTerms()} />;
