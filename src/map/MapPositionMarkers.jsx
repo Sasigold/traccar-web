@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { map } from './core/MapView';
 import MapMarkers from './MapMarkers';
@@ -6,8 +6,8 @@ import { formatTime, getStatusColor } from '../common/util/formatter';
 import { deviceIconKey, isDeviceMoving, isHeadingIcon } from './core/preloadImages';
 import { useAttributePreference } from '../common/util/preferences';
 import { fromMapCoordinates } from './core/mapUtil';
-import useSmoothPositions from './core/useSmoothPositions';
-import MapSelectionRing from './main/MapSelectionRing';
+
+const SMOOTH_LIMIT = 300;
 
 const MapPositionMarkers = ({
   positions,
@@ -26,7 +26,7 @@ const MapPositionMarkers = ({
   const mapCluster = useAttributePreference('mapCluster', true);
   const directionType = useAttributePreference('mapDirection', 'selected');
 
-  const shownPositions = useSmoothPositions(positions, Boolean(smooth));
+  const selectTime = useSelector((state) => state.devices.selectTime);
 
   const onMapClickCallback = useCallback(
     (event) => {
@@ -43,43 +43,60 @@ const MapPositionMarkers = ({
     return () => map.off('click', onMapClickCallback);
   }, [onMapClickCallback]);
 
-  const buildMarker = (position) => {
-    const device = devices[position.deviceId];
-    let showDirection;
-    switch (directionType) {
-      case 'none':
-        showDirection = false;
-        break;
-      case 'all':
-        showDirection = position.course > 0;
-        break;
-      default:
-        showDirection = selectedPosition?.id === position.id && position.course > 0;
-        break;
-    }
-    const color = showStatus
-      ? position.attributes.color || getStatusColor(device.status)
-      : 'neutral';
-    const titles = { name: device.name, fixTime: formatTime(position.fixTime, 'seconds') };
-    const iconKey = deviceIconKey(device.category, showStatus && isDeviceMoving(device, position));
-    // A top-down vehicle already shows where it is heading; it needs no direction arrow.
-    const heading = isHeadingIcon(iconKey);
-    return {
-      id: position.id,
-      deviceId: position.deviceId,
-      latitude: position.latitude,
-      longitude: position.longitude,
-      image: `${iconKey}-${color}`,
-      title: titles[titleField || 'name'],
-      rotation: position.course,
-      direction: showDirection && !heading,
-      heading,
+  // Built once per new fix (not per animation frame): MapMarkers glides between them.
+  const markers = useMemo(() => {
+    const buildMarker = (position) => {
+      const device = devices[position.deviceId];
+      let showDirection;
+      switch (directionType) {
+        case 'none':
+          showDirection = false;
+          break;
+        case 'all':
+          showDirection = position.course > 0;
+          break;
+        default:
+          showDirection = selectedPosition?.id === position.id && position.course > 0;
+          break;
+      }
+      const color = showStatus
+        ? position.attributes.color || getStatusColor(device.status)
+        : 'neutral';
+      const title =
+        titleField === 'fixTime' ? formatTime(position.fixTime, 'seconds') : device.name;
+      const iconKey = deviceIconKey(
+        device.category,
+        showStatus && isDeviceMoving(device, position),
+      );
+      // A top-down vehicle already shows where it is heading; it needs no direction arrow.
+      const heading = isHeadingIcon(iconKey);
+      return {
+        id: position.id,
+        deviceId: position.deviceId,
+        latitude: position.latitude,
+        longitude: position.longitude,
+        image: `${iconKey}-${color}`,
+        title,
+        fixTime: position.fixTime,
+        rotation: position.course,
+        direction: showDirection && !heading,
+        heading,
+      };
     };
-  };
 
-  const markers = shownPositions
-    .filter((it) => devices.hasOwnProperty(it.deviceId))
-    .map(buildMarker);
+    return positions.filter((it) => devices.hasOwnProperty(it.deviceId)).map(buildMarker);
+  }, [positions, devices, directionType, showStatus, selectedPosition, titleField]);
+
+  const otherMarkers = useMemo(
+    () => markers.filter((it) => it.deviceId !== selectedDeviceId),
+    [markers, selectedDeviceId],
+  );
+  const selectedMarkers = useMemo(
+    () => markers.filter((it) => it.deviceId === selectedDeviceId),
+    [markers, selectedDeviceId],
+  );
+  // Gliding every marker costs a map update per frame; above this many it is switched off.
+  const glide = Boolean(smooth) && markers.length <= SMOOTH_LIMIT;
 
   const onClick = useCallback(
     (properties) => onMarkerClick?.(properties.id, properties.deviceId),
@@ -89,28 +106,23 @@ const MapPositionMarkers = ({
   return (
     <>
       <MapMarkers
-        markers={markers.filter((it) => it.deviceId !== selectedDeviceId)}
+        markers={otherMarkers}
         showTitles
         direction
         cluster={mapCluster}
         onClick={onClick}
         disabled={disabled}
+        smooth={glide}
       />
-      {selectionRing && (
-        <MapSelectionRing
-          position={
-            selectedDeviceId
-              ? shownPositions.find((it) => it.deviceId === selectedDeviceId)
-              : undefined
-          }
-        />
-      )}
       <MapMarkers
-        markers={markers.filter((it) => it.deviceId === selectedDeviceId)}
+        markers={selectedMarkers}
         showTitles
         direction
         onClick={onClick}
         disabled={disabled}
+        smooth={glide}
+        ring={Boolean(selectionRing)}
+        ringPulse={selectTime}
       />
     </>
   );
