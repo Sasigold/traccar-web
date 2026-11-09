@@ -282,6 +282,11 @@ the customer and billing parts show why they are unavailable.
   touching another organization, making or changing an owner unless you are one, platform keys per user,
   and anything without `users.manage`. Every such change goes to `audit_log`. Platform administrators and
   server-side code are not limited.
+- **Billing integrity (SEC-09, `20261114110000_billing_integrity.sql`).** A bill's number always comes from
+  the sequence; once it is not a draft only its status, payment details and notes change, it never returns
+  to draft, its lines are locked and it is cancelled rather than deleted. `billing_save_invoice(invoice,
+  lines)` saves a bill and replaces its lines in one transaction. Every change to customers, their users,
+  the device registry, plans, subscriptions, bills and lines goes to `audit_log`.
 - **Drivers** reach incident parties, claims, photos and checklist answers only through incidents and
   inspections they may see. They upload files but never replace or delete them.
 - **Tests.** `supabase/tests/run.sh` applies every migration to a fresh Postgres on top of

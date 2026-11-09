@@ -268,34 +268,24 @@ const invoiceFields = (invoice) => {
   return fields;
 };
 
-// Saves a bill with its lines. Lines are replaced as a whole and only while
-// the bill is a draft; issued bills change status only.
+// Saves a bill with its lines in one transaction (billing_save_invoice, SEC-09). Lines are
+// replaced as a whole and only while the bill is a draft; the requested status is set after the
+// lines, so a draft can be issued in the same call. The number always comes from the server.
 export const saveInvoice = async (invoice, lines) => {
   const fields = invoiceFields(invoice);
-  const saved = invoice.id
-    ? unwrap(
-        await db().from('billing_invoices').update(fields).eq('id', invoice.id).select().single(),
-      )
-    : unwrap(await db().from('billing_invoices').insert(fields).select().single());
-  if (lines) {
-    unwrap(await db().from('billing_invoice_lines').delete().eq('invoice_id', saved.id));
-    if (lines.length) {
-      unwrap(
-        await db()
-          .from('billing_invoice_lines')
-          .insert(
-            lines.map((line, index) => ({
-              invoice_id: saved.id,
-              description: line.description,
-              quantity: Number(line.quantity) || 0,
-              unit_price: Number(line.unit_price) || 0,
-              sort_order: index,
-            })),
-          ),
-      );
-    }
-  }
-  return unwrap(await db().from('billing_invoices_view').select('*').eq('id', saved.id).single());
+  const id = unwrap(
+    await db().rpc('billing_save_invoice', {
+      p_invoice: { ...fields, ...(invoice.id ? { id: invoice.id } : {}) },
+      p_lines: lines
+        ? lines.map((line) => ({
+            description: line.description,
+            quantity: Number(line.quantity) || 0,
+            unit_price: Number(line.unit_price) || 0,
+          }))
+        : null,
+    }),
+  );
+  return unwrap(await db().from('billing_invoices_view').select('*').eq('id', id).single());
 };
 
 export const setInvoiceStatus = async (id, changes) =>
