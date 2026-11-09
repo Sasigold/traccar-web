@@ -277,6 +277,11 @@ the customer and billing parts show why they are unavailable.
   users of a customer. To add someone (as an existing platform admin, or as `postgres`):
   `insert into public.platform_admins (user_id) select id from public.profiles where traccar_user_id = <id>;`
   Nobody can remove themselves.
+- **Roles and overrides (SEC-08, `20261114100000_role_guard.sql`).** Triggers on `profiles` and
+  `user_permissions` refuse, for a signed-in user: changing your own role, organization or access,
+  touching another organization, making or changing an owner unless you are one, platform keys per user,
+  and anything without `users.manage`. Every such change goes to `audit_log`. Platform administrators and
+  server-side code are not limited.
 - **Drivers** reach incident parties, claims, photos and checklist answers only through incidents and
   inspections they may see. They upload files but never replace or delete them.
 - **Tests.** `supabase/tests/run.sh` applies every migration to a fresh Postgres on top of
