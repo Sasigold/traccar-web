@@ -242,7 +242,7 @@ const SafetyInboxPage = () => {
       >
         <TableHead>
           <TableRow>
-            <TableCell>{t('positionFixTime')}</TableCell>
+            <TableCell>{t('fleetFuelFieldOccurredAt')}</TableCell>
             <TableCell>{t('sharedDevice')}</TableCell>
             <TableCell>{t('sharedDriver')}</TableCell>
             <TableCell>{t('fleetSafetyEvents')}</TableCell>

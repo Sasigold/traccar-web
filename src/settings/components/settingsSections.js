@@ -1,4 +1,5 @@
 import AccessibilityNewRoundedIcon from '@mui/icons-material/AccessibilityNewRounded';
+import SavingsRoundedIcon from '@mui/icons-material/SavingsRounded';
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
 import PrivacyTipRoundedIcon from '@mui/icons-material/PrivacyTipRounded';
 import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedInRounded';
@@ -435,6 +436,15 @@ const useSectionCatalog = () => {
             icon: LocalGasStationRoundedIcon,
             path: '/fleet/costs',
             match: (pathname) => pathname.startsWith('/fleet/costs'),
+            visible: fleetCosts && has('costs'),
+          },
+          {
+            id: 'fuelChecks',
+            titleKey: 'fuelChecksTitle',
+            descriptionKey: 'fuelChecksDescription',
+            icon: SavingsRoundedIcon,
+            path: '/fleet/fuel-checks',
+            match: (pathname) => pathname.startsWith('/fleet/fuel-checks'),
             visible: fleetCosts && has('costs'),
           },
         ],
