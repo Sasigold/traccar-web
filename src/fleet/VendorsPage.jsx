@@ -17,6 +17,7 @@ import {
 import { makeStyles } from 'tss-react/mui';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
+import { DateField } from '../common/components/pickers';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import DataTable from '../common/components/table/DataTable';
@@ -61,6 +62,9 @@ const emptyVendor = {
   email: '',
   address: '',
   notes: '',
+  licensed: null,
+  license_number: '',
+  license_valid_until: '',
 };
 
 // Garages, tire shops, insurers and the other suppliers work orders and expenses point to.
@@ -117,6 +121,39 @@ export const VendorDialog = ({ vendor, onClose, onSaved }) => {
               </MenuItem>
             ))}
           </TextField>
+          {form.type === 'garage' && (
+            <>
+              <TextField
+                select
+                label={t('safetyGarageLicensed')}
+                value={form.licensed == null ? '' : String(form.licensed)}
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+                    licensed: event.target.value === '' ? null : event.target.value === 'true',
+                  })
+                }
+              >
+                <MenuItem value="">{t('safetyGarageUnknown')}</MenuItem>
+                <MenuItem value="true">{t('sharedYes')}</MenuItem>
+                <MenuItem value="false">{t('sharedNo')}</MenuItem>
+              </TextField>
+              {form.licensed && (
+                <>
+                  {field('license_number', 'safetyGarageLicenseNumber', {
+                    slotProps: { htmlInput: { dir: 'ltr' } },
+                  })}
+                  <DateField
+                    label={t('safetyGarageLicenseUntil')}
+                    value={form.license_valid_until || ''}
+                    onChange={(event) =>
+                      setForm({ ...form, license_valid_until: event.target.value })
+                    }
+                  />
+                </>
+              )}
+            </>
+          )}
           {field('contact_name', 'fleetVendorContact')}
           {field('phone', 'sharedPhone', { slotProps: { htmlInput: { dir: 'ltr' } } })}
           {field('email', 'userEmail', { slotProps: { htmlInput: { dir: 'ltr' } } })}

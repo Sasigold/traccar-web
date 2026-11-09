@@ -328,6 +328,33 @@ What it does **not** do, and needs the server (SEC-12):
 - When the fleet database is not reachable, nothing is hidden (Traccar alone has no privacy rules). Pages wait
   up to 15 seconds for the fleet session before loading.
 
+## Safety officer (Transport Regulations 585)
+
+`/fleet/safety-officer` (from the safety page; `safety.read`, changes with `safety.write`) turns the duties
+into a work plan, computed in `src/common/fleet/safetyOfficer.js` (unit-tested) from the records already
+kept:
+
+- **Periodic review** with each professional driver (every 3 months by default). The officer marks
+  professional drivers on the page (`safety_set_professional`); the driver confirms the summary in the
+  driver area by typing their name (`safety_review_sign`, once). Unsigned reviews are flagged.
+- **Licence and traffic record check** (585א): every 6 months for professional drivers, 36 for the others
+  by default. The check can carry the PDF from the government driver-check service.
+- **Accident investigation** for every accident without one (14 days by default), opened with a template of
+  questions and linked to the incident.
+- **Tachograph downloads** (vehicle unit or driver card) with the file; each one is due again after 28 days
+  by default. Files are kept by the storage policy; decoding .DDD files is not part of this stage.
+- **Quarterly report to the owner**: a printable page (save as PDF) with what was done in the quarter, the
+  open tasks and signature lines.
+- **Procedures library** (`safety_procedures`, files under `<org>/procedures/`, readable by everyone in the
+  organization) shown to drivers in the driver area.
+- **Licensed garages**: vendors of type garage record their Ministry of Transport licence; a work order warns
+  when the garage is not licensed, not recorded or expired.
+
+The frequencies are `org_safety_settings.officer_rules` (the "Frequencies" dialog); they are defaults to check
+against the regulations' text. Migration `supabase/migrations/20261110160000_safety_officer.sql`, DB test
+`supabase/tests/safety_officer.test.sql`. Not yet: one external safety officer serving several organizations
+from a single login (needs a profile per organization and an organization switch).
+
 ## Roadmap stages 2-4
 
 All fleet database screens live under `/fleet` (code in `src/fleet/`, pure logic with unit tests in

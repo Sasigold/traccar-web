@@ -24,6 +24,7 @@ import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import HealthAndSafetyRoundedIcon from '@mui/icons-material/HealthAndSafetyRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
+import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedInRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
@@ -377,6 +378,14 @@ const SafetyPage = () => {
           ))}
         </TextField>
       )}
+      <Button
+        size="small"
+        startIcon={<AssignmentTurnedInRoundedIcon />}
+        component={RouterLink}
+        to="/fleet/safety-officer"
+      >
+        {t('safetyOfficerPage')}
+      </Button>
       {canWrite && settings && (
         <Button size="small" startIcon={<TuneRoundedIcon />} onClick={() => setDialog('settings')}>
           {t('fleetSafetySettings')}

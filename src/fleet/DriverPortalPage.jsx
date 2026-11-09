@@ -19,6 +19,7 @@ import ExpiryBadge from './components/ExpiryBadge';
 import FleetNotice from './components/FleetNotice';
 import DriverJobsCard from './components/DriverJobsCard';
 import DriverPrivacyCard from './components/DriverPrivacyCard';
+import DriverSafetyCard from './components/DriverSafetyCard';
 import { incidentKey } from './IncidentsPage';
 
 const useStyles = makeStyles()((theme) => ({
@@ -193,6 +194,8 @@ const DriverPortalPage = () => {
             <DriverJobsCard driverId={data.driver.id} />
 
             <DriverPrivacyCard driverId={data.driver.id} hasVehicle={Boolean(data.assignment)} />
+
+            <DriverSafetyCard driverId={data.driver.id} />
 
             <Paper elevation={0} className={classes.card}>
               <div className={classes.head}>
