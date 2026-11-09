@@ -2320,5 +2320,20 @@
     "pickerEndTime": "שעת סיום",
     "pickerLast7Days": "7 הימים האחרונים",
     "pickerLast30Days": "30 הימים האחרונים",
-    "pickerPeriod": "תקופה"
+    "pickerPeriod": "תקופה",
+    "mapCtrlZoomIn": "הגדלה",
+    "mapCtrlZoomOut": "הקטנה",
+    "mapCtrlResetBearing": "איפוס הכיוון לצפון",
+    "mapCtrlFindMyLocation": "המיקום שלי",
+    "mapCtrlLocationNotAvailable": "המיקום לא זמין",
+    "mapCtrlMap": "מפה",
+    "mapCtrlAttribution": "זכויות יוצרים של המפה",
+    "mapCtrlClose": "סגירה",
+    "mapCtrlEnterFullscreen": "מסך מלא",
+    "mapCtrlExitFullscreen": "יציאה ממסך מלא",
+    "mapCtrlMeters": "מ׳",
+    "mapCtrlKilometers": "ק״מ",
+    "mapCtrlMiles": "מייל",
+    "mapCtrlFeet": "רגל",
+    "mapCtrlNauticalMiles": "מייל ימי"
 }

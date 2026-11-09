@@ -39,4 +39,17 @@ export const gotoReady = async (page, path) => {
   await page.goto(path);
   await expect(page.locator('#root')).not.toBeEmpty();
   await page.waitForLoadState('networkidle');
+  await settleAnimations(page);
 };
+
+// Entrance animations (login reveal, card slides) fade text in; contrast is only meaningful at
+// rest. Waits for every finite animation, ignoring looping ones such as the brand loader.
+export const settleAnimations = (page) =>
+  page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity)
+        .map((animation) => animation.finished.catch(() => null)),
+    ),
+  );

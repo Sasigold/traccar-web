@@ -11,7 +11,7 @@ import usePersistedState from '../../common/util/usePersistedState';
 import { mapImages } from './preloadImages';
 import useMapStyles from './useMapStyles';
 import { localizeStyle } from './mapLanguage';
-import { useLocalization } from '../../common/components/LocalizationProvider';
+import { useLocalization, useTranslation } from '../../common/components/LocalizationProvider';
 import { googleProtocol } from './googleProtocol';
 import { useAsyncTask } from '../../reactHelper';
 
@@ -60,6 +60,26 @@ export const useMapReady = () => {
   return mapReady;
 };
 
+// MapLibre reads control labels (tooltips, aria-labels, scale units) from map._locale when a
+// control is added, so the app language is applied before any control is created.
+const mapLocale = (t) => ({
+  'NavigationControl.ZoomIn': t('mapCtrlZoomIn'),
+  'NavigationControl.ZoomOut': t('mapCtrlZoomOut'),
+  'NavigationControl.ResetBearing': t('mapCtrlResetBearing'),
+  'GeolocateControl.FindMyLocation': t('mapCtrlFindMyLocation'),
+  'GeolocateControl.LocationNotAvailable': t('mapCtrlLocationNotAvailable'),
+  'Map.Title': t('mapCtrlMap'),
+  'AttributionControl.ToggleAttribution': t('mapCtrlAttribution'),
+  'Popup.Close': t('mapCtrlClose'),
+  'FullscreenControl.Enter': t('mapCtrlEnterFullscreen'),
+  'FullscreenControl.Exit': t('mapCtrlExitFullscreen'),
+  'ScaleControl.Meters': t('mapCtrlMeters'),
+  'ScaleControl.Kilometers': t('mapCtrlKilometers'),
+  'ScaleControl.Miles': t('mapCtrlMiles'),
+  'ScaleControl.Feet': t('mapCtrlFeet'),
+  'ScaleControl.NauticalMiles': t('mapCtrlNauticalMiles'),
+});
+
 const initMap = async () => {
   if (ready) return;
   if (!map.hasImage('background')) {
@@ -78,6 +98,13 @@ const MapView = ({ children }) => {
 
   const mapReady = useMapReady();
   const { language } = useLocalization();
+  const t = useTranslation();
+
+  // Layout effect: runs before the control effects below (and before child controls mount).
+  useLayoutEffect(() => {
+    map._locale = { ...map._locale, ...mapLocale(t) };
+    map.getCanvas().setAttribute('aria-label', t('mapCtrlMap'));
+  }, [t]);
 
   const mapStyles = useMapStyles();
   const activeMapStyles = useAttributePreference(

@@ -2320,5 +2320,20 @@
     "pickerEndTime": "End time",
     "pickerLast7Days": "Last 7 days",
     "pickerLast30Days": "Last 30 days",
-    "pickerPeriod": "Period"
+    "pickerPeriod": "Period",
+    "mapCtrlZoomIn": "Zoom in",
+    "mapCtrlZoomOut": "Zoom out",
+    "mapCtrlResetBearing": "Reset bearing to north",
+    "mapCtrlFindMyLocation": "Find my location",
+    "mapCtrlLocationNotAvailable": "Location not available",
+    "mapCtrlMap": "Map",
+    "mapCtrlAttribution": "Map attribution",
+    "mapCtrlClose": "Close",
+    "mapCtrlEnterFullscreen": "Enter fullscreen",
+    "mapCtrlExitFullscreen": "Exit fullscreen",
+    "mapCtrlMeters": "m",
+    "mapCtrlKilometers": "km",
+    "mapCtrlMiles": "mi",
+    "mapCtrlFeet": "ft",
+    "mapCtrlNauticalMiles": "nm"
 }

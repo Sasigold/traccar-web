@@ -177,9 +177,13 @@ export default {
   },
   MuiFormHelperText: {
     styleOverrides: {
-      root: {
+      // Help text explains a disabled field too, so it keeps readable secondary contrast.
+      root: ({ theme }) => ({
         marginInline: 2,
-      },
+        '&.Mui-disabled': {
+          color: theme.palette.text.secondary,
+        },
+      }),
     },
   },
   MuiButton: {
