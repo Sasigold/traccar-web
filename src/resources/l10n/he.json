@@ -2416,5 +2416,6 @@
     "errorWidgetText": "הרכיב לא הצליח להיטען.",
     "errorRetry": "נסו שוב",
     "errorReload": "רענון",
-    "mapViperFleet": "viper fleet (מפת המותג)"
+    "mapViperFleet": "viper fleet (מפת המותג)",
+    "mapOverSpeedLimit": "מעל המהירות המותרת"
 }

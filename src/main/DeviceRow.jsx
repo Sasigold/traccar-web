@@ -10,12 +10,12 @@ import {
   ListItemButton,
   Typography,
 } from '@mui/material';
-import BatteryFullIcon from '@mui/icons-material/BatteryFull';
-import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
-import Battery60Icon from '@mui/icons-material/Battery60';
-import BatteryCharging60Icon from '@mui/icons-material/BatteryCharging60';
-import Battery20Icon from '@mui/icons-material/Battery20';
-import BatteryCharging20Icon from '@mui/icons-material/BatteryCharging20';
+import BatteryFullIcon from '@mui/icons-material/BatteryFullRounded';
+import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFullRounded';
+import Battery60Icon from '@mui/icons-material/Battery60Rounded';
+import BatteryCharging60Icon from '@mui/icons-material/BatteryCharging60Rounded';
+import Battery20Icon from '@mui/icons-material/Battery20Rounded';
+import BatteryCharging20Icon from '@mui/icons-material/BatteryCharging20Rounded';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -111,7 +111,7 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: 'center',
     height: 18,
     paddingInline: 6,
-    borderRadius: 6,
+    borderRadius: theme.tokens.radius.xs,
     fontSize: '0.6875rem',
     fontWeight: 700,
     fontVariantNumeric: 'tabular-nums',
@@ -131,7 +131,7 @@ const useStyles = makeStyles()((theme) => ({
     justifyContent: 'center',
     width: 30,
     height: 30,
-    borderRadius: 9,
+    borderRadius: theme.tokens.radius.sm,
     border: `1px solid ${theme.palette.surface.border}`,
     backgroundColor: theme.palette.surface.sunken,
   },

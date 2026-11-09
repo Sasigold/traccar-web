@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { IconButton } from '@mui/material';
-import QrCode2Icon from '@mui/icons-material/QrCode2';
+import QrCode2Icon from '@mui/icons-material/QrCode2Rounded';
 import QrCodeDialog from './QrCodeDialog';
 import { useTranslation } from './LocalizationProvider';
 

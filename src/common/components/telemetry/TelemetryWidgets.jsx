@@ -21,12 +21,6 @@ const clickProps = (onClick, label) =>
       }
     : {};
 
-const pulse = keyframes`
-  0% { transform: scale(1); opacity: 0.55; }
-  70% { transform: scale(2.4); opacity: 0; }
-  100% { transform: scale(2.4); opacity: 0; }
-`;
-
 const enter = keyframes`
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
@@ -172,16 +166,6 @@ const useStyles = makeStyles()((theme) => ({
     height: 7,
     borderRadius: '50%',
     flexShrink: 0,
-  },
-  dotPulse: {
-    '&::after': {
-      content: '""',
-      position: 'absolute',
-      inset: 0,
-      borderRadius: '50%',
-      backgroundColor: 'inherit',
-      animation: `${pulse} 1.8s ${theme.tokens.motion.easing.standard} infinite`,
-    },
   },
   // Metric tile -------------------------------------------------------------
   tile: {
@@ -491,10 +475,7 @@ export const StatusChip = ({ icon, label, state, on, alert, index = 0, onClick }
       <span className={classes.chipText}>
         <span className={classes.chipLabel}>{label}</span>
         <span className={classes.chipState}>
-          <span
-            className={cx(classes.dot, (on || alert) && classes.dotPulse)}
-            style={{ backgroundColor: dotColor }}
-          />
+          <span className={classes.dot} style={{ backgroundColor: dotColor }} />
           {state}
         </span>
       </span>

@@ -173,7 +173,7 @@ const useStyles = makeStyles()((theme) => ({
   emptyIcon: {
     width: 56,
     height: 56,
-    borderRadius: 18,
+    borderRadius: theme.tokens.radius.lg,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

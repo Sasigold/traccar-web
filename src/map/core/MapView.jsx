@@ -197,7 +197,7 @@ const MapView = ({ children }) => {
   const controlVariables = useMemo(() => {
     const dark = theme.palette.mode === 'dark';
     return {
-      '--map-ctrl-bg': alpha(theme.palette.background.paper, 0.88),
+      '--map-ctrl-bg': theme.palette.background.paper,
       '--map-ctrl-border': theme.palette.surface.border,
       '--map-ctrl-divider': theme.palette.surface.border,
       '--map-ctrl-hover': alpha(theme.palette.primary.main, 0.1),

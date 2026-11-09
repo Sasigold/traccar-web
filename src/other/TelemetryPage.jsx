@@ -2,7 +2,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, IconButton, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import { keyframes } from 'tss-react';
 import { alpha } from '@mui/material/styles';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
@@ -14,11 +13,6 @@ import { useVehicleSettings } from '../common/components/telemetry/VehicleSettin
 import { formatStatus, formatTime } from '../common/util/formatter';
 import { statusColor } from '../common/theme/surfaces';
 import { devicesActions } from '../store';
-
-const pulse = keyframes`
-  0% { transform: scale(1); opacity: 0.6; }
-  70%, 100% { transform: scale(2.6); opacity: 0; }
-`;
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -74,14 +68,6 @@ const useStyles = makeStyles()((theme) => ({
     height: 8,
     borderRadius: '50%',
     backgroundColor: theme.palette.success.main,
-    '&::after': {
-      content: '""',
-      position: 'absolute',
-      inset: 0,
-      borderRadius: '50%',
-      backgroundColor: 'inherit',
-      animation: `${pulse} 1.6s ${theme.tokens.motion.easing.standard} infinite`,
-    },
   },
   empty: {
     padding: theme.spacing(6, 2),

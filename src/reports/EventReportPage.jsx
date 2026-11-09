@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { TableHead, TableRow, TableCell, TableBody, IconButton } from '@mui/material';
-import GpsFixedIcon from '@mui/icons-material/GpsFixed';
-import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
+import GpsFixedIcon from '@mui/icons-material/GpsFixedRounded';
+import LocationSearchingIcon from '@mui/icons-material/LocationSearchingRounded';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
 import { formatAddress, formatTime } from '../common/util/formatter';

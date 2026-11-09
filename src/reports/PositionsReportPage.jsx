@@ -1,8 +1,8 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IconButton, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
-import GpsFixedIcon from '@mui/icons-material/GpsFixed';
-import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
+import GpsFixedIcon from '@mui/icons-material/GpsFixedRounded';
+import LocationSearchingIcon from '@mui/icons-material/LocationSearchingRounded';
 import ReportFilter, { updateReportParams } from './components/ReportFilter';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';

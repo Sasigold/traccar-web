@@ -1,4 +1,6 @@
 import { useCallback } from 'react';
+import { useSelector } from 'react-redux';
+import { useTheme } from '@mui/material/styles';
 import { map } from './core/MapView';
 import useMapLayer from './core/useMapLayer';
 import getSpeedColor from '../common/util/colors';
@@ -9,6 +11,12 @@ const onMouseEnter = () => (map.getCanvas().style.cursor = 'pointer');
 const onMouseLeave = () => (map.getCanvas().style.cursor = '');
 
 const MapRoutePoints = ({ positions, onClick, showSpeedControl }) => {
+  const theme = useTheme();
+  const dark = theme.palette.mode === 'dark';
+  const speedLimit = useSelector((state) => {
+    const deviceId = positions?.find(() => true)?.deviceId;
+    return Number(state.devices.items[deviceId]?.attributes?.speedLimit) || 0;
+  });
   const onMarkerClick = useCallback(
     (event) => {
       event.preventDefault();
@@ -57,14 +65,14 @@ const MapRoutePoints = ({ positions, onClick, showSpeedControl }) => {
           index,
           id: position.id,
           rotation: position.course,
-          color: getSpeedColor(position.speed, minSpeed, maxSpeed),
+          color: getSpeedColor(position.speed, minSpeed, maxSpeed, { dark, limit: speedLimit }),
         },
       })),
     },
-    dataDeps: [positions],
+    dataDeps: [positions, dark, speedLimit],
   });
 
-  return showSpeedControl ? <MapSpeedLegend positions={positions} /> : null;
+  return showSpeedControl ? <MapSpeedLegend positions={positions} speedLimit={speedLimit} /> : null;
 };
 
 export default MapRoutePoints;

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Button, ButtonGroup, Menu, MenuItem, Typography } from '@mui/material';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDownRounded';
 
 const SplitButton = ({
   fullWidth,

@@ -12,3 +12,7 @@ export const casingLayer = (theme, extra = {}) => ({
   },
   ...extra,
 });
+
+// Halo behind map text: white on the light map, ink on the dark one.
+export const haloColor = (theme) =>
+  theme.palette.mode === 'dark' ? theme.palette.brand.ink : theme.palette.brand.white;

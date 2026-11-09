@@ -25,6 +25,12 @@ const MapRoutePath = ({ positions }) => {
   const mapLineWidth = useAttributePreference('mapLineWidth', 2);
   const mapLineOpacity = useAttributePreference('mapLineOpacity', 1);
 
+  const speedLimit = useSelector((state) => {
+    const deviceId = positions?.find(() => true)?.deviceId;
+    return Number(state.devices.items[deviceId]?.attributes?.speedLimit) || 0;
+  });
+  const dark = theme.palette.mode === 'dark';
+
   const minSpeed = positions.map((p) => p.speed).reduce((a, b) => Math.min(a, b), Infinity);
   const maxSpeed = positions.map((p) => p.speed).reduce((a, b) => Math.max(a, b), -Infinity);
   const features = [];
@@ -39,7 +45,9 @@ const MapRoutePath = ({ positions }) => {
         ],
       },
       properties: {
-        color: reportColor || getSpeedColor(positions[i + 1].speed, minSpeed, maxSpeed),
+        color:
+          reportColor ||
+          getSpeedColor(positions[i + 1].speed, minSpeed, maxSpeed, { dark, limit: speedLimit }),
         width: mapLineWidth,
         opacity: mapLineOpacity,
       },

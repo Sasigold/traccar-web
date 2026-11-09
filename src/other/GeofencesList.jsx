@@ -42,7 +42,7 @@ const useStyles = makeStyles()((theme) => ({
     width: 34,
     height: 34,
     flexShrink: 0,
-    borderRadius: 10,
+    borderRadius: theme.tokens.radius.md,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

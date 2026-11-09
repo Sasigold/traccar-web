@@ -5,6 +5,9 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import prettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
 
+const brandFlatMessage =
+  'The brand is flat: no gradients, and shadows need an offset (a "0 0 8px" glow is not allowed). See BRAND.md.';
+
 const brandColorMessage =
   'Raw color values are not allowed outside src/common/theme. Use theme.palette or the brand tokens (see BRAND.md).';
 
@@ -83,11 +86,32 @@ export default [
           selector: 'Literal[value=/^\\s*(rgba?|hsla?)\\(/]',
           message: brandColorMessage,
         },
+        {
+          selector: 'Literal[value=/(linear|radial|conic)-gradient\\(/]',
+          message: brandFlatMessage,
+        },
+        {
+          selector: 'TemplateElement[value.raw=/(linear|radial|conic)-gradient\\(/]',
+          message: brandFlatMessage,
+        },
+        {
+          selector: "Property[key.name='boxShadow'] > Literal[value=/^\\s*0 0 [1-9]\\d*px/]",
+          message: brandFlatMessage,
+        },
+        {
+          selector:
+            "Property[key.name='boxShadow'] > TemplateLiteral > TemplateElement:first-child[value.raw=/^\\s*0 0 [1-9]\\d*px/]",
+          message: brandFlatMessage,
+        },
+        {
+          selector: 'TemplateElement[value.raw=/box-shadow:\\s*0 0 [1-9]\\d*px/]',
+          message: brandFlatMessage,
+        },
       ],
     },
   },
   {
-    files: ['deploy/**/*.mjs'],
+    files: ['deploy/**/*.mjs', 'tools/**/*.mjs'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',

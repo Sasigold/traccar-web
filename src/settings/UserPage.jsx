@@ -16,9 +16,9 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import CachedIcon from '@mui/icons-material/Cached';
-import CloseIcon from '@mui/icons-material/Close';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForeverRounded';
+import CachedIcon from '@mui/icons-material/CachedRounded';
+import CloseIcon from '@mui/icons-material/CloseRounded';
 import { useDispatch, useSelector } from 'react-redux';
 import EditItemView from './components/EditItemView';
 import CheckboxField from './components/CheckboxField';

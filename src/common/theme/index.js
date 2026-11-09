@@ -63,7 +63,7 @@ export default (server, darkMode, direction) =>
         direction,
         dimensions,
         layers,
-        tokens: { radius, motion },
+        tokens: { radius, motion, font: { mono: type.mono } },
         components,
       }),
     [server, darkMode, direction],

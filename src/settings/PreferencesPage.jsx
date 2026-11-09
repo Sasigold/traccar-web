@@ -84,7 +84,7 @@ const useStyles = makeStyles()((theme) => ({
     flexDirection: 'column',
   },
   tokenField: {
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+    fontFamily: theme.tokens.font.mono,
     fontSize: '0.8125rem',
   },
   infoGrid: {

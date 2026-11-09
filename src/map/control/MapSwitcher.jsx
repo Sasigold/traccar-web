@@ -11,8 +11,8 @@ import {
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { createRoot } from 'react-dom/client';
-import LayersIcon from '@mui/icons-material/Layers';
-import TuneIcon from '@mui/icons-material/Tune';
+import LayersIcon from '@mui/icons-material/LayersRounded';
+import TuneIcon from '@mui/icons-material/TuneRounded';
 import { map } from '../core/MapView';
 import usePersistedState from '../../common/util/usePersistedState';
 import { useTranslation } from '../../common/components/LocalizationProvider';

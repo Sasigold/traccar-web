@@ -195,9 +195,13 @@
   - חוק ESLint (`no-restricted-syntax` ב-`eslint.config.js`) **חוסם** ערכי `#hex`, `rgb()` ו-`hsl()` בכל קובץ מחוץ ל-`src/common/theme`.
   - `npm run lint` נכשל, וכך גם ה-CI.
   - חריגים מתועדים: `index.html` ו-`public/styles.css` (לפני ש-React נטען), וקובצי SVG של סמני המפה. גם בהם מותרים רק ערכי המותג.
+  - אותו חוק חוסם גם גרדיאנטים (`linear-gradient` וכו') וזוהר (`boxShadow` של `0 0 8px`, בלי היסט).
+  - קובצי CSS נבדקים ב-`tools/brand-css-guard.mjs`, שרץ כחלק מ-`npm run lint`: בלי צבעים גולמיים (חוץ מ-`brand/brand-tokens.css` ו-`public/styles.css`), בלי גרדיאנטים ובלי זוהר.
+- **מפה:** מפת הבסיס "viper fleet" נצבעת בפלטה מ-`src/common/theme/mapPalette.js`, בהירה או כהה לפי מצב התצוגה. קווי aqua על המפה (גדרות, מסלולים) מקבלים קו מתאר (`lineCasing.js`). מהירות במסלול: חמש מדרגות aqua–navy, וחריגה מהמהירות המותרת בצבע שגיאה.
 - **צבע חדש:** אסור, אלא אם ספר המותג עודכן. אז מוסיפים אותו ל-`tokens.js` עם הערה שמפנה לעמוד בספר, ומעדכנים את המסמך הזה.
-- **גופן:** רק דרך `theme.typography`. משקלים 400–700.
-- **פינות, צללים ותנועה:** רק `theme.tokens.radius`, `theme.shadows` ו-`theme.tokens.motion`.
+- **גופן:** רק דרך `theme.typography`. משקלים 400–700. גופן קבוע רוחב: `theme.tokens.font.mono`.
+- **פינות, צללים ותנועה:** רק `theme.tokens.radius`, `theme.shadows` ו-`theme.tokens.motion`. אין אנימציה אינסופית על נקודות סטטוס.
+- **אייקונים:** רק מהמשפחה Rounded של `@mui/icons-material`.
 - **עזרים מוכנים** (`src/common/theme/surfaces.js`):
   - `ctaFill`: פעולה ראשית.
   - `brandTile`: אריח navy/aqua.

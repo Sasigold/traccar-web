@@ -9,6 +9,7 @@ import { useAsyncTask } from '../../reactHelper';
 import { usePreference } from '../../common/util/preferences';
 import { findFonts } from '../core/mapUtil';
 import { useTranslation } from '../../common/components/LocalizationProvider';
+import { haloColor } from '../core/lineCasing';
 
 const loadIcon = (href, signal) =>
   new Promise((resolve) => {
@@ -154,12 +155,12 @@ const PoiMap = () => {
           'text-size': 12,
         },
         paint: {
-          'text-halo-color': 'white',
+          'text-halo-color': haloColor(theme),
           'text-halo-width': 1,
         },
       },
     ],
-    layersDeps: [t, theme.palette.geometry.main],
+    layersDeps: [t, theme.palette.geometry.main, theme.palette.mode],
     data,
     dataDeps: [data],
   });

@@ -21,7 +21,7 @@ import {
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { useTheme, alpha } from '@mui/material/styles';
-import MapOutlinedIcon from '@mui/icons-material/MapOutlined';
+import MapOutlinedIcon from '@mui/icons-material/MapRounded';
 import ViewListRoundedIcon from '@mui/icons-material/ViewListRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
@@ -56,17 +56,28 @@ const useStyles = makeStyles()((theme) => ({
       color: theme.palette.primary.main,
     },
   },
+  // Adding a vehicle is a secondary action here (the vehicle card holds the screen's aqua
+  // action), so it is outlined, except on an empty fleet, where it is the next step.
   primary: {
     width: 40,
     height: 40,
     flexShrink: 0,
     borderRadius: theme.tokens.radius.lg,
-    ...ctaFill(theme),
+    border: `1px solid ${theme.palette.surface.borderStrong}`,
+    color: theme.palette.primary.main,
+    backgroundColor: theme.palette.background.paper,
     transition: 'background-color 160ms ease',
+    '&:hover': {
+      backgroundColor: alpha(theme.palette.primary.main, 0.08),
+    },
     '&.Mui-disabled': {
-      backgroundColor: theme.palette.action.disabledBackground,
+      borderColor: theme.palette.surface.border,
       color: theme.palette.action.disabled,
     },
+  },
+  primaryCta: {
+    ...ctaFill(theme),
+    border: 'none',
   },
   search: {
     height: 40,
@@ -117,7 +128,7 @@ const MainToolbar = ({
   filterMap,
   setFilterMap,
 }) => {
-  const { classes } = useStyles();
+  const { classes, cx } = useStyles();
   const theme = useTheme();
   const navigate = useNavigate();
   const t = useTranslation();
@@ -320,7 +331,10 @@ const MainToolbar = ({
       >
         <span>
           <IconButton
-            className={classes.primary}
+            className={cx(
+              classes.primary,
+              devicesLoaded && Object.keys(devices).length === 0 && classes.primaryCta,
+            )}
             onClick={() => navigate('/settings/device')}
             disabled={deviceReadonly}
             aria-label={t('shellAddDevice')}

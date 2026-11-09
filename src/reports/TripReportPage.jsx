@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
 import { IconButton, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
-import GpsFixedIcon from '@mui/icons-material/GpsFixed';
-import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
-import RouteIcon from '@mui/icons-material/Route';
+import GpsFixedIcon from '@mui/icons-material/GpsFixedRounded';
+import LocationSearchingIcon from '@mui/icons-material/LocationSearchingRounded';
+import RouteIcon from '@mui/icons-material/RouteRounded';
 import {
   formatAddress,
   formatDistance,
@@ -22,7 +22,6 @@ import SelectField from '../common/components/SelectField';
 import ReportsMenu from './components/ReportsMenu';
 import ColumnSelect from './components/ColumnSelect';
 import ReportKpis from './components/ReportKpis';
-import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
 import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded';
 import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
 import PlayCircleRoundedIcon from '@mui/icons-material/PlayCircleRounded';
@@ -209,7 +208,7 @@ const TripReportPage = () => {
         key: 'distance',
         label: `${t('sharedTotal')} · ${t('sharedDistance')}`,
         value: formatDistance(sum('distance'), distanceUnit, t),
-        icon: <RouteRoundedIcon />,
+        icon: <RouteIcon />,
       },
       {
         key: 'duration',

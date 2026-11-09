@@ -59,7 +59,7 @@ const useStyles = makeStyles()((theme) => ({
     color: theme.palette.text.secondary,
   },
   mono: {
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+    fontFamily: theme.tokens.font.mono,
     fontSize: '0.8125rem',
   },
 }));

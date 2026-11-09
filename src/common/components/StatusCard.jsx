@@ -70,9 +70,10 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     color: theme.palette.text.primary,
     cursor: 'grab',
   },
+  // Over a vehicle photo the header is a flat ink bar at the bottom (brand: no gradients).
   headerMedia: {
     color: theme.palette.common.white,
-    background: `linear-gradient(180deg, ${alpha(theme.palette.brand.ink, 0.1)} 0%, ${alpha(theme.palette.brand.ink, 0.65)} 100%)`,
+    backgroundColor: alpha(theme.palette.brand.ink, 0.72),
     alignItems: 'flex-end',
   },
   titles: {

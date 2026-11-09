@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button, IconButton } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
+import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrongRounded';
 import GpsFixedRoundedIcon from '@mui/icons-material/GpsFixedRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { devicesActions } from '../../store';

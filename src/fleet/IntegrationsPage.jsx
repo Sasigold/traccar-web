@@ -69,7 +69,7 @@ const useStyles = makeStyles()((theme) => ({
     fontVariantNumeric: 'tabular-nums',
   },
   code: {
-    fontFamily: 'monospace',
+    fontFamily: theme.tokens.font.mono,
     wordBreak: 'break-all',
   },
 }));

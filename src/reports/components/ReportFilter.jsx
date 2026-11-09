@@ -13,8 +13,8 @@ import {
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeftRounded';
+import ChevronRightIcon from '@mui/icons-material/ChevronRightRounded';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import useReportStyles from '../common/useReportStyles';
 import SplitButton from '../../common/components/SplitButton';

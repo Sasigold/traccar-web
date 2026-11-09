@@ -2416,5 +2416,6 @@
     "errorWidgetText": "This widget could not load.",
     "errorRetry": "Try again",
     "errorReload": "Reload",
-    "mapViperFleet": "viper fleet (brand map)"
+    "mapViperFleet": "viper fleet (brand map)",
+    "mapOverSpeedLimit": "Over the speed limit"
 }
