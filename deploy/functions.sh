@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
-# Deploy the edge functions kept in this repository (today: public-api, INT-01) to the VPS.
+# Deploy the edge functions kept in this repository (public-api, INT-01; billing-documents,
+# BIZ-01) to the VPS.
 # Run `sh deploy/migrate.sh` first: the function needs the api_* database functions.
 #
 #   sh deploy/functions.sh            copy, restart the functions container, check the answer
@@ -13,7 +14,7 @@ set -eu
 HOST="${DEPLOY_HOST:-root@72.61.153.60}"
 FLEET_DIR="${FLEET_DIR:-/docker/viper-fleet}"
 FLEET_URL="${FLEET_URL:-https://viper-fleet-api.srv2122641.hstgr.cloud}"
-FUNCTIONS="public-api"
+FUNCTIONS="public-api billing-documents"
 
 cd "$(dirname "$0")/.."
 remote() { ssh -o ConnectTimeout=30 "$HOST" "$@"; }

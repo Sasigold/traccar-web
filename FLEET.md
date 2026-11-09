@@ -176,6 +176,8 @@ registry and billing.
 | `/admin/users` | Every user with its customer and role; assign to a customer, log in as, disable / enable |
 | `/admin/billing` | Bills with filters and Excel export; monthly generation for all active subscriptions; draft → issued → paid / cancelled |
 | `/admin/plans` | Price lists (per device per month, base fee, setup fee, cycle) |
+| `/admin/invoicing` | The provider of official tax documents (Morning), production or sandbox, its API key (to Vault) and the card payment page |
+| `/admin/api` | Public API limits per organization (INT-01) |
 
 **Ownership.** Assigning a device to a customer writes `device_registry.customer_id` and links the device
 (`api/permissions`) to every Traccar user of that customer, removing the links of the previous customer's
@@ -196,6 +198,40 @@ sees the live value from the latest position next to each sensor. The choices ar
 devices) × (1 − discount). Quarterly and yearly cycles bill calendar quarters / years. Bills are payment
 requests for internal tracking, not tax invoices. Totals and VAT (default 18%) are recomputed by the
 database from the lines, and a customer can be billed only once per period (cancelled bills excepted).
+
+**Official tax documents (BIZ-01).** Since 2026 an invoice over the threshold (10,000 ₪ from January,
+5,000 ₪ from June, before VAT) needs an allocation number from the Tax Authority, or the customer cannot
+deduct its VAT. The bills stay payment requests; the official documents come from an authorized provider,
+today Morning (Green Invoice). No direct connection to the Tax Authority is built.
+- *What a bill gets.* In the bill dialog: a tax invoice (305) for an open bill, or an invoice-receipt (320)
+  for a paid one; a receipt (400) linked to the tax invoice once it is paid; or a card payment page
+  (Cardcom through Morning) for an open bill, after which Morning issues the invoice-receipt and the bill
+  is marked paid. The bill links to the provider's copy, which carries the allocation number when the
+  Morning account is connected to the Tax Authority. Cheques are recorded at the provider by hand (the
+  provider needs bank details the bill does not keep).
+- *How.* The `billing-documents` edge function (`supabase/functions/billing-documents/`: `core.js` routes,
+  `documents.js` builds the provider's requests, `morning.js` is the API client, checked against Morning's
+  public Postman collection and JSON schema). Only platform administrators may call it (their fleet JWT is
+  checked with `is_platform_admin()`). Before calling the provider it claims the bill in the database
+  (`billing_document_claim`), so a double click or two administrators never make two tax documents; a claim
+  left "working" is released by hand after checking the provider. After issuing it reads the document back
+  and flags a total that differs from the bill's by even one agora.
+- *The payment notification* (`/notify`) is not signed by the provider, so it must carry the bill's random
+  token, and the document it names is read back from Morning and must be an invoice-receipt for the bill's
+  total and customer.
+- *Locks* (migration `20261112100000_billing_documents.sql`, tests in `billing_documents.test.sql`): only
+  the service role writes the official fields; once a tax invoice exists the bill's customer, dates, VAT and
+  lines cannot change and it cannot be deleted. Corrections are a credit invoice at the provider. Notes,
+  payment and status still change.
+- *Keys.* The Morning API key id and secret go to Vault (`billing_set_secret`, platform administrators
+  only) and are never read back; `billing_provider_status()` says whether they are set.
+- *Deploy.* `sh deploy/migrate.sh`, then `sh deploy/functions.sh`. For card payments set
+  `BILLING_DOCUMENTS_URL` (the function's public https address) on the functions container. Try the sandbox
+  first. Morning is moving its API sign-in to OAuth; the function uses the API-key token (`/account/token`)
+  that its published collection documents, so check it against the current Morning documentation before
+  going live.
+- *Not yet.* iCount and Rivhit (the provider is one row, ready for another adapter), credit invoices from
+  here, and a clearing company other than Morning's.
 
 **Database.** `supabase/migrations/20261104120000_super_admin.sql` adds `customers`, `customer_users`,
 `device_registry`, `device_assignment_history`, `billing_plans`, `billing_subscriptions`,
