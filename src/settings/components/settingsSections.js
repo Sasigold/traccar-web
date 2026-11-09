@@ -58,6 +58,7 @@ const useSectionCatalog = () => {
   const fleetPoi = useFleetPermission('poi.read');
   const fleetDispatch = useFleetPermission('dispatch.read');
   const fleetVehicles = useFleetPermission('vehicles.read');
+  const fleetDrivers = useFleetPermission('drivers.read');
   const fleetIntegrations = useFleetPermission('integrations.manage');
   const fleetPrivacy = useFleetPermission('privacy.manage');
 
@@ -323,7 +324,8 @@ const useSectionCatalog = () => {
               pathname.startsWith('/fleet/vehicle') ||
               pathname.startsWith('/settings/device') ||
               pathname.startsWith('/settings/accumulators'),
-            visible: !readonly,
+            // ADM-03: a viewer reads the vehicles (the list is read only for them).
+            visible: !readonly || fleetVehicles,
           },
           {
             id: 'drivers',
@@ -333,7 +335,7 @@ const useSectionCatalog = () => {
             path: '/fleet/drivers',
             match: (pathname) =>
               pathname.startsWith('/fleet/drivers') || pathname.startsWith('/settings/driver'),
-            visible: !readonly && !features.disableDrivers,
+            visible: (!readonly || fleetDrivers) && !features.disableDrivers,
           },
           {
             id: 'equipment',
@@ -458,6 +460,7 @@ const useSectionCatalog = () => {
     fleetPoi,
     fleetDispatch,
     fleetVehicles,
+    fleetDrivers,
     fleetIntegrations,
     fleetPrivacy,
   ]);

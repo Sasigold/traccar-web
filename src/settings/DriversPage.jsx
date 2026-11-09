@@ -15,6 +15,7 @@ import fetchOrThrow from '../common/util/fetchOrThrow';
 import { formatTime } from '../common/util/formatter';
 import { expiryStatus } from '../common/fleet/fleetFields';
 import ExpiryBadge from '../fleet/components/ExpiryBadge';
+import { useRestriction } from '../common/util/permissions';
 
 const useStyles = makeStyles()((theme) => ({
   expiry: {
@@ -32,6 +33,8 @@ const DriversPage = () => {
   const { classes: settingsClasses } = useSettingsStyles();
   const { classes } = useStyles();
   const t = useTranslation();
+  // ADM-03: a viewer reaches this list through the fleet permissions; it stays read only.
+  const readonly = useRestriction('readonly');
 
   const [reloadKey, reload] = useReducer((k) => k + 1, 0);
   const [items, setItems] = useState([]);
@@ -140,6 +143,7 @@ const DriversPage = () => {
                   editPath="/settings/driver"
                   endpoint="drivers"
                   onReload={reload}
+                  readonly={readonly}
                 />
               </TableCell>
             </TableRow>
