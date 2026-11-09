@@ -38,6 +38,8 @@ import DriverValue from '../common/components/DriverValue';
 import MotionBar from './components/MotionBar';
 import useActivityText from '../common/components/useActivityText';
 import { brandTile, statusColor } from '../common/theme/surfaces';
+import Highlight from '../common/components/Highlight';
+import { deviceSearchFields, matchDevice } from '../common/util/deviceSearch';
 
 dayjs.extend(relativeTime);
 
@@ -171,7 +173,7 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const DeviceRow = ({ devices, index, style }) => {
+const DeviceRow = ({ devices, tokens = [], index, style }) => {
   const { classes, cx, theme } = useStyles();
   const dispatch = useDispatch();
   const t = useTranslation();
@@ -181,6 +183,8 @@ const DeviceRow = ({ devices, index, style }) => {
 
   const item = devices[index];
   const position = useSelector((state) => state.session.positions[item.id]);
+  const groups = useSelector((state) => state.groups.items);
+  const drivers = useSelector((state) => state.drivers.items);
 
   const devicePrimary = useAttributePreference('devicePrimary', 'name');
   const deviceSecondary = useAttributePreference('deviceSecondary', '');
@@ -201,8 +205,34 @@ const DeviceRow = ({ devices, index, style }) => {
     return item[field];
   };
 
-  const primaryValue = resolveFieldValue(devicePrimary);
-  const secondaryValue = resolveFieldValue(deviceSecondary);
+  const digitFields = ['uniqueId', 'phone'];
+  const highlight = (field, value) =>
+    tokens.length && typeof value === 'string' ? (
+      <Highlight text={value} tokens={tokens} digits={digitFields.includes(field)} />
+    ) : (
+      value
+    );
+
+  // While searching, the field that matched (plate, driver, group…) is shown and marked when the
+  // row does not show it already.
+  const shownKeys = [devicePrimary, deviceSecondary];
+  const extraMatch = tokens.length
+    ? matchDevice(tokens, deviceSearchFields(item, { groups, drivers, position }))?.fields.find(
+        (field) =>
+          !shownKeys.includes(field.key) &&
+          !(field.key === 'driver' && shownKeys.includes('driverUniqueId')),
+      )
+    : null;
+
+  const primaryValue = highlight(devicePrimary, resolveFieldValue(devicePrimary));
+  const extraDigits = extraMatch?.key === 'plate' || digitFields.includes(extraMatch?.key);
+  const secondaryValue = extraMatch ? (
+    <bdi dir={extraDigits ? 'ltr' : 'auto'}>
+      <Highlight text={extraMatch.value} tokens={tokens} digits={extraDigits} />
+    </bdi>
+  ) : (
+    highlight(deviceSecondary, resolveFieldValue(deviceSecondary))
+  );
 
   const moving = Boolean(position && (position.attributes?.motion || position.speed > 1));
 

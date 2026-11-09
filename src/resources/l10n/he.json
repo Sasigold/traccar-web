@@ -2380,5 +2380,8 @@
     "commandStatusQueued": "בתור מ-{0} · תישלח כשהרכב יתחבר",
     "commandStatusDelivered": "נמסרה לרכב · ממתינה לתשובה",
     "commandStatusAnswered": "תשובה ב-{0}",
-    "commandStatusHide": "הסתרת מצב הפקודה"
+    "commandStatusHide": "הסתרת מצב הפקודה",
+    "deviceSearchPlaceholder": "חיפוש לפי שם, לוחית או נהג",
+    "shellRecentDevices": "נצפו לאחרונה",
+    "shellAttentionDevices": "דורשים תשומת לב"
 }

@@ -2380,5 +2380,8 @@
     "commandStatusQueued": "Queued at {0} · goes out when the vehicle connects",
     "commandStatusDelivered": "Delivered to the vehicle · waiting for a reply",
     "commandStatusAnswered": "Replied at {0}",
-    "commandStatusHide": "Hide command status"
+    "commandStatusHide": "Hide command status",
+    "deviceSearchPlaceholder": "Search by name, plate or driver",
+    "shellRecentDevices": "Recently viewed",
+    "shellAttentionDevices": "Need attention"
 }

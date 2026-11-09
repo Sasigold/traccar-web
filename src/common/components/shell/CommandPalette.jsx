@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -36,6 +36,15 @@ import DeviceTile from '../brand/DeviceTile';
 import useNavItems from './navItems';
 import { adminSections } from '../../../admin/components/adminSections';
 import { useShell } from './ShellContext';
+import Highlight from '../Highlight';
+import {
+  deviceSearchFields,
+  matchDevice,
+  normalizeSearch,
+  tokenizeSearch,
+} from '../../util/deviceSearch';
+import { recentDeviceIds } from '../../util/recentDevices';
+import { activityOf } from '../../util/activity';
 
 const useStyles = makeStyles()((theme) => ({
   paper: {
@@ -99,7 +108,11 @@ const useStyles = makeStyles()((theme) => ({
       display: 'none',
     },
   },
+  entry: {
+    listStyle: 'none',
+  },
   empty: {
+    listStyle: 'none',
     padding: theme.spacing(5, 2),
     textAlign: 'center',
     color: theme.palette.text.secondary,
@@ -118,7 +131,7 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const normalize = (value) => (value || '').toString().toLowerCase();
+const normalize = (value) => normalizeSearch(value);
 
 const CommandPalette = ({ open, onClose }) => {
   const { classes, cx } = useStyles();
@@ -129,6 +142,9 @@ const CommandPalette = ({ open, onClose }) => {
   const { openEvents } = useShell();
 
   const devices = useSelector((state) => state.devices.items);
+  const positions = useSelector((state) => state.session.positions);
+  const deviceGroups = useSelector((state) => state.groups.items);
+  const drivers = useSelector((state) => state.drivers.items);
   const features = useFeatures();
   const deviceReadonly = useDeviceReadonly();
   const readonly = useRestriction('readonly');
@@ -152,22 +168,109 @@ const CommandPalette = ({ open, onClose }) => {
   }, [open]);
 
   const groups = useMemo(() => {
+    if (!open) {
+      return [];
+    }
     const needle = normalize(query).trim();
     const matches = (...values) => !needle || values.some((v) => normalize(v).includes(needle));
+    const tokens = tokenizeSearch(query);
 
-    const deviceEntries = Object.values(devices)
-      .filter((device) => matches(device.name, device.uniqueId, device.phone, device.model))
-      .slice(0, needle ? 8 : 5)
-      .map((device) => ({
+    // Plate and driver (or whatever else matched) under the name, with the match marked.
+    const deviceEntry = (device, match) => {
+      const position = positions[device.id];
+      const driverName = drivers[position?.attributes?.driverUniqueId]?.name;
+      const plate = device.attributes?.plateNumber;
+      const extra = match?.fields.find((field) => field.key !== 'name' && field.key !== 'plate');
+      const details = [
+        plate && { value: plate, digits: true },
+        extra
+          ? { value: extra.value, digits: ['uniqueId', 'phone'].includes(extra.key) }
+          : driverName && { value: driverName },
+      ].filter(Boolean);
+      if (!details.length) {
+        details.push({ value: device.uniqueId, digits: true });
+      }
+      return {
         id: `device-${device.id}`,
         title: device.name,
-        subtitle: device.uniqueId,
+        titleNode: <Highlight text={device.name} tokens={tokens} />,
+        subtitle: details.map((detail) => detail.value).join(' · '),
+        subtitleNode: details.map((detail, index) => (
+          <Fragment key={detail.value}>
+            {index > 0 && ' · '}
+            <bdi dir={detail.digits ? 'ltr' : 'auto'}>
+              <Highlight text={detail.value} tokens={tokens} digits={detail.digits} />
+            </bdi>
+          </Fragment>
+        )),
         device,
         onSelect: () => {
           dispatch(devicesActions.selectId(device.id));
           navigate('/');
         },
-      }));
+      };
+    };
+
+    const deviceSections = [];
+    if (tokens.length) {
+      const found = Object.values(devices)
+        .map((device) => ({
+          device,
+          match: matchDevice(
+            tokens,
+            deviceSearchFields(device, {
+              groups: deviceGroups,
+              drivers,
+              position: positions[device.id],
+            }),
+          ),
+        }))
+        .filter((item) => item.match)
+        .sort((a, b) => b.match.score - a.match.score || a.device.name.localeCompare(b.device.name))
+        .slice(0, 8);
+      deviceSections.push({
+        key: 'devices',
+        title: t('deviceTitle'),
+        entries: found.map((item) => deviceEntry(item.device, item.match)),
+      });
+    } else {
+      const recent = recentDeviceIds()
+        .map((id) => devices[id])
+        .filter(Boolean);
+      const now = Date.now();
+      const recentIds = new Set(recent.map((device) => device.id));
+      const attention = Object.values(devices)
+        .filter(
+          (device) =>
+            !recentIds.has(device.id) &&
+            (positions[device.id]?.attributes?.alarm ||
+              activityOf(device, positions[device.id], now) === 'stale'),
+        )
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .slice(0, 5);
+      deviceSections.push(
+        {
+          key: 'recent',
+          title: t('shellRecentDevices'),
+          entries: recent.map((device) => deviceEntry(device)),
+        },
+        {
+          key: 'attention',
+          title: t('shellAttentionDevices'),
+          entries: attention.map((device) => deviceEntry(device)),
+        },
+      );
+      if (!recent.length && !attention.length) {
+        deviceSections.push({
+          key: 'devices',
+          title: t('deviceTitle'),
+          entries: Object.values(devices)
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .slice(0, 5)
+            .map((device) => deviceEntry(device)),
+        });
+      }
+    }
 
     const navigationEntries = [
       ...navItems.map((item) => ({
@@ -262,13 +365,17 @@ const CommandPalette = ({ open, onClose }) => {
     ].filter((entry) => matches(entry.title));
 
     return [
-      { key: 'devices', title: t('deviceTitle'), entries: deviceEntries },
+      ...deviceSections,
       { key: 'navigation', title: t('shellNavigation'), entries: navigationEntries },
       { key: 'actions', title: t('shellActions'), entries: actionEntries },
     ].filter((group) => group.entries.length > 0);
   }, [
+    open,
     query,
     devices,
+    positions,
+    deviceGroups,
+    drivers,
     navItems,
     settingsItems,
     reportItems,
@@ -354,37 +461,38 @@ const CommandPalette = ({ open, onClose }) => {
                 const Icon = entry.icon;
                 const device = entry.device;
                 return (
-                  <ListItemButton
-                    key={entry.id}
-                    className={classes.item}
-                    selected={index === highlighted}
-                    data-highlighted={index === highlighted ? 'true' : undefined}
-                    onMouseEnter={() => setHighlighted(index)}
-                    onClick={() => select(entry)}
-                  >
-                    <ListItemIcon>
-                      {device ? (
-                        <DeviceTile category={device.category} status={device.status} size={32} />
-                      ) : (
-                        Icon && <Icon fontSize="small" />
-                      )}
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={entry.title}
-                      secondary={entry.subtitle}
-                      slotProps={{
-                        primary: { noWrap: true, fontWeight: 600 },
-                        secondary: { noWrap: true },
-                      }}
-                    />
-                  </ListItemButton>
+                  <li key={entry.id} className={classes.entry}>
+                    <ListItemButton
+                      className={classes.item}
+                      selected={index === highlighted}
+                      data-highlighted={index === highlighted ? 'true' : undefined}
+                      onMouseEnter={() => setHighlighted(index)}
+                      onClick={() => select(entry)}
+                    >
+                      <ListItemIcon>
+                        {device ? (
+                          <DeviceTile category={device.category} status={device.status} size={32} />
+                        ) : (
+                          Icon && <Icon fontSize="small" />
+                        )}
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={entry.titleNode || entry.title}
+                        secondary={entry.subtitleNode || entry.subtitle}
+                        slotProps={{
+                          primary: { noWrap: true, fontWeight: 600 },
+                          secondary: { noWrap: true },
+                        }}
+                      />
+                    </ListItemButton>
+                  </li>
                 );
               })}
             </ul>
           </li>
         ))}
         {flat.length === 0 && (
-          <Typography className={cx(classes.empty)} variant="body2">
+          <Typography component="li" className={cx(classes.empty)} variant="body2">
             {t('shellNoResults')}
           </Typography>
         )}

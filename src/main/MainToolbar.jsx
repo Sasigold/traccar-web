@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -30,6 +30,7 @@ import { glass, ctaFill } from '../common/theme/surfaces';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import { useDeviceReadonly } from '../common/util/permissions';
 import DeviceRow from './DeviceRow';
+import { tokenizeSearch } from '../common/util/deviceSearch';
 
 const useStyles = makeStyles()((theme) => ({
   toolbar: {
@@ -132,6 +133,7 @@ const MainToolbar = ({
   const inputRef = useRef();
   const [filterAnchorEl, setFilterAnchorEl] = useState(null);
   const [devicesAnchorEl, setDevicesAnchorEl] = useState(null);
+  const tokens = useMemo(() => tokenizeSearch(keyword), [keyword]);
 
   const deviceStatusCount = (status) =>
     Object.values(devices).filter((d) => d.status === status).length;
@@ -156,7 +158,7 @@ const MainToolbar = ({
       <OutlinedInput
         ref={inputRef}
         className={classes.search}
-        placeholder={t('sharedSearchDevices')}
+        placeholder={t('deviceSearchPlaceholder')}
         value={keyword}
         onChange={(e) => setKeyword(e.target.value)}
         onFocus={() => setDevicesAnchorEl(toolbarRef.current)}
@@ -204,7 +206,12 @@ const MainToolbar = ({
         disableEnforceFocus
       >
         {filteredDevices.slice(0, 3).map((_, index) => (
-          <DeviceRow key={filteredDevices[index].id} devices={filteredDevices} index={index} />
+          <DeviceRow
+            key={filteredDevices[index].id}
+            devices={filteredDevices}
+            tokens={tokens}
+            index={index}
+          />
         ))}
         {filteredDevices.length > 3 && (
           <ListItemButton className={classes.more} onClick={() => setDevicesOpen(true)}>

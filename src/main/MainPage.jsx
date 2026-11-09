@@ -7,6 +7,7 @@ import { Button } from '@mui/material';
 import DnsRoundedIcon from '@mui/icons-material/DnsRounded';
 import { useNavigate } from 'react-router-dom';
 import DeviceList from './DeviceList';
+import { rememberDevice } from '../common/util/recentDevices';
 import StatusCard from '../common/components/StatusCard';
 import EmptyState from '../common/components/table/EmptyState';
 import { devicesActions } from '../store';
@@ -154,6 +155,12 @@ const MainPage = () => {
     }
   }, [desktop, mapOnSelect, selectedDeviceId]);
 
+  useEffect(() => {
+    if (selectedDeviceId) {
+      rememberDevice(selectedDeviceId);
+    }
+  }, [selectedDeviceId]);
+
   useFilter(
     keyword,
     filter,
@@ -231,7 +238,7 @@ const MainPage = () => {
                       }
                     />
                   ) : (
-                    <DeviceList devices={filteredDevices} />
+                    <DeviceList devices={filteredDevices} keyword={keyword} />
                   )}
                 </div>
               )}

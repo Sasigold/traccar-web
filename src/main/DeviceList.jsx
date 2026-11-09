@@ -1,4 +1,4 @@
-import { useEffect, useReducer } from 'react';
+import { useEffect, useMemo, useReducer } from 'react';
 import { useDispatch } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
 import { List } from 'react-window';
@@ -6,6 +6,7 @@ import { devicesActions } from '../store';
 import { useAsyncTask } from '../reactHelper';
 import DeviceRow from './DeviceRow';
 import fetchOrThrow from '../common/util/fetchOrThrow';
+import { tokenizeSearch } from '../common/util/deviceSearch';
 
 const useStyles = makeStyles()((theme) => ({
   list: {
@@ -17,11 +18,12 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const DeviceList = ({ devices }) => {
+const DeviceList = ({ devices, keyword = '' }) => {
   const { classes } = useStyles();
   const dispatch = useDispatch();
 
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
+  const tokens = useMemo(() => tokenizeSearch(keyword), [keyword]);
 
   useEffect(() => {
     const interval = setInterval(forceUpdate, 60000);
@@ -44,7 +46,7 @@ const DeviceList = ({ devices }) => {
       rowComponent={DeviceRow}
       rowCount={devices.length}
       rowHeight={72}
-      rowProps={{ devices }}
+      rowProps={{ devices, tokens }}
       overscanCount={5}
     />
   );
