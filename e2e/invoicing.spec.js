@@ -1,6 +1,4 @@
-import { test, expect, axe, formatViolations, gotoReady } from './fixtures';
-
-const FLEET = 'https://viper-fleet-api.srv2122641.hstgr.cloud';
+import { test, expect, axe, formatViolations, gotoReady, FLEET } from './fixtures';
 
 const bill = {
   id: 'b3000000-0000-0000-0000-000000000001',

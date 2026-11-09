@@ -2,6 +2,9 @@ import { test as base, expect } from '@playwright/test';
 import { AxeBuilder } from '@axe-core/playwright';
 
 // Every page must reach "ready" without uncaught errors; collect them per test.
+// The demo's fleet database (demo/vite.config.js): never a real one, so tests mock it here.
+export const FLEET = 'https://fleet.demo.invalid';
+
 export const test = base.extend({
   pageErrors: [
     async ({ page }, use) => {

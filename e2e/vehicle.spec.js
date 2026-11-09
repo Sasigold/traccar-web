@@ -1,6 +1,5 @@
-import { test, expect, gotoReady, axe, formatViolations } from './fixtures';
+import { test, expect, gotoReady, axe, formatViolations, FLEET } from './fixtures';
 
-const FLEET = 'https://viper-fleet-api.srv2122641.hstgr.cloud';
 const month = new Date().toISOString().slice(0, 7);
 const tables = {
   vehicles: [{ id: 'veh1', plate_number: '12-345-67' }],

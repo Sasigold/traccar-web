@@ -1,7 +1,5 @@
 import { Buffer } from 'node:buffer';
-import { test, expect, gotoReady } from './fixtures';
-
-const FLEET = 'https://viper-fleet-api.srv2122641.hstgr.cloud';
+import { test, expect, gotoReady, FLEET } from './fixtures';
 
 // A driver linked to the demo's Delivery Van (device 1).
 const tables = {

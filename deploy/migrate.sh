@@ -9,15 +9,16 @@ set -eu
 HOST="${DEPLOY_HOST:-root@72.61.153.60}"
 
 cd "$(dirname "$0")/.."
+. deploy/lib.sh
 
 remote() { ssh -o ConnectTimeout=30 "$HOST" "$@"; }
 
-# Exactly the supabase/postgres image (not supabase/postgres-meta and friends).
-DB=$(remote "docker ps --format '{{.Names}} {{.Image}}'" | awk '$2 ~ /^supabase\/postgres(:|@|$)/ { print $1; exit }')
-if [ -z "$DB" ]; then
-  echo "No running supabase/postgres container on $HOST"
+# Exactly the supabase/postgres image (not supabase/postgres-meta and friends). With a staging
+# stack on the same server, DB_CONTAINER names the database (FND-04).
+DB=$(remote "docker ps --format '{{.Names}} {{.Image}}'" | pick_container '^supabase/postgres(:|@|$)' "${DB_CONTAINER:-}") || {
+  echo "Set DB_CONTAINER to the database of this environment on $HOST."
   exit 1
-fi
+}
 echo "Database container: $DB"
 
 psql_remote() { remote "docker exec -i $DB psql -X -q -v ON_ERROR_STOP=1 -U postgres -d postgres $*"; }

@@ -15,8 +15,11 @@ login (Traccar administrators become fleet `admin`, the very first user becomes 
 
 ## Code map
 
-- `src/common/fleet/config.js` - URL, anon key (public, RLS-restricted), bucket name. Override with
-  `VITE_FLEET_URL` / `VITE_FLEET_ANON_KEY`; an empty `VITE_FLEET_URL` disables the integration.
+- `src/common/fleet/config.js` - URL, anon key (public, RLS-restricted), bucket name, from
+  `VITE_FLEET_URL` / `VITE_FLEET_ANON_KEY` at build time. There is no default (FND-04): without them the
+  fleet features are off, production and staging builds refuse to start, and staging refuses the
+  production database. An empty `VITE_FLEET_URL` disables the integration on purpose. Environments,
+  staging and promotion: `deploy/STAGING.md`.
 - `src/common/fleet/session.js` - token bridge + localStorage cache (`fleetSession`).
 - `src/common/fleet/client.js` - the shared `supabase-js` client (`getFleetClient()`), `unwrap()` helper.
 - `src/common/fleet/useFleet.js` - hooks: `useFleetReady`, `useFleetPermission(key)`, `useFleetProfile`,

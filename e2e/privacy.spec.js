@@ -1,6 +1,5 @@
-import { test, expect, gotoReady } from './fixtures';
+import { test, expect, gotoReady, FLEET } from './fixtures';
 
-const FLEET = 'https://viper-fleet-api.srv2122641.hstgr.cloud';
 const MINUTE = 60 * 1000;
 
 // A companion database with the privacy tables. `tables` answers GET by table name; every write

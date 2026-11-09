@@ -2958,5 +2958,9 @@
     "billingDocError_clearing_disabled": "דף תשלום באשראי לא מופעל.",
     "billingDocError_no_public_url": "חסרה הכתובת הציבורית של שירות החשבוניות בשרת.",
     "billingDocError_forbidden": "רק מנהלי השירות יכולים להפיק מסמכים רשמיים.",
-    "billingDocError_not_recorded": "המסמך הופק אצל הספק אבל לא נשמר כאן. רשמו את המספר שלו ופנו לתמיכה."
+    "billingDocError_not_recorded": "המסמך הופק אצל הספק אבל לא נשמר כאן. רשמו את המספר שלו ופנו לתמיכה.",
+    "shellEnvStaging": "סביבת בדיקות",
+    "shellEnvDevelopment": "סביבת פיתוח",
+    "shellEnvStagingShort": "בדיקות",
+    "shellEnvDevelopmentShort": "פיתוח"
 }

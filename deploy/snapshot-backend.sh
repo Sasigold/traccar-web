@@ -11,10 +11,13 @@ HOST="${DEPLOY_HOST:-root@72.61.153.60}"
 FLEET_DIR="${FLEET_DIR:-/docker/viper-fleet}"
 
 cd "$(dirname "$0")/.."
+. deploy/lib.sh
 remote() { ssh -o ConnectTimeout=30 "$HOST" "$@"; }
 
-DB=$(remote "docker ps --format '{{.Names}} {{.Image}}'" | awk '$2 ~ /^supabase\/postgres(:|@|$)/ { print $1; exit }')
-[ -n "$DB" ] || { echo "No running supabase/postgres container on $HOST"; exit 1; }
+DB=$(remote "docker ps --format '{{.Names}} {{.Image}}'" | pick_container '^supabase/postgres(:|@|$)' "${DB_CONTAINER:-}") || {
+  echo "Set DB_CONTAINER to the production database on $HOST."
+  exit 1
+}
 
 mkdir -p supabase/base/migrations supabase/functions/traccar-auth
 

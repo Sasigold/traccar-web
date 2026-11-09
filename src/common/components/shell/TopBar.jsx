@@ -10,6 +10,7 @@ import { focusRing } from '../../theme/surfaces';
 import { useTranslation } from '../LocalizationProvider';
 import { useShell } from './ShellContext';
 import SocketStatusPill from './SocketStatusPill';
+import EnvironmentBadge from './EnvironmentBadge';
 import NotificationsButton from './NotificationsButton';
 import ThemeToggle from './ThemeToggle';
 import LanguageMenu from './LanguageMenu';
@@ -143,6 +144,7 @@ const TopBar = ({ onOpenDrawer }) => {
             </IconButton>
           </Tooltip>
         )}
+        <EnvironmentBadge />
         <SocketStatusPill />
         {!features.disableEvents && <NotificationsButton />}
         <ThemeToggle />

@@ -1,6 +1,5 @@
-import { test, expect, gotoReady } from './fixtures';
+import { test, expect, gotoReady, FLEET } from './fixtures';
 
-const FLEET = 'https://viper-fleet-api.srv2122641.hstgr.cloud';
 const DAY = 24 * 60 * 60 * 1000;
 const isoDay = (offset) => new Date(Date.now() + offset * DAY).toISOString().slice(0, 10);
 

@@ -47,7 +47,16 @@ jobs:
         cache: npm
         cache-dependency-path: package-lock.json
     - run: npm ci
+    # FND-04: builds need an explicit fleet database; CI only checks that the app builds, so it
+    # gets one that never resolves, for production and for staging.
     - run: npm run build
+      env:
+        VITE_FLEET_URL: https://fleet.ci.invalid
+        VITE_FLEET_ANON_KEY: ci
+    - run: npm run build -- --mode staging
+      env:
+        VITE_FLEET_URL: https://fleet.ci.invalid
+        VITE_FLEET_ANON_KEY: ci
 
   e2e:
     # Smoke and WCAG 2.1 AA checks against the built-in demo server, desktop and phone.

@@ -20,6 +20,7 @@
  *   --history   hours of past track to backfill (default 3, 0 to skip)
  *   --interval  seconds between live updates (default 10)
  *   --no-osrm   do not fetch road geometry from router.project-osrm.org
+ *   --allow-production   seed the production server anyway (refused by default, FND-04)
  *
  * Everything created is tagged (uniqueId prefix "demo-il-", attribute demoData=true)
  * so "clean" removes exactly that and nothing else. Requires Node 18+.
@@ -38,6 +39,7 @@ const { values: args, positionals } = parseArgs({
     history: { type: 'string', default: '3' },
     interval: { type: 'string', default: '10' },
     'no-osrm': { type: 'boolean', default: false },
+    'allow-production': { type: 'boolean', default: false },
     help: { type: 'boolean', short: 'h', default: false },
   },
 });
@@ -57,6 +59,19 @@ if (!args.url || (!args.token && !(args.email && args.password))) {
 }
 
 const baseUrl = args.url.replace(/\/+$/, '');
+
+// FND-04: demo vehicles on the production server skew the admin KPIs, "devices without a customer"
+// and the billing counts. Use the staging server; production only on explicit request.
+const PRODUCTION_TRACCAR = ['traccar-ovjj.srv2122641.hstgr.cloud', '72.61.153.60:8082'];
+const target = new URL(baseUrl);
+const isProduction =
+  PRODUCTION_TRACCAR.includes(target.hostname) || PRODUCTION_TRACCAR.includes(target.host);
+if (isProduction && !args['allow-production']) {
+  console.error(
+    `${target.host} is the production server. Seed the staging server instead, or pass --allow-production.`,
+  );
+  process.exit(1);
+}
 const osmandUrl = (
   args.osmand || `${new URL(baseUrl).protocol}//${new URL(baseUrl).hostname}:5055`
 ).replace(/\/+$/, '');

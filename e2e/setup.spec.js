@@ -1,6 +1,4 @@
-import { test, expect, gotoReady } from './fixtures';
-
-const FLEET = 'https://viper-fleet-api.srv2122641.hstgr.cloud';
+import { test, expect, gotoReady, FLEET } from './fixtures';
 
 // Counts come back as HEAD requests with a Content-Range header, as PostgREST answers them.
 const mockFleet = async (page, counts) => {

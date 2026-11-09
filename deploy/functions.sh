@@ -16,7 +16,8 @@ FLEET_DIR="${FLEET_DIR:-/docker/viper-fleet}"
 FLEET_URL="${FLEET_URL:-https://viper-fleet-api.srv2122641.hstgr.cloud}"
 FUNCTIONS="public-api billing-documents"
 
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/..
+. deploy/lib.sh
 remote() { ssh -o ConnectTimeout=30 "$HOST" "$@"; }
 
 TARGET="$FLEET_DIR/volumes/functions"
@@ -34,13 +35,13 @@ for name in $FUNCTIONS; do
 done
 
 # The edge runtime keeps workers warm; a restart makes it load the new code.
-RUNTIME=$(remote "docker ps --format '{{.Names}} {{.Image}}'" | awk '$2 ~ /^supabase\/edge-runtime(:|@|$)/ { print $1; exit }')
+RUNTIME=$(remote "docker ps --format '{{.Names}} {{.Image}}'" | pick_container '^supabase/edge-runtime(:|@|$)' "${RUNTIME_CONTAINER:-}" || true)
 if [ -n "$RUNTIME" ]; then
   echo "Restarting $RUNTIME"
   remote "docker restart '$RUNTIME'" >/dev/null
   sleep 5
 else
-  echo "No supabase/edge-runtime container found; restart the functions service by hand."
+  echo "No single supabase/edge-runtime container (set RUNTIME_CONTAINER); restart it by hand."
 fi
 
 echo "Checking $FLEET_URL/functions/v1/public-api/v1"

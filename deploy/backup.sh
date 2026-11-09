@@ -17,7 +17,21 @@ target="$BACKUP_DIR/$stamp"
 mkdir -p "$target"
 chmod 700 "$BACKUP_DIR"
 
-DB=$(docker ps --format '{{.Names}} {{.Image}}' | awk '$2 ~ /^supabase\/postgres(:|@|$)/ { print $1; exit }')
+# One container per pattern, or the one named. With a staging stack on the same server (FND-04)
+# two match, and backing up the wrong one silently is worse than failing: set DB_CONTAINER and
+# TRACCAR_DB_CONTAINER then. (Standalone copy of deploy/lib.sh's pick_container: this file is
+# installed on its own.)
+only_one() {
+  if [ -n "$2" ]; then echo "$2"; return 0; fi
+  found=$(docker ps --format '{{.Names}} {{.Image}}' | awk "$1")
+  if [ "$(printf '%s' "$found" | grep -c .)" -gt 1 ]; then
+    echo "$(date -u) more than one container matches; set the container name:" $found >&2
+    exit 1
+  fi
+  echo "$found"
+}
+
+DB=$(only_one '$2 ~ /^supabase\/postgres(:|@|$)/ { print $1 }' "${DB_CONTAINER:-}")
 if [ -n "$DB" ]; then
   echo "$(date -u) fleet database ($DB)"
   docker exec "$DB" pg_dumpall -U postgres --globals-only > "$target/fleet-globals.sql"
@@ -31,7 +45,7 @@ if [ -d "$FLEET_DIR/volumes/storage" ]; then
 fi
 
 # Traccar: its database container if it has one (MySQL / Postgres), otherwise its data folder (H2).
-TDB=$(docker ps --format '{{.Names}} {{.Image}}' | awk '$2 ~ /^(mysql|mariadb|postgres)(:|@|$)/ && $1 ~ /traccar/ { print $1; exit }')
+TDB=$(only_one '$2 ~ /^(mysql|mariadb|postgres)(:|@|$)/ && $1 ~ /traccar/ { print $1 }' "${TRACCAR_DB_CONTAINER:-}")
 if [ -n "$TDB" ]; then
   echo "$(date -u) traccar database ($TDB)"
   case "$(docker inspect -f '{{.Config.Image}}' "$TDB")" in

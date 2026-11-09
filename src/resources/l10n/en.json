@@ -2958,5 +2958,9 @@
     "billingDocError_clearing_disabled": "The card payment page is off.",
     "billingDocError_no_public_url": "The invoicing service's public address is not set on the server.",
     "billingDocError_forbidden": "Only service administrators can issue official documents.",
-    "billingDocError_not_recorded": "The document was issued at the provider but not saved here. Note its number and contact support."
+    "billingDocError_not_recorded": "The document was issued at the provider but not saved here. Note its number and contact support.",
+    "shellEnvStaging": "Staging",
+    "shellEnvDevelopment": "Development",
+    "shellEnvStagingShort": "Staging",
+    "shellEnvDevelopmentShort": "Dev"
 }
