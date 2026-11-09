@@ -122,7 +122,7 @@ export const totalsOf = (items, spec) => {
 };
 
 // The totals row. `leading` cells come before the columns (actions, vehicle).
-export const ReportTotalsRow = ({ leading = 1, columns, spec, items, format }) => {
+export const ReportTotalsRow = ({ leading = 1, trailing = 0, columns, spec, items, format }) => {
   const { classes } = useStyles();
   const t = useTranslation();
   const totals = useMemo(() => totalsOf(items, spec), [items, spec]);
@@ -138,6 +138,7 @@ export const ReportTotalsRow = ({ leading = 1, columns, spec, items, format }) =
             {key in spec && totals[key] != null ? format({ ...totals }, key) : null}
           </TableCell>
         ))}
+        {trailing > 0 && <TableCell colSpan={trailing} />}
       </TableRow>
     </TableFooter>
   );

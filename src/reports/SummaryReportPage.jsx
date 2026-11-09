@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link as RouterLink } from 'react-router-dom';
 import {
   FormControl,
   InputLabel,
@@ -10,6 +10,7 @@ import {
   TableRow,
   TableBody,
   TableCell,
+  Link,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -21,6 +22,7 @@ import {
 } from '../common/util/formatter';
 import ReportFilter, { updateReportParams } from './components/ReportFilter';
 import { useAttributePreference } from '../common/util/preferences';
+import { summaryTripsLink } from './components/reportLinks';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import ReportsMenu from './components/ReportsMenu';
@@ -264,7 +266,17 @@ const SummaryReportPage = () => {
           {!loading ? (
             sortedItems.map((item) => (
               <TableRow key={`${item.deviceId}_${Date.parse(item.startTime)}`}>
-                <TableCell>{devices[item.deviceId].name}</TableCell>
+                <TableCell>
+                  {/* REP-07: the row's trips (its day in a daily summary). */}
+                  <Link
+                    component={RouterLink}
+                    to={summaryTripsLink(item, daily)}
+                    underline="hover"
+                    aria-label={`${t('reportShowTrips')}: ${devices[item.deviceId]?.name || ''}`}
+                  >
+                    {devices[item.deviceId]?.name}
+                  </Link>
+                </TableCell>
                 {columns.map((key) => (
                   <TableCell key={key}>{formatValue(item, key)}</TableCell>
                 ))}

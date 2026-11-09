@@ -3124,5 +3124,10 @@
     "fleetSignatureSigned": "נחתם",
     "driverVehicleOutOfService": "הרכב שלכם סומן \"לא לנסיעה\": {0}. אין לנסוע בו עד שמנהל הצי יסגור את התקלה.",
     "settingsAccessibility": "הצהרת נגישות",
-    "settingsAccessibilityDescription": "רמת הנגישות של המערכת, מה עוד לא נגיש ואיך פונים לרכז הנגישות"
+    "settingsAccessibilityDescription": "רמת הנגישות של המערכת, מה עוד לא נגיש ואיך פונים לרכז הנגישות",
+    "dashboardVehicleTrips": "הנסיעות בתקופה",
+    "dashboardVehicleReplay": "שחזור המסלול בתקופה",
+    "dashboardVehicleNow": "איפה הוא עכשיו, במפה",
+    "reportShowTrips": "הנסיעות",
+    "reportReplayStop": "שחזור המסלול סביב העצירה"
 }

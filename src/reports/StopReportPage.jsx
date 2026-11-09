@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
 import { IconButton, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
@@ -14,6 +14,8 @@ import {
 } from '../common/util/formatter';
 import ReportFilter from './components/ReportFilter';
 import { useAttributePreference, usePreference } from '../common/util/preferences';
+import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
+import { stopReplayLink } from './components/reportLinks';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import ReportsMenu from './components/ReportsMenu';
@@ -249,11 +251,12 @@ const StopReportPage = () => {
                     {t(columnsMap.get(key))}
                   </SortCell>
                 ))}
+                <TableCell className={classes.columnAction} />
               </TableRow>
             </TableHead>
             <TableBody>
               {!loading && queried && !items.length && (
-                <ReportEmptyRow colSpan={columns.length + 2} />
+                <ReportEmptyRow colSpan={columns.length + 3} />
               )}
               {!loading ? (
                 sortedItems.map((item) => (
@@ -278,19 +281,32 @@ const StopReportPage = () => {
                         </IconButton>
                       )}
                     </TableCell>
-                    <TableCell>{devices[item.deviceId].name}</TableCell>
+                    <TableCell>{devices[item.deviceId]?.name}</TableCell>
                     {columns.map((key) => (
                       <TableCell key={key}>{formatValue(item, key)}</TableCell>
                     ))}
+                    <TableCell className={classes.columnAction} padding="none">
+                      {/* REP-07: replay from ten minutes before the stop to ten after. */}
+                      <IconButton
+                        size="small"
+                        component={RouterLink}
+                        to={stopReplayLink(item)}
+                        aria-label={t('reportReplayStop')}
+                        disabled={Boolean(item.privacy)}
+                      >
+                        <ReplayRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
-                <TableShimmer columns={columns.length + 2} startAction />
+                <TableShimmer columns={columns.length + 3} startAction endAction />
               )}
             </TableBody>
             {!loading && (
               <ReportTotalsRow
                 leading={2}
+                trailing={1}
                 columns={columns}
                 spec={TOTALS}
                 items={items}

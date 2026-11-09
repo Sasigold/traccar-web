@@ -3124,5 +3124,10 @@
     "fleetSignatureSigned": "signed",
     "driverVehicleOutOfService": "Your vehicle is marked \"not for driving\": {0}. Do not drive it until the fleet manager closes the fault.",
     "settingsAccessibility": "Accessibility statement",
-    "settingsAccessibilityDescription": "How accessible the system is, what is not yet, and how to reach the accessibility coordinator"
+    "settingsAccessibilityDescription": "How accessible the system is, what is not yet, and how to reach the accessibility coordinator",
+    "dashboardVehicleTrips": "Trips in the period",
+    "dashboardVehicleReplay": "Replay the period",
+    "dashboardVehicleNow": "Where it is now, on the map",
+    "reportShowTrips": "Trips",
+    "reportReplayStop": "Replay around the stop"
 }

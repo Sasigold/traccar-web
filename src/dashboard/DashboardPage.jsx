@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 import {
   Button,
@@ -42,6 +43,8 @@ import useFeatures from '../common/util/useFeatures';
 import { useFleetStatus } from '../common/fleet/useFleet';
 import { devicesActions, messagesActions } from '../store';
 import { DashboardDataProvider } from './data/DashboardDataContext';
+import VehiclePeriodDialog from './components/VehiclePeriodDialog';
+import { periodRange } from './data/periods';
 import DashboardCanvas from './layout/DashboardCanvas';
 import { HEIGHT_PRESETS, locate, uid } from './layout/model';
 import {
@@ -209,6 +212,9 @@ const DashboardPage = () => {
   const [settingsId, setSettingsId] = useState(null);
   const [focusId, setFocusId] = useState(null);
   const [drill, setDrill] = useState(null);
+  const [vehiclePeriod, setVehiclePeriod] = useState(null);
+  const devicesRef = useRef({});
+  devicesRef.current = useSelector((state) => state.devices.items);
   const [highlightId, setHighlightId] = useState(null);
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [naming, setNaming] = useState(null); // 'rename' | 'duplicate'
@@ -304,7 +310,18 @@ const DashboardPage = () => {
         ),
       onSelectItem: (id, item, query) => {
         if (query.d === 'vehicle' && !item.other) {
-          openDevice(item.key);
+          if (!query.ds || query.ds === 'live') {
+            openDevice(item.key);
+          } else {
+            // REP-07: a period chart: the vehicle's trips or replay in that period, or now.
+            const range = periodRange(dashboard.filters.period, dayjs(), dashboard.filters);
+            setVehiclePeriod({
+              deviceId: Number(item.key),
+              name: item.label || devicesRef.current[item.key]?.name || String(item.key),
+              from: range.from,
+              to: range.to,
+            });
+          }
         } else if (query.ds === 'live') {
           setDrill({ item, query });
         }
@@ -317,7 +334,7 @@ const DashboardPage = () => {
         );
       },
     }),
-    [update, updateRows, openDevice, dashboard.rows],
+    [update, updateRows, openDevice, dashboard.rows, dashboard.filters],
   );
 
   const onRows = useCallback(
@@ -633,6 +650,7 @@ const DashboardPage = () => {
         onClose={() => setFocusId(null)}
       />
       <DrillDialog drill={drill} onClose={() => setDrill(null)} />
+      <VehiclePeriodDialog vehicle={vehiclePeriod} onClose={() => setVehiclePeriod(null)} />
     </DashboardDataProvider>
   );
 
