@@ -272,6 +272,26 @@ ids as a fallback).
   (`updated`, `unchanged`, `not_found`, `error`) for 14 days. Without pg_net nothing is scheduled (the
   migration says so) and the validity page button does the same job.
 
+## Traffic and parking tickets (transfer to the driver)
+
+A ticket on a company vehicle has to be transferred to the driver (or paid) by a deadline, usually 90 days
+from the notice; after it the company is charged an increased fine, usually four times the amount.
+`src/common/fleet/violations.js` holds the rules (`transferDeadline`, `violationUrgency`,
+`companyPenalty`, `violationsByDriver`, `transferLetter`), unit-tested.
+
+- **Ticket form** (`/fleet/safety` → "עבירות ודוחות", new or the pencil on a row): the receipt date fills
+  the deadline (+90 days, editable); a warning shows the date and the company fine while the ticket is open
+  or assigned; "who drove?" finds the driver from the track; "charge the driver" records a payroll
+  deduction or collection and its date.
+- **Countdown**: each open ticket shows the days left (warning from 14 days, red when overdue).
+- **Transfer letter**: "מכתב הסבה" opens a printable notice to the issuer with the driver's name, ID and
+  licence number from the driver's file, the plate and the company name, and a line for the driver to sign.
+  Missing details print as blank lines to fill in.
+- **Tickets by driver**: count, still open, fines, points and fines still to charge, per driver.
+
+Columns `received_at`, `charge_driver`, `charged_at` on `driver_violations`
+(`supabase/migrations/20261110140000_violation_transfer.sql`).
+
 ## Roadmap stages 2-4
 
 All fleet database screens live under `/fleet` (code in `src/fleet/`, pure logic with unit tests in
