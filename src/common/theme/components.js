@@ -60,6 +60,17 @@ export default {
       ':root .MuiInputBase-input:focus-visible': {
         outline: 'none',
       },
+      // Names and values that may be Latin (vehicle names, plates, emails) take their direction
+      // from their own text, so a long Latin name is cut at its end ("Delivery V…"), not at its
+      // start ("…very Van"); alignment still follows the page.
+      '.MuiTypography-noWrap, .MuiListItemText-primary, .MuiListItemText-secondary, .MuiSelect-select, .MuiChip-label, .MuiInputBase-input':
+        {
+          unicodeBidi: 'plaintext',
+        },
+      // Addresses, passwords and phone numbers are always typed left to right.
+      'input[type="email"], input[type="password"], input[type="url"], input[type="tel"]': {
+        direction: 'ltr',
+      },
       '::selection': {
         backgroundColor: alpha(brandColors.aqua, 0.35),
       },

@@ -58,9 +58,11 @@ const useStyles = makeStyles()((theme) => ({
   muted: {
     color: theme.palette.text.secondary,
   },
+  // Plates and identifiers never wrap in the middle ("12-345-" / "67").
   mono: {
     fontFamily: theme.tokens.font.mono,
     fontSize: '0.8125rem',
+    whiteSpace: 'nowrap',
   },
 }));
 
@@ -228,7 +230,9 @@ const DevicesPage = () => {
                   <span dir="ltr">{item.attributes?.plateNumber}</span>
                 </TableCell>
                 <TableCell>{validity !== 'none' && <ExpiryBadge status={validity} />}</TableCell>
-                <TableCell className={classes.mono}>{item.uniqueId}</TableCell>
+                <TableCell className={classes.mono}>
+                  <bdi dir="ltr">{item.uniqueId}</bdi>
+                </TableCell>
                 <TableCell>{item.groupId ? groups[item.groupId]?.name : null}</TableCell>
                 <TableCell>{item.phone}</TableCell>
                 <TableCell>{item.model}</TableCell>

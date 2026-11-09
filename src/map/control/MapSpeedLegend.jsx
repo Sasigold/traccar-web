@@ -52,6 +52,8 @@ const MapSpeedLegend = ({ positions, speedLimit = 0 }) => {
       onAdd: () => {
         container = document.createElement('div');
         container.className = 'maplibregl-ctrl maplibregl-ctrl-scale';
+        // Slow to fast reads left to right, like the "min - max" range under it.
+        container.dir = 'ltr';
         const dark = theme.palette.mode === 'dark';
         const colorBar = document.createElement('div');
         colorBar.className = classes.colorBar;
