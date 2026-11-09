@@ -3138,5 +3138,11 @@
     "vehiclePickerSearch": "Search by name, plate or ID",
     "vehiclePickerNone": "No vehicles chosen",
     "vehiclePickerClear": "Clear",
-    "vehiclePickerDone": "Done"
+    "vehiclePickerDone": "Done",
+    "replayLast24": "Last 24 hours",
+    "replayBackMinute": "Back a minute",
+    "replayForwardMinute": "Forward a minute",
+    "replaySpeed": "Replay speed",
+    "replayTimeline": "Route timeline",
+    "replayEmpty": "No locations in this period. Try another period."
 }

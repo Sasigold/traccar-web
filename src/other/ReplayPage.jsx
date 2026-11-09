@@ -1,5 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Chip, IconButton, Slider, Tooltip, Typography, useMediaQuery } from '@mui/material';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  Chip,
+  IconButton,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+} from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { useTheme } from '@mui/material/styles';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
@@ -9,12 +17,14 @@ import PauseRoundedIcon from '@mui/icons-material/PauseRounded';
 import FastForwardRoundedIcon from '@mui/icons-material/FastForwardRounded';
 import FastRewindRoundedIcon from '@mui/icons-material/FastRewindRounded';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import dayjs from 'dayjs';
 import { useSelector } from 'react-redux';
 import MapView from '../map/core/MapView';
 import MapRoutePath from '../map/MapRoutePath';
 import MapRoutePoints from '../map/MapRoutePoints';
 import MapReplayMarker from '../map/MapReplayMarker';
-import { formatTime } from '../common/util/formatter';
+import { formatNumericHours, formatTime } from '../common/util/formatter';
+
 import ReportFilter from '../reports/components/ReportFilter';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import { useCatchCallback } from '../reactHelper';
@@ -29,6 +39,15 @@ import MapOverlay from '../map/overlay/MapOverlay';
 import { ctaFill, glass } from '../common/theme/surfaces';
 import { logPrivacyView, privatePositions } from '../common/fleet/privacyData';
 import PrivacyNote from '../common/components/PrivacyNote';
+import MapMarkers from '../map/MapMarkers';
+import ReplayTimeline from './replay/ReplayTimeline';
+import {
+  SPEEDS,
+  quickRange,
+  replayStops,
+  stepByTime,
+  timelineSegments,
+} from './replay/replayTimeline';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -48,12 +67,14 @@ const useStyles = makeStyles()((theme) => ({
     ...glass(theme, 0.92),
     borderRadius: theme.tokens.radius.xxl,
     overflow: 'hidden',
+    // LIV-10: on a phone the panel is a sheet at the bottom, so the route stays in view above it.
     [theme.breakpoints.down('md')]: {
       insetInline: 0,
-      top: 0,
+      top: 'auto',
+      bottom: 0,
       width: '100%',
-      maxHeight: '70%',
-      borderRadius: '0 0 20px 20px',
+      maxHeight: '60%',
+      borderRadius: `${theme.tokens.radius.xl}px ${theme.tokens.radius.xl}px 0 0`,
     },
   },
   header: {
@@ -94,10 +115,6 @@ const useStyles = makeStyles()((theme) => ({
   deviceName: {
     fontWeight: 700,
   },
-  slider: {
-    marginInline: theme.spacing(1),
-    width: 'auto',
-  },
   controls: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -120,8 +137,45 @@ const useStyles = makeStyles()((theme) => ({
   time: {
     fontVariantNumeric: 'tabular-nums',
     fontWeight: 600,
+    minWidth: 64,
+  },
+  speeds: {
+    alignSelf: 'center',
+    '& .MuiToggleButton-root': {
+      paddingBlock: 2,
+      paddingInline: theme.spacing(1.25),
+      fontVariantNumeric: 'tabular-nums',
+    },
+  },
+  stops: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: theme.spacing(0.75),
+    margin: 0,
+    padding: 0,
+    listStyle: 'none',
+  },
+  quick: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: theme.spacing(0.75),
+  },
+  empty: {
+    color: theme.palette.text.secondary,
   },
 }));
+
+// "23 דק׳", or hours and minutes from an hour up.
+const stopLength = (duration, t) =>
+  duration < 3600000
+    ? `${Math.round(duration / 60000)} ${t('sharedMinuteAbbreviation')}`
+    : formatNumericHours(duration, t);
+
+const QUICK = [
+  ['today', 'reportToday'],
+  ['yesterday', 'reportYesterday'],
+  ['last24', 'replayLast24'],
+];
 
 const ReplayPage = () => {
   const t = useTranslation();
@@ -131,7 +185,7 @@ const ReplayPage = () => {
 
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const defaultDeviceId = useSelector((state) => state.devices.selectedId);
 
@@ -145,6 +199,8 @@ const ReplayPage = () => {
   const [loading, setLoading] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [privacy, setPrivacy] = useState(null);
+  const [speed, setSpeed] = useState(20);
+  const [empty, setEmpty] = useState(false);
 
   const loaded = Boolean(from && to && !loading && positions.length);
 
@@ -170,6 +226,65 @@ const ReplayPage = () => {
     }
   }, [index, positions]);
 
+  const segments = useMemo(() => timelineSegments(positions), [positions]);
+  const stops = useMemo(() => replayStops(segments), [segments]);
+
+  // LIV-10: a vehicle without a period (from the card) shows today at once.
+  const urlDeviceId = searchParams.get('deviceId');
+  const showRange = useCallback(
+    (key) => {
+      const range = quickRange(key);
+      const params = new URLSearchParams(searchParams);
+      params.set('period', range.period);
+      params.set('from', range.from.toISOString());
+      params.set('to', range.to.toISOString());
+      setSearchParams(params, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
+  useEffect(() => {
+    if (urlDeviceId && !from && !to) {
+      showRange('today');
+    }
+    // eslint-disable-next-line @eslint-react/exhaustive-deps
+  }, [urlDeviceId]);
+
+  // Space plays and pauses, arrows move a point and Shift+arrows a minute, wherever the focus is
+  // outside a field or a button.
+  useEffect(() => {
+    if (!positions.length) {
+      return undefined;
+    }
+    const onKeyDown = (event) => {
+      const target = event.target;
+      if (
+        event.defaultPrevented ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        target.closest?.(
+          'input, textarea, select, button, a, [role="slider"], [role="dialog"], [contenteditable="true"]',
+        )
+      ) {
+        return;
+      }
+      if (event.key === ' ') {
+        event.preventDefault();
+        setPlaying((value) => !value);
+      } else if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+        event.preventDefault();
+        const direction = event.key === 'ArrowRight' ? 1 : -1;
+        setIndex((value) =>
+          event.shiftKey
+            ? stepByTime(positions, value, direction * 60000)
+            : Math.min(Math.max(value + direction, 0), positions.length - 1),
+        );
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [positions]);
+
   const onPointClick = useCallback(
     (_, index) => {
       setIndex(index);
@@ -184,34 +299,32 @@ const ReplayPage = () => {
     [setShowCard],
   );
 
-  const onShow = useCatchCallback(
-    async ({ deviceIds, from, to }) => {
-      const deviceId = deviceIds.find(() => true);
-      setLoading(true);
-      setSelectedDeviceId(deviceId);
-      const query = new URLSearchParams({ deviceId, from, to });
-      try {
-        const response = await fetchOrThrow(`api/positions?${query.toString()}`);
-        setIndex(0);
-        // Locations in hidden time (outside working hours, private periods) are left out.
-        const result = await privatePositions(await response.json(), {
-          deviceIds: [deviceId],
-          from,
-          to,
-          view: 'replay',
-        });
-        setPositions(result.positions);
-        setPrivacy(result.hidden ? result : null);
-        if (!result.positions.length) {
-          throw Error(t(result.hidden ? 'privacyAllHidden' : 'sharedNoData'));
-        }
+  const onShow = useCatchCallback(async ({ deviceIds, from, to }) => {
+    const deviceId = deviceIds.find(() => true);
+    setLoading(true);
+    setSelectedDeviceId(deviceId);
+    const query = new URLSearchParams({ deviceId, from, to });
+    try {
+      const response = await fetchOrThrow(`api/positions?${query.toString()}`);
+      setIndex(0);
+      // Locations in hidden time (outside working hours, private periods) are left out.
+      const result = await privatePositions(await response.json(), {
+        deviceIds: [deviceId],
+        from,
+        to,
+        view: 'replay',
+      });
+      setPositions(result.positions);
+      setPrivacy(result.hidden ? result : null);
+      // An empty period is not an error: it is said quietly under the filter.
+      setEmpty(!result.positions.length);
+      if (result.positions.length) {
         setFilterOpen(false);
-      } finally {
-        setLoading(false);
       }
-    },
-    [t],
-  );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const handleDownload = () => {
     logPrivacyView([selectedDeviceId], 'export', from, to);
@@ -226,11 +339,28 @@ const ReplayPage = () => {
         <MapGeofence />
         <MapRoutePath positions={positions} />
         <MapRoutePoints positions={positions} onClick={onPointClick} showSpeedControl />
+        {positions.length > 1 && (
+          <MapMarkers
+            markers={[
+              {
+                latitude: positions[0].latitude,
+                longitude: positions[0].longitude,
+                image: 'start-success',
+              },
+              {
+                latitude: positions[positions.length - 1].latitude,
+                longitude: positions[positions.length - 1].longitude,
+                image: 'finish-error',
+              },
+            ]}
+          />
+        )}
         {index < positions.length && (
           <MapReplayMarker
             positions={positions}
             index={index}
             playing={playing}
+            speed={speed}
             onIndexChange={setIndex}
             onMarkerClick={onMarkerClick}
           />
@@ -290,23 +420,23 @@ const ReplayPage = () => {
                 />
               </div>
               <PrivacyNote hidden={privacy?.hidden} distance={privacy?.hiddenDistance} />
-              <Slider
-                className={classes.slider}
-                max={positions.length - 1}
-                step={null}
-                marks={positions.map((_, index) => ({ value: index }))}
-                value={index}
-                onChange={(_, index) => setIndex(index)}
+              <ReplayTimeline
+                positions={positions}
+                segments={segments}
+                stops={stops}
+                index={index}
+                onChange={setIndex}
               />
-              <div className={classes.controls}>
+              {/* The player runs left to right, like the gauges. */}
+              <div className={classes.controls} dir="ltr">
                 <Typography variant="caption" className={classes.time}>
                   {formatTime(positions[0].fixTime, 'time')}
                 </Typography>
                 <div className={classes.transport}>
                   <IconButton
-                    aria-label={t('a11yPrevious')}
-                    onClick={() => setIndex((index) => index - 1)}
-                    disabled={playing || index <= 0}
+                    aria-label={t('replayBackMinute')}
+                    onClick={() => setIndex((value) => stepByTime(positions, value, -60000))}
+                    disabled={index <= 0}
                   >
                     <FastRewindRoundedIcon />
                   </IconButton>
@@ -319,18 +449,77 @@ const ReplayPage = () => {
                     {playing ? <PauseRoundedIcon /> : <PlayArrowRoundedIcon />}
                   </IconButton>
                   <IconButton
-                    aria-label={t('a11yNext')}
-                    onClick={() => setIndex((index) => index + 1)}
-                    disabled={playing || index >= positions.length - 1}
+                    aria-label={t('replayForwardMinute')}
+                    onClick={() => setIndex((value) => stepByTime(positions, value, 60000))}
+                    disabled={index >= positions.length - 1}
                   >
                     <FastForwardRoundedIcon />
                   </IconButton>
                 </div>
-                <Typography variant="caption" className={classes.time}>
-                  {formatTime(positions[index].fixTime, 'seconds')}
+                <Typography variant="caption" className={classes.time} align="right">
+                  {dayjs(positions[index].fixTime).format('HH:mm:ss')}
                 </Typography>
               </div>
+              <ToggleButtonGroup
+                className={classes.speeds}
+                size="small"
+                exclusive
+                value={speed}
+                onChange={(_, value) => value && setSpeed(value)}
+                aria-label={t('replaySpeed')}
+              >
+                {SPEEDS.map((value) => (
+                  <ToggleButton key={value} value={value}>
+                    {`${value}×`}
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
+              {stops.length > 0 && (
+                <>
+                  <Typography variant="overline" component="h3">
+                    {t('reportStops')}
+                  </Typography>
+                  <ul className={classes.stops}>
+                    {stops.map((stop) => (
+                      <li key={stop.index}>
+                        <Chip
+                          size="small"
+                          variant={
+                            index >= stop.index &&
+                            positions[index] &&
+                            new Date(positions[index].fixTime).getTime() < stop.end
+                              ? 'filled'
+                              : 'outlined'
+                          }
+                          label={`${dayjs(stop.start).format('HH:mm')} · ${stopLength(stop.duration, t)}`}
+                          onClick={() => {
+                            setPlaying(false);
+                            setIndex(stop.index);
+                          }}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </>
+          )}
+          {(!loaded || filterOpen) && (
+            <div className={classes.quick}>
+              {QUICK.map(([key, label]) => (
+                <Chip
+                  key={key}
+                  label={t(label)}
+                  disabled={!urlDeviceId || loading}
+                  onClick={() => showRange(key)}
+                />
+              ))}
+            </div>
+          )}
+          {empty && !loading && (!loaded || filterOpen) && (
+            <Typography variant="body2" className={classes.empty} role="status">
+              {t(privacy ? 'privacyAllHidden' : 'replayEmpty')}
+            </Typography>
           )}
           <div
             className={classes.filterGrid}

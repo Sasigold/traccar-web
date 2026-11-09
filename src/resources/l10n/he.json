@@ -3138,5 +3138,11 @@
     "vehiclePickerSearch": "חיפוש לפי שם, מספר רישוי או מזהה",
     "vehiclePickerNone": "לא נבחרו רכבים",
     "vehiclePickerClear": "ניקוי",
-    "vehiclePickerDone": "סיום"
+    "vehiclePickerDone": "סיום",
+    "replayLast24": "24 השעות האחרונות",
+    "replayBackMinute": "דקה אחורה",
+    "replayForwardMinute": "דקה קדימה",
+    "replaySpeed": "מהירות השחזור",
+    "replayTimeline": "ציר הזמן של המסלול",
+    "replayEmpty": "אין מיקומים בתקופה הזו. נסו תקופה אחרת."
 }
