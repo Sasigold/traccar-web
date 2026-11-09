@@ -3,7 +3,7 @@
 הקובץ הזה הוא נקודת ההמשך. מי שממשיך את הפיתוח (אדם או סוכן AI) קורא אותו קודם, ואחר כך את
 `docs/roadmap/ITEMS.md`, שבו כל 213 הפריטים של דוח הסקירה עם המצב של כל אחד.
 
-עודכן: 9 בנובמבר 2026, אחרי FND-07 (commit `a066e362`), בענף `claude/clever-edison-f9609a`.
+עודכן: 14 בנובמבר 2026, אחרי A11-07, בענף `claude/clever-edison-f9609a`.
 
 ## ההוראה של הבעלים
 
@@ -14,17 +14,9 @@
 
 ## הבא בתור
 
-סדר הביצוע הוא מפת הדרכים של הדוח. שלב "1 עד 3 חודשים" כמעט הסתיים; נשארו בו:
-
-1. **ARC-06, שכבת נתונים משותפת.** TanStack Query גם ל-Traccar וגם ל-Supabase, `signal` מחובר ל-
-   `.abortSignal()`, `invalidateQueries` במקום `reloadKey`, מפתחות עם `orgId`. מעבר הדרגתי.
-
-אחריהם, לפי הדוח:
-
-- **3 עד 6 חודשים:** AI-01 עד AI-04, SAF-01, SAF-02, OPS-02, LIV-09, ADM-10, INT-03, BIZ-02, BIZ-06,
-  A11-10.
-- **6 עד 12 חודשים:** SAF-03, AI-05, OPS-03, INT-02, ISR-07, BIZ-05, AI-09, LIV-26 עד LIV-28.
-- כל שאר הפריטים ב-`ITEMS.md` שמסומנים ⬜ (P2 ו-P3 בעיקר), לפי העדיפות.
+בסבב הזה בוצעו לפי עדיפות: FND-06, FND-07, SEC-08, SEC-09, SEC-06, SEC-10, SEC-11 (בקוד), SEC-12, ARC-05,
+ADM-03, ADM-05, ADM-06, ADM-08, ADM-11, A11-07. ממשיכים בשאר פריטי P1 (ITEMS.md, ⬜ עם P1): REP-07,
+REP-05, LIV-09, LIV-10, ADM-10, ADM-13, ARC-06, AI-01 עד AI-04, SAF-01, SAF-02, OPS-02; אחר כך P2 ו-P3.
 
 ## מה נשאר פתוח בסעיפים שבוצעו
 
@@ -37,6 +29,9 @@
 - **ISR-04:** קצין בטיחות חיצוני לכמה ארגונים, ופענוח קובצי טכוגרף.
 - **REP-08:** תזמון חודשי (יש יומי ושבועי).
 - **FND-04:** תצוגה מקדימה לכל PR (היה אופציונלי).
+- **SEC-06, ARC-05:** סנכרון ההרשאות מול Traccar עדיין רץ מהדפדפן (עם אימות, מקביליות מוגבלת והתאמה
+  מלאה). תור בשרת (Edge Function + outbox) צריך חשבון שירות ב-Traccar, כמו INT-01.
+- **SEC-11:** הקוד והתיעוד מוכנים; השינוי עצמו בשרת (ראו למטה).
 - **FND-07:** בדיקות RTL כרגע ל-SocketController, לרשימה, לכרטיס הרכב, ל-EditItemView ול-adminApi.
   כשנוגעים בקומפוננטה מסוכנת אחרת, להוסיף לה `*.test.jsx` באותו דפוס. מספרי הביצועים נמדדו בלי GPU;
   לאשר פעם אחת על מחשב משרדי ועל טלפון בינוני (`docs/PERFORMANCE.md`).
@@ -60,6 +55,15 @@
    `*_ANALYTICS_PROVIDER/URL/SITE`, ולמפות המקור: `ERROR_SOURCEMAPS_URL`, `ERROR_SOURCEMAPS_ORG`,
    `*_ERROR_PROJECT` והסוד `ERROR_AUTH_TOKEN`. עם אנליטיקה: שורה בהודעת הפרטיות. עם CSP (SEC-10):
    להוסיף את שני השירותים ל-`connect-src`.
+9. כותרות אבטחה ב-reverse proxy (SEC-10): `sh deploy/security-headers.sh traefik` (או nginx / caddy) והדבקה
+   בהגדרות, לפי `deploy/SECURITY-HEADERS.md`.
+10. הקשחת השרת (SEC-11, SEC-19): פורט 8082 רק על 127.0.0.1, חומת אש לפורטי המכשירים, להריץ
+    `sh deploy/check-exposure.sh 72.61.153.60 https://traccar-ovjj.srv2122641.hstgr.cloud` ממחשב רגיל, ולמלא את
+    רשימת הבדיקה ב-`deploy/SERVER-HARDENING.md`.
+11. פרטיות (SEC-12): בדיקה של עורך דין להודעה לעובדים, להסכמה ולמרשם פעילויות העיבוד (מסך הפרטיות ›
+    בקשות של עובדים); `database.historyDays` ב-Traccar לפי מדיניות השמירה.
+12. נגישות (A11-07): פרטי רכז נגישות בהגדרות השרת (`accessibilityContact`, `accessibilityPhone`,
+    `accessibilityEmail`) ובאתר (`website/src/config.js` › `site.accessibility`), ובדיקת הנוסח מול יועץ נגישות.
 
 ## איך עובדים כאן
 
