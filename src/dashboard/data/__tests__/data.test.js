@@ -4,7 +4,7 @@ import { OTHER, aggregate, delta, reduceMeasure } from '../aggregate';
 import { assignSlots } from '../colors';
 import { DATASETS, DIMENSIONS, liveRow, resolveQuery, sourceOf } from '../datasets';
 import { formatDelta, formatNumber, toDisplay } from '../format';
-import { bucketFor, periodRange, previousRange, timeBuckets } from '../periods';
+import { bucketFor, periodRange, previousRange, shiftRange, timeBuckets } from '../periods';
 import { createQueryCache } from '../queryCache';
 import { TooLargeError, checkSize, chunk, fetchReport, reportUrl } from '../reportFetch';
 import { scopeDeviceIds, scopeKey } from '../scope';
@@ -283,5 +283,22 @@ describe('query cache', () => {
     stop();
     expect(aborted).toBe(true);
     expect(cache.get('k').status).toBe('idle');
+  });
+});
+
+describe('period arrows keep calendar periods whole', () => {
+  it('moves a month to the whole next month', () => {
+    const range = periodRange('thisMonth', dayjs('2026-02-10T12:00:00'));
+    const next = shiftRange('thisMonth', range, 1);
+    expect(next.from.format('YYYY-MM-DD')).toBe('2026-03-01');
+    expect(next.to.format('YYYY-MM-DD')).toBe('2026-03-31');
+    const previous = shiftRange('thisMonth', range, -1);
+    expect(previous.to.format('YYYY-MM-DD')).toBe('2026-01-31');
+  });
+
+  it('moves rolling periods by their length', () => {
+    const range = periodRange('last7', dayjs('2026-11-09T12:00:00'));
+    const previous = shiftRange('last7', range, -1);
+    expect(previous.from.format('YYYY-MM-DD')).toBe('2026-10-27');
   });
 });

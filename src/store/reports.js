@@ -3,7 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 const { reducer, actions } = createSlice({
   name: 'reports',
   initialState: {
-    period: 'day',
+    period: 'today',
     range: null,
   },
   reducers: {

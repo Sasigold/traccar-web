@@ -13,8 +13,6 @@ import {
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeftRounded';
-import ChevronRightIcon from '@mui/icons-material/ChevronRightRounded';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import useReportStyles from '../common/useReportStyles';
 import SplitButton from '../../common/components/SplitButton';
@@ -25,13 +23,24 @@ import { reportsActions } from '../../store';
 import ReportIntro from './ReportIntro';
 import { getFormatLocale } from '../../common/util/formatter';
 import { DateRangeField } from '../../common/components/pickers';
+import { PERIODS, periodRange, shiftRange } from '../../dashboard/data/periods';
+import { PERIOD_KEYS } from '../../dashboard/components/periodLabel';
+import { NextPeriodIcon, PreviousPeriodIcon } from '../../common/components/PeriodArrowIcons';
 
+// The same presets as the dashboard. Older saved choices ("day", "week", "month") still work.
+const LEGACY_PERIODS = { day: 'today', week: 'thisWeek', month: 'thisMonth' };
+const normalizePeriod = (period) => {
+  const value = LEGACY_PERIODS[period] || period;
+  return PERIODS.includes(value) ? value : 'today';
+};
+
+// A new custom period starts with today, from midnight until now.
 const getPeriodRange = (period) => {
-  const now = dayjs();
   if (period === 'custom') {
-    return [now.subtract(1, 'hour').toISOString(), now.toISOString()];
+    return [dayjs().startOf('day').toISOString(), dayjs().toISOString()];
   }
-  return [now.startOf(period).toISOString(), now.endOf(period).toISOString()];
+  const { from, to } = periodRange(period);
+  return [from.toISOString(), to.toISOString()];
 };
 
 export const updateReportParams = (searchParams, setSearchParams, key, values) => {
@@ -75,8 +84,8 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
   const groupIds = useMemo(() => searchParams.getAll('groupId').map(Number), [searchParams]);
   const from = searchParams.get('from');
   const to = searchParams.get('to');
-  const [period, setPeriod] = useState(
-    searchParams.get('period') || (from && to ? 'custom' : savedPeriod),
+  const [period, setPeriod] = useState(() =>
+    normalizePeriod(searchParams.get('period') || (from && to ? 'custom' : savedPeriod)),
   );
   const [range, setRange] = useState(() =>
     from && to
@@ -91,7 +100,7 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
   useEffect(() => {
     if (from && to) {
       setRange([from, to]);
-      setPeriod(urlPeriod || 'custom');
+      setPeriod(normalizePeriod(urlPeriod || 'custom'));
     }
   }, [from, to, urlPeriod]);
 
@@ -143,8 +152,8 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
 
   const dateFormat = new Intl.DateTimeFormat(getFormatLocale(), {
     year: 'numeric',
-    month: period === 'month' ? 'long' : 'short',
-    day: period === 'month' ? undefined : 'numeric',
+    month: period.endsWith('Month') ? 'long' : 'short',
+    day: period.endsWith('Month') ? undefined : 'numeric',
   });
   const periodLabel =
     period === 'custom' || !validRange
@@ -160,15 +169,15 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
     setSearchParams(newParams, { replace: true });
   };
 
+  // The arrows move by whole periods (a month stays a whole month); a custom period moves by its
+  // own length. Nothing after now.
+  const shifted = (direction) =>
+    shiftRange(period, { from: selectedFrom, to: selectedTo }, direction);
   const shiftPeriod = (direction) => {
-    const offset = selectedTo.diff(selectedFrom) * direction;
-    const start =
-      period === 'custom'
-        ? selectedFrom.add(offset, 'millisecond')
-        : selectedFrom.add(direction, period).startOf(period);
-    const end = period === 'custom' ? selectedTo.add(offset, 'millisecond') : start.endOf(period);
+    const { from: start, to: end } = shifted(direction);
     setRange([start.toISOString(), end.toISOString()]);
   };
+  const nextInFuture = validRange && shifted(1).from.isAfter(dayjs());
 
   const onSelected = (type) => {
     switch (type) {
@@ -290,7 +299,7 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
                       onClick={() => shiftPeriod(-1)}
                       aria-label={t('a11yPreviousPeriod')}
                     >
-                      <ChevronLeftIcon />
+                      <PreviousPeriodIcon />
                     </IconButton>
                   </InputAdornment>
                 }
@@ -299,19 +308,20 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
                     <IconButton
                       edge="end"
                       size="small"
-                      disabled={loading || !validRange}
+                      disabled={loading || !validRange || nextInFuture}
                       onClick={() => shiftPeriod(1)}
                       aria-label={t('a11yNextPeriod')}
                     >
-                      <ChevronRightIcon />
+                      <NextPeriodIcon />
                     </IconButton>
                   </InputAdornment>
                 }
               >
-                <MenuItem value="day">{t('reportToday')}</MenuItem>
-                <MenuItem value="week">{t('reportThisWeek')}</MenuItem>
-                <MenuItem value="month">{t('reportThisMonth')}</MenuItem>
-                <MenuItem value="custom">{t('reportCustom')}</MenuItem>
+                {PERIODS.map((value) => (
+                  <MenuItem key={value} value={value}>
+                    {t(PERIOD_KEYS[value])}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </div>

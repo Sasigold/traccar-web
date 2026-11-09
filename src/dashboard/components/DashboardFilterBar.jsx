@@ -17,8 +17,7 @@ import {
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
-import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
-import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+import { NextPeriodIcon, PreviousPeriodIcon } from '../../common/components/PeriodArrowIcons';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import useFeatures from '../../common/util/useFeatures';
@@ -141,14 +140,14 @@ const DashboardFilterBar = ({ filters, refresh, onFilters, onRefresh }) => {
         ))}
       </Select>
       {shiftable && (
-        <div className={classes.arrows} dir="ltr">
+        <div className={classes.arrows}>
           <Tooltip title={t('dashboardPreviousPeriod')}>
             <IconButton
               size="small"
               aria-label={t('dashboardPreviousPeriod')}
               onClick={() => shift(-1)}
             >
-              <ChevronLeftRoundedIcon />
+              <PreviousPeriodIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title={t('dashboardNextPeriod')}>
@@ -159,7 +158,7 @@ const DashboardFilterBar = ({ filters, refresh, onFilters, onRefresh }) => {
                 disabled={range.to.isAfter(dayjs())}
                 onClick={() => shift(1)}
               >
-                <ChevronRightRoundedIcon />
+                <NextPeriodIcon />
               </IconButton>
             </span>
           </Tooltip>

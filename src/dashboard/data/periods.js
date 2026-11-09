@@ -67,12 +67,28 @@ export const periodRange = (period, now = dayjs(), custom = {}) => {
   }
 };
 
+// Calendar presets move by whole calendar units, so a month stays a whole month (adding a month
+// to "February 28, 23:59" would end March on the 28th).
+const CALENDAR_UNIT = {
+  today: 'day',
+  yesterday: 'day',
+  thisWeek: 'week',
+  lastWeek: 'week',
+  thisMonth: 'month',
+  lastMonth: 'month',
+};
+
 // Moves a range by whole periods (the arrows next to the period select).
 export const shiftRange = (period, range, step) => {
-  const [amount, unit] = SHIFT[period] ?? [range.to.diff(range.from), 'millisecond'];
+  const unit = CALENDAR_UNIT[period];
+  if (unit) {
+    const from = range.from.add(step, unit).startOf(unit);
+    return { from, to: from.endOf(unit) };
+  }
+  const [amount, amountUnit] = SHIFT[period] ?? [range.to.diff(range.from), 'millisecond'];
   return {
-    from: range.from.add(step * amount, unit),
-    to: range.to.add(step * amount, unit),
+    from: range.from.add(step * amount, amountUnit),
+    to: range.to.add(step * amount, amountUnit),
   };
 };
 
