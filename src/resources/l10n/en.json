@@ -2383,5 +2383,8 @@
     "commandStatusHide": "Hide command status",
     "deviceSearchPlaceholder": "Search by name, plate or driver",
     "shellRecentDevices": "Recently viewed",
-    "shellAttentionDevices": "Need attention"
+    "shellAttentionDevices": "Need attention",
+    "mapFollowing": "Following {0}",
+    "mapStopFollowing": "Clear selection",
+    "mapFitFleet": "Whole fleet"
 }

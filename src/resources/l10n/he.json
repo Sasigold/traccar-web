@@ -2383,5 +2383,8 @@
     "commandStatusHide": "הסתרת מצב הפקודה",
     "deviceSearchPlaceholder": "חיפוש לפי שם, לוחית או נהג",
     "shellRecentDevices": "נצפו לאחרונה",
-    "shellAttentionDevices": "דורשים תשומת לב"
+    "shellAttentionDevices": "דורשים תשומת לב",
+    "mapFollowing": "עוקבים אחרי {0}",
+    "mapStopFollowing": "ביטול הבחירה",
+    "mapFitFleet": "כל הצי"
 }

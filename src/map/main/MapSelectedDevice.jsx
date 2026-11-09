@@ -1,8 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useSelector } from 'react-redux';
-import { Button } from '@mui/material';
+import { useDispatch, useSelector } from 'react-redux';
+import { Button, IconButton } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
+import GpsFixedRoundedIcon from '@mui/icons-material/GpsFixedRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { devicesActions } from '../../store';
+import { shortcutAllowed } from '../../common/util/keyboard';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import {
   getStatusCardRect,
@@ -16,15 +21,58 @@ import { toMapCoordinates } from '../core/mapUtil';
 import { createTrack, retargetTrack, trackCoordinates } from '../core/motion';
 import { prefersReducedMotion } from '../core/movingIcon';
 
+const useStyles = makeStyles()((theme) => ({
+  pill: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+    height: 40,
+    paddingInlineStart: theme.spacing(1.5),
+    paddingInlineEnd: theme.spacing(0.5),
+    borderRadius: 999,
+    backgroundColor: theme.palette.background.paper,
+    color: theme.palette.text.primary,
+    boxShadow: theme.shadows[3],
+    whiteSpace: 'nowrap',
+    fontSize: '0.875rem',
+    fontWeight: 600,
+    maxWidth: 'calc(100vw - 32px)',
+  },
+  following: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+  followIcon: {
+    color: theme.palette.primary.main,
+  },
+  back: {
+    borderRadius: 999,
+    height: 32,
+    paddingInline: theme.spacing(1),
+    color: theme.palette.text.primary,
+  },
+}));
+
+const PAN_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']);
+
 // Selecting a vehicle (on the map or in the list) locks the camera onto it: the map slides under
 // the vehicle so it stays at the same spot on screen, frame by frame, in step with the marker's
 // glide (both are fed the same fixes, see motion.js). Zooming and rotating keep the lock; dragging
-// the map with one finger or the mouse releases it; the "back to vehicle" button that then
-// appears (or selecting the vehicle again) re-locks. Closing the vehicle card keeps the lock: the
-// vehicle moves to the middle of the map, and stays clear of the card while it is open.
+// the map with one finger or the mouse, or panning it with the arrow keys, releases it; the "back
+// to vehicle" button that then appears (or selecting the vehicle again) re-locks. Closing the
+// vehicle card keeps the lock, and a "following …" pill says so. Its ✕, Esc (when no dialog or
+// text field has the keyboard) or a click on an empty part of the map clears the selection.
 // With the "map follows the selected vehicle" preference off, the map only centers once.
 const MapSelectedDevice = () => {
   const t = useTranslation();
+  const { classes } = useStyles();
+  const dispatch = useDispatch();
+  const cardHidden = useSelector((state) => state.devices.cardHidden);
+  const deviceName = useSelector((state) => state.devices.items[state.devices.selectedId]?.name);
   const currentTime = useSelector((state) => state.devices.selectTime);
   const currentId = useSelector((state) => state.devices.selectedId);
   const previousTime = usePrevious(currentTime);
@@ -43,6 +91,7 @@ const MapSelectedDevice = () => {
   const offsetRef = useRef(0);
   const pointerDownRef = useRef(false);
   const [released, setReleased] = useState(false);
+  const [following, setFollowing] = useState(false);
 
   // Put the followed vehicle back on its spot: easeTo for a soft settle after a gesture or the
   // initial fly-in, jumpTo for the per-frame glide.
@@ -126,7 +175,16 @@ const MapSelectedDevice = () => {
         setReleased(true);
       }
       followingRef.current = false;
+      setFollowing(false);
       stopLoop();
+    };
+    // Arrow keys pan the map (with Shift they rotate it): a pan is a move away from the vehicle.
+    // Read from the key itself: during the fly-in the map is already moving and a keyboard pan
+    // starts no new move.
+    const onKeyDown = (event) => {
+      if (PAN_KEYS.has(event.key) && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
+        onDragStart({});
+      }
     };
     // While a finger or the mouse button is down the user may be starting a drag: settling then
     // would cancel the gesture (camera moves stop map handlers), e.g. grabbing during the fly-in.
@@ -153,12 +211,15 @@ const MapSelectedDevice = () => {
     window.addEventListener('pointerup', onPointerUp, true);
     window.addEventListener('pointercancel', onPointerUp, true);
     map.on('dragstart', onDragStart);
+    // Capture phase: seen before the map's own keyboard handler moves the camera.
+    container.addEventListener('keydown', onKeyDown, true);
     map.on('moveend', onMoveEnd);
     return () => {
       container.removeEventListener('pointerdown', onPointerDown, true);
       window.removeEventListener('pointerup', onPointerUp, true);
       window.removeEventListener('pointercancel', onPointerUp, true);
       map.off('dragstart', onDragStart);
+      container.removeEventListener('keydown', onKeyDown, true);
       map.off('moveend', onMoveEnd);
       stopLoop();
     };
@@ -171,6 +232,7 @@ const MapSelectedDevice = () => {
       trackRef.current = null;
       stopLoop();
       setReleased(false);
+      setFollowing(false);
       return;
     }
     if (!position) {
@@ -180,6 +242,7 @@ const MapSelectedDevice = () => {
     if (selected) {
       offsetRef.current = measureOffset();
       followingRef.current = mapFollow;
+      setFollowing(mapFollow);
       setReleased(false);
       trackRef.current = createTrack(position);
       stopLoop();
@@ -200,14 +263,30 @@ const MapSelectedDevice = () => {
     // eslint-disable-next-line @eslint-react/exhaustive-deps
   }, [currentId, previousId, currentTime, previousTime, mapFollow, position, selectZoom]);
 
+  useEffect(() => {
+    if (!currentId) {
+      return undefined;
+    }
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape' && shortcutAllowed(event)) {
+        dispatch(devicesActions.selectId(null));
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [currentId, dispatch]);
+
   const relock = () => {
     followingRef.current = true;
+    setFollowing(true);
     setReleased(false);
     centerOn(shownCoordinates(), prefersReducedMotion() ? 0 : 400);
     startLoop();
   };
 
-  if (!released) {
+  // While the card is open it shows the selection itself; the pill speaks up once it is closed,
+  // or when the map was moved away from the vehicle.
+  if (!currentId || !(released || (following && cardHidden))) {
     return null;
   }
 
@@ -224,21 +303,25 @@ const MapSelectedDevice = () => {
 
   return createPortal(
     <div style={style}>
-      <Button
-        onClick={relock}
-        startIcon={<CenterFocusStrongIcon />}
-        sx={(theme) => ({
-          borderRadius: 999,
-          paddingInline: 2,
-          backgroundColor: theme.palette.background.paper,
-          color: theme.palette.text.primary,
-          boxShadow: theme.shadows[3],
-          whiteSpace: 'nowrap',
-          '&:hover': { backgroundColor: theme.palette.background.paper },
-        })}
-      >
-        {t('mapBackToVehicle')}
-      </Button>
+      <div className={classes.pill} role="group" aria-label={deviceName}>
+        {released ? (
+          <Button className={classes.back} onClick={relock} startIcon={<CenterFocusStrongIcon />}>
+            {t('mapBackToVehicle')}
+          </Button>
+        ) : (
+          <span className={classes.following} role="status">
+            <GpsFixedRoundedIcon fontSize="small" className={classes.followIcon} aria-hidden />
+            {t('mapFollowing').replace('{0}', deviceName || '')}
+          </span>
+        )}
+        <IconButton
+          size="small"
+          aria-label={t('mapStopFollowing')}
+          onClick={() => dispatch(devicesActions.selectId(null))}
+        >
+          <CloseRoundedIcon fontSize="small" />
+        </IconButton>
+      </div>
     </div>,
     map.getContainer(),
   );

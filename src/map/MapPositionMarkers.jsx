@@ -7,6 +7,7 @@ import { deviceIconKey, isDeviceMoving, isHeadingIcon } from './core/preloadImag
 import { useAttributePreference } from '../common/util/preferences';
 import { fromMapCoordinates } from './core/mapUtil';
 import useSmoothPositions from './core/useSmoothPositions';
+import MapSelectionRing from './main/MapSelectionRing';
 
 const MapPositionMarkers = ({
   positions,
@@ -17,6 +18,7 @@ const MapPositionMarkers = ({
   titleField,
   disabled,
   smooth,
+  selectionRing,
 }) => {
   const devices = useSelector((state) => state.devices.items);
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
@@ -94,6 +96,15 @@ const MapPositionMarkers = ({
         onClick={onClick}
         disabled={disabled}
       />
+      {selectionRing && (
+        <MapSelectionRing
+          position={
+            selectedDeviceId
+              ? shownPositions.find((it) => it.deviceId === selectedDeviceId)
+              : undefined
+          }
+        />
+      )}
       <MapMarkers
         markers={markers.filter((it) => it.deviceId === selectedDeviceId)}
         showTitles

@@ -1,5 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
+import { keyframes } from 'tss-react';
 import { alpha } from '@mui/material/styles';
 import {
   Tooltip,
@@ -171,6 +172,23 @@ const useStyles = makeStyles()((theme) => ({
       backgroundColor: theme.palette.surface.tint,
     },
   },
+  // One short flash when a vehicle is selected elsewhere (map, quick search), so the eye finds
+  // the row the list scrolled to.
+  flash: {
+    position: 'absolute',
+    inset: 0,
+    borderRadius: 'inherit',
+    pointerEvents: 'none',
+    backgroundColor: alpha(theme.palette.brand.aqua, 0.3),
+    opacity: 0,
+    animation: `${keyframes`
+      from { opacity: 1; }
+      to { opacity: 0; }
+    `} 600ms ease-out`,
+    '@media (prefers-reduced-motion: reduce)': {
+      animation: 'none',
+    },
+  },
 }));
 
 const DeviceRow = ({ devices, tokens = [], index, style }) => {
@@ -180,6 +198,7 @@ const DeviceRow = ({ devices, tokens = [], index, style }) => {
 
   const admin = useAdministrator();
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
+  const selectTime = useSelector((state) => state.devices.selectTime);
 
   const item = devices[index];
   const position = useSelector((state) => state.session.positions[item.id]);
@@ -271,6 +290,9 @@ const DeviceRow = ({ devices, tokens = [], index, style }) => {
         aria-pressed={selectedDeviceId === item.id}
         className={cx(classes.row, selectedDeviceId === item.id && classes.selected)}
       >
+        {selectedDeviceId === item.id && (
+          <span key={selectTime} className={classes.flash} aria-hidden />
+        )}
         <ListItemAvatar className={classes.avatarWrapper}>
           <span className={classes.avatarBox}>
             <Avatar className={avatarClass}>
