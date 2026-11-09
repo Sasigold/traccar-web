@@ -162,6 +162,55 @@ export const fakeFleet = async (
     return { ...base, ...(defaults[table] || {}), ...row };
   };
 
+  // ARC-05: the database's fleet_save (supabase/migrations/*_fleet_save.sql), in memory.
+  const SAVE_KINDS = {
+    work_order: ['work_orders', 'work_order_items', 'work_order_id', null],
+    incident: ['incidents', 'incident_parties', 'incident_id', 'insurance_claims'],
+    inspection_template: ['inspection_templates', 'inspection_template_items', 'template_id', null],
+  };
+  const fleetSave = ({
+    p_kind: kind,
+    p_id: id,
+    p_row: row,
+    p_children: children,
+    p_single: one,
+  }) => {
+    const [parent, child, link, single] = SAVE_KINDS[kind];
+    let saved = id && rowsOf(parent).find((item) => item.id === id);
+    if (saved) {
+      Object.assign(saved, row, { updated_at: new Date().toISOString() });
+    } else {
+      saved = withDefaults(parent, row);
+      rowsOf(parent).push(saved);
+    }
+    if (children) {
+      state.tables[child] = rowsOf(child).filter((item) => item[link] !== saved.id);
+      children.forEach((item, index) => {
+        const { id: ignored, ...rest } = item;
+        void ignored;
+        rowsOf(child).push(
+          withDefaults(child, {
+            ...rest,
+            org_id: saved.org_id,
+            [link]: saved.id,
+            sort_order: index,
+          }),
+        );
+      });
+    }
+    if (one && single) {
+      const existing = one.id && rowsOf(single).find((item) => item.id === one.id);
+      if (existing) {
+        Object.assign(existing, one);
+      } else {
+        rowsOf(single).push(
+          withDefaults(single, { ...one, org_id: saved.org_id, [link]: saved.id }),
+        );
+      }
+    }
+    return saved.id;
+  };
+
   const json = (route, body, status = 200) =>
     route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 
@@ -303,6 +352,9 @@ export const fakeFleet = async (
     }
     if (url.pathname.startsWith('/rest/v1/rpc/')) {
       const name = url.pathname.split('/').pop();
+      if (name === 'fleet_save' && !rpc.fleet_save) {
+        return json(route, fleetSave(request.postDataJSON()));
+      }
       const handler = rpc[name];
       const result =
         typeof handler === 'function'

@@ -49,7 +49,9 @@ import {
   fleetFileUrl,
   openFleetFile,
   uploadFleetFile,
+  FILES_BUCKET,
 } from './fleetData';
+import { fleetSave, withUploadedFile } from '../common/fleet/fleetSave';
 import { DateField, DateTimeField } from '../common/components/pickers';
 
 const useStyles = makeStyles()((theme) => ({
@@ -271,64 +273,53 @@ const IncidentPage = () => {
         repair_cost: nullable(incident.repair_cost),
         investigation_notes: nullable(incident.investigation_notes),
       };
-      const saved = id
-        ? unwrap(await client.from('incidents').update(payload).eq('id', id).select('id').single())
-        : unwrap(
-            await client
-              .from('incidents')
-              .insert({ ...payload, org_id: profile.org_id, reported_by: profile.id })
-              .select('id')
-              .single(),
-          );
-
-      unwrap(await client.from('incident_parties').delete().eq('incident_id', saved.id));
       const partyRows = parties
         .filter((party) => partyFields.some((field) => party[field]?.trim()))
         .map((party) => ({
-          org_id: profile.org_id,
-          incident_id: saved.id,
           role: party.role,
           ...Object.fromEntries(
             partyFields.map((field) => [field, nullable(party[field]?.trim())]),
           ),
         }));
-      if (partyRows.length) {
-        unwrap(await client.from('incident_parties').insert(partyRows));
-      }
-
       const claimFilled = ['insurer', 'claim_number', 'filed_at'].some((field) => claim[field]);
-      if (claim.id || claimFilled) {
-        const claimPayload = {
-          insurer: nullable(claim.insurer),
-          claim_number: nullable(claim.claim_number),
-          filed_at: nullable(claim.filed_at),
-          status: claim.status,
-          deductible: nullable(claim.deductible),
-          approved_amount: nullable(claim.approved_amount),
-          paid_at: nullable(claim.paid_at),
-          notes: nullable(claim.notes),
-        };
-        if (claim.id) {
-          unwrap(await client.from('insurance_claims').update(claimPayload).eq('id', claim.id));
-        } else {
-          unwrap(
-            await client
-              .from('insurance_claims')
-              .insert({ ...claimPayload, org_id: profile.org_id, incident_id: saved.id }),
-          );
-        }
-      }
+      const claimRow =
+        claim.id || claimFilled
+          ? {
+              ...(claim.id ? { id: claim.id } : {}),
+              insurer: nullable(claim.insurer),
+              claim_number: nullable(claim.claim_number),
+              filed_at: nullable(claim.filed_at),
+              status: claim.status,
+              deductible: nullable(claim.deductible),
+              approved_amount: nullable(claim.approved_amount),
+              paid_at: nullable(claim.paid_at),
+              notes: nullable(claim.notes),
+            }
+          : null;
+      // ARC-05: the incident, its parties and its claim in one transaction.
+      const savedId = await fleetSave(
+        'incident',
+        id,
+        id ? payload : { ...payload, org_id: profile.org_id, reported_by: profile.id },
+        partyRows,
+        claimRow,
+      );
 
+      // Each photo: the file, then its row; a row that fails takes its file away again.
       for (const file of newPhotos) {
-        const path = await uploadFleetFile(profile.org_id, 'incidents', file);
-        unwrap(
-          await client.from('incident_photos').insert({
-            org_id: profile.org_id,
-            incident_id: saved.id,
-            storage_path: path,
-            file_name: file.name,
-            taken_at: file.lastModified ? new Date(file.lastModified).toISOString() : null,
-          }),
+        await withUploadedFile(
+          () => uploadFleetFile(profile.org_id, 'incidents', file),
+          (path) => client.storage.from(FILES_BUCKET).remove([path]),
+          async (path) =>
+            unwrap(
+              await client.from('incident_photos').insert({
+                org_id: profile.org_id,
+                incident_id: savedId,
+                storage_path: path,
+                file_name: file.name,
+                taken_at: file.lastModified ? new Date(file.lastModified).toISOString() : null,
+              }),
+            ),
         );
       }
       navigate('/fleet/incidents');

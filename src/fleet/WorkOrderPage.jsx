@@ -46,7 +46,15 @@ import { garageLicenseIssue } from '../common/fleet/safetyOfficer';
 import FleetNotice from './components/FleetNotice';
 import { VendorDialog } from './VendorsPage';
 import { workOrderStatusKey, workOrderTypeKey } from './WorkOrdersPage';
-import { ensureVehicle, money, openFleetFile, uploadFleetFile, useVendors } from './fleetData';
+import {
+  ensureVehicle,
+  FILES_BUCKET,
+  money,
+  openFleetFile,
+  uploadFleetFile,
+  useVendors,
+} from './fleetData';
+import { fleetSave, withUploadedFile } from '../common/fleet/fleetSave';
 import { loadMaintenanceLinks, markMaintenanceDone } from './maintenance';
 import { DateField } from '../common/components/pickers';
 
@@ -189,54 +197,44 @@ const WorkOrderPage = () => {
   const handleSave = useCatch(async () => {
     setSaving(true);
     try {
-      const client = getFleetClient();
       const vehicleId = await ensureVehicle(devices[deviceId], profile);
-      let invoicePath = order.invoice_path || null;
-      if (invoice) {
-        invoicePath = await uploadFleetFile(profile.org_id, 'work-orders', invoice);
-      }
       const original = id ? order : {};
-      const payload = {
-        vehicle_id: vehicleId,
-        vendor_id: order.vendor_id || null,
-        title: order.title.trim(),
-        type: order.type,
-        scheduled_at: order.scheduled_at || null,
-        odometer_km: order.odometer_km === '' ? null : (order.odometer_km ?? null),
-        engine_hours: order.engine_hours === '' ? null : (order.engine_hours ?? null),
-        invoice_number: order.invoice_number || null,
-        invoice_path: invoicePath,
-        notes: order.notes || null,
-        ...statusChange(original, order.status),
-        ...(resetIds.length && { traccar_maintenance_id: resetIds[0] }),
-      };
-      const saved = id
-        ? unwrap(
-            await client.from('work_orders').update(payload).eq('id', id).select('id').single(),
-          )
-        : unwrap(
-            await client
-              .from('work_orders')
-              .insert({ ...payload, org_id: profile.org_id, created_by: profile.id })
-              .select('id')
-              .single(),
-          );
-      // Lines are replaced as a whole; the database recomputes the total.
-      unwrap(await client.from('work_order_items').delete().eq('work_order_id', saved.id));
       const lines = items
         .filter((item) => item.description.trim())
-        .map((item, index) => ({
-          org_id: profile.org_id,
-          work_order_id: saved.id,
+        .map((item) => ({
           kind: item.kind,
           description: item.description.trim(),
           quantity: Number(item.quantity) || 0,
           unit_price: Number(item.unit_price) || 0,
-          sort_order: index,
         }));
-      if (lines.length) {
-        unwrap(await client.from('work_order_items').insert(lines));
-      }
+      // ARC-05: the order and its lines in one transaction; a new invoice file is removed again
+      // if the save fails.
+      await withUploadedFile(
+        async () => (invoice ? uploadFleetFile(profile.org_id, 'work-orders', invoice) : null),
+        (path) => getFleetClient().storage.from(FILES_BUCKET).remove([path]),
+        async (uploaded) => {
+          const payload = {
+            vehicle_id: vehicleId,
+            vendor_id: order.vendor_id || null,
+            title: order.title.trim(),
+            type: order.type,
+            scheduled_at: order.scheduled_at || null,
+            odometer_km: order.odometer_km === '' ? null : (order.odometer_km ?? null),
+            engine_hours: order.engine_hours === '' ? null : (order.engine_hours ?? null),
+            invoice_number: order.invoice_number || null,
+            invoice_path: uploaded || order.invoice_path || null,
+            notes: order.notes || null,
+            ...statusChange(original, order.status),
+            ...(resetIds.length && { traccar_maintenance_id: resetIds[0] }),
+          };
+          return fleetSave(
+            'work_order',
+            id,
+            id ? payload : { ...payload, org_id: profile.org_id, created_by: profile.id },
+            lines,
+          );
+        },
+      );
       for (const maintenanceId of resetIds) {
         const target = maintenance.find((it) => it.id === maintenanceId);
         const state = maintenanceStatus(target, positions[deviceId]);

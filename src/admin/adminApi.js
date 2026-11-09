@@ -8,6 +8,11 @@ import { getFreshFleetAccessToken } from '../common/fleet/session';
 import { fleetConfig } from '../common/fleet/config';
 import { planComputedSync } from './sensors';
 import { translate } from '../common/util/translator';
+import { runLimited } from '../common/util/runLimited';
+
+// ARC-05: Traccar link changes from the browser, a few at a time (a customer with 20 users and
+// 500 devices is 10,000 requests).
+const LINK_CONCURRENCY = 6;
 
 const db = () => getFleetClient();
 
@@ -214,16 +219,16 @@ export const assignDevices = async (deviceIds, customerId) => {
     const previous = owners.get(deviceId);
     if (previous && previous !== customerId) {
       oldUsers.get(previous).forEach((userId) => {
-        tasks.push(unlinkDevice(userId, deviceId));
+        tasks.push(() => unlinkDevice(userId, deviceId));
         expected.push({ userId, deviceId, should: false });
       });
     }
     if (previous !== customerId || !owners.has(deviceId)) {
-      newUsers.forEach((userId) => tasks.push(linkDevice(userId, deviceId)));
+      newUsers.forEach((userId) => tasks.push(() => linkDevice(userId, deviceId)));
     }
     newUsers.forEach((userId) => expected.push({ userId, deviceId, should: true }));
   });
-  await Promise.all(tasks);
+  await runLimited(tasks, LINK_CONCURRENCY);
   // SEC-06: check what Traccar now shows, so a failed or partial change is reported, not hidden.
   await verifyAccess(expected);
 };
@@ -250,7 +255,10 @@ export const assignUser = async (userId, customerId, { primary = false } = {}) =
   const expected = [];
   if (previous && previous.customer_id !== customerId) {
     const devices = await customerDeviceIds(previous.customer_id);
-    await Promise.all(devices.map((deviceId) => unlinkDevice(userId, deviceId)));
+    await runLimited(
+      devices.map((deviceId) => () => unlinkDevice(userId, deviceId)),
+      LINK_CONCURRENCY,
+    );
     devices.forEach((deviceId) => expected.push({ userId, deviceId, should: false }));
   }
   if (!customerId) {
@@ -267,7 +275,10 @@ export const assignUser = async (userId, customerId, { primary = false } = {}) =
       ),
   );
   const devices = await customerDeviceIds(customerId);
-  await Promise.all(devices.map((deviceId) => linkDevice(userId, deviceId)));
+  await runLimited(
+    devices.map((deviceId) => () => linkDevice(userId, deviceId)),
+    LINK_CONCURRENCY,
+  );
   devices.forEach((deviceId) => expected.push({ userId, deviceId, should: true }));
   await verifyAccess(expected);
 };
@@ -294,7 +305,7 @@ export const syncCustomerAccess = async (customerId) => {
     mine.forEach((deviceId) => {
       if (!visible.has(deviceId)) {
         added += 1;
-        tasks.push(linkDevice(userId, deviceId));
+        tasks.push(() => linkDevice(userId, deviceId));
       }
       expected.push({ userId, deviceId, should: true });
     });
@@ -303,11 +314,11 @@ export const syncCustomerAccess = async (customerId) => {
         unknown.add(deviceId);
       } else if (owner.get(deviceId) !== customerId) {
         removed += 1;
-        tasks.push(unlinkDevice(userId, deviceId));
+        tasks.push(() => unlinkDevice(userId, deviceId));
         expected.push({ userId, deviceId, should: false });
       }
     });
-    await Promise.all(tasks);
+    await runLimited(tasks, LINK_CONCURRENCY);
   }
   await verifyAccess(expected);
   return { users: users.length, devices: mine.length, added, removed, unknown: [...unknown] };
