@@ -3364,5 +3364,10 @@
     "deviceFiltersActive": "Active filters",
     "deviceFilterCount": "{0} of {1}",
     "deviceFilterClear": "Clear filters",
-    "deviceFilterNoMatch": "No vehicles match the filter"
+    "deviceFilterNoMatch": "No vehicles match the filter",
+    "mapLoading": "Loading the map…",
+    "mapLoadFailed": "The map did not load.",
+    "mapRetry": "Try again",
+    "mapSwitchLayer": "Switch layer",
+    "mapSearchNotFound": "No place by that name"
 }

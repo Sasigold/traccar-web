@@ -16,6 +16,7 @@ import { brandStyle } from './brandStyle';
 import { useLocalization, useTranslation } from '../../common/components/LocalizationProvider';
 import { googleProtocol } from './googleProtocol';
 import { useAsyncTask } from '../../reactHelper';
+import { MapFailed, MapLoading } from './MapStatus';
 
 const element = document.createElement('div');
 element.style.width = '100%';
@@ -121,6 +122,22 @@ const MapView = ({ children }) => {
   const selectedStyleId = dark ? darkStyleId : lightStyleId;
   const setSelectedStyleId = dark ? setDarkStyleId : setLightStyleId;
   const maxZoom = useAttributePreference('web.maxZoom');
+  // LIV-12: while the map style loads, a loader; if it fails, a way to retry or switch layers.
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    setFailed(false);
+    const onError = (event) => {
+      if (!map.isStyleLoaded() && /fetch|style|load/i.test(event?.error?.message || '')) {
+        setFailed(true);
+      }
+    };
+    map.on('error', onError);
+    const timer = setTimeout(() => !map.isStyleLoaded() && setFailed(true), 20000);
+    return () => {
+      map.off('error', onError);
+      clearTimeout(timer);
+    };
+  }, [selectedStyleId]);
 
   const styles = useMemo(() => {
     // The brand map is always offered.
@@ -211,6 +228,18 @@ const MapView = ({ children }) => {
   return (
     <div style={{ width: '100%', height: '100%', ...controlVariables }} ref={containerRef}>
       <MapSwitcher styles={styles} selectedId={selectedStyleId} onSelect={setSelectedStyleId} />
+      {!mapReady && !failed && <MapLoading />}
+      {!mapReady && failed && (
+        <MapFailed
+          // The map instance is shared by every page; a reload starts it cleanly.
+          onRetry={() => window.location.reload()}
+          onSwitch={() => {
+            const next = styles.find((item) => item.id !== selectedStyleId);
+            if (next) setSelectedStyleId(next.id);
+          }}
+          canSwitch={styles.length > 1}
+        />
+      )}
       {mapReady && children}
     </div>
   );

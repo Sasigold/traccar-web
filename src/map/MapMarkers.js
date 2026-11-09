@@ -92,7 +92,9 @@ const MapMarkers = ({
         'icon-size': iconScale,
         'icon-allow-overlap': true,
         'text-field': '{title}',
-        'text-allow-overlap': true,
+        // LIV-12: names do not cover each other; a name that would is left out, the icon stays.
+        'text-allow-overlap': false,
+        'text-optional': true,
         'text-anchor': 'bottom',
         'text-offset': [0, -2 * iconScale],
         'text-font': findFonts(map),

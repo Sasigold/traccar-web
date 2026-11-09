@@ -28,10 +28,14 @@ test('speed and play from the keyboard', async ({ page }) => {
   await expect(speeds.getByRole('button', { name: '20×' })).toHaveAttribute('aria-pressed', 'true');
   await speeds.getByRole('button', { name: '60×' }).click();
   await expect(speeds.getByRole('button', { name: '60×' })).toHaveAttribute('aria-pressed', 'true');
-  await page.getByRole('heading', { name: 'שחזור מסלול' }).click();
+  // At 1× the short demo route does not end before the next check.
+  await speeds.getByRole('button', { name: '1×' }).click();
+  // The keys work wherever the focus is outside a field or a button.
+  const blur = () => page.evaluate(() => document.activeElement?.blur());
+  await blur();
   await page.keyboard.press(' ');
   await expect(page.getByRole('button', { name: 'השהיה' })).toBeVisible();
-  await page.getByRole('heading', { name: 'שחזור מסלול' }).click();
+  await blur();
   await page.keyboard.press(' ');
   await expect(page.getByRole('button', { name: 'הפעלה' })).toBeVisible();
 });

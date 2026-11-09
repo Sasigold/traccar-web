@@ -55,6 +55,8 @@ const MapReplayMarker = ({ positions, index, playing, speed, onIndexChange, onMa
 
     let last = performance.now();
     let frame;
+    // A new route starts from its own beginning, not where the old one was.
+    progressRef.current = Math.min(progressRef.current, positions.length - 1);
     const step = (now) => {
       const elapsed = now - last;
       last = now;
@@ -72,6 +74,9 @@ const MapReplayMarker = ({ positions, index, playing, speed, onIndexChange, onMa
       }
       const from = positions[current];
       const to = positions[Math.min(current + 1, positions.length - 1)];
+      if (!from || !to) {
+        return;
+      }
       const position = animate
         ? { ...from, ...interpolateCoordinates(from, to, progress - current) }
         : from;

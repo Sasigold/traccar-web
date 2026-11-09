@@ -3364,5 +3364,10 @@
     "deviceFiltersActive": "מסננים פעילים",
     "deviceFilterCount": "{0} מתוך {1}",
     "deviceFilterClear": "ניקוי סינון",
-    "deviceFilterNoMatch": "אין רכבים שתואמים לסינון"
+    "deviceFilterNoMatch": "אין רכבים שתואמים לסינון",
+    "mapLoading": "טוען את המפה…",
+    "mapLoadFailed": "טעינת המפה נכשלה.",
+    "mapRetry": "נסו שוב",
+    "mapSwitchLayer": "החלפת שכבה",
+    "mapSearchNotFound": "לא נמצא מקום בשם הזה"
 }

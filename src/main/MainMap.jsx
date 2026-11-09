@@ -68,7 +68,8 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
       <MapView>
         <MapOverlay />
         <MapGeofence />
-        <MapAccuracy positions={filteredPositions} />
+        {/* LIV-12: the accuracy circle only for the selected vehicle. */}
+        <MapAccuracy positions={selectedPosition ? [selectedPosition] : []} />
         <MapLiveRoutes deviceIds={deviceIds} />
         <PoiMap />
         <MapPositionMarkers

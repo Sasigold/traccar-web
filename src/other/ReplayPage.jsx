@@ -190,7 +190,9 @@ const ReplayPage = () => {
   const defaultDeviceId = useSelector((state) => state.devices.selectedId);
 
   const [positions, setPositions] = useState([]);
-  const [index, setIndex] = useState(0);
+  const [rawIndex, setRawIndex] = useState(0);
+  // Never past the end of the route shown (a route can be replaced while it plays).
+  const index = Math.max(0, Math.min(rawIndex, positions.length - 1));
   const [selectedDeviceId, setSelectedDeviceId] = useState(defaultDeviceId);
   const [showCard, setShowCard] = useState(false);
   const from = searchParams.get('from');
@@ -274,7 +276,7 @@ const ReplayPage = () => {
       } else if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
         event.preventDefault();
         const direction = event.key === 'ArrowRight' ? 1 : -1;
-        setIndex((value) =>
+        setRawIndex((value) =>
           event.shiftKey
             ? stepByTime(positions, value, direction * 60000)
             : Math.min(Math.max(value + direction, 0), positions.length - 1),
@@ -287,9 +289,9 @@ const ReplayPage = () => {
 
   const onPointClick = useCallback(
     (_, index) => {
-      setIndex(index);
+      setRawIndex(index);
     },
-    [setIndex],
+    [setRawIndex],
   );
 
   const onMarkerClick = useCallback(
@@ -304,9 +306,11 @@ const ReplayPage = () => {
     setLoading(true);
     setSelectedDeviceId(deviceId);
     const query = new URLSearchParams({ deviceId, from, to });
+    // A new route stops the playback, so the old position never points past its end.
+    setPlaying(false);
     try {
       const response = await fetchOrThrow(`api/positions?${query.toString()}`);
-      setIndex(0);
+      setRawIndex(0);
       // Locations in hidden time (outside working hours, private periods) are left out.
       const result = await privatePositions(await response.json(), {
         deviceIds: [deviceId],
@@ -361,7 +365,7 @@ const ReplayPage = () => {
             index={index}
             playing={playing}
             speed={speed}
-            onIndexChange={setIndex}
+            onIndexChange={setRawIndex}
             onMarkerClick={onMarkerClick}
           />
         )}
@@ -425,7 +429,7 @@ const ReplayPage = () => {
                 segments={segments}
                 stops={stops}
                 index={index}
-                onChange={setIndex}
+                onChange={setRawIndex}
               />
               {/* The player runs left to right, like the gauges. */}
               <div className={classes.controls} dir="ltr">
@@ -435,7 +439,7 @@ const ReplayPage = () => {
                 <div className={classes.transport}>
                   <IconButton
                     aria-label={t('replayBackMinute')}
-                    onClick={() => setIndex((value) => stepByTime(positions, value, -60000))}
+                    onClick={() => setRawIndex((value) => stepByTime(positions, value, -60000))}
                     disabled={index <= 0}
                   >
                     <FastRewindRoundedIcon />
@@ -450,7 +454,7 @@ const ReplayPage = () => {
                   </IconButton>
                   <IconButton
                     aria-label={t('replayForwardMinute')}
-                    onClick={() => setIndex((value) => stepByTime(positions, value, 60000))}
+                    onClick={() => setRawIndex((value) => stepByTime(positions, value, 60000))}
                     disabled={index >= positions.length - 1}
                   >
                     <FastForwardRoundedIcon />
@@ -494,7 +498,7 @@ const ReplayPage = () => {
                           label={`${dayjs(stop.start).format('HH:mm')} · ${stopLength(stop.duration, t)}`}
                           onClick={() => {
                             setPlaying(false);
-                            setIndex(stop.index);
+                            setRawIndex(stop.index);
                           }}
                         />
                       </li>
