@@ -66,7 +66,9 @@ export const brandPanel = () => ({
   color: brandColors.paper,
 });
 
-export const focusRing = (theme) => `0 0 0 3px ${alpha(theme.palette.secondary.main, 0.45)}`;
+// A 2px gap in the surface color, then 2px of the focus color (WCAG 2.4.7 / 1.4.11).
+export const focusRing = (theme) =>
+  `0 0 0 2px ${theme.palette.background.paper}, 0 0 0 4px ${theme.palette.focus}`;
 
 export const statusColor = (theme, status) => {
   switch (status) {

@@ -37,7 +37,7 @@ import { useAttributePreference } from '../common/util/preferences';
 import GeofencesValue from '../common/components/GeofencesValue';
 import DriverValue from '../common/components/DriverValue';
 import MotionBar from './components/MotionBar';
-import useActivityText from '../common/components/useActivityText';
+import useActivityText, { toneColor } from '../common/components/useActivityText';
 import { brandTile, statusColor } from '../common/theme/surfaces';
 import Highlight from '../common/components/Highlight';
 import { deviceSearchFields, matchDevice } from '../common/util/deviceSearch';
@@ -168,9 +168,32 @@ const useStyles = makeStyles()((theme) => ({
   },
   selected: {
     '&&': {
-      // Direction A: the selected vehicle is a plain ice tile.
-      backgroundColor: theme.palette.surface.tint,
+      // Direction A: the selected vehicle is a plain ice-aqua tile, light enough that the slate
+      // secondary text keeps 4.5:1 on it.
+      backgroundColor:
+        theme.palette.mode === 'dark'
+          ? theme.palette.surface.tint
+          : alpha(theme.palette.brand.aqua, 0.1),
     },
+  },
+  // What the vehicle is doing: the status color is on the dot, the words stay in text color
+  // (amber or aqua text would fall under 4.5:1).
+  activity: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 5,
+    fontWeight: 600,
+    color: theme.palette.text.primary,
+  },
+  activityQuiet: {
+    fontWeight: 500,
+    color: theme.palette.text.secondary,
+  },
+  toneDot: {
+    width: 7,
+    height: 7,
+    borderRadius: '50%',
+    flexShrink: 0,
   },
   // One short flash when a vehicle is selected elsewhere (map, quick search), so the eye finds
   // the row the list scrolled to.
@@ -260,7 +283,20 @@ const DeviceRow = ({ devices, tokens = [], index, style }) => {
   const secondaryText = () => {
     return (
       <>
-        <span className={cx(classes.secondaryValue, classes[activityTone])}>{activityLabel}</span>
+        <span
+          className={cx(
+            classes.secondaryValue,
+            classes.activity,
+            activityTone === 'neutralText' && classes.activityQuiet,
+          )}
+        >
+          <span
+            className={classes.toneDot}
+            style={{ backgroundColor: toneColor(theme, activityTone) }}
+            aria-hidden
+          />
+          {activityLabel}
+        </span>
         {secondaryValue && (
           <>
             <span>·</span>

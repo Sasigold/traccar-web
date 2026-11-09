@@ -14,7 +14,11 @@ const exportExcel = async (title, fileName, sheets, theme) => {
 
   const { default: ExcelJS } = await import('exceljs');
   const workbook = new ExcelJS.Workbook();
-  const headerColor = `FF${theme.palette.primary.main.replace('#', '').toUpperCase()}`;
+  // Navy header with white bold type in both modes (the primary color is aqua in dark mode,
+  // and default black type on navy was 1.6:1).
+  const argb = (hex) => `FF${hex.replace('#', '').toUpperCase()}`;
+  const headerColor = argb(theme.palette.brand.navy);
+  const headerText = argb(theme.palette.brand.white);
 
   sheets.forEach((rows, sheetTitle) => {
     const worksheet = workbook.addWorksheet(sheetTitle);
@@ -29,7 +33,7 @@ const exportExcel = async (title, fileName, sheets, theme) => {
     const headerRow = worksheet.addRow(headers);
     headerRow.eachCell((cell) => {
       cell.border = borderDefinition;
-      cell.font = {};
+      cell.font = { bold: true, color: { argb: headerText } };
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',

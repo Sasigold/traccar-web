@@ -39,3 +39,17 @@ export default (device, position) => {
         : { activity, label: t('activityUnknown'), tone: 'neutralText' };
   }
 };
+
+// The color of an activity tone, for its dot or icon (never for the words themselves).
+export const toneColor = (theme, tone) => {
+  switch (tone) {
+    case 'success':
+      return theme.palette.success.main;
+    case 'warning':
+      return theme.palette.warning.main;
+    case 'error':
+      return theme.palette.error.main;
+    default:
+      return theme.palette.neutral.main;
+  }
+};

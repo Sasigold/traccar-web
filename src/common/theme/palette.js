@@ -68,6 +68,8 @@ export default (server, darkMode) => {
     neutral: {
       main: colors.neutral,
     },
+    // Keyboard focus: a darker aqua that reaches 4.8:1 on white in light mode, full aqua on dark.
+    focus: darkMode ? brandColors.aqua : aqua[800],
     geometry: {
       main: darkMode ? mapColors.geometryDark : mapColors.geometryLight,
     },

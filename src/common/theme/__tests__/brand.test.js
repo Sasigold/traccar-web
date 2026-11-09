@@ -1,3 +1,4 @@
+import createPalette from '../palette';
 import { describe, expect, it } from 'vitest';
 import { aqua, brandColors, dataviz, navy, slate, status, surfaces } from '../tokens';
 
@@ -69,5 +70,53 @@ describe('data visualization palette', () => {
 
   it.each(['light', 'dark'])('%s mode has no repeated series color', (mode) => {
     expect(new Set(dataviz[mode].categorical).size).toBe(6);
+  });
+});
+
+// The palette as the app builds it, in both modes: every pair the interface relies on keeps
+// WCAG AA (4.5:1 for text, 3:1 for the focus ring and other non-text marks).
+describe('theme contrast (WCAG 2.1 AA)', () => {
+  const mix = (color, base, amount) =>
+    `#${[1, 3, 5]
+      .map((i) =>
+        Math.round(
+          parseInt(color.slice(i, i + 2), 16) * amount +
+            parseInt(base.slice(i, i + 2), 16) * (1 - amount),
+        )
+          .toString(16)
+          .padStart(2, '0'),
+      )
+      .join('')}`;
+
+  [false, true].forEach((dark) => {
+    const palette = createPalette(null, dark);
+    const mode = dark ? 'dark' : 'light';
+    const surfacesToCheck = [palette.background.default, palette.background.paper];
+
+    it(`${mode}: text on the canvas and on cards`, () => {
+      surfacesToCheck.forEach((surface) => {
+        expect(contrast(palette.text.primary, surface)).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(palette.text.secondary, surface)).toBeGreaterThanOrEqual(4.5);
+      });
+    });
+
+    it(`${mode}: the keyboard focus ring stands out`, () => {
+      surfacesToCheck.forEach((surface) => {
+        expect(contrast(palette.focus, surface)).toBeGreaterThanOrEqual(3);
+      });
+    });
+
+    it(`${mode}: text on status chips and on the main action`, () => {
+      ['success', 'warning', 'error', 'info'].forEach((key) => {
+        expect(contrast(palette[key].contrastText, palette[key].main)).toBeGreaterThanOrEqual(4.5);
+      });
+      expect(contrast(palette.cta.contrastText, palette.cta.main)).toBeGreaterThanOrEqual(4.5);
+    });
+  });
+
+  it('light: secondary text on the selected vehicle row', () => {
+    const palette = createPalette(null, false);
+    const row = mix(brandColors.aqua, palette.background.paper, 0.1);
+    expect(contrast(palette.text.secondary, row)).toBeGreaterThanOrEqual(4.5);
   });
 });

@@ -32,7 +32,7 @@ import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import ChatRoundedIcon from '@mui/icons-material/ChatRounded';
-import { glass, statusColor } from '../theme/surfaces';
+import { glass } from '../theme/surfaces';
 import DeviceTile from './brand/DeviceTile';
 import TelemetryStrip from './telemetry/TelemetryStrip';
 import { setStatusCardElement, statusCardMoved } from './statusCardArea';
@@ -46,7 +46,7 @@ import { useCatchCallback } from '../../reactHelper';
 import { useAttributePreference } from '../util/preferences';
 import fetchOrThrow from '../util/fetchOrThrow';
 import { formatSpeed } from '../util/formatter';
-import useActivityText from './useActivityText';
+import useActivityText, { toneColor } from './useActivityText';
 import { whatsappLink } from '../fleet/dispatch';
 import CommandDialog from './commands/CommandDialog';
 import CommandStatus from './commands/CommandStatus';
@@ -200,10 +200,6 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     fontSize: '0.8125rem',
     color: theme.palette.text.secondary,
   },
-  success: { color: theme.palette.success.main },
-  warning: { color: theme.palette.warning.main },
-  error: { color: theme.palette.error.main },
-  neutralText: { color: theme.palette.text.secondary },
   speedChip: {
     fontVariantNumeric: 'tabular-nums',
     fontWeight: 700,
@@ -281,7 +277,6 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
     navigate(`/settings/geofence/${item.id}`);
   }, [navigate, position, t]);
 
-  const color = device ? statusColor(theme, device.status) : theme.palette.neutral.main;
   const moving = activity === 'moving';
   const plateNumber = device?.attributes?.plateNumber;
 
@@ -301,9 +296,9 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
           <Typography
             component="span"
             color={deviceImage ? 'inherit' : 'textSecondary'}
-            className={cx(classes.status, !deviceImage && classes[tone])}
+            className={classes.status}
           >
-            <span className={classes.dot} style={{ backgroundColor: color }} />
+            <span className={classes.dot} style={{ backgroundColor: toneColor(theme, tone) }} />
             {activityLabel}
             {moving && position && (
               <span className={classes.speedChip}>
