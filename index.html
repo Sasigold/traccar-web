@@ -22,6 +22,18 @@
       } catch (e) {
         /* ignore */
       }
+      // The app's script did not load (a network failure). Here rather than an inline onerror
+      // attribute, which the Content-Security-Policy would block (SEC-10).
+      window.addEventListener(
+        'error',
+        function (event) {
+          var target = event.target;
+          if (target && target.tagName === 'SCRIPT' && target.id === 'app-entry') {
+            window.alert('לא הצלחנו לטעון את viper fleet. רעננו את הדף.\nviper fleet failed to load. Reload the page.');
+          }
+        },
+        true,
+      );
     </script>
     <link rel="stylesheet" href="styles.css">
     <title>${title}</title>
@@ -40,6 +52,6 @@
         <circle class="vf-loader__mark vf-loader__dot" cx="50" cy="50" r="9" />
       </g>
     </svg>
-    <script type="module" src="src/index.jsx" onerror="alert('Loading error.')"></script>
+    <script id="app-entry" type="module" src="src/index.jsx"></script>
   </body>
 </html>

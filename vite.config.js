@@ -8,6 +8,12 @@ import { readFileSync } from 'node:fs';
 import { buildEnvProblems } from './src/common/fleet/buildEnv.js';
 import { releaseFile } from './src/common/util/release.js';
 import { telemetryEnvProblems } from './src/common/telemetry/config.js';
+import {
+  contentSecurityPolicy,
+  inlineScripts,
+  scriptHash,
+  securityHeaders,
+} from './src/common/util/securityPolicy.js';
 
 // FND-05: the build says which release it is, "1.0.0+<commit>", in the app (Preferences) and in
 // version.json next to index.html (the deploy check reads it).
@@ -17,7 +23,9 @@ const commit = () => {
     return process.env.GITHUB_SHA;
   }
   try {
-    return execSync('git rev-parse HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    return execSync('git rev-parse HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .trim();
   } catch {
     return '';
   }
@@ -107,6 +115,29 @@ export default defineConfig(({ command, mode }) => {
       },
       svgr(),
       react(),
+      {
+        // SEC-10: the Content-Security-Policy, with the hashes of the inline scripts of the
+        // final index.html, as a <meta> tag (no server change needed), and security-headers.json
+        // with every header for the reverse proxy (deploy/security-headers). Builds only: the
+        // dev server injects its own scripts.
+        name: 'security-policy',
+        apply: 'build',
+        transformIndexHtml: {
+          order: 'post',
+          handler(html) {
+            const scriptHashes = inlineScripts(html).map(scriptHash);
+            this.emitFile?.({
+              type: 'asset',
+              fileName: 'security-headers.json',
+              source: `${JSON.stringify(securityHeaders({ scriptHashes }), null, 2)}\n`,
+            });
+            return html.replace(
+              '<meta charset="utf-8" />',
+              `<meta charset="utf-8" />\n    <meta http-equiv="Content-Security-Policy" content="${contentSecurityPolicy({ scriptHashes })}" />\n    <meta name="referrer" content="strict-origin" />`,
+            );
+          },
+        },
+      },
       {
         name: 'release-file',
         apply: 'build',
