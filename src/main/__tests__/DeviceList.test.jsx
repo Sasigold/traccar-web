@@ -124,7 +124,11 @@ describe('the vehicle list', () => {
   it('selects a vehicle on click', async () => {
     const { store, user } = await renderApp(<List />, { state });
     await waitFor(() => expect(screen.getAllByRole('listitem')).toHaveLength(3));
-    const button = within(screen.getAllByRole('listitem')[1]).getByRole('button');
+    // The list is in "important first" order (LIV-11); the row is found by its vehicle.
+    const row = screen
+      .getAllByRole('listitem')
+      .find((item) => within(item).queryByText('משאית מרכז'));
+    const button = within(row).getByRole('button');
     await user.click(button);
     expect(store.getState().devices.selectedId).toBe(2);
     expect(button).toHaveAttribute('aria-pressed', 'true');
