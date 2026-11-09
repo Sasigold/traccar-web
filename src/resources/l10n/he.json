@@ -2764,5 +2764,19 @@
     "reportsGroupPlaces": "מיקומים ואזורים",
     "reportsGroupCosts": "עלויות ותחזוקה",
     "reportsRecent": "נפתחו לאחרונה",
-    "reportsHubDescription": "כל הדוחות לפי השאלה שהם עונים עליה"
+    "reportsHubDescription": "כל הדוחות לפי השאלה שהם עונים עליה",
+    "dashboardMFuelPer100": "צריכת דלק",
+    "dashboardMCo2": "פליטת CO₂",
+    "dashboardMAfterHours": "נסיעה מחוץ לשעות העבודה",
+    "dashboardMPrivateShare": "שיעור נסיעה פרטית",
+    "dashboardMActiveDays": "ימי פעילות של רכבים",
+    "dashboardMIdlePct": "סרק מזמן העמידה",
+    "dashboardUnitFuelRate": "ל׳/100 ק״מ",
+    "dashboardUnitKg": "ק״ג",
+    "dashboardWEfficiencyKpis": "יעילות ושימוש",
+    "dashboardWFuelPer100ByVehicle": "צריכת דלק לפי רכב",
+    "dashboardWAfterHoursByDriver": "נסיעה מחוץ לשעות לפי נהג",
+    "dashboardWEfficiencyKpisDesc": "צריכת דלק, CO₂, סרק, נסיעה מחוץ לשעות וימי פעילות לתקופה",
+    "dashboardWFuelPer100ByVehicleDesc": "ליטרים ל־100 ק״מ לכל רכב שמדווח דלק",
+    "dashboardWAfterHoursByDriverDesc": "ק״מ שנסעו מחוץ לשעות העבודה של הארגון"
 }

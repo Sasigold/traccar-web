@@ -2764,5 +2764,19 @@
     "reportsGroupPlaces": "Places and areas",
     "reportsGroupCosts": "Costs and maintenance",
     "reportsRecent": "Opened recently",
-    "reportsHubDescription": "Every report, by the question it answers"
+    "reportsHubDescription": "Every report, by the question it answers",
+    "dashboardMFuelPer100": "Fuel consumption",
+    "dashboardMCo2": "CO₂ emissions",
+    "dashboardMAfterHours": "Driving after hours",
+    "dashboardMPrivateShare": "Private driving share",
+    "dashboardMActiveDays": "Active vehicle-days",
+    "dashboardMIdlePct": "Idling while stopped",
+    "dashboardUnitFuelRate": "L/100 km",
+    "dashboardUnitKg": "kg",
+    "dashboardWEfficiencyKpis": "Efficiency and usage",
+    "dashboardWFuelPer100ByVehicle": "Fuel consumption by vehicle",
+    "dashboardWAfterHoursByDriver": "After-hours driving by driver",
+    "dashboardWEfficiencyKpisDesc": "Fuel use, CO₂, idling, after-hours driving and active days for the period",
+    "dashboardWFuelPer100ByVehicleDesc": "Liters per 100 km for each vehicle that reports fuel",
+    "dashboardWAfterHoursByDriverDesc": "Kilometers driven outside the organization's working hours"
 }

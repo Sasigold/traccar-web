@@ -5,6 +5,8 @@ import { useFleetPermission, useFleetStatus } from '../../common/fleet/useFleet'
 import { maintenanceStatus } from '../../common/fleet/maintenanceStatus';
 import fetchOrThrow from '../../common/util/fetchOrThrow';
 import { useCachedQuery, useDashboardData } from '../data/DashboardDataContext';
+import { loadPrivacy } from '../../common/fleet/privacyData';
+import { DEFAULT_POLICY } from '../../common/fleet/privacy';
 import { DATASETS, dimensionOf, measureOf, sourceOf, tripAsSummary } from '../data/datasets';
 import { aggregate, delta } from '../data/aggregate';
 import { bucketFor, days, timeBuckets, toIso } from '../data/periods';
@@ -162,26 +164,45 @@ const inRange = (rows, dataset, measure, range, monthly) => {
   });
 };
 
-const useAggregateContext = () => {
+// Private periods in a range, for the private-share metric (REP-06); cached like report rows.
+const usePrivatePeriods = (range, enabled) => {
+  const ready = useFleetStatus() === 'ready';
+  const key =
+    enabled && ready && range ? `privacy|${range.from.valueOf()}|${range.to.valueOf()}` : null;
+  const snapshot = useCachedQuery(key, () => loadPrivacy(range.from.valueOf(), range.to.valueOf()));
+  return snapshot.status === 'success' ? snapshot.data?.periods || [] : [];
+};
+
+const useAggregateContext = (range, measure) => {
   const devices = useSelector((state) => state.devices.items);
+  const policy = useSelector((state) => state.fleet.privacy?.policy);
+  const { deviceIds } = useDashboardData();
+  const privatePeriods = usePrivatePeriods(range, Boolean(measure?.needsPrivacy));
   return useMemo(
     () => ({
       groupOf: (row) => row.groupId ?? devices[row.deviceId]?.groupId ?? 0,
       categoryOf: (deviceId) => devices[deviceId]?.category,
+      // REP-06: fuel type for CO2, working hours for after-hours driving, private periods,
+      // and the vehicles and days of the window for active vehicle-days.
+      fuelTypeOf: (deviceId) => devices[deviceId]?.attributes?.fuelType,
+      workPolicy: policy || DEFAULT_POLICY,
+      privatePeriods,
+      vehicleCount: deviceIds?.length ?? Object.keys(devices).length,
+      rangeDays: range ? Math.max(1, Math.round(range.to.diff(range.from, 'day', true))) : null,
     }),
-    [devices],
+    [devices, policy, privatePeriods, deviceIds, range],
   );
 };
 
 // Data model of a chart widget for a resolved query.
 export const useWidgetData = (query, { topN } = {}) => {
   const { range: filterRange } = useDashboardData();
-  const base = useAggregateContext();
   const dataset = DATASETS[query.ds];
   const measure = measureOf(query.ds, query.m);
   const dimension = dimensionOf(query.d);
   const breakdown = dimensionOf(query.b);
   const range = windowRange(query.w, filterRange);
+  const base = useAggregateContext(range, measure);
   const timeAxis = dimension?.type === 'time';
   const bucket = dimension?.bucket ?? bucketFor(range);
   const source = sourceOf(query.ds, { timeAxis, bucket });
@@ -228,10 +249,10 @@ export const useWidgetData = (query, { topN } = {}) => {
 // One KPI: value, value of the comparable earlier period, change, and a trend line.
 export const useMetric = (metric, { compare = false, spark = true } = {}) => {
   const { range, previous, liveHistory } = useDashboardData();
-  const base = useAggregateContext();
   const [ds, m] = metric.split('.');
   const dataset = DATASETS[ds];
   const measure = measureOf(ds, m);
+  const base = useAggregateContext(range, measure);
   const bucket = bucketFor(range);
   const current = useSourceRows(ds, sourceOf(ds), range);
   const withCompare = compare && Boolean(dataset?.report);
