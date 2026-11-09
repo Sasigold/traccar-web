@@ -1,6 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
-import { keyframes } from 'tss-react';
 import { alpha } from '@mui/material/styles';
 import {
   Tooltip,
@@ -25,8 +24,7 @@ import {
   formatBoolean,
   formatPercentage,
   formatSpeed,
-  formatStatus,
-  getStatusColor,
+  formatTime,
 } from '../common/util/formatter';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import { isDeviceMoving, mapIconKey, mapIcons, movingCategories } from '../map/core/preloadImages';
@@ -39,14 +37,11 @@ import { useAttributePreference } from '../common/util/preferences';
 import GeofencesValue from '../common/components/GeofencesValue';
 import DriverValue from '../common/components/DriverValue';
 import MotionBar from './components/MotionBar';
+import { activityOf, activitySince, formatShortDuration } from '../common/util/activity';
+import useMinuteNow from '../common/util/useMinuteNow';
 import { brandTile, statusColor } from '../common/theme/surfaces';
 
 dayjs.extend(relativeTime);
-
-const ping = keyframes`
-  0% { transform: scale(1); opacity: 0.7; }
-  80%, 100% { transform: scale(2.6); opacity: 0; }
-`;
 
 const useStyles = makeStyles()((theme) => ({
   row: {
@@ -92,13 +87,6 @@ const useStyles = makeStyles()((theme) => ({
     height: 12,
     borderRadius: '50%',
     border: `2px solid ${theme.palette.background.paper}`,
-  },
-  statusPing: {
-    position: 'absolute',
-    inset: 0,
-    borderRadius: '50%',
-    backgroundColor: 'inherit',
-    animation: `${ping} 2.2s cubic-bezier(0, 0, 0.2, 1) infinite`,
   },
   primaryText: {
     fontWeight: 600,
@@ -174,6 +162,9 @@ const useStyles = makeStyles()((theme) => ({
   neutral: {
     color: theme.palette.neutral.main,
   },
+  neutralText: {
+    color: theme.palette.text.secondary,
+  },
   selected: {
     '&&': {
       // Direction A: the selected vehicle is a plain ice tile.
@@ -217,25 +208,45 @@ const DeviceRow = ({ devices, index, style }) => {
 
   const moving = Boolean(position && (position.attributes?.motion || position.speed > 1));
 
-  const secondaryText = () => {
-    let status;
-    if (item.status === 'online' || !item.lastUpdate) {
-      status = formatStatus(item.status, t);
-    } else {
-      status = dayjs(item.lastUpdate).fromNow();
+  const now = useMinuteNow();
+  const activity = activityOf(item, position, now);
+
+  // What the vehicle is doing, in words (not only a colour): moving, idling for 12 min,
+  // stopped for 23 min, no recent GPS since 14:02, offline for 3 hours.
+  const activityLabel = () => {
+    const since = activitySince(item, activity);
+    const duration = since ? formatShortDuration(now - since, t) : '';
+    switch (activity) {
+      case 'moving':
+        return [t('activityMoving'), 'success'];
+      case 'idling':
+        return [[t('activityIdling'), duration].filter(Boolean).join(' '), 'warning'];
+      case 'stopped':
+        return [[t('activityStopped'), duration].filter(Boolean).join(' '), 'neutralText'];
+      case 'stale':
+        return [
+          `${t('activityStale')} · ${formatTime(position.fixTime, 'minutes').split(' ').pop()}`,
+          'warning',
+        ];
+      default:
+        return item.lastUpdate
+          ? [`${t('activityOffline')} · ${dayjs(item.lastUpdate).fromNow()}`, 'error']
+          : [t('activityUnknown'), 'neutralText'];
     }
+  };
+
+  const secondaryText = () => {
+    const [label, tone] = activityLabel();
     return (
       <>
-        <span className={cx(classes.secondaryValue, classes[getStatusColor(item.status)])}>
-          {status}
-        </span>
+        <span className={cx(classes.secondaryValue, classes[tone])}>{label}</span>
         {secondaryValue && (
           <>
             <span>·</span>
             <span className={classes.secondaryValue}>{secondaryValue}</span>
           </>
         )}
-        {moving && (
+        {moving && activity === 'moving' && (
           <span className={classes.speed}>{formatSpeed(position.speed, speedUnit, t)}</span>
         )}
       </>
@@ -299,16 +310,8 @@ const DeviceRow = ({ devices, index, style }) => {
             </Avatar>
             <span
               className={classes.statusDot}
-              style={{
-                backgroundColor: statusColor(theme, item.status),
-                boxShadow:
-                  item.status === 'online'
-                    ? `0 0 8px ${alpha(statusColor(theme, item.status), 0.8)}`
-                    : undefined,
-              }}
-            >
-              {item.status === 'online' && <span className={classes.statusPing} />}
-            </span>
+              style={{ backgroundColor: statusColor(theme, item.status) }}
+            />
           </span>
         </ListItemAvatar>
         <ListItemText

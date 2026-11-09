@@ -138,6 +138,7 @@ const MainPage = () => {
 
   const [keyword, setKeyword] = useState('');
   const [filter, setFilter] = usePersistedState('deviceFilter', {
+    activities: [],
     statuses: [],
     groups: [],
     geofences: [],

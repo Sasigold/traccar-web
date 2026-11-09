@@ -2342,5 +2342,18 @@
     "mapRetryIn": "מנותק · ניסיון נוסף בעוד {0} שנ׳",
     "mapRetrying": "מתחבר מחדש…",
     "mapRetryNow": "לחצו כדי לנסות עכשיו",
-    "mapOffline": "אין חיבור לאינטרנט"
+    "mapOffline": "אין חיבור לאינטרנט",
+    "sharedDaysCount": "{0} ימים",
+    "activityMoving": "בתנועה",
+    "activityIdling": "בסרק",
+    "activityStopped": "עומד",
+    "activityStale": "אין GPS עדכני",
+    "activityOffline": "מנותק",
+    "activityUnknown": "לא ידוע",
+    "activityFor": "{0} {1}",
+    "fleetStatsAll": "כל הרכבים",
+    "fleetStatsMoving": "בתנועה",
+    "fleetStatsStopped": "עומדים",
+    "fleetStatsIdlingCount": "מתוכם בסרק {0}",
+    "fleetStatsNotReporting": "מנותקים"
 }

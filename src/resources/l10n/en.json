@@ -2342,5 +2342,18 @@
     "mapRetryIn": "Disconnected · retrying in {0} s",
     "mapRetrying": "Reconnecting…",
     "mapRetryNow": "Click to retry now",
-    "mapOffline": "No internet connection"
+    "mapOffline": "No internet connection",
+    "sharedDaysCount": "{0} days",
+    "activityMoving": "Moving",
+    "activityIdling": "Idling",
+    "activityStopped": "Stopped",
+    "activityStale": "No recent GPS",
+    "activityOffline": "Offline",
+    "activityUnknown": "Unknown",
+    "activityFor": "{0} {1}",
+    "fleetStatsAll": "All vehicles",
+    "fleetStatsMoving": "Moving",
+    "fleetStatsStopped": "Stopped",
+    "fleetStatsIdlingCount": "{0} idling",
+    "fleetStatsNotReporting": "Offline"
 }

@@ -137,7 +137,10 @@ const MainToolbar = ({
     Object.values(devices).filter((d) => d.status === status).length;
 
   const filtersActive =
-    filter.statuses.length > 0 || filter.groups.length > 0 || filter.geofences.length > 0;
+    filter.statuses.length > 0 ||
+    filter.groups.length > 0 ||
+    filter.geofences.length > 0 ||
+    (filter.activities || []).length > 0;
 
   return (
     <div ref={toolbarRef} className={classes.toolbar}>

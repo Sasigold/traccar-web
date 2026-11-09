@@ -4,7 +4,8 @@ import { ButtonBase, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import { useTranslation } from '../../common/components/LocalizationProvider';
-import { statusColor } from '../../common/theme/surfaces';
+import { activityGroup, activityOf } from '../../common/util/activity';
+import useMinuteNow from '../../common/util/useMinuteNow';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -28,10 +29,13 @@ const useStyles = makeStyles()((theme) => ({
     overflow: 'hidden',
     border: '1px solid transparent',
     backgroundColor: theme.palette.surface.tint,
-    transition: 'border-color 160ms ease, background-color 160ms ease, transform 160ms ease',
+    transition: `border-color ${theme.tokens.motion.duration.base}ms ${theme.tokens.motion.easing.standard}, background-color ${theme.tokens.motion.duration.base}ms ${theme.tokens.motion.easing.standard}`,
     '&:hover': {
       borderColor: alpha(theme.palette.primary.main, 0.4),
-      transform: 'translateY(-1px)',
+    },
+    '&.Mui-focusVisible': {
+      outline: `2px solid ${theme.palette.primary.main}`,
+      outlineOffset: 2,
     },
   },
   label: {
@@ -62,67 +66,83 @@ const useStyles = makeStyles()((theme) => ({
     color: theme.palette.text.primary,
     fontVariantNumeric: 'tabular-nums',
   },
+  hint: {
+    fontSize: '0.6875rem',
+    color: theme.palette.surface.textSecondaryOnTint,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
   bar: {
     position: 'absolute',
     insetInlineStart: 0,
     bottom: 0,
     height: 3,
     borderRadius: 3,
-    transition: 'width 400ms ease',
+    transition: `width 400ms ${theme.tokens.motion.easing.standard}`,
   },
 }));
 
-const statuses = ['online', 'offline', 'unknown'];
-
-const labelKeys = {
-  online: 'deviceStatusOnline',
-  offline: 'deviceStatusOffline',
-  unknown: 'fleetStatsUnknown',
-};
-
+// The tiles answer "what is the fleet doing now" (brand mockup p.14: vehicles / moving), and
+// filter the list: all, moving, stopped (idling counted inside), not reporting.
 const FleetStats = ({ filter, setFilter }) => {
   const { classes, theme } = useStyles();
   const t = useTranslation();
 
   const devices = useSelector((state) => state.devices.items);
+  const positions = useSelector((state) => state.session.positions);
+  const now = useMinuteNow();
 
   const counts = useMemo(() => {
-    const result = { total: 0, online: 0, offline: 0, unknown: 0 };
+    const result = { total: 0, moving: 0, stopped: 0, idling: 0, offline: 0 };
     Object.values(devices).forEach((device) => {
+      const activity = activityOf(device, positions[device.id], now);
       result.total += 1;
-      result[statuses.includes(device.status) ? device.status : 'unknown'] += 1;
+      result[activityGroup(activity)] += 1;
+      if (activity === 'idling') {
+        result.idling += 1;
+      }
     });
     return result;
-  }, [devices]);
+  }, [devices, positions, now]);
 
-  const toggle = (status) => {
-    const selected = filter.statuses.includes(status)
-      ? filter.statuses.filter((it) => it !== status)
-      : [...filter.statuses, status];
-    setFilter({ ...filter, statuses: selected });
+  const activities = filter.activities || [];
+  const toggle = (group) => {
+    const selected = activities.includes(group)
+      ? activities.filter((it) => it !== group)
+      : [...activities, group];
+    setFilter({ ...filter, activities: selected });
   };
+
+  const tiles = [
+    { key: 'moving', label: t('fleetStatsMoving'), color: theme.palette.success.main },
+    {
+      key: 'stopped',
+      label: t('fleetStatsStopped'),
+      color: theme.palette.neutral.main,
+      hint: counts.idling ? t('fleetStatsIdlingCount').replace('{0}', counts.idling) : null,
+    },
+    { key: 'offline', label: t('fleetStatsNotReporting'), color: theme.palette.error.main },
+  ];
 
   const tileStyle = (active, color) =>
     active
-      ? {
-          borderColor: alpha(color, 0.6),
-          backgroundColor: theme.palette.background.paper,
-        }
+      ? { borderColor: alpha(color, 0.6), backgroundColor: theme.palette.background.paper }
       : undefined;
 
-  const allActive = !filter.statuses.length;
+  const allActive = !activities.length;
 
   return (
     <div className={classes.root}>
       <ButtonBase
         className={classes.tile}
         style={tileStyle(allActive, theme.palette.primary.main)}
-        onClick={() => setFilter({ ...filter, statuses: [] })}
+        onClick={() => setFilter({ ...filter, activities: [] })}
         aria-pressed={allActive}
       >
         <span className={classes.label}>
           <span className={classes.dot} style={{ backgroundColor: theme.palette.primary.main }} />
-          <span className={classes.labelText}>{t('deviceTitle')}</span>
+          <span className={classes.labelText}>{t('fleetStatsAll')}</span>
         </span>
         <Typography component="span" className={classes.value}>
           {counts.total}
@@ -132,25 +152,25 @@ const FleetStats = ({ filter, setFilter }) => {
           style={{ width: '100%', backgroundColor: theme.palette.primary.main }}
         />
       </ButtonBase>
-      {statuses.map((status) => {
-        const color = statusColor(theme, status);
-        const share = counts.total ? (counts[status] / counts.total) * 100 : 0;
+      {tiles.map(({ key, label, color, hint }) => {
+        const share = counts.total ? (counts[key] / counts.total) * 100 : 0;
         return (
           <ButtonBase
-            key={status}
+            key={key}
             className={classes.tile}
-            style={tileStyle(filter.statuses.includes(status), color)}
-            onClick={() => toggle(status)}
-            title={t(labelKeys[status])}
-            aria-pressed={filter.statuses.includes(status)}
+            style={tileStyle(activities.includes(key), color)}
+            onClick={() => toggle(key)}
+            title={hint ? `${label} · ${hint}` : label}
+            aria-pressed={activities.includes(key)}
           >
             <span className={classes.label}>
               <span className={classes.dot} style={{ backgroundColor: color }} />
-              <span className={classes.labelText}>{t(labelKeys[status])}</span>
+              <span className={classes.labelText}>{label}</span>
             </span>
             <Typography component="span" className={classes.value}>
-              {counts[status]}
+              {counts[key]}
             </Typography>
+            {hint && <span className={classes.hint}>{hint}</span>}
             <span className={classes.bar} style={{ width: `${share}%`, backgroundColor: color }} />
           </ButtonBase>
         );

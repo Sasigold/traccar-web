@@ -221,7 +221,8 @@ export const createFleet = (now = Date.now()) => {
         attributes: {
           batteryLevel: 95 - index * 15,
           fuel: 45 - index * 7,
-          ignition: moving,
+          // The third vehicle keeps its engine running at stops, so the demo shows idling.
+          ignition: moving || index === 2,
           motion: moving,
           power: moving ? 14.2 : 12.6,
           totalDistance: (12000 + index * 8000) * 1000,
@@ -238,6 +239,14 @@ export const createFleet = (now = Date.now()) => {
     for (let timestamp = from; timestamp <= tick; timestamp += interval) {
       positions = sample(timestamp);
       history.push(...positions);
+      // Traccar keeps motionState / motionTime on the device: when the current state began.
+      positions.forEach((position, index) => {
+        const device = devices[index];
+        if (device.motionState !== position.attributes.motion) {
+          device.motionState = position.attributes.motion;
+          device.motionTime = position.fixTime;
+        }
+      });
     }
     lastTick = tick;
     history = history.filter((position) => Date.parse(position.fixTime) >= tick - retention);

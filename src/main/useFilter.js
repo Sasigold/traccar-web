@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import dayjs from 'dayjs';
+import { activityGroup, activityOf } from '../common/util/activity';
 
 export default (
   keyword,
@@ -25,8 +26,15 @@ export default (
       return groupIds;
     };
 
+    const now = Date.now();
+    const activities = filter.activities || [];
     const filtered = Object.values(devices)
       .filter((device) => !filter.statuses.length || filter.statuses.includes(device.status))
+      .filter(
+        (device) =>
+          !activities.length ||
+          activities.includes(activityGroup(activityOf(device, positions[device.id], now))),
+      )
       .filter(
         (device) =>
           !filter.groups.length || deviceGroups(device).some((id) => filter.groups.includes(id)),
