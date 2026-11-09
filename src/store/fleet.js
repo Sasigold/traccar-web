@@ -10,6 +10,8 @@ const { reducer, actions } = createSlice({
     error: null,
     alertsCount: 0, // open document alerts (roadmap 3.4), shown on the bell
     privacy: null, // { policy, periods }: working hours and recent private periods (ISR-03)
+    // The fleet areas this database has (ADM-08), or null while unknown: unknown shows all.
+    features: null,
   },
   reducers: {
     alertsCount(state, action) {
@@ -17,6 +19,9 @@ const { reducer, actions } = createSlice({
     },
     privacy(state, action) {
       state.privacy = action.payload;
+    },
+    features(state, action) {
+      state.features = action.payload;
     },
     loading(state) {
       state.status = 'loading';
@@ -34,6 +39,7 @@ const { reducer, actions } = createSlice({
     },
     disabled(state) {
       state.status = 'disabled';
+      state.features = null;
       state.privacy = null;
       state.profile = null;
       state.permissions = [];
@@ -41,6 +47,7 @@ const { reducer, actions } = createSlice({
     },
     reset(state) {
       state.alertsCount = 0;
+      state.features = null;
       state.privacy = null;
       state.status = 'idle';
       state.profile = null;

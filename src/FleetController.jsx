@@ -4,6 +4,7 @@ import { fleetActions } from './store';
 import { isFleetConfigured } from './common/fleet/config';
 import { clearFleetSession, ensureFleetSession } from './common/fleet/session';
 import { getFleetClient } from './common/fleet/client';
+import { loadFleetFeatures } from './common/fleet/features';
 
 const REFRESH_INTERVAL_MS = 30 * 60 * 1000;
 
@@ -33,6 +34,11 @@ const FleetController = () => {
         if (!cancelled) {
           dispatch(
             fleetActions.ready({ profile: session.profile, permissions: session.permissions }),
+          );
+          // ADM-08: which fleet areas this database has.
+          loadFleetFeatures().then(
+            (features) => !cancelled && dispatch(fleetActions.features(features)),
+            () => {},
           );
           // "Last seen" for the users screen; missing before the stage 3 migration, so ignored.
           getFleetClient()

@@ -64,7 +64,8 @@ const GenerateBillsDialog = ({ directory, invoices, onClose, onDone }) => {
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [month, setMonth] = useState(() => monthValue(new Date()));
-  const [issue, setIssue] = useState(true);
+  // ADM-08: drafts by default; issuing locks the bills (SEC-09).
+  const [issue, setIssue] = useState(false);
   const [excluded, setExcluded] = useState([]);
   const [busy, setBusy] = useState(false);
 

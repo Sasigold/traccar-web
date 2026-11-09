@@ -31,7 +31,8 @@ import PageLayout from '../common/components/PageLayout';
 import DataTable from '../common/components/table/DataTable';
 import TableToolbar from '../common/components/table/TableToolbar';
 import SettingsMenu from '../settings/components/SettingsMenu';
-import { useCatch } from '../reactHelper';
+import { useAsyncTask, useCatch } from '../reactHelper';
+import { fleetConfig } from '../common/fleet/config';
 import { formatTime } from '../common/util/formatter';
 import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
@@ -310,6 +311,24 @@ const IntegrationsPage = () => {
     enabled: canManage && view === 'deliveries',
     reloadKey,
   });
+  // ADM-08: keys only work once the public-api gateway (edge function) is installed; its OpenAPI
+  // document needs no key, so it says whether it answers.
+  const [gateway, setGateway] = useState(null);
+  useAsyncTask(
+    async ({ signal }) => {
+      if (!canManage || view !== 'keys') return;
+      try {
+        const response = await fetch(`${fleetConfig.url}/functions/v1/public-api/v1/openapi.json`, {
+          signal,
+        });
+        setGateway(response.ok);
+      } catch {
+        if (!signal.aborted) setGateway(false);
+      }
+    },
+    [canManage, view],
+  );
+
   const webhookName = useMemo(
     () => Object.fromEntries((webhooks || []).map((hook) => [hook.id, hook.name])),
     [webhooks],
@@ -343,6 +362,11 @@ const IntegrationsPage = () => {
       description={t('fleetIntegrationsPageDescription')}
     >
       <FleetNotice permission="integrations.manage" />
+      {view === 'keys' && gateway === false && (
+        <Alert severity="warning" sx={{ mx: 3, mb: 2 }}>
+          {t('fleetApiGatewayMissing')}
+        </Alert>
+      )}
       <DataTable
         toolbar={
           <TableToolbar

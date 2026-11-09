@@ -1105,7 +1105,7 @@
     "adminGenerateBills": "Generate bills",
     "adminGenerateBillsHelp": "One bill per customer with an active subscription, by their billable devices. Customers already billed for the period are skipped.",
     "adminBillingMonth": "Billing month",
-    "adminIssueImmediately": "Issue now (otherwise save as drafts)",
+    "adminIssueImmediately": "Issue at once (unchecked, the bills are saved as drafts to check before issuing)",
     "adminAlreadyBilled": "Already billed for this period",
     "adminNoActiveSubscriptions": "No active subscriptions. Set one up in the customer's Billing tab.",
     "adminGenerateSummary": "{0} bills · {1} incl. VAT",
@@ -1685,7 +1685,7 @@
     "fleetDriverFilePrinted": "Produced {0}",
     "fleetDriverFileNotInDatabase": "The driver isn't in the database yet. Save the driver page once.",
     "fleetPoiPage": "Points of interest and visits",
-    "fleetPoiPageDescription": "Customers, depots and suppliers on the map, and vehicle visits by geofence entry and exit",
+    "fleetPoiPageDescription": "Customers, warehouses and suppliers, and vehicle visits to them by geofence entry and exit",
     "fleetPoi": "Point of interest",
     "fleetPoiAdd": "Add point",
     "fleetPoiEdit": "Edit point",
@@ -3110,5 +3110,8 @@
     "validationVin": "Not a valid VIN: 17 characters, without I, O and Q",
     "validationYear": "Not a valid model year",
     "validationImei": "The IMEI is not valid (the check digit does not match). Check the number on the device.",
-    "validationDuplicate": "Already exists: {0}"
+    "validationDuplicate": "Already exists: {0}",
+    "sharedComingSoon": "soon",
+    "fleetOutboxNotConnected": "Sending is not connected yet: no channel (WhatsApp, SMS, e-mail) is set up. The messages here will be sent once a channel is set up in service management.",
+    "fleetApiGatewayMissing": "The API gateway is not installed on the server yet, so the keys here do not work. They will work as soon as the gateway (the public-api function) is installed."
 }

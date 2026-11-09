@@ -79,6 +79,9 @@ const useStyles = makeStyles()((theme) => ({
 
 const capital = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
 // document_expiry -> fleetAlertKindDocumentExpiry
+// The alert kinds that something produces today (ADM-08); the others are offered as "soon".
+const WORKING_KINDS = ['document_expiry'];
+
 const kindKey = (kind) =>
   `fleetAlertKind${capital(kind.replace(/_(\w)/g, (_, c) => c.toUpperCase()))}`;
 const emptyRecipient = {
@@ -115,6 +118,8 @@ const AlertsPage = () => {
 
   const views = ['open', ...(canManage ? ['recipients', 'outbox'] : [])];
   const [view, setView] = useState('open');
+  // null while unknown (an older database without messaging_ready).
+  const [sendingReady, setSendingReady] = useState(null);
   const [reloadKey, reload] = useReducer((k) => k + 1, 0);
   const [rows, setRows] = useState(null);
   const [selected, setSelected] = useState([]);
@@ -132,6 +137,9 @@ const AlertsPage = () => {
     } else if (view === 'recipients') {
       setRows(unwrap(await client.from('alert_recipients').select('*').order('name')) || []);
     } else {
+      // ADM-08: is any channel set up? Otherwise the queued messages are only waiting.
+      const { data: channels } = await client.rpc('messaging_ready');
+      setSendingReady(channels ? channels.some((channel) => channel.ready) : null);
       setRows(
         unwrap(
           await client
@@ -245,6 +253,11 @@ const AlertsPage = () => {
       {view === 'recipients' && (
         <Alert severity="info" sx={{ mx: 3, mb: 2 }}>
           {t('fleetRecipientsHint')}
+        </Alert>
+      )}
+      {view === 'outbox' && sendingReady === false && (
+        <Alert severity="warning" sx={{ mx: 3, mb: 2 }}>
+          {t('fleetOutboxNotConnected')}
         </Alert>
       )}
       <DataTable
@@ -449,7 +462,13 @@ const AlertsPage = () => {
                 multiple
                 options={alertKinds}
                 value={editing.kinds}
-                getOptionLabel={(kind) => t(kindKey(kind))}
+                getOptionLabel={(kind) =>
+                  WORKING_KINDS.includes(kind)
+                    ? t(kindKey(kind))
+                    : `${t(kindKey(kind))} (${t('sharedComingSoon')})`
+                }
+                // ADM-08: only expiry alerts are sent today.
+                getOptionDisabled={(kind) => !WORKING_KINDS.includes(kind)}
                 onChange={(_, kinds) => setEditing({ ...editing, kinds })}
                 renderInput={(params) => <TextField {...params} label={t('fleetRecipientKinds')} />}
               />

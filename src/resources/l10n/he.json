@@ -1087,7 +1087,7 @@
     "adminInvoiceFilterPaid": "שולמו",
     "adminInvoiceFilterCancelled": "בוטלו",
     "adminSaveDraft": "שמירת טיוטה",
-    "adminIssueInvoice": "הפקה ושליחה",
+    "adminIssueInvoice": "הפקה",
     "adminMarkPaid": "סימון כשולם",
     "adminConfirmPayment": "אישור תשלום",
     "adminUndoPayment": "ביטול סימון תשלום",
@@ -1105,7 +1105,7 @@
     "adminGenerateBills": "הפקת חיובים",
     "adminGenerateBillsHelp": "חשבון לכל לקוח עם מנוי פעיל, לפי מספר המכשירים לחיוב שלו. לקוח שכבר חויב על התקופה מדולג.",
     "adminBillingMonth": "חודש החיוב",
-    "adminIssueImmediately": "להפיק מיד (אחרת יישמרו כטיוטות)",
+    "adminIssueImmediately": "להפיק מיד (בלי הסימון החשבונות נשמרים כטיוטות, לבדיקה לפני הפקה)",
     "adminAlreadyBilled": "כבר חויב על התקופה",
     "adminNoActiveSubscriptions": "אין מנויים פעילים. הגדירו מנוי בכרטיס הלקוח, בלשונית חיוב.",
     "adminGenerateSummary": "{0} חשבונות · {1} כולל מע״מ",
@@ -1685,7 +1685,7 @@
     "fleetDriverFilePrinted": "הופק {0}",
     "fleetDriverFileNotInDatabase": "הנהג עוד לא נשמר במסד הנתונים. שמרו את כרטיס הנהג פעם אחת.",
     "fleetPoiPage": "נקודות עניין וביקורים",
-    "fleetPoiPageDescription": "לקוחות, מחסנים וספקים על המפה, וביקורי רכבים אצלם לפי כניסה ויציאה מהגדר",
+    "fleetPoiPageDescription": "לקוחות, מחסנים וספקים, וביקורי רכבים אצלם לפי כניסה ויציאה מהגדר",
     "fleetPoi": "נקודת עניין",
     "fleetPoiAdd": "הוספת נקודה",
     "fleetPoiEdit": "עריכת נקודה",
@@ -3110,5 +3110,8 @@
     "validationVin": "מספר שלדה (VIN) לא תקין: 17 תווים, בלי I, O ו-Q",
     "validationYear": "שנת ייצור לא תקינה",
     "validationImei": "ה-IMEI לא תקין (ספרת הביקורת לא מתאימה). בדקו את המספר שעל המכשיר.",
-    "validationDuplicate": "כבר קיים: {0}"
+    "validationDuplicate": "כבר קיים: {0}",
+    "sharedComingSoon": "בקרוב",
+    "fleetOutboxNotConnected": "השליחה עוד לא מחוברת: אף ערוץ (וואטסאפ, SMS, מייל) לא הוגדר. ההודעות שכאן יישלחו כשהחיבור יופעל במסך ערוצי השליחה בניהול השירות.",
+    "fleetApiGatewayMissing": "שער ה-API עוד לא הותקן בשרת, ולכן המפתחות כאן לא פעילים. הם יעבדו מיד אחרי התקנת השער (פונקציית public-api)."
 }
