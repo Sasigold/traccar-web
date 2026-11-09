@@ -95,7 +95,7 @@ const DevicePage = () => {
       validate={validate}
       onItemSaved={onItemSaved}
       menu={<SettingsMenu />}
-      breadcrumbs={['settingsTitle', 'sharedDevice']}
+      breadcrumbs={['fleetTitle', 'sharedDevice']}
       description={t('devicePageDescription')}
     >
       {item && (

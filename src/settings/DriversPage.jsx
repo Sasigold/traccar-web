@@ -72,7 +72,7 @@ const DriversPage = () => {
   );
 
   return (
-    <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'sharedDrivers']}>
+    <PageLayout menu={<SettingsMenu />} breadcrumbs={['fleetTitle', 'sharedDrivers']}>
       <DataTable
         toolbar={
           <TableToolbar

@@ -19,7 +19,7 @@ const fleetSettingsPaths = [
   '/settings/accumulators',
 ];
 
-const isFleetPath = (pathname) =>
+export const isFleetPath = (pathname) =>
   pathname.startsWith('/fleet') || fleetSettingsPaths.some((path) => pathname.startsWith(path));
 
 // Primary destinations shown in the navigation rail and the mobile tabs.

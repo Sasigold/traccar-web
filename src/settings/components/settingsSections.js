@@ -1,4 +1,5 @@
 import PrivacyTipRoundedIcon from '@mui/icons-material/PrivacyTipRounded';
+import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedInRounded';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
@@ -36,9 +37,9 @@ import { useAdministrator, useManager, useRestriction } from '../../common/util/
 import useFeatures from '../../common/util/useFeatures';
 import { useFleetPermission } from '../../common/fleet/useFleet';
 
-// Single source of truth for the settings area: drives the settings menu,
-// the settings hub cards and the command palette.
-export const useSettingsSections = () => {
+// Single source of truth for the menus: the settings area and the fleet area drive their side
+// menus, hub cards and the command palette.
+const useSectionCatalog = () => {
   const readonly = useRestriction('readonly');
   const admin = useAdministrator();
   const manager = useManager();
@@ -62,7 +63,12 @@ export const useSettingsSections = () => {
 
   return useMemo(() => {
     const profilePath = `/settings/user/${userId}`;
-    const groups = [
+    const tidy = (groups) =>
+      groups
+        .filter((group) => group.visible !== false)
+        .map((group) => ({ ...group, items: group.items.filter((item) => item.visible !== false) }))
+        .filter((group) => group.items.length > 0);
+    const settings = [
       {
         id: 'account',
         titleKey: 'settingsUser',
@@ -96,18 +102,10 @@ export const useSettingsSections = () => {
         ],
       },
       {
-        id: 'fleet',
-        titleKey: 'settingsGroupFleet',
+        id: 'fleetConfig',
+        titleKey: 'settingsGroupFleetConfig',
         visible: !readonly,
         items: [
-          {
-            id: 'devices',
-            titleKey: 'deviceTitle',
-            descriptionKey: 'settingsDevicesDescription',
-            icon: DnsRoundedIcon,
-            path: '/settings/devices',
-            match: (pathname) => pathname.startsWith('/settings/device'),
-          },
           {
             id: 'groups',
             titleKey: 'settingsGroups',
@@ -118,15 +116,6 @@ export const useSettingsSections = () => {
             visible: !features.disableGroups,
           },
           {
-            id: 'drivers',
-            titleKey: 'sharedDrivers',
-            descriptionKey: 'settingsDriversDescription',
-            icon: BadgeRoundedIcon,
-            path: '/settings/drivers',
-            match: (pathname) => pathname.startsWith('/settings/driver'),
-            visible: !features.disableDrivers,
-          },
-          {
             id: 'geofences',
             titleKey: 'sharedGeofences',
             descriptionKey: 'settingsGeofencesDescription',
@@ -134,148 +123,6 @@ export const useSettingsSections = () => {
             path: '/geofences',
             match: (pathname) =>
               pathname === '/geofences' || pathname.startsWith('/settings/geofence'),
-          },
-          {
-            id: 'maintenance',
-            titleKey: 'sharedMaintenance',
-            descriptionKey: 'settingsMaintenanceDescription',
-            icon: BuildRoundedIcon,
-            path: '/settings/maintenances',
-            match: (pathname) => pathname.startsWith('/settings/maintenance'),
-            visible: !features.disableMaintenance,
-          },
-          {
-            id: 'expiries',
-            titleKey: 'fleetExpiriesPage',
-            descriptionKey: 'fleetExpiriesPageDescription',
-            icon: EventAvailableRoundedIcon,
-            path: '/fleet/expiries',
-            match: (pathname) => pathname.startsWith('/fleet/expiries'),
-          },
-          {
-            id: 'fleetAlerts',
-            titleKey: 'fleetAlertsPage',
-            descriptionKey: 'fleetAlertsPageDescription',
-            icon: NotificationsActiveRoundedIcon,
-            path: '/fleet/alerts',
-            match: (pathname) => pathname.startsWith('/fleet/alerts'),
-            visible: fleetAlerts,
-          },
-          {
-            id: 'workOrders',
-            titleKey: 'fleetWorkOrdersPage',
-            descriptionKey: 'fleetWorkOrdersPageDescription',
-            icon: HandymanRoundedIcon,
-            path: '/fleet/work-orders',
-            match: (pathname) =>
-              pathname.startsWith('/fleet/work-order') || pathname.startsWith('/fleet/vendors'),
-            visible: fleetMaintenance,
-          },
-          {
-            id: 'incidents',
-            titleKey: 'fleetIncidentsPage',
-            descriptionKey: 'fleetIncidentsPageDescription',
-            icon: CarCrashRoundedIcon,
-            path: '/fleet/incidents',
-            match: (pathname) => pathname.startsWith('/fleet/incident'),
-            visible: fleetIncidents,
-          },
-          {
-            id: 'inspections',
-            titleKey: 'fleetInspectionsPage',
-            descriptionKey: 'fleetInspectionsPageDescription',
-            icon: FactCheckRoundedIcon,
-            path: '/fleet/inspections',
-            match: (pathname) => pathname.startsWith('/fleet/inspection'),
-            visible: fleetInspections,
-          },
-          {
-            id: 'safety',
-            titleKey: 'fleetSafetyPage',
-            descriptionKey: 'fleetSafetyPageDescription',
-            icon: HealthAndSafetyRoundedIcon,
-            path: '/fleet/safety',
-            match: (pathname) =>
-              pathname.startsWith('/fleet/safety') || pathname.startsWith('/fleet/driver-file'),
-            visible: fleetSafety,
-          },
-          {
-            id: 'costs',
-            titleKey: 'fleetCostsPage',
-            descriptionKey: 'fleetCostsPageDescription',
-            icon: LocalGasStationRoundedIcon,
-            path: '/fleet/costs',
-            match: (pathname) => pathname.startsWith('/fleet/costs'),
-            visible: fleetCosts,
-          },
-          {
-            id: 'dispatch',
-            titleKey: 'fleetDispatchPage',
-            descriptionKey: 'fleetDispatchPageDescription',
-            icon: LocalShippingRoundedIcon,
-            path: '/fleet/dispatch',
-            match: (pathname) => pathname.startsWith('/fleet/dispatch'),
-            visible: fleetDispatch,
-          },
-          {
-            id: 'poi',
-            titleKey: 'fleetPoiPage',
-            descriptionKey: 'fleetPoiPageDescription',
-            icon: PlaceRoundedIcon,
-            path: '/fleet/poi',
-            match: (pathname) => pathname.startsWith('/fleet/poi'),
-            visible: fleetPoi,
-          },
-          {
-            id: 'equipment',
-            titleKey: 'fleetEquipmentPage',
-            descriptionKey: 'fleetEquipmentPageDescription',
-            icon: RvHookupRoundedIcon,
-            path: '/fleet/equipment',
-            match: (pathname) => pathname.startsWith('/fleet/equipment'),
-            visible: fleetVehicles,
-          },
-          {
-            id: 'sensors',
-            titleKey: 'fleetSensorsPage',
-            descriptionKey: 'fleetSensorsPageDescription',
-            icon: ThermostatRoundedIcon,
-            path: '/fleet/sensors',
-            match: (pathname) => pathname.startsWith('/fleet/sensors'),
-          },
-          {
-            id: 'fleetDocuments',
-            titleKey: 'fleetDocumentsPage',
-            descriptionKey: 'fleetDocumentsPageDescription',
-            icon: DescriptionRoundedIcon,
-            path: '/settings/fleet-documents',
-            match: (pathname) => pathname.startsWith('/settings/fleet-documents'),
-            visible: fleetDocuments,
-          },
-        ],
-      },
-      {
-        id: 'automation',
-        titleKey: 'settingsGroupAutomation',
-        visible: !readonly,
-        items: [
-          {
-            id: 'commands',
-            titleKey: 'sharedSavedCommands',
-            descriptionKey: 'settingsCommandsDescription',
-            icon: SendRoundedIcon,
-            path: '/settings/commands',
-            match: (pathname) => pathname.startsWith('/settings/command'),
-            visible: !features.disableSavedCommands,
-          },
-          {
-            id: 'attributes',
-            titleKey: 'sharedComputedAttributes',
-            descriptionKey: 'settingsAttributesDescription',
-            icon: CalculateRoundedIcon,
-            path: '/settings/attributes',
-            match: (pathname) => pathname.startsWith('/settings/attribute'),
-            visible: !features.disableComputedAttributes,
           },
           {
             id: 'calendars',
@@ -354,6 +201,33 @@ export const useSettingsSections = () => {
             icon: RouterRoundedIcon,
             path: '/settings/protocols',
             match: (pathname) => pathname === '/settings/protocols',
+            visible: Boolean(admin),
+          },
+        ],
+      },
+      {
+        id: 'advanced',
+        titleKey: 'settingsGroupAdvanced',
+        visible: !readonly,
+        collapsible: true,
+        items: [
+          {
+            id: 'commands',
+            titleKey: 'sharedSavedCommands',
+            descriptionKey: 'settingsCommandsDescription',
+            icon: SendRoundedIcon,
+            path: '/settings/commands',
+            match: (pathname) => pathname.startsWith('/settings/command'),
+            visible: !features.disableSavedCommands,
+          },
+          {
+            id: 'attributes',
+            titleKey: 'sharedComputedAttributes',
+            descriptionKey: 'settingsAttributesDescription',
+            icon: CalculateRoundedIcon,
+            path: '/settings/attributes',
+            match: (pathname) => pathname.startsWith('/settings/attribute'),
+            visible: !features.disableComputedAttributes,
           },
         ],
       },
@@ -380,10 +254,191 @@ export const useSettingsSections = () => {
         ],
       },
     ];
-    return groups
-      .filter((group) => group.visible !== false)
-      .map((group) => ({ ...group, items: group.items.filter((item) => item.visible !== false) }))
-      .filter((group) => group.items.length > 0);
+    // The fleet area, by the work people do (ADM-02): operations, vehicles and drivers, validity
+    // and alerts, costs, safety. Settings keep only configuration.
+    const fleet = [
+      {
+        id: 'fleetOperations',
+        titleKey: 'fleetGroupOperations',
+        items: [
+          {
+            id: 'dispatch',
+            titleKey: 'fleetDispatchPage',
+            descriptionKey: 'fleetDispatchPageDescription',
+            icon: LocalShippingRoundedIcon,
+            path: '/fleet/dispatch',
+            match: (pathname) => pathname.startsWith('/fleet/dispatch'),
+            visible: fleetDispatch,
+          },
+          {
+            id: 'workOrders',
+            titleKey: 'fleetWorkOrdersPage',
+            descriptionKey: 'fleetWorkOrdersPageDescription',
+            icon: HandymanRoundedIcon,
+            path: '/fleet/work-orders',
+            match: (pathname) =>
+              pathname.startsWith('/fleet/work-order') || pathname.startsWith('/fleet/vendors'),
+            visible: fleetMaintenance,
+          },
+          {
+            id: 'inspections',
+            titleKey: 'fleetInspectionsPage',
+            descriptionKey: 'fleetInspectionsPageDescription',
+            icon: FactCheckRoundedIcon,
+            path: '/fleet/inspections',
+            match: (pathname) => pathname.startsWith('/fleet/inspection'),
+            visible: fleetInspections,
+          },
+          {
+            id: 'incidents',
+            titleKey: 'fleetIncidentsPage',
+            descriptionKey: 'fleetIncidentsPageDescription',
+            icon: CarCrashRoundedIcon,
+            path: '/fleet/incidents',
+            match: (pathname) => pathname.startsWith('/fleet/incident'),
+            visible: fleetIncidents,
+          },
+          {
+            id: 'maintenance',
+            titleKey: 'sharedMaintenance',
+            descriptionKey: 'settingsMaintenanceDescription',
+            icon: BuildRoundedIcon,
+            path: '/settings/maintenances',
+            match: (pathname) => pathname.startsWith('/settings/maintenance'),
+            visible: !readonly && !features.disableMaintenance,
+          },
+        ],
+      },
+      {
+        id: 'fleetAssets',
+        titleKey: 'fleetGroupAssets',
+        items: [
+          {
+            id: 'devices',
+            titleKey: 'deviceTitle',
+            descriptionKey: 'settingsDevicesDescription',
+            icon: DnsRoundedIcon,
+            path: '/fleet/vehicles',
+            match: (pathname) =>
+              pathname.startsWith('/fleet/vehicles') ||
+              pathname.startsWith('/settings/device') ||
+              pathname.startsWith('/settings/accumulators'),
+            visible: !readonly,
+          },
+          {
+            id: 'drivers',
+            titleKey: 'sharedDrivers',
+            descriptionKey: 'settingsDriversDescription',
+            icon: BadgeRoundedIcon,
+            path: '/fleet/drivers',
+            match: (pathname) =>
+              pathname.startsWith('/fleet/drivers') || pathname.startsWith('/settings/driver'),
+            visible: !readonly && !features.disableDrivers,
+          },
+          {
+            id: 'equipment',
+            titleKey: 'fleetEquipmentPage',
+            descriptionKey: 'fleetEquipmentPageDescription',
+            icon: RvHookupRoundedIcon,
+            path: '/fleet/equipment',
+            match: (pathname) => pathname.startsWith('/fleet/equipment'),
+            visible: fleetVehicles,
+          },
+          {
+            id: 'sensors',
+            titleKey: 'fleetSensorsPage',
+            descriptionKey: 'fleetSensorsPageDescription',
+            icon: ThermostatRoundedIcon,
+            path: '/fleet/sensors',
+            match: (pathname) => pathname.startsWith('/fleet/sensors'),
+          },
+          {
+            id: 'poi',
+            titleKey: 'fleetPoiPage',
+            descriptionKey: 'fleetPoiPageDescription',
+            icon: PlaceRoundedIcon,
+            path: '/fleet/poi',
+            match: (pathname) => pathname.startsWith('/fleet/poi'),
+            visible: fleetPoi,
+          },
+        ],
+      },
+      {
+        id: 'fleetValidity',
+        titleKey: 'fleetGroupValidity',
+        items: [
+          {
+            id: 'expiries',
+            titleKey: 'fleetExpiriesPage',
+            descriptionKey: 'fleetExpiriesPageDescription',
+            icon: EventAvailableRoundedIcon,
+            path: '/fleet/expiries',
+            match: (pathname) => pathname.startsWith('/fleet/expiries'),
+          },
+          {
+            id: 'fleetAlerts',
+            titleKey: 'fleetAlertsPage',
+            descriptionKey: 'fleetAlertsPageDescription',
+            icon: NotificationsActiveRoundedIcon,
+            path: '/fleet/alerts',
+            match: (pathname) => pathname.startsWith('/fleet/alerts'),
+            visible: fleetAlerts,
+          },
+          {
+            id: 'fleetDocuments',
+            titleKey: 'fleetDocumentsPage',
+            descriptionKey: 'fleetDocumentsPageDescription',
+            icon: DescriptionRoundedIcon,
+            path: '/settings/fleet-documents',
+            match: (pathname) => pathname.startsWith('/settings/fleet-documents'),
+            visible: fleetDocuments,
+          },
+        ],
+      },
+      {
+        id: 'fleetCosts',
+        titleKey: 'fleetGroupCosts',
+        items: [
+          {
+            id: 'costs',
+            titleKey: 'fleetCostsPage',
+            descriptionKey: 'fleetCostsPageDescription',
+            icon: LocalGasStationRoundedIcon,
+            path: '/fleet/costs',
+            match: (pathname) => pathname.startsWith('/fleet/costs'),
+            visible: fleetCosts,
+          },
+        ],
+      },
+      {
+        id: 'fleetSafety',
+        titleKey: 'fleetGroupSafety',
+        items: [
+          {
+            id: 'safety',
+            titleKey: 'fleetSafetyPage',
+            descriptionKey: 'fleetSafetyPageDescription',
+            icon: HealthAndSafetyRoundedIcon,
+            path: '/fleet/safety',
+            match: (pathname) =>
+              (pathname.startsWith('/fleet/safety') &&
+                !pathname.startsWith('/fleet/safety-officer')) ||
+              pathname.startsWith('/fleet/driver-file'),
+            visible: fleetSafety,
+          },
+          {
+            id: 'safetyOfficer',
+            titleKey: 'safetyOfficerPage',
+            descriptionKey: 'safetyOfficerPageDescription',
+            icon: AssignmentTurnedInRoundedIcon,
+            path: '/fleet/safety-officer',
+            match: (pathname) => pathname.startsWith('/fleet/safety-officer'),
+            visible: fleetSafety,
+          },
+        ],
+      },
+    ];
+    return { settings: tidy(settings), fleet: tidy(fleet) };
   }, [
     readonly,
     admin,
@@ -408,13 +463,18 @@ export const useSettingsSections = () => {
   ]);
 };
 
+export const useSettingsSections = () => useSectionCatalog().settings;
+
+export const useFleetSections = () => useSectionCatalog().fleet;
+
+// Every page of both areas, for the command palette.
 export const useSettingsSectionItems = () => {
-  const sections = useSettingsSections();
+  const { settings, fleet } = useSectionCatalog();
   return useMemo(
     () =>
-      sections.flatMap((section) =>
+      [...fleet, ...settings].flatMap((section) =>
         section.items.map((item) => ({ ...item, groupKey: section.titleKey })),
       ),
-    [sections],
+    [settings, fleet],
   );
 };

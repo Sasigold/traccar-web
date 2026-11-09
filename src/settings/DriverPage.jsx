@@ -66,7 +66,7 @@ const DriverPage = () => {
       validate={validate}
       onItemSaved={onItemSaved}
       menu={<SettingsMenu />}
-      breadcrumbs={['settingsTitle', 'sharedDriver']}
+      breadcrumbs={['fleetTitle', 'sharedDriver']}
       description={t('driverPageDescription')}
     >
       {item && (

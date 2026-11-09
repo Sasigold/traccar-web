@@ -27,6 +27,7 @@ import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsAct
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import ValidityTabs from './components/ValidityTabs';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import DataTable from '../common/components/table/DataTable';
@@ -218,6 +219,7 @@ const AlertsPage = () => {
       breadcrumbs={['fleetTitle', 'fleetAlertsPage']}
       description={t('fleetAlertsPageDescription')}
     >
+      <ValidityTabs />
       {status === 'error' && (
         <Alert severity="warning" sx={{ mx: 3, mb: 2 }}>
           {t('fleetConnectionError').replace('{0}', error || '')}

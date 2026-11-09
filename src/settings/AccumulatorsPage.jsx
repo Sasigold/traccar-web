@@ -45,7 +45,7 @@ const AccumulatorsPage = () => {
   return (
     <FormPage
       menu={<SettingsMenu />}
-      breadcrumbs={['sharedDeviceAccumulators']}
+      breadcrumbs={['fleetTitle', 'sharedDeviceAccumulators']}
       description={t('accumulatorsPageDescription')}
       footer={<SaveBar onCancel={() => navigate(-1)} onSave={handleSave} />}
     >

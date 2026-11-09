@@ -7,7 +7,7 @@ export const SETUP_STEPS = [
   {
     id: 'assignments',
     count: 'assignments',
-    path: '/settings/drivers',
+    path: '/fleet/drivers',
     permission: 'vehicles.read',
   },
   { id: 'users', count: 'users', path: '/fleet/users', permission: 'users.read', min: 2 },

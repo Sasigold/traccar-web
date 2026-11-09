@@ -4,6 +4,7 @@ import { Chip, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
+import ValidityTabs from './components/ValidityTabs';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import DataTable from '../common/components/table/DataTable';
@@ -139,6 +140,7 @@ const ExpiriesPage = () => {
       breadcrumbs={['fleetTitle', 'fleetExpiriesPage']}
       description={t('fleetExpiriesPageDescription')}
     >
+      <ValidityTabs />
       <DataTable
         toolbar={
           <TableToolbar

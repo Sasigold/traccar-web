@@ -26,6 +26,20 @@ login (Traccar administrators become fleet `admin`, the very first user becomes 
 - `src/settings/FleetDocumentsPage.jsx` - `/settings/fleet-documents`, all documents by expiry.
 - `src/settings/components/FleetRoleSection.jsx` - fleet role + permissions card on the user page.
 
+## Where things are (fleet area and settings)
+
+The fleet area has its own menu, grouped by the work people do (`useFleetSections` in
+`src/settings/components/settingsSections.js`): operations (dispatch, work orders, checks, damage,
+maintenance plan), vehicles and drivers (`/fleet/vehicles`, `/fleet/drivers`, equipment, sensors, points of
+interest), validity and alerts (one subject with shared tabs: validity dates, validity alerts, documents),
+costs, and safety (driver safety, the safety officer's plan). Any fleet page, and the vehicle and driver
+forms under `/settings/device` and `/settings/driver`, show this menu and "Fleet" in the breadcrumbs.
+
+Settings keep configuration: account, fleet configuration (groups, geofences, calendars), administration
+(users, fleet users, API and webhooks, employee privacy, server, announcement, protocols for administrators
+only) and an "Advanced (for technicians)" group, folded by default (saved commands, computed attributes). The
+old `/settings/devices` and `/settings/drivers` addresses redirect, keeping their query.
+
 ## Setting up a new account
 
 Owners, admins and managers see a "Set up your fleet" card on `/fleet` and `/dashboard`

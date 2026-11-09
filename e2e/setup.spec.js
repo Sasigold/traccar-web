@@ -45,7 +45,7 @@ test('a new account sees its setup steps, continues with the next one and can hi
   // The demo has vehicles, drivers and maintenance; nothing in the fleet database yet.
   await expect(card).toContainText('3 מתוך 7 שלבים הושלמו');
   const next = card.getByRole('link', { name: 'המשך: שיוך נהג לרכב' });
-  await expect(next).toHaveAttribute('href', '/settings/drivers');
+  await expect(next).toHaveAttribute('href', '/fleet/drivers');
   await expect(card.getByRole('link', { name: 'מי מקבל התראות' })).toHaveAttribute(
     'href',
     '/fleet/alerts',

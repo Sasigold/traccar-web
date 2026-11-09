@@ -153,7 +153,7 @@ const DevicesPage = () => {
   return (
     <PageLayout
       menu={<SettingsMenu />}
-      breadcrumbs={['settingsTitle', 'deviceTitle']}
+      breadcrumbs={['fleetTitle', 'deviceTitle']}
       description={t('settingsDevicesDescription')}
     >
       <DataTable

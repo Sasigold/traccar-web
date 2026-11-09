@@ -120,7 +120,7 @@ const MaintenacesPage = () => {
     return (
       <PageLayout
         menu={<SettingsMenu />}
-        breadcrumbs={['settingsTitle', 'sharedMaintenance']}
+        breadcrumbs={['fleetTitle', 'sharedMaintenance']}
         description={t('fleetMaintenanceStatusDescription')}
       >
         <DataTable
@@ -158,7 +158,7 @@ const MaintenacesPage = () => {
   }
 
   return (
-    <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'sharedMaintenance']}>
+    <PageLayout menu={<SettingsMenu />} breadcrumbs={['fleetTitle', 'sharedMaintenance']}>
       <DataTable
         toolbar={
           <TableToolbar

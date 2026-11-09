@@ -18,7 +18,7 @@ const DeviceConnectionsPage = () => {
   return (
     <FormPage
       menu={<SettingsMenu />}
-      breadcrumbs={['settingsTitle', 'sharedDevice', 'sharedConnections']}
+      breadcrumbs={['fleetTitle', 'sharedDevice', 'sharedConnections']}
       description={t('connectionsDeviceDescription')}
     >
       <FormSection title={t('sharedConnections')} description={t('connectionsHint')}>

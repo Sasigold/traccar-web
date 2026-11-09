@@ -11,6 +11,13 @@ import { generateLoginToken } from './common/components/NativeInterface';
 import { useLocalization } from './common/components/LocalizationProvider';
 import fetchOrThrow from './common/util/fetchOrThrow';
 
+// The vehicle and driver lists moved to the fleet area (ADM-02); old links keep their filters.
+const KeepQuery = ({ to }) => {
+  const [searchParams] = useSearchParams();
+  const query = searchParams.toString();
+  return <Navigate to={query ? `${to}?${query}` : to} replace />;
+};
+
 const NotFoundPage = lazy(() => import('./other/NotFoundPage'));
 const DashboardPage = lazy(() => import('./dashboard/DashboardPage'));
 const FleetHubPage = lazy(() => import('./fleet/FleetHubPage'));
@@ -206,6 +213,8 @@ const Navigation = () => {
             <Route path="sensors" element={<SensorsPage />} />
             <Route path="integrations" element={<IntegrationsPage />} />
             <Route path="privacy" element={<PrivacyPage />} />
+            <Route path="vehicles" element={<DevicesPage />} />
+            <Route path="drivers" element={<DriversPage />} />
           </Route>
 
           <Route path="settings">
@@ -223,12 +232,12 @@ const Navigation = () => {
             <Route path="attributes" element={<ComputedAttributesPage />} />
             <Route path="attribute/:id" element={<ComputedAttributePage />} />
             <Route path="attribute" element={<ComputedAttributePage />} />
-            <Route path="devices" element={<DevicesPage />} />
+            <Route path="devices" element={<KeepQuery to="/fleet/vehicles" />} />
             <Route path="device/:id/connections" element={<DeviceConnectionsPage />} />
             <Route path="device/:id/command" element={<CommandDevicePage />} />
             <Route path="device/:id" element={<DevicePage />} />
             <Route path="device" element={<DevicePage />} />
-            <Route path="drivers" element={<DriversPage />} />
+            <Route path="drivers" element={<KeepQuery to="/fleet/drivers" />} />
             <Route path="driver/:id" element={<DriverPage />} />
             <Route path="driver" element={<DriverPage />} />
             <Route path="fleet-documents" element={<FleetDocumentsPage />} />

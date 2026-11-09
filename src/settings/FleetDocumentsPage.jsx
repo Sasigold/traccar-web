@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Chip, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
+import ValidityTabs from '../fleet/components/ValidityTabs';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import DataTable from '../common/components/table/DataTable';
@@ -82,9 +83,10 @@ const FleetDocumentsPage = () => {
   return (
     <PageLayout
       menu={<SettingsMenu />}
-      breadcrumbs={['settingsTitle', 'fleetDocumentsPage']}
+      breadcrumbs={['fleetTitle', 'fleetDocumentsPage']}
       description={t('fleetDocumentsPageDescription')}
     >
+      <ValidityTabs />
       {status === 'error' && (
         <Alert severity="warning" sx={{ mx: 3, mb: 2 }}>
           {t('fleetConnectionError').replace('{0}', error || '')}
