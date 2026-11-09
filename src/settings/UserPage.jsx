@@ -24,6 +24,7 @@ import EditItemView from './components/EditItemView';
 import CheckboxField from './components/CheckboxField';
 import EditAttributesAccordion from './components/EditAttributesAccordion';
 import FleetRoleSection from './components/FleetRoleSection';
+import { traccarFlagsForRole } from '../common/fleet/permissionsCatalog';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import useUserAttributes from '../common/attributes/useUserAttributes';
 import { sessionActions } from '../store';
@@ -457,7 +458,16 @@ const UserPage = () => {
               disabled={!manager}
             />
           </FormSection>
-          <FleetRoleSection traccarUserId={item.id} />
+          <FleetRoleSection
+            traccarUserId={item.id}
+            onRoleApplied={(role) =>
+              setItem((current) =>
+                role === 'owner' || role === 'admin' || current.administrator
+                  ? current
+                  : { ...current, ...traccarFlagsForRole(role) },
+              )
+            }
+          />
           <EditAttributesAccordion
             attribute={attribute}
             attributes={item.attributes}
