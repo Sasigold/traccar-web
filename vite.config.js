@@ -24,7 +24,7 @@ export default defineConfig(() => ({
     },
   },
   test: {
-    include: ['src/**/*.test.js'],
+    include: ['src/**/*.test.js', 'supabase/functions/**/*.test.js'],
   },
   build: {
     outDir: 'build',

@@ -47,6 +47,7 @@ const DispatchPage = lazy(() => import('./fleet/DispatchPage'));
 const EquipmentPage = lazy(() => import('./fleet/EquipmentPage'));
 const SensorsPage = lazy(() => import('./fleet/SensorsPage'));
 const IntegrationsPage = lazy(() => import('./fleet/IntegrationsPage'));
+const ApiDocsPage = lazy(() => import('./fleet/ApiDocsPage'));
 const ReportsHubPage = lazy(() => import('./reports/ReportsHubPage'));
 const TimelineReportPage = lazy(() => import('./reports/TimelineReportPage'));
 const UsageReportPage = lazy(() => import('./reports/UsageReportPage'));
@@ -227,6 +228,7 @@ const Navigation = () => {
             <Route path="equipment" element={<EquipmentPage />} />
             <Route path="sensors" element={<SensorsPage />} />
             <Route path="integrations" element={<IntegrationsPage />} />
+            <Route path="integrations/api" element={<ApiDocsPage />} />
             <Route path="privacy" element={<PrivacyPage />} />
             <Route path="vehicles" element={<DevicesPage />} />
             <Route path="vehicle/new" element={<VehicleWizardPage />} />

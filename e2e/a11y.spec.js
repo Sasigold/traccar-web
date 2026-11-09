@@ -10,6 +10,7 @@ const pages = [
   ['preferences', '/settings/preferences'],
   ['devices', '/fleet/vehicles'],
   ['fleet hub', '/fleet'],
+  ['public API', '/fleet/integrations/api'],
   ['validity', '/fleet/expiries?status=all'],
   ['battery and temperature', '/fleet/sensors'],
   ['dispatch', '/fleet/dispatch'],

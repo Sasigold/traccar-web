@@ -20,6 +20,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 import { makeStyles } from 'tss-react/mui';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
@@ -121,6 +122,7 @@ const KeyDialog = ({ onClose, onSaved }) => {
             <TextField
               select
               label={t('fleetApiKeyScope')}
+              helperText={t('apiDocsReadOnlyNote')}
               value={scope}
               onChange={(event) => setScope(event.target.value)}
             >
@@ -502,8 +504,16 @@ const IntegrationsPage = () => {
         )}
       </DataTable>
       {view === 'keys' && canManage && (
-        <Alert severity="info" sx={{ mx: 3, my: 2 }}>
-          {t('fleetApiKeyGatewayNote')}
+        <Alert
+          severity="info"
+          sx={{ mx: 3, my: 2 }}
+          action={
+            <Button component={RouterLink} to="/fleet/integrations/api" size="small">
+              {t('apiDocsOpen')}
+            </Button>
+          }
+        >
+          {t('apiDocsNote')}
         </Alert>
       )}
       {dialog?.type === 'key' && <KeyDialog onClose={() => setDialog(null)} onSaved={reload} />}

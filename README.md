@@ -48,7 +48,8 @@ default language and full RTL.
 and every source asset live in [`brand/`](brand/). `npm run lint` blocks raw colors outside the design
 tokens in `src/common/theme/tokens.js`. Deploy with `sh deploy/deploy.sh`,
 which builds and uploads `build/` into the Traccar container's web directory on the VPS
-(see `deploy/docker-compose.override.example.yml`).
+(see `deploy/docker-compose.override.example.yml`). Database changes go out with `sh deploy/migrate.sh`
+and the edge functions kept here (the public API) with `sh deploy/functions.sh`.
 
 A customizable **dashboard** (`/dashboard`, second item in the rail) lets every user build their own
 boards from live fleet state, period activity and fleet-database widgets, in any form (KPI, donut,

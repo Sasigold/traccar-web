@@ -481,9 +481,28 @@ The `vf_send_webhooks` pg_cron job (every minute) posts them with `pg_net`, sign
 `X-ViperFleet-Signature: sha256=<HMAC-SHA256(body, secret)>`, and retries with exponential back-off up to
 5 attempts. Without the `pg_net` extension deliveries stay `queued`.
 
-**API keys.** `api_key_lookup(key)` (service role only) returns the organization and scopes of a valid
-key. The public API gateway that calls it (an edge function on the VPS, next to `traccar-auth`) is not in
-this repository yet; until it exists keys can be created and revoked but not used. The screen says so.
+**Public API (INT-01).** Read-only REST, version 1, for Power BI, Excel and other systems:
+`GET <fleet url>/functions/v1/public-api/v1/<resource>` with the key in `X-API-Key` (or
+`Authorization: Bearer`). Resources: vehicles, drivers, assignments, documents, work_orders, issues,
+inspections, incidents, fuel, expenses, monthly_costs, violations, dispatch_jobs. Pages of up to 1,000
+rows (`limit`, `cursor`, and `next` in the answer); `updated_since` for incremental refresh; every row has
+`changed_at`. `GET .../v1/openapi.json?lang=he|en` is the OpenAPI document, and `/fleet/integrations/api`
+explains it in the app, with a Power BI query that pages through a resource.
+- *Where the rules live.* The edge function (`supabase/functions/public-api/`: `core.js` routes and checks,
+  `index.ts` connects it to the database, `resources.js` is the one list of resources) decides nothing about
+  access. `api_authorize(key, scope)` checks the key and counts the request; `api_v1_rows(org, resource, …)`
+  returns one page filtered to the key's organization, without national ID numbers, storage paths or customer
+  tracking links. Both are callable only by the service role (migration `20261111100000_public_api.sql`,
+  tests in `supabase/tests/public_api.test.sql`).
+- *Rate limit.* Per organization, all keys together: `api_limits` (the package; platform administrators
+  set it, default 60 a minute and 20,000 a day); `api_usage` counts per key and minute, kept two days. Over
+  the limit is 429 with `Retry-After`; the `X-RateLimit-*` headers show what is left.
+- *Deploy.* `sh deploy/migrate.sh`, then `sh deploy/functions.sh` (copies the function next to
+  `traccar-auth`, restarts the edge runtime, checks `/v1`; `sh deploy/functions.sh rollback` puts the previous
+  copy back). Optional `PUBLIC_API_URL` on the functions container sets the address used in `next` links;
+  otherwise the `X-Forwarded-*` headers are used.
+- *Not yet.* Writes (the `write` scope is stored but no endpoint writes), Traccar data (positions and trips
+  need a Traccar service account kept in Vault), an OData feed, and the MCP server (AI-07) on the same tools.
 
 **Left out on purpose.**
 - *Per-customer branding (white label).* BRAND.md forbids changing, recoloring or replacing the viper fleet
