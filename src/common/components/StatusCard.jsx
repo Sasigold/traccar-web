@@ -356,13 +356,22 @@ const StatusCard = ({
       <div className={handleClass}>{header}</div>
     );
 
-  const details = (
+  // What the vehicle is doing now (privacy, an alert in focus, a command's reply): shown even
+  // when the phone sheet is at its peek.
+  const notices = (
     <>
       {privacy && (
         <Alert severity="info" icon={<VisibilityOffRoundedIcon />} className={classes.privacy}>
           {t(privacy === 'private' ? 'privacyHiddenPrivate' : 'privacyHiddenHours')}
         </Alert>
       )}
+      <FocusedEventBanner deviceId={deviceId} />
+      <CommandStatus deviceId={deviceId} />
+    </>
+  );
+
+  const details = (
+    <>
       {position && <TelemetryStrip position={position} device={device} />}
       {position && (
         <div className={classes.content}>
@@ -409,8 +418,6 @@ const StatusCard = ({
           {t('cardDriverName').replace('{0}', driverName)}
         </div>
       )}
-      <FocusedEventBanner deviceId={deviceId} />
-      <CommandStatus deviceId={deviceId} />
     </>
   );
 
@@ -495,7 +502,12 @@ const StatusCard = ({
                 sheetRef={setStatusCardElement}
                 topInset={theme.dimensions.topBarHeightMobile + 8}
                 handle={top()}
-                peek={actionsBlock}
+                peek={
+                  <>
+                    {notices}
+                    {actionsBlock}
+                  </>
+                }
               >
                 {details}
               </BottomSheet>
@@ -510,6 +522,7 @@ const StatusCard = ({
             >
               <Card elevation={0} className={classes.card} ref={setStatusCardElement}>
                 {top('draggable-header')}
+                {notices}
                 {details}
                 {actionsBlock}
               </Card>
