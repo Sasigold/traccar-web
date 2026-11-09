@@ -114,6 +114,7 @@ export const fakeFleet = async (
       Object.entries(tables).map(([name, rows]) => [name, rows.map((row) => ({ ...row }))]),
     ),
     files: new Map(),
+    removedFiles: [],
     requests: [],
     counters: {},
   };
@@ -259,6 +260,16 @@ export const fakeFleet = async (
       return file
         ? route.fulfill({ status: 200, contentType: file.type, body: file.body })
         : route.fulfill({ status: 404, body: '' });
+    }
+    // Bulk delete: DELETE object/<bucket> { prefixes: [paths] }.
+    if (path.startsWith('object/') && request.method() === 'DELETE') {
+      const { prefixes = [] } = request.postDataJSON() || {};
+      const removed = prefixes.filter((key) => state.files.delete(key));
+      state.removedFiles.push(...prefixes);
+      return json(
+        route,
+        removed.map((name) => ({ name })),
+      );
     }
     if (path.startsWith('object/') && request.method() === 'POST') {
       const key = path.replace(/^object\/[^/]+\//, '');

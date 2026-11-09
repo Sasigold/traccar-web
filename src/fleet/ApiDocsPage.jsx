@@ -21,6 +21,7 @@ import FileDownloadRoundedIcon from '@mui/icons-material/FileDownloadRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded';
 import TableChartRoundedIcon from '@mui/icons-material/TableChartRounded';
+import { downloadJson } from '../common/util/downloadFile';
 import { useLocalization, useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import SettingsMenu from '../settings/components/SettingsMenu';
@@ -128,15 +129,7 @@ const CodeBlock = ({ code, label }) => {
   );
 };
 
-const download = (name, value) => {
-  const blob = new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = name;
-  anchor.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-};
+const download = downloadJson;
 
 // /fleet/integrations/api (INT-01): how to read the fleet data from Power BI, Excel or another
 // system with an API key, the resources, the limits and the OpenAPI document.

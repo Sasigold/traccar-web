@@ -1,9 +1,15 @@
 import { useReducer, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { useTheme } from '@mui/material/styles';
 import {
   Alert,
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  MenuItem,
   FormControlLabel,
   Switch,
   Table,
@@ -21,6 +27,7 @@ import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import ManageSearchRoundedIcon from '@mui/icons-material/ManageSearchRounded';
+import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import SettingsMenu from '../settings/components/SettingsMenu';
@@ -31,6 +38,14 @@ import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import { DEFAULT_POLICY } from '../common/fleet/privacy';
 import FleetNotice from './components/FleetNotice';
+import { privacyRegister } from '../common/fleet/privacyRegister';
+import printDocument from './components/printDocument';
+import { openLetterWindow } from './components/printTransferLetter';
+import { telemetryStatus } from '../common/telemetry/install';
+import { messagesActions } from '../store';
+import { fleetConfig } from '../common/fleet/config';
+import { FILES_BUCKET } from './fleetData';
+import { downloadJson } from '../common/util/downloadFile';
 
 const useStyles = makeStyles()((theme) => ({
   page: {
@@ -437,6 +452,158 @@ const ViewLogSection = ({ log }) => {
   );
 };
 
+// SEC-12: an employee's requests: see the data kept about them, or have the personal details
+// erased when they leave; and the record of processing activities, to print.
+const EmployeeRequestsSection = ({ drivers, policy, onDone }) => {
+  const { classes } = useStyles();
+  const t = useTranslation();
+  const theme = useTheme();
+  const dispatch = useDispatch();
+  const profile = useFleetProfile();
+  const [driverId, setDriverId] = useState('');
+  const [erasing, setErasing] = useState(false);
+  const [typed, setTyped] = useState('');
+  const [busy, setBusy] = useState(false);
+  const living = drivers.filter((driver) => !driver.erased_at);
+  const driver = living.find((item) => item.id === driverId);
+
+  const exportData = useCatch(async () => {
+    const data = unwrap(
+      await getFleetClient().rpc('privacy_subject_export', { p_driver: driverId }),
+    );
+    const date = new Date().toISOString().slice(0, 10);
+    // No name in the file name: the file sits in a downloads folder.
+    const name = driverId.slice(0, 8);
+    downloadJson(`viper-fleet_employee-data_${name}_${date}.json`, data);
+    onDone();
+  });
+
+  const erase = useCatch(async () => {
+    setBusy(true);
+    try {
+      const result = unwrap(
+        await getFleetClient().rpc('privacy_erase_driver', { p_driver: driverId }),
+      );
+      // The database removed the rows; the files go through storage.
+      const byBucket = new Map();
+      (result.files || []).forEach(({ bucket, path }) =>
+        byBucket.set(bucket, [...(byBucket.get(bucket) || []), path]),
+      );
+      for (const [bucket, paths] of byBucket) {
+        const name = bucket === 'documents' ? fleetConfig.bucket : FILES_BUCKET;
+        unwrap(await getFleetClient().storage.from(name).remove(paths));
+      }
+      dispatch(
+        messagesActions.push({
+          message: t('privacyEraseDone').replace('{0}', (result.files || []).length),
+          severity: 'success',
+        }),
+      );
+      setErasing(false);
+      setTyped('');
+      setDriverId('');
+      onDone();
+    } finally {
+      setBusy(false);
+    }
+  });
+
+  const printRegister = useCatch(async () => {
+    const win = openLetterWindow();
+    if (!win) {
+      return;
+    }
+    const organization = unwrap(
+      await getFleetClient()
+        .from('organizations')
+        .select('name')
+        .eq('id', profile.org_id)
+        .maybeSingle(),
+    );
+    const status = telemetryStatus();
+    printDocument(
+      win,
+      {
+        organization: organization?.name || '',
+        date: formatTime(new Date(), 'date'),
+        ...privacyRegister(t, {
+          policy,
+          services: { messaging: true, errors: status.errors, analytics: status.analytics },
+        }),
+      },
+      {
+        title: t('privacyRegisterTitle'),
+        direction: theme.direction,
+        fontFamily: theme.typography.fontFamily,
+      },
+    );
+  });
+
+  return (
+    <FormSection
+      title={t('privacyRequests')}
+      description={t('privacyRequestsHelp')}
+      icon={<BadgeRoundedIcon />}
+    >
+      <TextField
+        select
+        label={t('privacyRequestsDriver')}
+        value={driverId}
+        onChange={(event) => setDriverId(event.target.value)}
+      >
+        {living.map((item) => (
+          <MenuItem key={item.id} value={item.id}>
+            {item.full_name || item.id}
+          </MenuItem>
+        ))}
+      </TextField>
+      <div className={classes.actions}>
+        <Button variant="outlined" onClick={exportData} disabled={!driver}>
+          {t('privacyExportData')}
+        </Button>
+        <Button
+          variant="outlined"
+          color="error"
+          onClick={() => setErasing(true)}
+          disabled={!driver}
+        >
+          {t('privacyEraseData')}
+        </Button>
+        <Button onClick={printRegister}>{t('privacyRegisterPrint')}</Button>
+      </div>
+      {erasing && driver && (
+        <Dialog open onClose={() => setErasing(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>{t('privacyEraseTitle').replace('{0}', driver.full_name || '')}</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" sx={{ mb: 2 }}>
+              {t('privacyEraseExplain')}
+            </Typography>
+            <TextField
+              fullWidth
+              label={t('privacyEraseType').replace('{0}', driver.full_name || '')}
+              value={typed}
+              onChange={(event) => setTyped(event.target.value)}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setErasing(false)} autoFocus>
+              {t('sharedCancel')}
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={erase}
+              disabled={busy || typed.trim() !== (driver.full_name || '').trim()}
+            >
+              {t('privacyEraseConfirm')}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+    </FormSection>
+  );
+};
+
 // Fleet → Privacy (ISR-03): what the organization hides, tells its employees and records.
 const PrivacyPage = () => {
   const { classes } = useStyles();
@@ -455,7 +622,7 @@ const PrivacyPage = () => {
     const [policy, notices, drivers, consents, periods, log] = await Promise.all([
       client.from('privacy_policies').select('*').maybeSingle(),
       client.from('privacy_notices').select('*').order('version', { ascending: false }),
-      client.from('drivers').select('id, full_name, status').order('full_name'),
+      client.from('drivers').select('id, full_name, status, erased_at').order('full_name'),
       client.from('privacy_consents').select('driver_id, notice_version, method, consented_at'),
       client
         .from('privacy_private_periods')
@@ -498,6 +665,7 @@ const PrivacyPage = () => {
           />
           <PeriodsSection periods={data.periods} onSaved={reload} />
           <ViewLogSection log={data.log} />
+          <EmployeeRequestsSection drivers={data.drivers} policy={data.policy} onDone={reload} />
         </div>
       )}
     </PageLayout>
