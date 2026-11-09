@@ -1,5 +1,8 @@
 import { useMemo } from 'react';
 import ViewTimelineRoundedIcon from '@mui/icons-material/ViewTimelineRounded';
+import DonutLargeRoundedIcon from '@mui/icons-material/DonutLargeRounded';
+import PaidRoundedIcon from '@mui/icons-material/PaidRounded';
+import MonitorHeartRoundedIcon from '@mui/icons-material/MonitorHeartRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
@@ -70,6 +73,15 @@ export const useReportsSections = () => {
               icon: ViewTimelineRoundedIcon,
               path: '/reports/timeline',
               match: exact('/reports/timeline'),
+              carry: true,
+            },
+            {
+              id: 'usage',
+              descriptionKey: 'reportUsageDescription',
+              titleKey: 'reportUsage',
+              icon: DonutLargeRoundedIcon,
+              path: '/reports/usage',
+              match: exact('/reports/usage'),
               carry: true,
             },
             {
@@ -190,6 +202,16 @@ export const useReportsSections = () => {
           titleKey: 'reportsGroupCosts',
           items: [
             {
+              id: 'costPerKm',
+              descriptionKey: 'reportCostPerKmDescription',
+              titleKey: 'reportCostPerKm',
+              icon: PaidRoundedIcon,
+              path: '/reports/cost-per-km',
+              match: exact('/reports/cost-per-km'),
+              carry: true,
+              visible: fleetCosts,
+            },
+            {
               id: 'costs',
               descriptionKey: 'fleetCostsPageDescription',
               titleKey: 'fleetCostsPage',
@@ -222,6 +244,15 @@ export const useReportsSections = () => {
           id: 'tools',
           titleKey: 'reportsGroupTools',
           items: [
+            {
+              id: 'deviceHealth',
+              descriptionKey: 'reportDeviceHealthDescription',
+              titleKey: 'reportDeviceHealth',
+              icon: MonitorHeartRoundedIcon,
+              path: '/reports/device-health',
+              match: exact('/reports/device-health'),
+              carry: true,
+            },
             {
               id: 'scheduled',
               descriptionKey: 'reportScheduledDescription',

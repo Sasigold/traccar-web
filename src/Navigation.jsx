@@ -49,6 +49,9 @@ const SensorsPage = lazy(() => import('./fleet/SensorsPage'));
 const IntegrationsPage = lazy(() => import('./fleet/IntegrationsPage'));
 const ReportsHubPage = lazy(() => import('./reports/ReportsHubPage'));
 const TimelineReportPage = lazy(() => import('./reports/TimelineReportPage'));
+const UsageReportPage = lazy(() => import('./reports/UsageReportPage'));
+const CostPerKmReportPage = lazy(() => import('./reports/CostPerKmReportPage'));
+const DeviceHealthReportPage = lazy(() => import('./reports/DeviceHealthReportPage'));
 const CombinedReportPage = lazy(() => import('./reports/CombinedReportPage'));
 const PositionsReportPage = lazy(() => import('./reports/PositionsReportPage'));
 const ServerPage = lazy(() => import('./settings/ServerPage'));
@@ -294,6 +297,9 @@ const Navigation = () => {
             <Route index element={<ReportsHubPage />} />
             <Route path="combined" element={<CombinedReportPage />} />
             <Route path="timeline" element={<TimelineReportPage />} />
+            <Route path="usage" element={<UsageReportPage />} />
+            <Route path="cost-per-km" element={<CostPerKmReportPage />} />
+            <Route path="device-health" element={<DeviceHealthReportPage />} />
             <Route path="chart" element={<ChartReportPage />} />
             <Route path="events" element={<EventReportPage />} />
             <Route path="geofences" element={<GeofenceReportPage />} />

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Button, ButtonGroup, Menu, MenuItem, Typography } from '@mui/material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDownRounded';
+import { useTranslation } from './LocalizationProvider';
 
 const SplitButton = ({
   fullWidth,
@@ -12,6 +13,7 @@ const SplitButton = ({
   selected,
   setSelected,
 }) => {
+  const t = useTranslation();
   const anchorRef = useRef();
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
 
@@ -23,7 +25,14 @@ const SplitButton = ({
             {options[selected]}
           </Typography>
         </Button>
-        <Button fullWidth={false} size="small" onClick={() => setMenuAnchorEl(anchorRef.current)}>
+        <Button
+          fullWidth={false}
+          size="small"
+          aria-label={t('a11yMoreActions')}
+          aria-haspopup="menu"
+          aria-expanded={Boolean(menuAnchorEl)}
+          onClick={() => setMenuAnchorEl(anchorRef.current)}
+        >
           <ArrowDropDownIcon />
         </Button>
       </ButtonGroup>
