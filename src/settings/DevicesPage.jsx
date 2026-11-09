@@ -1,4 +1,4 @@
-import { useCallback, useReducer, useState } from 'react';
+import { useCallback, useMemo, useReducer, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
@@ -10,7 +10,14 @@ import {
   Switch,
   Typography,
   Link,
+  Button,
+  Checkbox,
 } from '@mui/material';
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
+import ImportDialog from '../fleet/components/ImportDialog';
+import BulkVehicleBar from './components/BulkVehicleBar';
+import { importEntity } from '../common/fleet/bulkImport';
+import { digitsOf } from '../common/util/israeliFields';
 import { makeStyles } from 'tss-react/mui';
 import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
 import DnsRoundedIcon from '@mui/icons-material/DnsRounded';
@@ -88,6 +95,34 @@ const DevicesPage = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [showAll, setShowAll] = usePersistedState('showAllDevices', false);
   const [hasMore, setHasMore] = useState(true);
+  // ADM-13: import from a spreadsheet, and actions on the ticked rows.
+  const [importing, setImporting] = useState(false);
+  const [selected, setSelected] = useState(() => new Set());
+  const storeDevices = useSelector((state) => state.devices.items);
+  const existing = useMemo(() => {
+    const all = Object.values(storeDevices);
+    return {
+      identifiers: new Set(all.map((device) => String(device.uniqueId).toLowerCase())),
+      plates: new Set(
+        all.map((device) => digitsOf(device.attributes?.plateNumber)).filter(Boolean),
+      ),
+    };
+  }, [storeDevices]);
+  const groupsByName = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.values(groups).map((group) => [group.name.toLowerCase(), group.id]),
+      ),
+    [groups],
+  );
+  const toggle = (id) =>
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const chosen = items.filter((item) => selected.has(item.id));
 
   const loadItems = useCallback(
     async (offset, signal) => {
@@ -115,13 +150,16 @@ const DevicesPage = () => {
   );
 
   // The list loads 50 at a time while scrolling; the export always takes every matching device.
-  const handleExport = async () => {
-    const query = new URLSearchParams({ all: showAll });
-    if (searchKeyword) {
-      query.append('keyword', searchKeyword);
+  const handleExport = async (only) => {
+    let allItems = only;
+    if (!allItems) {
+      const query = new URLSearchParams({ all: showAll });
+      if (searchKeyword) {
+        query.append('keyword', searchKeyword);
+      }
+      const response = await fetchOrThrow(`api/devices?${query.toString()}`);
+      allItems = await response.json();
     }
-    const response = await fetchOrThrow(`api/devices?${query.toString()}`);
-    const allItems = await response.json();
     const data = allItems.map((item) => ({
       [t('sharedName')]: item.name,
       [t('fleetPlateNumber')]: item.attributes?.plateNumber,
@@ -149,7 +187,7 @@ const DevicesPage = () => {
     handler: (deviceId) => navigate(`/settings/device/${deviceId}/connections`),
   };
 
-  const columnCount = manager ? 12 : 11;
+  const columnCount = (manager ? 12 : 11) + (deviceReadonly ? 0 : 1);
 
   return (
     <PageLayout
@@ -159,27 +197,52 @@ const DevicesPage = () => {
     >
       <DataTable
         toolbar={
-          <TableToolbar
-            search={{ value: searchKeyword, onChange: setSearchKeyword }}
-            count={items.length}
-            addPath="/fleet/vehicle/new"
-            addDisabled={deviceReadonly}
-            exportHandler={handleExport}
-            actions={
-              manager && (
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={showAll}
-                      onChange={(e) => setShowAll(e.target.checked)}
+          <>
+            <TableToolbar
+              search={{ value: searchKeyword, onChange: setSearchKeyword }}
+              count={items.length}
+              addPath="/fleet/vehicle/new"
+              addDisabled={deviceReadonly}
+              exportHandler={() => handleExport()}
+              actions={
+                <>
+                  {!deviceReadonly && (
+                    <Button
                       size="small"
+                      variant="outlined"
+                      startIcon={<UploadFileRoundedIcon />}
+                      onClick={() => setImporting(true)}
+                    >
+                      {t('importFromExcel')}
+                    </Button>
+                  )}
+                  {manager && (
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={showAll}
+                          onChange={(e) => setShowAll(e.target.checked)}
+                          size="small"
+                        />
+                      }
+                      label={t('notificationAlways')}
                     />
-                  }
-                  label={t('notificationAlways')}
-                />
-              )
-            }
-          />
+                  )}
+                </>
+              }
+            />
+            {chosen.length > 0 && (
+              <BulkVehicleBar
+                devices={chosen}
+                onClear={() => setSelected(new Set())}
+                onExport={() => handleExport(chosen)}
+                onDone={() => {
+                  setSelected(new Set());
+                  reload();
+                }}
+              />
+            )}
+          </>
         }
         empty={!hasMore && items.length === 0}
         emptyState={{
@@ -190,6 +253,21 @@ const DevicesPage = () => {
       >
         <TableHead>
           <TableRow>
+            {!deviceReadonly && (
+              <TableCell padding="checkbox">
+                <Checkbox
+                  size="small"
+                  checked={items.length > 0 && chosen.length === items.length}
+                  indeterminate={chosen.length > 0 && chosen.length < items.length}
+                  onChange={(event) =>
+                    setSelected(
+                      event.target.checked ? new Set(items.map((item) => item.id)) : new Set(),
+                    )
+                  }
+                  slotProps={{ input: { 'aria-label': t('bulkSelectAll') } }}
+                />
+              </TableCell>
+            )}
             <TableCell>{t('sharedName')}</TableCell>
             <TableCell>{t('deviceStatus')}</TableCell>
             <TableCell>{t('fleetPlateNumber')}</TableCell>
@@ -210,7 +288,19 @@ const DevicesPage = () => {
             const color = statusColor(theme, item.status);
             const validity = entityExpiryStatus(item, vehicleExpiryFields);
             return (
-              <TableRow key={item.id} hover>
+              <TableRow key={item.id} hover selected={selected.has(item.id)}>
+                {!deviceReadonly && (
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      size="small"
+                      checked={selected.has(item.id)}
+                      onChange={() => toggle(item.id)}
+                      slotProps={{
+                        input: { 'aria-label': t('bulkSelectRow').replace('{0}', item.name) },
+                      }}
+                    />
+                  </TableCell>
+                )}
                 <TableCell>
                   <span className={classes.name}>
                     <DeviceTile category={item.category} status={item.status} size={32} />
@@ -280,6 +370,21 @@ const DevicesPage = () => {
         </TableBody>
       </DataTable>
       <AddFab editPath="/fleet/vehicle/new" disabled={deviceReadonly} />
+      {importing && (
+        <ImportDialog
+          kind="vehicles"
+          existing={existing}
+          save={async (values) => {
+            await fetchOrThrow('api/devices', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(importEntity('vehicles', values, { groups: groupsByName })),
+            });
+          }}
+          onClose={() => setImporting(false)}
+          onImported={reload}
+        />
+      )}
     </PageLayout>
   );
 };

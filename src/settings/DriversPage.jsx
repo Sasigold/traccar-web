@@ -1,5 +1,9 @@
-import { useCallback, useReducer, useState } from 'react';
-import { Chip, TableRow, TableCell, TableHead, TableBody } from '@mui/material';
+import { useCallback, useMemo, useReducer, useState } from 'react';
+import { Button, Chip, TableRow, TableCell, TableHead, TableBody } from '@mui/material';
+import { useSelector } from 'react-redux';
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
+import ImportDialog from '../fleet/components/ImportDialog';
+import { importEntity } from '../common/fleet/bulkImport';
 import { useAsyncTask, useScrollToLoad, pageSize } from '../reactHelper';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
@@ -38,6 +42,17 @@ const DriversPage = () => {
 
   const [reloadKey, reload] = useReducer((k) => k + 1, 0);
   const [items, setItems] = useState([]);
+  // ADM-13: drivers from a spreadsheet.
+  const [importing, setImporting] = useState(false);
+  const storeDrivers = useSelector((state) => state.drivers.items);
+  const existing = useMemo(
+    () => ({
+      identifiers: new Set(
+        Object.values(storeDrivers).map((driver) => String(driver.uniqueId).toLowerCase()),
+      ),
+    }),
+    [storeDrivers],
+  );
   const [searchKeyword, setSearchKeyword] = useState('');
   const [hasMore, setHasMore] = useState(true);
   const [licenseFilter, setLicenseFilter] = useState('all');
@@ -81,6 +96,18 @@ const DriversPage = () => {
           <TableToolbar
             search={{ value: searchKeyword, onChange: setSearchKeyword }}
             addPath="/settings/driver"
+            actions={
+              !readonly && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<UploadFileRoundedIcon />}
+                  onClick={() => setImporting(true)}
+                >
+                  {t('importFromExcel')}
+                </Button>
+              )
+            }
             filters={licenseFilters.map((key) => (
               <Chip
                 key={key}
@@ -155,6 +182,21 @@ const DriversPage = () => {
         </TableBody>
       </DataTable>
       <AddFab editPath="/settings/driver" />
+      {importing && (
+        <ImportDialog
+          kind="drivers"
+          existing={existing}
+          save={async (values) => {
+            await fetchOrThrow('api/drivers', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(importEntity('drivers', values)),
+            });
+          }}
+          onClose={() => setImporting(false)}
+          onImported={reload}
+        />
+      )}
     </PageLayout>
   );
 };
