@@ -217,7 +217,9 @@ today Morning (Green Invoice). No direct connection to the Tax Authority is buil
   public Postman collection and JSON schema). Only platform administrators may call it (their fleet JWT is
   checked with `is_platform_admin()`). Before calling the provider it claims the bill in the database
   (`billing_document_claim`), so a double click or two administrators never make two tax documents; a claim
-  left "working" is released by hand after checking the provider. After issuing it reads the document back
+  left "working" is released by hand after checking the provider. A definite refusal (a 4xx answer, or a failure before
+  the document was sent) frees the bill; an unknown outcome (no answer, a 5xx, no document id) keeps it locked with
+  `unknown_outcome` in `official_error`, so a retry can never issue a second tax document. After issuing it reads the document back
   and flags a total that differs from the bill's by even one agora.
 - *The payment notification* (`/notify`) is not signed by the provider, so it must carry the bill's random
   token, and the document it names is read back from Morning and must be an invoice-receipt for the bill's

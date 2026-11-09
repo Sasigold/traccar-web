@@ -143,5 +143,21 @@ do $$ begin
   assert public.he_days(1) = 'יום אחד' and public.he_days(-3) = '3 ימים', 'he_days';
 end $$;
 
+-- A channel that cannot send (email here: no channel set up) never fills the batch: its old
+-- deliveries stay queued while a newer SMS still goes out. (The earlier steps' queue is set aside.)
+update public.notification_deliveries set status = 'skipped' where status = 'queued';
+insert into public.notification_deliveries (id, org_id, kind, channel, address, body, created_at) values
+  ('d0000000-0000-0000-0000-000000000011', 'a0000000-0000-0000-0000-000000000000', 'test', 'email', 'a@example.com', 'old', now() - interval '3 hours'),
+  ('d0000000-0000-0000-0000-000000000012', 'a0000000-0000-0000-0000-000000000000', 'test', 'email', 'b@example.com', 'old', now() - interval '2 hours'),
+  ('d0000000-0000-0000-0000-000000000013', 'a0000000-0000-0000-0000-000000000000', 'test', 'sms', '0525556666', 'new', now());
+do $$ begin
+  assert public.messaging_dispatch(2) >= 1, 'the SMS goes out despite older email waiting';
+  assert (select status from public.notification_deliveries
+           where id = 'd0000000-0000-0000-0000-000000000013') = 'sending', 'the new SMS is sending';
+  assert (select count(*) from public.notification_deliveries
+           where id in ('d0000000-0000-0000-0000-000000000011', 'd0000000-0000-0000-0000-000000000012')
+             and status = 'queued') = 2, 'the email deliveries still wait for their channel';
+end $$;
+
 rollback;
 \echo 'messaging.test.sql: all assertions passed'

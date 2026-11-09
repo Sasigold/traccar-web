@@ -2962,5 +2962,7 @@
     "shellEnvStaging": "סביבת בדיקות",
     "shellEnvDevelopment": "סביבת פיתוח",
     "shellEnvStagingShort": "בדיקות",
-    "shellEnvDevelopmentShort": "פיתוח"
+    "shellEnvDevelopmentShort": "פיתוח",
+    "privacyExportBlockedRange": "בתקופה הזו יש מיקומים מוסתרים (מחוץ לשעות העבודה או בזמן פרטי), ולכן אי אפשר להוריד אותם כקובץ. אפשר לראות את הדוח על המסך, בלי המיקומים המוסתרים.",
+    "billingDocError_provider_unknown": "לא התקבלה תשובה ברורה מ-Morning, וייתכן שהמסמך נוצר בכל זאת. החשבון נשאר נעול כדי שלא תופק חשבונית כפולה: בדקו ב-Morning, ואם המסמך לא נוצר, לחצו \"שחרור\" ונסו שוב."
 }

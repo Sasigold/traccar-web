@@ -91,6 +91,24 @@ const ensureClient = async ({ db, morning, customer }) => {
 
 const providerReady = (provider) => Boolean(provider?.enabled);
 
+// After a failed call: a definite refusal, or a failure before the document was sent, frees the
+// bill for another try. Anything else (no answer, a server error, an answer without a document id)
+// may mean the document exists, so the claim stays "working" until an administrator checks the
+// provider and releases it: a retry could otherwise issue a second tax document.
+const settleFailure = async ({ db, invoiceId, stateKey, attempted, error }) => {
+  const message = String(error.message || error).slice(0, 450);
+  const unknown = attempted && !(error instanceof ProviderError && error.definite);
+  await db.updateInvoice(
+    invoiceId,
+    unknown
+      ? { official_error: `unknown_outcome: ${message}` }
+      : { [stateKey]: 'failed', official_error: message },
+  );
+  return unknown
+    ? fail(502, 'provider_unknown', message)
+    : fail(error.status ?? 502, error.code ?? 'provider_error', error.message);
+};
+
 const issue = async ({ db, morningFor }, invoiceId) => {
   const claim = await db.claim(invoiceId, 'invoice');
   if (claim?.error) {
@@ -111,19 +129,23 @@ const issue = async ({ db, morningFor }, invoiceId) => {
 
   let created;
   let morning;
+  let attempted = false;
   try {
     morning = morningFor(provider, await db.credentials());
     const clientId = await ensureClient({ db, morning, customer });
+    attempted = true;
     created = await morning.addDocument(invoiceDocument({ invoice, lines, clientId, paymentType }));
     if (!created?.id) {
-      throw new ProviderError('Morning: no document id in the answer');
+      throw new ProviderError('Morning: no document id in the answer', { definite: false });
     }
   } catch (error) {
-    await db.updateInvoice(invoice.id, {
-      official_state: 'failed',
-      official_error: String(error.message || error).slice(0, 500),
+    return settleFailure({
+      db,
+      invoiceId: invoice.id,
+      stateKey: 'official_state',
+      attempted,
+      error,
     });
-    return fail(error.status ?? 502, error.code ?? 'provider_error', error.message);
   }
 
   // The document exists at the provider: record it whatever happens next.
@@ -177,19 +199,23 @@ const receipt = async ({ db, morningFor }, invoiceId) => {
     return fail(409, 'payment_method');
   }
   let created;
+  let attempted = false;
   try {
     const morning = morningFor(provider, await db.credentials());
     const clientId = await ensureClient({ db, morning, customer });
+    attempted = true;
     created = await morning.addDocument(receiptDocument({ invoice, clientId, paymentType }));
     if (!created?.id) {
-      throw new ProviderError('Morning: no document id in the answer');
+      throw new ProviderError('Morning: no document id in the answer', { definite: false });
     }
   } catch (error) {
-    await db.updateInvoice(invoice.id, {
-      receipt_state: 'failed',
-      official_error: String(error.message || error).slice(0, 500),
+    return settleFailure({
+      db,
+      invoiceId: invoice.id,
+      stateKey: 'receipt_state',
+      attempted,
+      error,
     });
-    return fail(error.status ?? 502, error.code ?? 'provider_error', error.message);
   }
   const patch = {
     receipt_state: 'done',

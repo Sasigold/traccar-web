@@ -26,7 +26,7 @@ import scheduleReport from './common/scheduleReport';
 import MapScale from '../map/MapScale';
 import { useRestriction } from '../common/util/permissions';
 import CollectionActions from '../settings/components/CollectionActions';
-import { privatePositions } from '../common/fleet/privacyData';
+import { exportTouchesHidden, privatePositions } from '../common/fleet/privacyData';
 import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import SelectField from '../common/components/SelectField';
@@ -120,6 +120,10 @@ const PositionsReportPage = () => {
   );
 
   const onExport = useCatch(async ({ deviceIds, from, to, format }) => {
+    // The file comes straight from Traccar, without the privacy rules (ISR-03).
+    if (await exportTouchesHidden(deviceIds, from, to)) {
+      throw Error(t('privacyExportBlockedRange'));
+    }
     const query = new URLSearchParams({ from, to });
     if (geofenceId) {
       query.append('geofenceId', geofenceId);

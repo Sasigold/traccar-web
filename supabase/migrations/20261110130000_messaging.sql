@@ -255,12 +255,16 @@ declare
   request record;
   started integer := 0;
 begin
+  -- Only channels that can send now take part: deliveries for a channel that is off or has no key
+  -- stay queued without filling every batch, so they never hold up the other channels.
   for delivery in
-    select * from public.notification_deliveries
-     where status = 'queued' and coalesce(next_attempt_at, created_at) <= now()
-     order by created_at
+    select d.* from public.notification_deliveries d
+     where d.status = 'queued' and coalesce(d.next_attempt_at, d.created_at) <= now()
+       and d.channel in (select c.channel from public.messaging_channels c
+                          where c.enabled and public.messaging_secret(c.channel) is not null)
+     order by d.created_at
      limit p_limit
-     for update skip locked
+     for update of d skip locked
   loop
     if exists (select 1 from public.messaging_optouts o
                 where o.channel = delivery.channel
@@ -284,6 +288,9 @@ begin
 
     select * into request from public.messaging_request(settings, secret, delivery);
     if request.url is null then
+      -- A provider this version cannot send through: say so instead of keeping it queued.
+      update public.notification_deliveries set status = 'failed', last_error = 'unsupported provider'
+       where id = delivery.id;
       continue;
     end if;
     update public.notification_deliveries

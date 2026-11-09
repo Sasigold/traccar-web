@@ -8,7 +8,7 @@ import {
   paymentTypeOf,
   receiptDocument,
 } from '../documents.js';
-import { MORNING_URLS, morningClient } from '../morning.js';
+import { MORNING_URLS, ProviderError, morningClient } from '../morning.js';
 
 const ID = 'b3000000-0000-0000-0000-000000000001';
 const BASE = 'https://api.example.com/functions/v1/billing-documents';
@@ -250,11 +250,9 @@ describe('handle', () => {
       provider,
     });
     const morning = fakeMorning({
+      // Morning answered and refused: nothing was created, so the bill may be tried again.
       addDocument: vi.fn(async () => {
-        throw Object.assign(new Error('Morning: Bad tax id'), {
-          status: 502,
-          code: 'provider_error',
-        });
+        throw new ProviderError('Morning: Bad tax id', { definite: true });
       }),
     });
     const failed = await handle(post('/issue', { invoice_id: ID }), deps(db, morning));
@@ -350,6 +348,95 @@ describe('handle', () => {
       (await (await handle(post('/payment-link', { invoice_id: ID }), deps(off, morning))).json())
         .error.code,
     ).toBe('clearing_disabled');
+  });
+});
+
+describe('an unknown outcome', () => {
+  it('keeps the bill locked when the answer never came', async () => {
+    const db = fakeDb({
+      invoice: openInvoice,
+      lines,
+      customer: { ...customer, provider_client_id: 'k' },
+      provider,
+    });
+    const morning = fakeMorning({
+      addDocument: vi.fn(async () => {
+        throw new ProviderError('Morning: no answer (socket hang up)', {
+          code: 'provider_unknown',
+          definite: false,
+        });
+      }),
+    });
+    const response = await handle(post('/issue', { invoice_id: ID }), deps(db, morning));
+    expect((await response.json()).error.code).toBe('provider_unknown');
+    const patch = db.updateInvoice.mock.calls.at(-1)[1];
+    expect(patch).toEqual({
+      official_error: 'unknown_outcome: Morning: no answer (socket hang up)',
+    });
+    expect(patch).not.toHaveProperty('official_state');
+  });
+
+  it('keeps it locked when the answer has no document id, for receipts too', async () => {
+    const invoice = {
+      ...openInvoice,
+      status: 'paid',
+      paid_at: '2026-11-05',
+      official_id: 'doc-1',
+      official_type: 305,
+    };
+    const db = fakeDb({
+      invoice,
+      lines,
+      customer: { ...customer, provider_client_id: 'k' },
+      provider,
+    });
+    const morning = fakeMorning({ addDocument: vi.fn(async () => ({})) });
+    const response = await handle(post('/receipt', { invoice_id: ID }), deps(db, morning));
+    expect((await response.json()).error.code).toBe('provider_unknown');
+    expect(db.updateInvoice.mock.calls.at(-1)[1]).not.toHaveProperty('receipt_state');
+  });
+
+  it('frees the bill when the failure came before the document was sent', async () => {
+    const db = fakeDb({ invoice: openInvoice, lines, customer, provider });
+    const morning = fakeMorning({
+      addClient: vi.fn(async () => {
+        throw new ProviderError('Morning: no answer', { definite: false });
+      }),
+    });
+    await handle(post('/issue', { invoice_id: ID }), deps(db, morning));
+    expect(morning.addDocument).not.toHaveBeenCalled();
+    expect(db.updateInvoice.mock.calls.at(-1)[1]).toMatchObject({ official_state: 'failed' });
+  });
+
+  it('tells a refusal from a lost answer in the Morning client', async () => {
+    const token = new Response(JSON.stringify({ token: 't' }));
+    const lost = morningClient({
+      fetch: vi.fn(async (url) => {
+        if (url.endsWith('/account/token')) return token.clone();
+        throw new TypeError('fetch failed');
+      }),
+      credentials: { id: 'a', secret: 'b' },
+    });
+    await expect(lost.addDocument({})).rejects.toMatchObject({
+      definite: false,
+      code: 'provider_unknown',
+    });
+    const server = morningClient({
+      fetch: vi.fn(async (url) =>
+        url.endsWith('/account/token') ? token.clone() : new Response('oops', { status: 503 }),
+      ),
+      credentials: { id: 'a', secret: 'b' },
+    });
+    await expect(server.addDocument({})).rejects.toMatchObject({ definite: false });
+    const refused = morningClient({
+      fetch: vi.fn(async (url) =>
+        url.endsWith('/account/token')
+          ? token.clone()
+          : new Response(JSON.stringify({ errorCode: 1, errorMessage: 'bad' }), { status: 400 }),
+      ),
+      credentials: { id: 'a', secret: 'b' },
+    });
+    await expect(refused.addDocument({})).rejects.toMatchObject({ definite: true });
   });
 });
 

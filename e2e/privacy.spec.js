@@ -139,3 +139,31 @@ test('a driver agrees to the notice and turns private mode on', async ({ page })
   await expect.poll(() => calls.some((call) => call.name === 'privacy_private_set')).toBe(true);
   expect(calls.find((call) => call.name === 'privacy_private_set').body).toEqual({ p_on: true });
 });
+
+test('the positions report refuses a file download that would include hidden locations', async ({
+  page,
+}) => {
+  const now = Date.now();
+  await mockFleet(page, {
+    tables: {
+      privacy_private_periods: [
+        {
+          traccar_device_id: 1,
+          started_at: new Date(now - 15 * MINUTE).toISOString(),
+          ended_at: new Date(now - 10 * MINUTE).toISOString(),
+        },
+      ],
+    },
+  });
+  const downloads = [];
+  page.on('request', (request) => {
+    if (/\/api\/positions\/(csv|gpx|kml|kmz)/.test(request.url())) downloads.push(request.url());
+  });
+  const from = new Date(now - 60 * MINUTE).toISOString();
+  const to = new Date(now).toISOString();
+  await gotoReady(page, `/reports/route?deviceId=1&from=${from}&to=${to}`);
+  await page.getByRole('button', { name: 'פעולות נוספות' }).click();
+  await page.getByRole('menuitem', { name: 'ייצוא (CSV)' }).click();
+  await expect(page.getByText(/אי אפשר להוריד אותם כקובץ/)).toBeVisible();
+  expect(downloads).toEqual([]);
+});

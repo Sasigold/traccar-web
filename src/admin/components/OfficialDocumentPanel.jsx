@@ -183,7 +183,11 @@ const OfficialDocumentPanel = ({ invoice, readonly, onChanged }) => {
             )
           }
         >
-          {t('billingDocWorking')}
+          {t(
+            invoice.official_error?.startsWith('unknown_outcome')
+              ? 'billingDocError_provider_unknown'
+              : 'billingDocWorking',
+          )}
         </Alert>
       )}
 

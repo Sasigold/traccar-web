@@ -58,6 +58,17 @@ export const loadPrivacy = async (from, to) => {
   return { policy: { ...DEFAULT_POLICY, ...policy.data }, periods: periods.data || [] };
 };
 
+// Would a download of raw positions for [from, to] include hidden time for any of these vehicles?
+// Downloads (CSV, GPX, KML) come straight from Traccar, which knows nothing of these rules, so they
+// are refused instead of filtered.
+export const exportTouchesHidden = async (deviceIds, from, to) => {
+  const privacy = await loadPrivacy(from, to);
+  return (
+    isPrivacyActive(privacy) &&
+    deviceIds.some((deviceId) => rangeTouchesHidden(privacy, Number(deviceId), from, to))
+  );
+};
+
 // Every look at locations is recorded (data security regulations); a failure never blocks the page.
 export const logPrivacyView = (deviceIds, view, from, to) => {
   const ids = [...new Set((deviceIds || []).map(Number).filter(Number.isFinite))];

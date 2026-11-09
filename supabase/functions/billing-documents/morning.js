@@ -12,12 +12,15 @@ export const MORNING_URLS = {
   sandbox: 'https://sandbox.d.greeninvoice.co.il/api/v1',
 };
 
+// `definite`: the provider answered and refused, so nothing was created. False when the outcome is
+// unknown (no answer, a server error): a document may exist, and retrying could make a second one.
 export class ProviderError extends Error {
-  constructor(message, { status = 502, code = 'provider_error' } = {}) {
+  constructor(message, { status = 502, code = 'provider_error', definite = true } = {}) {
     super(message);
     this.name = 'ProviderError';
     this.status = status;
     this.code = code;
+    this.definite = definite;
   }
 }
 
@@ -41,6 +44,8 @@ export const morningClient = ({ fetch, environment = 'production', credentials }
       const message = body?.errorMessage || `HTTP ${response.status}`;
       throw new ProviderError(`Morning: ${message}`, {
         code: response.status === 401 ? 'provider_auth' : 'provider_error',
+        // A 4xx is a refusal; a 5xx may come after the document was created.
+        definite: response.status < 500,
       });
     }
     return { body, response };
@@ -72,13 +77,21 @@ export const morningClient = ({ fetch, environment = 'production', credentials }
 
   const call = async (method, path, payload) => {
     const bearer = await authorize();
-    const { body } = await parse(
-      await fetch(`${base}${path}`, {
+    let response;
+    try {
+      response = await fetch(`${base}${path}`, {
         method,
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${bearer}` },
         body: payload === undefined ? undefined : JSON.stringify(payload),
-      }),
-    );
+      });
+    } catch (error) {
+      // The request may have reached the provider before the connection dropped.
+      throw new ProviderError(`Morning: no answer (${error.message || error})`, {
+        code: 'provider_unknown',
+        definite: false,
+      });
+    }
+    const { body } = await parse(response);
     return body;
   };
 
