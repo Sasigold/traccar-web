@@ -179,7 +179,7 @@ export const createFleet = (now = Date.now()) => {
       out1: false,
       tripOdometer: 18_400 + step * 12,
       drivingTime: 4_200_000 + step * 5000,
-      driverUniqueId: 'D-1024',
+      driverUniqueId: '1B2C3D4E',
       iccid: '8997201234567890123',
       versionFw: '3.7.12',
       vin: '4V4NC9EH5GN123456',
@@ -227,6 +227,8 @@ export const createFleet = (now = Date.now()) => {
           power: moving ? 14.2 : 12.6,
           totalDistance: (12000 + index * 8000) * 1000,
           ...(index === 1 && { dtcs: 'P0171,P0420' }),
+          // A driver identified by tag, so the card can show and call them.
+          ...(index === 0 && { driverUniqueId: '0A1B2C3D' }),
           ...(device.id === testDeviceId && testAttributes(step, speed, moving)),
         },
       };

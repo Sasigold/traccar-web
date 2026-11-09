@@ -24,7 +24,6 @@ import {
   formatBoolean,
   formatPercentage,
   formatSpeed,
-  formatTime,
 } from '../common/util/formatter';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import { isDeviceMoving, mapIconKey, mapIcons, movingCategories } from '../map/core/preloadImages';
@@ -37,8 +36,7 @@ import { useAttributePreference } from '../common/util/preferences';
 import GeofencesValue from '../common/components/GeofencesValue';
 import DriverValue from '../common/components/DriverValue';
 import MotionBar from './components/MotionBar';
-import { activityOf, activitySince, formatShortDuration } from '../common/util/activity';
-import useMinuteNow from '../common/util/useMinuteNow';
+import useActivityText from '../common/components/useActivityText';
 import { brandTile, statusColor } from '../common/theme/surfaces';
 
 dayjs.extend(relativeTime);
@@ -208,38 +206,12 @@ const DeviceRow = ({ devices, index, style }) => {
 
   const moving = Boolean(position && (position.attributes?.motion || position.speed > 1));
 
-  const now = useMinuteNow();
-  const activity = activityOf(item, position, now);
-
-  // What the vehicle is doing, in words (not only a colour): moving, idling for 12 min,
-  // stopped for 23 min, no recent GPS since 14:02, offline for 3 hours.
-  const activityLabel = () => {
-    const since = activitySince(item, activity);
-    const duration = since ? formatShortDuration(now - since, t) : '';
-    switch (activity) {
-      case 'moving':
-        return [t('activityMoving'), 'success'];
-      case 'idling':
-        return [[t('activityIdling'), duration].filter(Boolean).join(' '), 'warning'];
-      case 'stopped':
-        return [[t('activityStopped'), duration].filter(Boolean).join(' '), 'neutralText'];
-      case 'stale':
-        return [
-          `${t('activityStale')} · ${formatTime(position.fixTime, 'minutes').split(' ').pop()}`,
-          'warning',
-        ];
-      default:
-        return item.lastUpdate
-          ? [`${t('activityOffline')} · ${dayjs(item.lastUpdate).fromNow()}`, 'error']
-          : [t('activityUnknown'), 'neutralText'];
-    }
-  };
+  const { activity, label: activityLabel, tone: activityTone } = useActivityText(item, position);
 
   const secondaryText = () => {
-    const [label, tone] = activityLabel();
     return (
       <>
-        <span className={cx(classes.secondaryValue, classes[tone])}>{label}</span>
+        <span className={cx(classes.secondaryValue, classes[activityTone])}>{activityLabel}</span>
         {secondaryValue && (
           <>
             <span>·</span>

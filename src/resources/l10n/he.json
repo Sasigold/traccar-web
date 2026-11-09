@@ -85,7 +85,7 @@
     "sharedPreferences": "העדפות",
     "sharedPermissions": "הרשאות",
     "sharedConnections": "חיבורים",
-    "sharedExtra": "תוספת",
+    "sharedExtra": "פעולות נוספות",
     "sharedPrimary": "ראשי",
     "sharedSecondary": "משני",
     "sharedTypeString": "טקסט",
@@ -2355,5 +2355,18 @@
     "fleetStatsMoving": "בתנועה",
     "fleetStatsStopped": "עומדים",
     "fleetStatsIdlingCount": "מתוכם בסרק {0}",
-    "fleetStatsNotReporting": "מנותקים"
+    "fleetStatsNotReporting": "מנותקים",
+    "cardReplay": "שחזור",
+    "cardReplayToday": "שחזור היום",
+    "cardDials": "מחוונים",
+    "cardLiveDials": "מחוונים חיים",
+    "cardCommand": "פקודה",
+    "cardDriver": "נהג",
+    "cardMore": "עוד",
+    "cardCall": "התקשרות",
+    "cardWhatsapp": "וואטסאפ",
+    "cardNoDriver": "לא זוהה נהג ברכב",
+    "cardNoDriverPhone": "אין מספר טלפון לנהג",
+    "cardDriverName": "נהג: {0}",
+    "cardWhatsappGreeting": "שלום {0}, "
 }

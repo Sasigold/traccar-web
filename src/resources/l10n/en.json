@@ -85,7 +85,7 @@
     "sharedPreferences": "Preferences",
     "sharedPermissions": "Permissions",
     "sharedConnections": "Connections",
-    "sharedExtra": "Extra",
+    "sharedExtra": "More actions",
     "sharedPrimary": "Primary",
     "sharedSecondary": "Secondary",
     "sharedTypeString": "Text",
@@ -2355,5 +2355,18 @@
     "fleetStatsMoving": "Moving",
     "fleetStatsStopped": "Stopped",
     "fleetStatsIdlingCount": "{0} idling",
-    "fleetStatsNotReporting": "Offline"
+    "fleetStatsNotReporting": "Offline",
+    "cardReplay": "Replay",
+    "cardReplayToday": "Replay today",
+    "cardDials": "Dials",
+    "cardLiveDials": "Live dials",
+    "cardCommand": "Command",
+    "cardDriver": "Driver",
+    "cardMore": "More",
+    "cardCall": "Call",
+    "cardWhatsapp": "WhatsApp",
+    "cardNoDriver": "No driver identified in this vehicle",
+    "cardNoDriverPhone": "The driver has no phone number",
+    "cardDriverName": "Driver: {0}",
+    "cardWhatsappGreeting": "Hi {0}, "
 }
