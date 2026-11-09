@@ -110,8 +110,15 @@ const DevicesPage = () => {
     [reloadKey, loadItems],
   );
 
+  // The list loads 50 at a time while scrolling; the export always takes every matching device.
   const handleExport = async () => {
-    const data = items.map((item) => ({
+    const query = new URLSearchParams({ all: showAll });
+    if (searchKeyword) {
+      query.append('keyword', searchKeyword);
+    }
+    const response = await fetchOrThrow(`api/devices?${query.toString()}`);
+    const allItems = await response.json();
+    const data = allItems.map((item) => ({
       [t('sharedName')]: item.name,
       [t('fleetPlateNumber')]: item.attributes?.plateNumber,
       [t('deviceIdentifier')]: item.uniqueId,
