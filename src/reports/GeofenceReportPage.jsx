@@ -14,6 +14,8 @@ import { useCatch, useCatchCallback } from '../reactHelper';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
 import DataTable from '../common/components/table/DataTable';
+import { privateRows } from '../common/fleet/privacyData';
+import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import SelectField from '../common/components/SelectField';
 import exportExcel from '../common/util/exportExcel';
@@ -44,6 +46,7 @@ const GeofenceReportPage = () => {
     'endTime',
   ]);
   const [items, setItems] = useState([]);
+  const [hiddenRows, setHiddenRows] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const onShow = useCatchCallback(
@@ -57,7 +60,15 @@ const GeofenceReportPage = () => {
         const response = await fetchOrThrow(`api/reports/geofences?${query.toString()}`, {
           headers: { Accept: 'application/json' },
         });
-        setItems(await response.json());
+        // A visit in hidden time would tell where the vehicle was: it is left out.
+        const rows = await response.json();
+        const result = await privateRows(rows, {
+          deviceIds: [...deviceIds, ...rows.map((row) => row.deviceId)],
+          from,
+          to,
+        });
+        setItems(result.rows.filter((row) => !row.privacy));
+        setHiddenRows(result.hidden);
       } finally {
         setLoading(false);
       }
@@ -148,6 +159,7 @@ const GeofenceReportPage = () => {
           )}
         </TableBody>
       </DataTable>
+      {!loading && <PrivacyNote hidden={hiddenRows} kind="rows" padded />}
     </PageLayout>
   );
 };

@@ -14,6 +14,7 @@ import { makeStyles } from 'tss-react/mui';
 import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
 import DnsRoundedIcon from '@mui/icons-material/DnsRounded';
 import { useTheme } from '@mui/material/styles';
+import { useLivePositions } from '../common/fleet/usePrivacy';
 import { useAsyncTask, useScrollToLoad, pageSize } from '../reactHelper';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
@@ -79,7 +80,7 @@ const DevicesPage = () => {
   const deviceReadonly = useDeviceReadonly();
   const coordinateFormat = usePreference('coordinateFormat');
 
-  const positions = useSelector((state) => state.session.positions);
+  const positions = useLivePositions();
 
   const [reloadKey, reload] = useReducer((k) => k + 1, 0);
   const [items, setItems] = useState([]);

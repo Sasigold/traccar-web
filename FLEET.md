@@ -292,6 +292,42 @@ from the notice; after it the company is charged an increased fine, usually four
 Columns `received_at`, `charge_driver`, `charged_at` on `driver_violations`
 (`supabase/migrations/20261110140000_violation_transfer.sql`).
 
+## Employee location privacy
+
+Following the Privacy Protection Authority's guidance on employee location (no tracking outside working
+hours, notice in advance, explicit consent), Amendment 13 and the data security regulations (access log).
+The rules are pure functions in `src/common/fleet/privacy.js` (unit-tested); the tables are in
+`supabase/migrations/20261110150000_privacy.sql` (DB test `supabase/tests/privacy.test.sql`).
+
+- **Policy** (`/fleet/privacy`, permission `privacy.manage`, owners and admins by default): working days and
+  hours in the organization's time zone (a shift past midnight belongs to the day it starts), "hide
+  locations outside working hours", whether drivers may use the private switch, how long positions are kept
+  (recorded for the notice) and how long the view log is kept (two years by default, cleaned nightly by
+  `vf_privacy_cleanup`).
+- **Private mode**: the driver turns it on and off in the driver area (`privacy_private_set`, recorded with the
+  assigned vehicle and time); a manager can end a forgotten one (`privacy_private_end`). Periods change only
+  through these functions.
+- **What is hidden**: the live map, the vehicle card and list (the row says why), the dashboard map, dispatch
+  and POI maps, the command palette and the devices list drop the location of a vehicle that is private or
+  outside working hours now (`useLivePositions`, `useLivePosition`). Replay and the positions and chart
+  reports leave hidden positions out and say how many, with their distance; trips, stops and events keep
+  their times and distance but lose addresses and coordinates; geofence visits in hidden time are left out;
+  the combined report drops the route line of a vehicle whose period touches hidden time. Replay's KML
+  download (served by Traccar) is disabled when anything was hidden.
+- **Notice and consent**: notices are versions that are never edited (`privacy_notices`); drivers agree in the
+  driver area, and a manager records written consent (`privacy_consents`). The page counts who agreed to
+  the current version. The starting text is a template to fill in and review with a lawyer.
+- **View log**: selecting a vehicle on the live map, replay, every report with locations and exports call
+  `privacy_log_view` (vehicles, kind, period). The page shows the latest 200 views.
+
+What it does **not** do, and needs the server (SEC-12):
+
+- Traccar still stores every position, and its API returns them to any user with access. Deleting old
+  positions is `database.historyDays` in the Traccar configuration.
+- Scheduled reports emailed by Traccar and share links that already exist are not filtered.
+- When the fleet database is not reachable, nothing is hidden (Traccar alone has no privacy rules). Pages wait
+  up to 15 seconds for the fleet session before loading.
+
 ## Roadmap stages 2-4
 
 All fleet database screens live under `/fleet` (code in `src/fleet/`, pure logic with unit tests in

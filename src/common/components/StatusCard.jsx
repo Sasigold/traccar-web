@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { Rnd } from 'react-rnd';
 import {
+  Alert,
   Button,
   Card,
   Divider,
@@ -18,6 +19,7 @@ import {
   ListItemText,
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
+import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import { alpha } from '@mui/material/styles';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
@@ -123,6 +125,9 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     flexDirection: 'column',
     justifyContent: 'flex-end',
   },
+  privacy: {
+    margin: theme.spacing(1, 2, 0),
+  },
   content: {
     padding: theme.spacing(0.5, 2, 1.5),
     maxHeight: theme.dimensions.cardContentMaxHeight,
@@ -222,7 +227,14 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
   },
 }));
 
-const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPadding = '0px' }) => {
+const StatusCard = ({
+  deviceId,
+  position,
+  privacy,
+  onClose,
+  disableActions,
+  desktopPadding = '0px',
+}) => {
   const { classes, cx, theme } = useStyles({ desktopPadding });
   const navigate = useNavigate();
   const t = useTranslation();
@@ -336,6 +348,15 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                 </CardMedia>
               ) : (
                 <div className="draggable-header">{header}</div>
+              )}
+              {privacy && (
+                <Alert
+                  severity="info"
+                  icon={<VisibilityOffRoundedIcon />}
+                  className={classes.privacy}
+                >
+                  {t(privacy === 'private' ? 'privacyHiddenPrivate' : 'privacyHiddenHours')}
+                </Alert>
               )}
               {position && <TelemetryStrip position={position} device={device} />}
               {position && (

@@ -4,6 +4,7 @@ import { useTranslation } from './LocalizationProvider';
 import { activityOf, activitySince, formatShortDuration } from '../util/activity';
 import { formatTime } from '../util/formatter';
 import useMinuteNow from '../util/useMinuteNow';
+import { useHiddenReason } from '../fleet/usePrivacy';
 
 dayjs.extend(relativeTime);
 
@@ -12,6 +13,15 @@ dayjs.extend(relativeTime);
 export default (device, position) => {
   const t = useTranslation();
   const now = useMinuteNow();
+  // A vehicle whose location is hidden is not "offline": say why instead (ISR-03).
+  const hidden = useHiddenReason(device?.id);
+  if (hidden) {
+    return {
+      activity: 'hidden',
+      label: t(hidden === 'private' ? 'privacyActivityPrivate' : 'privacyActivityHours'),
+      tone: 'neutralText',
+    };
+  }
   const activity = activityOf(device, position, now);
   const since = activitySince(device, activity);
   const duration = since ? formatShortDuration(now - since, t) : '';

@@ -5,6 +5,7 @@ import SocketController from './SocketController';
 import CachingController from './CachingController';
 import FleetController from './FleetController';
 import FleetAlertsController from './fleet/FleetAlertsController';
+import PrivacyController from './fleet/PrivacyController';
 import { useCatch, useAsyncTask } from './reactHelper';
 import { sessionActions } from './store';
 import UpdateController from './UpdateController';
@@ -90,6 +91,7 @@ const App = () => {
       <CachingController />
       <FleetController />
       <FleetAlertsController />
+      <PrivacyController />
       <UpdateController />
       <MotionController />
       <AppShell>

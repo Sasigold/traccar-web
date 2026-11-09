@@ -1,3 +1,4 @@
+import PrivacyTipRoundedIcon from '@mui/icons-material/PrivacyTipRounded';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
@@ -57,6 +58,7 @@ export const useSettingsSections = () => {
   const fleetDispatch = useFleetPermission('dispatch.read');
   const fleetVehicles = useFleetPermission('vehicles.read');
   const fleetIntegrations = useFleetPermission('integrations.manage');
+  const fleetPrivacy = useFleetPermission('privacy.manage');
 
   return useMemo(() => {
     const profilePath = `/settings/user/${userId}`;
@@ -319,6 +321,15 @@ export const useSettingsSections = () => {
             visible: fleetIntegrations,
           },
           {
+            id: 'privacy',
+            titleKey: 'privacyPage',
+            descriptionKey: 'privacyPageDescription',
+            icon: PrivacyTipRoundedIcon,
+            path: '/fleet/privacy',
+            match: (pathname) => pathname.startsWith('/fleet/privacy'),
+            visible: fleetPrivacy,
+          },
+          {
             id: 'server',
             titleKey: 'settingsServer',
             descriptionKey: 'settingsServerDescription',
@@ -393,6 +404,7 @@ export const useSettingsSections = () => {
     fleetDispatch,
     fleetVehicles,
     fleetIntegrations,
+    fleetPrivacy,
   ]);
 };
 

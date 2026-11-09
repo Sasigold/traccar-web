@@ -1,5 +1,4 @@
 import { useMemo, useReducer, useState } from 'react';
-import { useSelector } from 'react-redux';
 import dayjs from 'dayjs';
 import {
   Alert,
@@ -23,6 +22,7 @@ import { makeStyles } from 'tss-react/mui';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
 import ShareLocationRoundedIcon from '@mui/icons-material/ShareLocationRounded';
+import { useLivePositions } from '../common/fleet/usePrivacy';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import DataTable from '../common/components/table/DataTable';
@@ -378,7 +378,7 @@ const DispatchPage = () => {
   const t = useTranslation();
   const canRead = useFleetPermission('dispatch.read');
   const canWrite = useFleetPermission('dispatch.write');
-  const positions = useSelector((state) => state.session.positions);
+  const positions = useLivePositions();
 
   const [filter, setFilter] = useState('today');
   const [search, setSearch] = useState('');

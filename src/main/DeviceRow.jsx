@@ -19,6 +19,7 @@ import BatteryCharging20Icon from '@mui/icons-material/BatteryCharging20Rounded'
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { useLivePosition } from '../common/fleet/usePrivacy';
 import { devicesActions } from '../store';
 import {
   formatAlarm,
@@ -224,7 +225,7 @@ const DeviceRow = ({ devices, tokens = [], index, style }) => {
   const selectTime = useSelector((state) => state.devices.selectTime);
 
   const item = devices[index];
-  const position = useSelector((state) => state.session.positions[item.id]);
+  const position = useLivePosition(item.id);
   const groups = useSelector((state) => state.groups.items);
   const drivers = useSelector((state) => state.drivers.items);
 

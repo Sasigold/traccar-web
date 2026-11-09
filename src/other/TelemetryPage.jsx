@@ -5,6 +5,7 @@ import { makeStyles } from 'tss-react/mui';
 import { alpha } from '@mui/material/styles';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
+import { useLivePosition } from '../common/fleet/usePrivacy';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageHeader from '../common/components/shell/PageHeader';
 import BrandLoader from '../common/components/brand/BrandLoader';
@@ -83,7 +84,7 @@ const TelemetryPage = () => {
   const { deviceId } = useParams();
 
   const device = useSelector((state) => state.devices.items[deviceId]);
-  const position = useSelector((state) => state.session.positions[deviceId]);
+  const position = useLivePosition(deviceId);
   const devicesLoaded = useSelector((state) => Object.keys(state.devices.items).length > 0);
   const settings = useVehicleSettings(device, position);
   const phone = useMediaQuery(theme.breakpoints.down('sm'));

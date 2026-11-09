@@ -20,6 +20,7 @@ import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import SmartToyRoundedIcon from '@mui/icons-material/SmartToyRounded';
+import { useLivePositions } from '../../fleet/usePrivacy';
 import { devicesActions } from '../../../store';
 import { useTranslation } from '../LocalizationProvider';
 import { useAdministrator, useDeviceReadonly, useRestriction } from '../../util/permissions';
@@ -142,7 +143,7 @@ const CommandPalette = ({ open, onClose }) => {
   const { openEvents } = useShell();
 
   const devices = useSelector((state) => state.devices.items);
-  const positions = useSelector((state) => state.session.positions);
+  const positions = useLivePositions();
   const deviceGroups = useSelector((state) => state.groups.items);
   const drivers = useSelector((state) => state.drivers.items);
   const features = useFeatures();

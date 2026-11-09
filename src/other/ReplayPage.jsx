@@ -27,6 +27,8 @@ import BackIcon from '../common/components/BackIcon';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import MapOverlay from '../map/overlay/MapOverlay';
 import { ctaFill, glass } from '../common/theme/surfaces';
+import { logPrivacyView, privatePositions } from '../common/fleet/privacyData';
+import PrivacyNote from '../common/components/PrivacyNote';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -142,6 +144,7 @@ const ReplayPage = () => {
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [privacy, setPrivacy] = useState(null);
 
   const loaded = Boolean(from && to && !loading && positions.length);
 
@@ -190,10 +193,17 @@ const ReplayPage = () => {
       try {
         const response = await fetchOrThrow(`api/positions?${query.toString()}`);
         setIndex(0);
-        const positions = await response.json();
-        setPositions(positions);
-        if (!positions.length) {
-          throw Error(t('sharedNoData'));
+        // Locations in hidden time (outside working hours, private periods) are left out.
+        const result = await privatePositions(await response.json(), {
+          deviceIds: [deviceId],
+          from,
+          to,
+          view: 'replay',
+        });
+        setPositions(result.positions);
+        setPrivacy(result.hidden ? result : null);
+        if (!result.positions.length) {
+          throw Error(t(result.hidden ? 'privacyAllHidden' : 'sharedNoData'));
         }
         setFilterOpen(false);
       } finally {
@@ -204,6 +214,7 @@ const ReplayPage = () => {
   );
 
   const handleDownload = () => {
+    logPrivacyView([selectedDeviceId], 'export', from, to);
     const query = new URLSearchParams({ deviceId: selectedDeviceId, from, to });
     window.location.assign(`api/positions/kml?${query.toString()}`);
   };
@@ -240,10 +251,18 @@ const ReplayPage = () => {
           </Typography>
           {loaded && (
             <>
-              <Tooltip title={t('reportExport')}>
-                <IconButton onClick={handleDownload}>
-                  <DownloadRoundedIcon />
-                </IconButton>
+              {/* The KML file comes straight from Traccar, so it is not offered when locations
+                  were hidden. */}
+              <Tooltip title={t(privacy ? 'privacyExportBlocked' : 'reportExport')}>
+                <span>
+                  <IconButton
+                    aria-label={t('reportExport')}
+                    onClick={handleDownload}
+                    disabled={Boolean(privacy)}
+                  >
+                    <DownloadRoundedIcon />
+                  </IconButton>
+                </span>
               </Tooltip>
               <Tooltip title={t('sharedFilter')}>
                 <IconButton
@@ -270,6 +289,7 @@ const ReplayPage = () => {
                   variant="outlined"
                 />
               </div>
+              <PrivacyNote hidden={privacy?.hidden} distance={privacy?.hiddenDistance} />
               <Slider
                 className={classes.slider}
                 max={positions.length - 1}

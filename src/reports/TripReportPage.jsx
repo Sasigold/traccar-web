@@ -45,6 +45,9 @@ import MapCamera from '../map/MapCamera';
 import MapGeofence from '../map/MapGeofence';
 import scheduleReport from './common/scheduleReport';
 import MapScale from '../map/MapScale';
+import { privateRows } from '../common/fleet/privacyData';
+import { isPlaceField } from '../common/fleet/privacy';
+import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import exportExcel from '../common/util/exportExcel';
 import { deviceEquality } from '../common/util/deviceEquality';
@@ -99,6 +102,7 @@ const TripReportPage = () => {
   const [loading, setLoading] = useState(false);
   const [queried, setQueried] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [hiddenRows, setHiddenRows] = useState(0);
   const [route, setRoute] = useState(null);
 
   const filteredItems = items.filter(
@@ -147,7 +151,15 @@ const TripReportPage = () => {
       const response = await fetchOrThrow(`api/reports/trips?${query.toString()}`, {
         headers: { Accept: 'application/json' },
       });
-      setItems(await response.json());
+      // Places in hidden time (outside working hours, private periods) are taken out.
+      const rows = await response.json();
+      const result = await privateRows(rows, {
+        deviceIds: [...deviceIds, ...rows.map((row) => row.deviceId)],
+        from,
+        to,
+      });
+      setItems(result.rows);
+      setHiddenRows(result.hidden);
     } finally {
       setLoading(false);
       setQueried(true);
@@ -164,7 +176,9 @@ const TripReportPage = () => {
       const row = {};
       columns.forEach((key) => {
         const header = t(columnsMap.get(key));
-        if (key === 'startAddress') {
+        if (item.privacy && isPlaceField(key)) {
+          row[header] = t('privacyHiddenShort');
+        } else if (key === 'startAddress') {
           row[header] = formatAddress(
             {
               address: item.startAddress,
@@ -253,6 +267,9 @@ const TripReportPage = () => {
   );
 
   const formatValue = (item, key) => {
+    if (item.privacy && isPlaceField(key)) {
+      return t('privacyHiddenShort');
+    }
     const value = item[key];
     switch (key) {
       case 'deviceId':
@@ -375,6 +392,7 @@ const TripReportPage = () => {
                           <IconButton
                             aria-label={t('a11yShowOnMap')}
                             size="small"
+                            disabled={Boolean(item.privacy)}
                             onClick={() => setSelectedItem(item)}
                           >
                             <LocationSearchingIcon fontSize="small" />
@@ -409,6 +427,7 @@ const TripReportPage = () => {
               />
             )}
           </DataTable>
+          {!loading && <PrivacyNote hidden={hiddenRows} kind="rows" padded />}
         </div>
       </div>
     </PageLayout>

@@ -6,6 +6,7 @@ import { makeStyles } from 'tss-react/mui';
 import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrongRounded';
 import GpsFixedRoundedIcon from '@mui/icons-material/GpsFixedRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { useLivePosition } from '../../common/fleet/usePrivacy';
 import { devicesActions } from '../../store';
 import { shortcutAllowed } from '../../common/util/keyboard';
 import { useTranslation } from '../../common/components/LocalizationProvider';
@@ -82,7 +83,7 @@ const MapSelectedDevice = () => {
   const selectZoom = useAttributePreference('web.selectZoom', 10);
   const mapFollow = useAttributePreference('mapFollow', true);
 
-  const position = useSelector((state) => state.session.positions[currentId]);
+  const position = useLivePosition(currentId);
 
   const followingRef = useRef(false);
   const trackRef = useRef(null);

@@ -27,6 +27,8 @@ import MapCamera from '../map/MapCamera';
 import scheduleReport from './common/scheduleReport';
 import MapScale from '../map/MapScale';
 import SelectField from '../common/components/SelectField';
+import { privateRows } from '../common/fleet/privacyData';
+import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import exportExcel from '../common/util/exportExcel';
 import AddressValue from '../common/components/AddressValue';
@@ -81,6 +83,7 @@ const EventReportPage = () => {
   const eventTypes = useMemo(() => searchParams.getAll('eventType'), [searchParams]);
   const alarmTypes = useMemo(() => searchParams.getAll('alarmType'), [searchParams]);
   const [items, setItems] = useState([]);
+  const [hiddenRows, setHiddenRows] = useState(0);
   const [positions, setPositions] = useState({});
   const [loading, setLoading] = useState(false);
   const [queried, setQueried] = useState(false);
@@ -126,8 +129,18 @@ const EventReportPage = () => {
         const response = await fetchOrThrow(`api/reports/events?${query.toString()}`, {
           headers: { Accept: 'application/json' },
         });
-        const events = await response.json();
+        // Events in hidden time keep their time and type but lose their place.
+        const result = await privateRows(await response.json(), {
+          deviceIds,
+          from,
+          to,
+          times: ['eventTime'],
+        });
+        const events = result.rows.map((event) =>
+          event.privacy ? { ...event, positionId: null } : event,
+        );
         setItems(events);
+        setHiddenRows(result.hidden);
         const positionIds = Array.from(
           new Set(events.map((event) => event.positionId).filter((id) => id)),
         );
@@ -378,6 +391,7 @@ const EventReportPage = () => {
               )}
             </TableBody>
           </DataTable>
+          {!loading && <PrivacyNote hidden={hiddenRows} kind="rows" padded />}
         </div>
       </div>
     </PageLayout>

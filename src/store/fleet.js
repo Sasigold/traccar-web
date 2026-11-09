@@ -9,10 +9,14 @@ const { reducer, actions } = createSlice({
     permissions: [],
     error: null,
     alertsCount: 0, // open document alerts (roadmap 3.4), shown on the bell
+    privacy: null, // { policy, periods }: working hours and recent private periods (ISR-03)
   },
   reducers: {
     alertsCount(state, action) {
       state.alertsCount = action.payload;
+    },
+    privacy(state, action) {
+      state.privacy = action.payload;
     },
     loading(state) {
       state.status = 'loading';
@@ -30,12 +34,14 @@ const { reducer, actions } = createSlice({
     },
     disabled(state) {
       state.status = 'disabled';
+      state.privacy = null;
       state.profile = null;
       state.permissions = [];
       state.error = null;
     },
     reset(state) {
       state.alertsCount = 0;
+      state.privacy = null;
       state.status = 'idle';
       state.profile = null;
       state.permissions = [];

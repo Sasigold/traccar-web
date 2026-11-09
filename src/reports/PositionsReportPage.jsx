@@ -26,6 +26,8 @@ import scheduleReport from './common/scheduleReport';
 import MapScale from '../map/MapScale';
 import { useRestriction } from '../common/util/permissions';
 import CollectionActions from '../settings/components/CollectionActions';
+import { privatePositions } from '../common/fleet/privacyData';
+import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import SelectField from '../common/components/SelectField';
 
@@ -46,6 +48,7 @@ const PositionsReportPage = () => {
   const [available, setAvailable] = useState([]);
   const [columns, setColumns] = useState(['fixTime', 'latitude', 'longitude', 'speed', 'address']);
   const [items, setItems] = useState([]);
+  const [hidden, setHidden] = useState(null);
   const geofenceId = searchParams.has('geofenceId')
     ? parseInt(searchParams.get('geofenceId'))
     : null;
@@ -80,7 +83,15 @@ const PositionsReportPage = () => {
         const response = await fetchOrThrow(`api/positions?${query.toString()}`, {
           headers: { Accept: 'application/json' },
         });
-        const data = await response.json();
+        // Locations in hidden time (outside working hours, private periods) are left out.
+        const result = await privatePositions(await response.json(), {
+          deviceIds,
+          from,
+          to,
+          view: 'report',
+        });
+        const data = result.positions;
+        setHidden(result);
         const keySet = new Set();
         const keyList = [];
         data.forEach((position) => {
@@ -242,6 +253,9 @@ const PositionsReportPage = () => {
               )}
             </TableBody>
           </DataTable>
+          {!loading && (
+            <PrivacyNote hidden={hidden?.hidden} distance={hidden?.hiddenDistance} padded />
+          )}
           {!loading && <ReportLimitNote shown={SHOWN_LIMIT} total={items.length} />}
         </div>
       </div>
