@@ -52,4 +52,44 @@ describe('throttleMiddleware', () => {
     const flushed = next.mock.calls.flatMap(([action]) => action.payload);
     expect(flushed.some((item) => item.deviceId === 1)).toBe(false);
   });
+
+  it('keeps flushing after a flush throws (logout while throttled)', () => {
+    let fail = false;
+    const next = vi.fn((action) => {
+      if (fail && action.type === sessionActions.updatePositions.type) {
+        throw new Error("Cannot read properties of null (reading 'attributes')");
+      }
+    });
+    const dispatch = throttleMiddleware({ getState: () => ({ devices: { selectedId: null } }) })(
+      next,
+    );
+    flood(dispatch);
+    dispatch(positions([2, 10]));
+    fail = true;
+    vi.advanceTimersByTime(1500);
+    const attempted = next.mock.calls.flatMap(([action]) => action.payload || []);
+    expect(attempted).toContainEqual({ deviceId: 2, speed: 10 });
+
+    fail = false;
+    next.mockClear();
+    flood(dispatch);
+    dispatch(positions([3, 20]));
+    vi.advanceTimersByTime(30000);
+    const flushed = next.mock.calls.flatMap(([action]) => action.payload || []);
+    expect(flushed).toContainEqual({ deviceId: 3, speed: 20 });
+  });
+
+  it('drops the buffer and stops throttling on logout', () => {
+    const { next, dispatch } = setup(null);
+    flood(dispatch);
+    dispatch(positions([2, 10]));
+    dispatch(sessionActions.updateUser(null));
+    next.mockClear();
+
+    vi.advanceTimersByTime(1500);
+    expect(next).not.toHaveBeenCalled();
+
+    dispatch(positions([4, 40]));
+    expect(next).toHaveBeenCalledWith(positions([4, 40]));
+  });
 });
