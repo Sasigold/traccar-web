@@ -6,7 +6,10 @@ test('deleting a group names it and says what happens to its vehicles', async ({
   await writeMode(page);
   await gotoReady(page, '/settings/groups');
   const row = page.getByRole('row', { name: /צפון/ });
-  await row.getByRole('button', { name: /פעולות|הסרה|מחיקה/ }).first().click();
+  await row
+    .getByRole('button', { name: /פעולות|הסרה|מחיקה/ })
+    .first()
+    .click();
   const remove = page.getByRole('menuitem', { name: 'הסרה' });
   if (await remove.isVisible().catch(() => false)) {
     await remove.click();
