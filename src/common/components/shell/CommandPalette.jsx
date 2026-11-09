@@ -353,7 +353,7 @@ const CommandPalette = ({ open, onClose }) => {
               id: 'action-add-device',
               title: t('shellAddDevice'),
               icon: AddRoundedIcon,
-              onSelect: () => navigate('/settings/device'),
+              onSelect: () => navigate('/fleet/vehicle/new'),
             },
           ]
         : []),

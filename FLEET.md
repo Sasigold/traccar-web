@@ -36,6 +36,15 @@ maintenance (plan and work orders), damage, checks, costs by month, documents an
 location follows the privacy rules. Editing stays in the vehicle form (`/settings/device/:id`). The tile rules
 are in `src/common/fleet/vehicle360.js` (unit-tested).
 
+"New vehicle" (`/fleet/vehicle/new`, from the vehicle list, the map toolbar, the palette, the empty map and
+the setup card) is a wizard that saves as it goes (`src/fleet/VehicleWizardPage.jsx`): the device (then a live
+"waiting for the first report…" that turns into the time of the first report), vehicle details with the
+government registry, validity dates and scans, the regular driver (linked in Traccar and assigned in the fleet
+database), and a maintenance plan from templates counted from today's odometer. Each vehicle gets its own
+Traccar maintenance records, named with the vehicle, because the start of a maintenance belongs to the record.
+The summary shows what was done or skipped and opens the vehicle card. The operator's device setup in
+`/admin` stays separate (SIM, customer, sensors).
+
 ## Driver area
 
 A driver (fleet role `driver`) starts in the driver area, once per session, and it is their first tab. The

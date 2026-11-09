@@ -2,7 +2,7 @@
 // the data says so. Steps the user may not do are left out. Pure, unit-tested.
 
 export const SETUP_STEPS = [
-  { id: 'vehicles', count: 'devices', path: '/settings/device' },
+  { id: 'vehicles', count: 'devices', path: '/fleet/vehicle/new' },
   { id: 'drivers', count: 'drivers', path: '/settings/driver' },
   {
     id: 'assignments',

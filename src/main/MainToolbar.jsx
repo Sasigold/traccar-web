@@ -335,7 +335,7 @@ const MainToolbar = ({
               classes.primary,
               devicesLoaded && Object.keys(devices).length === 0 && classes.primaryCta,
             )}
-            onClick={() => navigate('/settings/device')}
+            onClick={() => navigate('/fleet/vehicle/new')}
             disabled={deviceReadonly}
             aria-label={t('shellAddDevice')}
           >

@@ -162,7 +162,7 @@ const DevicesPage = () => {
           <TableToolbar
             search={{ value: searchKeyword, onChange: setSearchKeyword }}
             count={items.length}
-            addPath="/settings/device"
+            addPath="/fleet/vehicle/new"
             addDisabled={deviceReadonly}
             exportHandler={handleExport}
             actions={
@@ -278,7 +278,7 @@ const DevicesPage = () => {
           )}
         </TableBody>
       </DataTable>
-      <AddFab editPath="/settings/device" disabled={deviceReadonly} />
+      <AddFab editPath="/fleet/vehicle/new" disabled={deviceReadonly} />
     </PageLayout>
   );
 };

@@ -255,7 +255,7 @@ const MainPage = () => {
                           <Button
                             variant="contained"
                             onClick={() =>
-                              navigate(administrator ? '/admin/device' : '/settings/device')
+                              navigate(administrator ? '/admin/device' : '/fleet/vehicle/new')
                             }
                           >
                             {t(administrator ? 'deviceSetupWizard' : 'shellAddDevice')}
