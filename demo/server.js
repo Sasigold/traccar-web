@@ -12,6 +12,12 @@ const groups = [
 
 export const demoServer = (server) => {
   const fleet = createFleet();
+  // FND-07: the performance profile's fleet of 2,000 (cookie demoFleet=large), made on first use.
+  let largeFleet = null;
+  const fleetFor = (request) =>
+    /(?:^|;\s*)demoFleet=large(?:;|$)/.test(request.headers.cookie || '')
+      ? (largeFleet ||= createFleet(Date.now(), { size: 2000 }))
+      : fleet;
   const sockets = new WebSocketServer({ noServer: true });
   const settings = {
     id: 1,
@@ -122,7 +128,7 @@ export const demoServer = (server) => {
         } else if (sandbox.userId == null && url.pathname !== '/api/server') {
           response.writeHead(401).end('Not signed in.');
         } else {
-          read(url, response, send, sandbox);
+          read(url, response, send, sandbox, fleetFor(request));
         }
       });
       return;
@@ -131,9 +137,9 @@ export const demoServer = (server) => {
       response.writeHead(403).end('This demo is read-only.');
       return;
     }
-    read(url, response, send, null);
+    read(url, response, send, null, fleetFor(request));
   });
-  const read = (url, response, send, sandbox) => {
+  const read = (url, response, send, sandbox, fleet) => {
     fleet.advance();
     let data;
     const listed = (collection, items) => overlay(sandbox, collection, items);
@@ -240,11 +246,12 @@ export const demoServer = (server) => {
       sockets.handleUpgrade(request, socket, head, (client) => {
         client.demoClient = /(?:^|;\s*)demoClient=([^;]+)/.exec(request.headers.cookie || '')?.[1];
         client.sandbox = sandboxOf(request);
-        fleet.advance();
+        client.fleet = fleetFor(request);
+        client.fleet.advance();
         client.send(
           JSON.stringify({
-            devices: overlay(client.sandbox, 'devices', fleet.devices),
-            positions: fleet.positions,
+            devices: overlay(client.sandbox, 'devices', client.fleet.devices),
+            positions: client.fleet.positions,
           }),
         );
       });
@@ -252,17 +259,25 @@ export const demoServer = (server) => {
   });
   const timer = setInterval(() => {
     if (sockets.clients.size === 0) return;
-    fleet.advance();
-    const message = JSON.stringify({ devices: fleet.devices, positions: fleet.positions });
+    // One message per fleet, shared by its clients; a sandbox sees its own changes.
+    const messages = new Map();
     sockets.clients.forEach((client) => {
       if (client.readyState !== WebSocket.OPEN) return;
+      const source = client.fleet || fleet;
+      if (!messages.has(source)) {
+        source.advance();
+        messages.set(
+          source,
+          JSON.stringify({ devices: source.devices, positions: source.positions }),
+        );
+      }
       client.send(
         client.sandbox
           ? JSON.stringify({
-              devices: overlay(client.sandbox, 'devices', fleet.devices),
-              positions: fleet.positions,
+              devices: overlay(client.sandbox, 'devices', source.devices),
+              positions: source.positions,
             })
-          : message,
+          : messages.get(source),
       );
     });
   }, 5000);

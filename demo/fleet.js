@@ -128,23 +128,41 @@ export const createMaintenance = () => [
 
 export const maintenanceFor = (deviceId) => (Number(deviceId) === 5 ? [] : createMaintenance());
 
-export const createFleet = (now = Date.now()) => {
+// `size` (FND-07): the performance profile asks for a fleet of 2,000. The extra vehicles are
+// plain ones spread along the route, a fifth of them offline; their history is kept for a
+// minute only, so the server's memory stays small.
+export const createFleet = (now = Date.now(), { size = 0 } = {}) => {
   const details = vehicleDetails(now);
   const anchor = Math.floor(now / interval) * interval;
-  const names = ['Delivery Van', 'Service Van', 'City Shuttle', 'Courier', 'Support Car', 'בדיקה'];
-  const testDeviceId = names.length;
+  const base = ['Delivery Van', 'Service Van', 'City Shuttle', 'Courier', 'Support Car', 'בדיקה'];
+  const names = [
+    ...base,
+    ...Array.from(
+      { length: Math.max(0, size - base.length) },
+      (_, i) => `רכב ${i + base.length + 1}`,
+    ),
+  ];
+  const keep = size > base.length ? 60 * 1000 : retention;
+  const testDeviceId = base.length;
   const devices = names.map((name, index) => ({
     id: index + 1,
     name,
     uniqueId: `demo-${index + 1}`,
-    status: 'online',
-    category: index + 1 === testDeviceId ? 'truck' : 'car',
+    status: index >= base.length && index % 5 === 0 ? 'offline' : 'online',
+    category:
+      index + 1 === testDeviceId
+        ? 'truck'
+        : index < base.length
+          ? 'car'
+          : ['car', 'van', 'truck', 'pickup'][index % 4],
     disabled: false,
     // Two demo groups: north (1) and center (2).
     groupId: index < 3 ? 1 : 2,
     // The test device has a tank capacity (liters) and a speed limit (knots).
     attributes: {
-      ...details[index],
+      ...(details[index] || {
+        plateNumber: `${String(10 + (index % 90)).padStart(2, '0')}-${String(100 + (index % 900))}-${String(10 + (index % 89))}`,
+      }),
       ...(index + 1 === testDeviceId && { fuelCapacity: 80, speedLimit: 27 }),
     },
   }));
@@ -219,13 +237,13 @@ export const createFleet = (now = Date.now()) => {
         speed,
         course,
         attributes: {
-          batteryLevel: 95 - index * 15,
-          fuel: 45 - index * 7,
+          batteryLevel: Math.max(5, 95 - (index % 6) * 15),
+          fuel: Math.max(3, 45 - (index % 6) * 7),
           // The third vehicle keeps its engine running at stops, so the demo shows idling.
           ignition: moving || index === 2,
           motion: moving,
           power: moving ? 14.2 : 12.6,
-          totalDistance: (12000 + index * 8000) * 1000,
+          totalDistance: (12000 + (index % 50) * 8000) * 1000,
           ...(index === 1 && { dtcs: 'P0171,P0420' }),
           // A driver identified by tag, so the card can show and call them.
           ...(index === 0 && { driverUniqueId: '0A1B2C3D' }),
@@ -237,7 +255,7 @@ export const createFleet = (now = Date.now()) => {
   const advance = (time = Date.now()) => {
     const tick = Math.floor(time / interval) * interval;
     if (tick <= lastTick) return;
-    const from = lastTick < 0 ? tick - retention : Math.max(lastTick + interval, tick - retention);
+    const from = lastTick < 0 ? tick - keep : Math.max(lastTick + interval, tick - keep);
     for (let timestamp = from; timestamp <= tick; timestamp += interval) {
       positions = sample(timestamp);
       history.push(...positions);
@@ -251,7 +269,7 @@ export const createFleet = (now = Date.now()) => {
       });
     }
     lastTick = tick;
-    history = history.filter((position) => Date.parse(position.fixTime) >= tick - retention);
+    history = history.filter((position) => Date.parse(position.fixTime) >= tick - keep);
     devices.forEach((device, index) => {
       device.positionId = positions[index].id;
       device.lastUpdate = positions[index].fixTime;

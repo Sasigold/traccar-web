@@ -44,6 +44,15 @@ const roundedLine = (context, x, y, length, thickness) => {
 
 let repaintScheduled = false;
 
+// Large fleets (FND-07 profile): animating the streaks repaints the map 15 times a second, and
+// every repaint places every marker again; with 2,000 vehicles that kept the main thread busy
+// for about 2 s in every 5. Above the same limit as the marker glide, the driving icon keeps
+// its static pose. The live map sets this from the number of markers it shows.
+let animationAllowed = true;
+export const setMovingAnimation = (allowed) => {
+  animationAllowed = Boolean(allowed);
+};
+
 // MapLibre StyleImageInterface. MapLibre only calls render() for images that visible markers
 // use, so the redraw loop runs only while a driving vehicle is on screen.
 export const createMovingImage = ({ background, glyph, color, pixelRatio }) => {
@@ -84,7 +93,13 @@ export const createMovingImage = ({ background, glyph, color, pixelRatio }) => {
       map = mapInstance;
     },
     render() {
-      if (!animated) {
+      if (!animated || !animationAllowed) {
+        // Switching to the static pose: draw it once.
+        if (animated && frame !== null) {
+          frame = null;
+          this.data = draw(null);
+          return true;
+        }
         return false;
       }
       const now = performance.now();

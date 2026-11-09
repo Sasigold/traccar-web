@@ -16,11 +16,15 @@ export default defineConfig((env) => {
   return {
     ...config,
     server: { host: 'localhost', port: 3000 },
+    preview: { host: 'localhost', port: 3000 },
     plugins: [
       ...config.plugins,
       {
         name: 'demo-server',
         configureServer: demoServer,
+        // FND-07: `vite preview` of a production build, with the same mock server, for the
+        // performance profile (docs/PERFORMANCE.md).
+        configurePreviewServer: demoServer,
         transformIndexHtml: (html) =>
           html
             .replaceAll('${title}', 'viper fleet demo')

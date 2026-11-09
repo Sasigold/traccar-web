@@ -3,7 +3,7 @@
 הקובץ הזה הוא נקודת ההמשך. מי שממשיך את הפיתוח (אדם או סוכן AI) קורא אותו קודם, ואחר כך את
 `docs/roadmap/ITEMS.md`, שבו כל 213 הפריטים של דוח הסקירה עם המצב של כל אחד.
 
-עודכן: 9 בנובמבר 2026, אחרי FND-06 (commit `5fc511d`), בענף `claude/clever-edison-f9609a`.
+עודכן: 9 בנובמבר 2026, אחרי FND-07 (commit `FND-07_COMMIT`), בענף `claude/clever-edison-f9609a`.
 
 ## ההוראה של הבעלים
 
@@ -16,10 +16,7 @@
 
 סדר הביצוע הוא מפת הדרכים של הדוח. שלב "1 עד 3 חודשים" כמעט הסתיים; נשארו בו:
 
-1. **FND-07, בדיקות לקוד המסוכן.** כבר יש: בדיקות RLS ב-`supabase/tests/*.test.sql` שרצות ב-CI. חסר:
-   בדיקות React Testing Library לרשימה, לפרטים ולשמירה; בדיקות יחידה ל-`session.js`, ל-socket ול-throttle;
-   מצב כתיבה לשרת הדמו עם traccar-auth מזויף ותרחישים מלאים; פרופיל ביצועים של 2,000 רכבים.
-2. **ARC-06, שכבת נתונים משותפת.** TanStack Query גם ל-Traccar וגם ל-Supabase, `signal` מחובר ל-
+1. **ARC-06, שכבת נתונים משותפת.** TanStack Query גם ל-Traccar וגם ל-Supabase, `signal` מחובר ל-
    `.abortSignal()`, `invalidateQueries` במקום `reloadKey`, מפתחות עם `orgId`. מעבר הדרגתי.
 
 אחריהם, לפי הדוח:
@@ -40,6 +37,9 @@
 - **ISR-04:** קצין בטיחות חיצוני לכמה ארגונים, ופענוח קובצי טכוגרף.
 - **REP-08:** תזמון חודשי (יש יומי ושבועי).
 - **FND-04:** תצוגה מקדימה לכל PR (היה אופציונלי).
+- **FND-07:** בדיקות RTL כרגע ל-SocketController, לרשימה, לכרטיס הרכב, ל-EditItemView ול-adminApi.
+  כשנוגעים בקומפוננטה מסוכנת אחרת, להוסיף לה `*.test.jsx` באותו דפוס. מספרי הביצועים נמדדו בלי GPU;
+  לאשר פעם אחת על מחשב משרדי ועל טלפון בינוני (`docs/PERFORMANCE.md`).
 - **FND-06:** הקוד מוכן ומחכה להחלטות של הבעלים (ראו למטה). מדדי הדפדפן והמונים כבר נשלחים למסד הצי
   ונראים ב-`/admin/health`. אפשר להוסיף בעתיד: אירועי שימוש לפעולות מפתח (`trackEvent` ב-
   `src/common/telemetry/install.js` מוכן), פירוק מדדים לפי מסך, והתראה כשמונה קופץ אחרי פריסה.
@@ -71,11 +71,18 @@
   - `npm test` (vitest, סביבת node; `window` דרך `vi.stubGlobal`). כולל גם `supabase/functions/**`.
   - בדיקות מסד: Postgres 16 מקומי ואז `PGHOST=... PGPORT=... PGUSER=postgres sh supabase/tests/run.sh`.
     בדיקות עוברות בין משתמשים עם `pg_temp.as_user(id)`. לבדוק שבדיקה חדשה נכשלת כשמקלקלים את הקוד.
+  - בדיקות קומפוננטות: קובץ `*.test.jsx` שמתחיל ב-`// @vitest-environment jsdom`, עם `renderApp` ו-
+    `fakeFetch` מ-`src/test/render.jsx` (store, תרגומים, theme ו-router כמו באפליקציה), ו-
+    `createFakeSupabase` מ-`src/test/fakeSupabase.js`.
   - `npm run test:e2e -- --trace off` (Playwright מול שרת הדמו, דסקטופ וטלפון, כולל axe ל-WCAG 2.1 AA).
     לא לערוך קבצים ב-`src` בזמן הרצה מלאה (HMR של Vite גורם לכשלים מקריים).
+  - תרחישים ששומרים: `writeMode(page)` ו-`fakeFleet(page, {...})` מ-`e2e/fakeFleet.js` (ארגז חול לכתיבה
+    בדמו, traccar-auth מזויף, PostgREST ו-Storage בזיכרון). דוגמה: `e2e/scenarios.spec.js`.
+  - פרופיל ביצועים של 2,000 רכבים: `e2e/performance.spec.js`, ו-`docs/PERFORMANCE.md` (גם מול build של
+    ייצור: `npm run demo:build` ו-`npm run demo:preview`).
 - **הדמו:** `npm run demo` על פורט 3000. מסד הצי בדמו הוא `https://fleet.demo.invalid` (לא קיים), ובדיקות
   e2e מזייפות אותו עם `FLEET` מ-`e2e/fixtures.js` (traccar-auth שמחזיר הרשאות, ותשובות PostgREST).
-  משתמש הדמו לקריאה בלבד; לבדיקת כתיבה מזייפים את `api/session` עם `readonly: false`.
+  משתמש הדמו לקריאה בלבד; בדיקה שכותבת משתמשת ב-`writeMode(page)` (קוקי `demoWrite`, ראו `demo/sandbox.js`).
 - **סביבות ופריסה:** `deploy/STAGING.md` (סביבות, staging, גרסאות וחזרה לאחור).
 - **תצפיתיות:** `docs/OBSERVABILITY.md`. מונה חדש: `countEvent('name')` מ-`src/common/telemetry/metrics.js`
   (בלי פרטים אישיים בשם), ולהוסיף לו תווית ב-`ClientHealthPage.jsx`.
