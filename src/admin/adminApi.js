@@ -7,6 +7,7 @@ import { getFleetClient, unwrap } from '../common/fleet/client';
 import { getFreshFleetAccessToken } from '../common/fleet/session';
 import { fleetConfig } from '../common/fleet/config';
 import { planComputedSync } from './sensors';
+import { translate } from '../common/util/translator';
 
 const db = () => getFleetClient();
 
@@ -30,10 +31,53 @@ export const linkDevice = (userId, deviceId) =>
     ignoreDuplicate,
   );
 
+// SEC-06: only a link that is already gone is ignored; any other failure is an error, so a
+// customer never keeps a vehicle while the screen says it moved.
+const ignoreMissing = (error) => {
+  if (error.status !== 404) throw error;
+};
+
 export const unlinkDevice = (userId, deviceId) =>
   fetchOrThrow('api/permissions', { method: 'DELETE', ...json({ userId, deviceId }) }).catch(
-    () => null,
+    ignoreMissing,
   );
+
+// The devices a Traccar user sees, as Traccar answers (direct links and through groups).
+const visibleDeviceIds = async (userId) =>
+  new Set((await getJson(`api/devices?userId=${userId}`)).map((device) => device.id));
+
+export class AccessMismatchError extends Error {
+  constructor(problems) {
+    super(
+      `${translate('adminAccessMismatch')}\n${problems
+        .map(({ userId, deviceId, should }) =>
+          translate(should ? 'adminAccessMissing' : 'adminAccessExtra')
+            .replace('{0}', userId)
+            .replace('{1}', deviceId),
+        )
+        .join('\n')}`,
+    );
+    this.name = 'AccessMismatchError';
+    this.problems = problems;
+  }
+}
+
+// Reads back what Traccar shows each user and compares it with what should be:
+// expectations = [{ userId, deviceId, should: true | false }].
+export const verifyAccess = async (expectations) => {
+  const seen = new Map();
+  for (const { userId } of expectations) {
+    if (!seen.has(userId)) {
+      seen.set(userId, await visibleDeviceIds(userId));
+    }
+  }
+  const problems = expectations.filter(
+    ({ userId, deviceId, should }) => seen.get(userId).has(deviceId) !== should,
+  );
+  if (problems.length) {
+    throw new AccessMismatchError(problems);
+  }
+};
 
 export const saveTraccarDevice = async (device) => {
   const response = await fetchOrThrow(device.id ? `api/devices/${device.id}` : 'api/devices', {
@@ -165,16 +209,23 @@ export const assignDevices = async (deviceIds, customerId) => {
     oldUsers.set(oldCustomer, await customerUserIds(oldCustomer));
   }
   const tasks = [];
+  const expected = [];
   deviceIds.forEach((deviceId) => {
     const previous = owners.get(deviceId);
     if (previous && previous !== customerId) {
-      oldUsers.get(previous).forEach((userId) => tasks.push(unlinkDevice(userId, deviceId)));
+      oldUsers.get(previous).forEach((userId) => {
+        tasks.push(unlinkDevice(userId, deviceId));
+        expected.push({ userId, deviceId, should: false });
+      });
     }
     if (previous !== customerId || !owners.has(deviceId)) {
       newUsers.forEach((userId) => tasks.push(linkDevice(userId, deviceId)));
     }
+    newUsers.forEach((userId) => expected.push({ userId, deviceId, should: true }));
   });
   await Promise.all(tasks);
+  // SEC-06: check what Traccar now shows, so a failed or partial change is reported, not hidden.
+  await verifyAccess(expected);
 };
 
 export const saveRegistry = async (row) =>
@@ -196,12 +247,15 @@ export const assignUser = async (userId, customerId, { primary = false } = {}) =
       .eq('traccar_user_id', userId)
       .maybeSingle(),
   );
+  const expected = [];
   if (previous && previous.customer_id !== customerId) {
     const devices = await customerDeviceIds(previous.customer_id);
     await Promise.all(devices.map((deviceId) => unlinkDevice(userId, deviceId)));
+    devices.forEach((deviceId) => expected.push({ userId, deviceId, should: false }));
   }
   if (!customerId) {
     unwrap(await db().from('customer_users').delete().eq('traccar_user_id', userId));
+    await verifyAccess(expected);
     return;
   }
   unwrap(
@@ -214,18 +268,49 @@ export const assignUser = async (userId, customerId, { primary = false } = {}) =
   );
   const devices = await customerDeviceIds(customerId);
   await Promise.all(devices.map((deviceId) => linkDevice(userId, deviceId)));
+  devices.forEach((deviceId) => expected.push({ userId, deviceId, should: true }));
+  await verifyAccess(expected);
 };
 
-// Re-creates every Traccar link of a customer (users × devices).
+// SEC-06: brings every user of a customer in line with the registry: links the customer's
+// devices, and removes devices the registry gives to another customer (or to nobody). Devices
+// the registry does not know are left alone and reported. Then verifies what Traccar shows.
 export const syncCustomerAccess = async (customerId) => {
-  const [users, devices] = await Promise.all([
+  const [users, registry] = await Promise.all([
     customerUserIds(customerId),
-    customerDeviceIds(customerId),
+    db().from('device_registry').select('traccar_device_id, customer_id').then(unwrap),
   ]);
-  await Promise.all(
-    users.flatMap((userId) => devices.map((deviceId) => linkDevice(userId, deviceId))),
-  );
-  return { users: users.length, devices: devices.length };
+  const owner = new Map(registry.map((row) => [row.traccar_device_id, row.customer_id]));
+  const mine = registry
+    .filter((row) => row.customer_id === customerId)
+    .map((row) => row.traccar_device_id);
+  let added = 0;
+  let removed = 0;
+  const unknown = new Set();
+  const expected = [];
+  for (const userId of users) {
+    const visible = await visibleDeviceIds(userId);
+    const tasks = [];
+    mine.forEach((deviceId) => {
+      if (!visible.has(deviceId)) {
+        added += 1;
+        tasks.push(linkDevice(userId, deviceId));
+      }
+      expected.push({ userId, deviceId, should: true });
+    });
+    visible.forEach((deviceId) => {
+      if (!owner.has(deviceId)) {
+        unknown.add(deviceId);
+      } else if (owner.get(deviceId) !== customerId) {
+        removed += 1;
+        tasks.push(unlinkDevice(userId, deviceId));
+        expected.push({ userId, deviceId, should: false });
+      }
+    });
+    await Promise.all(tasks);
+  }
+  await verifyAccess(expected);
+  return { users: users.length, devices: mine.length, added, removed, unknown: [...unknown] };
 };
 
 export const savePlan = async (plan) => {

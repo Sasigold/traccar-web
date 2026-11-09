@@ -9,11 +9,24 @@ vi.mock('../../common/fleet/client', async (original) => ({
   getFleetClient: () => fake.client,
 }));
 
-const { assignDevices, assignUser, linkDevice, syncCustomerAccess } = await import('../adminApi');
+const { AccessMismatchError, assignDevices, assignUser, linkDevice, syncCustomerAccess } =
+  await import('../adminApi');
 
-// Traccar's api/permissions, recorded.
+// Traccar's api/permissions, recorded, and api/devices?userId= (what a user sees: direct links
+// plus devices shared through a group, which unlinking does not remove).
 let links;
+let groupLinks;
+let failUnlink;
 const permissionsFetch = vi.fn(async (url, init = {}) => {
+  if (url.startsWith('api/devices?userId=')) {
+    const userId = new URLSearchParams(url.split('?')[1]).get('userId');
+    const ids = new Set(
+      [...links, ...groupLinks]
+        .filter((link) => link.startsWith(`${userId}:`))
+        .map((link) => Number(link.split(':')[1])),
+    );
+    return new Response(JSON.stringify([...ids].map((id) => ({ id }))), { status: 200 });
+  }
   const body = JSON.parse(init.body || '{}');
   const key = `${body.userId}:${body.deviceId}`;
   if (init.method === 'POST') {
@@ -22,6 +35,12 @@ const permissionsFetch = vi.fn(async (url, init = {}) => {
     }
     links.add(key);
   } else if (init.method === 'DELETE') {
+    if (failUnlink) {
+      return new Response('Database error', { status: 500 });
+    }
+    if (!links.has(key)) {
+      return new Response('Not found', { status: 404 });
+    }
     links.delete(key);
   }
   return new Response(null, { status: 204 });
@@ -43,6 +62,8 @@ beforeEach(() => {
     ],
   });
   links = new Set(['11:1', '11:2', '12:1', '12:2', '21:3']);
+  groupLinks = new Set();
+  failUnlink = false;
   vi.stubGlobal('window', { dispatchEvent: vi.fn() });
   vi.stubGlobal('fetch', permissionsFetch);
 });
@@ -107,10 +128,33 @@ describe('assignUser', () => {
 });
 
 describe('syncCustomerAccess', () => {
-  it('re-creates every missing link of a customer, and ignores links that exist', async () => {
+  it('re-creates missing links and removes devices that belong to another customer', async () => {
     links.delete('12:2');
-    expect(await syncCustomerAccess('A')).toEqual({ users: 2, devices: 2 });
-    expect([...links].sort()).toEqual(['11:1', '11:2', '12:1', '12:2', '21:3']);
+    links.add('11:3');
+    links.add('11:77');
+    const result = await syncCustomerAccess('A');
+    expect(result).toEqual({ users: 2, devices: 2, added: 1, removed: 1, unknown: [77] });
+    expect([...links].sort()).toEqual(['11:1', '11:2', '11:77', '12:1', '12:2', '21:3']);
+  });
+});
+
+describe('a transfer that did not fully happen is reported (SEC-06)', () => {
+  it('fails when Traccar refuses to remove a link, instead of reporting success', async () => {
+    failUnlink = true;
+    await expect(assignDevices([2], 'B')).rejects.toThrow();
+  });
+
+  it('fails when the old customer still sees the device through a group', async () => {
+    groupLinks.add('11:2');
+    const error = await assignDevices([2], 'B').catch((value) => value);
+    expect(error).toBeInstanceOf(AccessMismatchError);
+    expect(error.problems).toEqual([{ userId: 11, deviceId: 2, should: false }]);
+  });
+
+  it('ignores a link that is already gone', async () => {
+    links.delete('12:2');
+    await assignDevices([2], 'B');
+    expect([...links].sort()).toEqual(['11:1', '12:1', '21:2', '21:3']);
   });
 });
 

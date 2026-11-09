@@ -112,10 +112,24 @@ const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged })
     const result = await syncCustomerAccess(customer.id);
     dispatch(
       messagesActions.push({
-        message: t('adminSyncDone').replace('{0}', result.users).replace('{1}', result.devices),
+        message: t('adminSyncDone')
+          .replace('{0}', result.users)
+          .replace('{1}', result.devices)
+          .replace('{2}', result.added)
+          .replace('{3}', result.removed),
         severity: 'success',
       }),
     );
+    if (result.unknown.length) {
+      dispatch(
+        messagesActions.push({
+          message: t('adminSyncUnknown')
+            .replace('{0}', result.unknown.length)
+            .replace('{1}', result.unknown.join(', ')),
+          severity: 'warning',
+        }),
+      );
+    }
   });
 
   const handleLogin = useCatch(async (userId) => {

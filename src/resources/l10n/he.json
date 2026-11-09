@@ -952,7 +952,7 @@
     "adminCreateUser": "משתמש חדש ללקוח",
     "adminCreateUserHelp": "נוצר משתמש התחברות חדש ומשויך ללקוח הזה. סיסמה של 6 תווים לפחות.",
     "adminSyncAccess": "סנכרון הרשאות",
-    "adminSyncDone": "ההרשאות סונכרנו: {0} משתמשים × {1} מכשירים",
+    "adminSyncDone": "ההרשאות סונכרנו: {0} משתמשים × {1} מכשירים. נוספו {2} קישורים והוסרו {3}.",
     "adminRole": "תפקיד",
     "adminRoleManager": "מנהל",
     "adminRoleUser": "משתמש",
@@ -3009,5 +3009,9 @@
     "adminHealthLongTasksDetail": "{0} בסך הכול, הארוכה {1}",
     "settingsUsageStatistics": "נתוני שימוש אנונימיים",
     "settingsUsageStatisticsHelp": "שולח אילו מסכים פתחתם, בלי שם, בלי פרטי רכבים ובלי עוגיות, כדי שנדע מה לשפר קודם.",
-    "settingsUsageStatisticsBrowser": "הדפדפן ביקש לא לעקוב (Do Not Track), ולכן לא נשלחים נתוני שימוש."
+    "settingsUsageStatisticsBrowser": "הדפדפן ביקש לא לעקוב (Do Not Track), ולכן לא נשלחים נתוני שימוש.",
+    "adminSyncUnknown": "משתמשי הלקוח רואים גם {0} מכשירים שלא רשומים במאגר המכשירים, ולכן לא נגענו בהם: {1}. כדאי לשייך אותם ללקוח או להסיר את הקישור.",
+    "adminAccessMismatch": "השינוי לא הושלם: מה ש-Traccar מראה למשתמשים לא תואם את השיוך. בדקו ונסו שוב, או לחצו \"סנכרון הרשאות\".",
+    "adminAccessMissing": "משתמש {0} עדיין לא רואה את מכשיר {1}.",
+    "adminAccessExtra": "משתמש {0} עדיין רואה את מכשיר {1} (ייתכן שדרך קבוצה)."
 }

@@ -952,7 +952,7 @@
     "adminCreateUser": "New user for customer",
     "adminCreateUserHelp": "Creates a new login and links it to this customer. Password of at least 6 characters.",
     "adminSyncAccess": "Sync access",
-    "adminSyncDone": "Access synced: {0} users × {1} devices",
+    "adminSyncDone": "Access synced: {0} users × {1} devices. {2} links added, {3} removed.",
     "adminRole": "Role",
     "adminRoleManager": "Manager",
     "adminRoleUser": "User",
@@ -3009,5 +3009,9 @@
     "adminHealthLongTasksDetail": "{0} in total, longest {1}",
     "settingsUsageStatistics": "Anonymous usage statistics",
     "settingsUsageStatisticsHelp": "Sends which screens you open, with no name, no vehicle details and no cookies, so we know what to improve first.",
-    "settingsUsageStatisticsBrowser": "Your browser asked not to be tracked (Do Not Track), so no usage statistics are sent."
+    "settingsUsageStatisticsBrowser": "Your browser asked not to be tracked (Do Not Track), so no usage statistics are sent.",
+    "adminSyncUnknown": "The customer's users also see {0} devices that are not in the device registry, so they were left as they are: {1}. Assign them to the customer or remove the link.",
+    "adminAccessMismatch": "The change did not complete: what Traccar shows the users does not match the assignment. Check and try again, or press \"Sync access\".",
+    "adminAccessMissing": "User {0} still does not see device {1}.",
+    "adminAccessExtra": "User {0} still sees device {1} (perhaps through a group)."
 }
