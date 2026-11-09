@@ -3368,3 +3368,34 @@ button {
     opacity: 1;
   }
 }
+
+/* A11-07: the accessibility statement page. */
+.statement__header {
+  background: var(--navy);
+}
+.statement__bar {
+  display: flex;
+  align-items: center;
+  min-height: 64px;
+}
+.statement {
+  padding-block: 40px 64px;
+  max-width: 760px;
+  color: var(--ink);
+  line-height: 1.7;
+}
+.statement h1 {
+  font-size: 2rem;
+  margin-block: 0 24px;
+}
+.statement h2 {
+  font-size: 1.25rem;
+  margin-block: 32px 8px;
+}
+.statement ul {
+  padding-inline-start: 24px;
+}
+.statement__updated {
+  color: var(--slate);
+  margin-top: 40px;
+}

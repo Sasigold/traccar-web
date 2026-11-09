@@ -88,6 +88,7 @@ const CommandPage = lazy(() => import('./settings/CommandPage'));
 const DeviceStatisticsPage = lazy(() => import('./reports/DeviceStatisticsPage'));
 const StatisticsPage = lazy(() => import('./reports/StatisticsPage'));
 const LoginPage = lazy(() => import('./login/LoginPage'));
+const AccessibilityPage = lazy(() => import('./other/AccessibilityPage'));
 const RegisterPage = lazy(() => import('./login/RegisterPage'));
 const ResetPasswordPage = lazy(() => import('./login/ResetPasswordPage'));
 const GeofencesPage = lazy(() => import('./other/GeofencesPage'));
@@ -183,6 +184,8 @@ const Navigation = () => {
     <Suspense fallback={<Loader />}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        {/* A11-07: open without signing in. */}
+        <Route path="/accessibility" element={<AccessibilityPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/change-server" element={<ChangeServerPage />} />

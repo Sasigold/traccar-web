@@ -61,6 +61,11 @@ const goLiveCheck = () => ({
   name: 'go-live-check',
   async buildStart() {
     const { site, screens } = await import('./src/config.js');
+    if (!site.accessibility?.name || !(site.accessibility?.phone || site.accessibility?.email)) {
+      this.warn(
+        'site: accessibility coordinator not set; the accessibility statement has no contact (A11-07).',
+      );
+    }
     if (!site.leadEndpoint && !site.whatsapp && !site.contactEmail) {
       this.warn('site: no leadEndpoint, whatsapp or contactEmail; the demo form cannot send.');
     }
@@ -81,6 +86,13 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    // A11-07: the accessibility statement is its own page.
+    rolldownOptions: {
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        accessibility: fileURLToPath(new URL('./accessibility.html', import.meta.url)),
+      },
+    },
   },
   plugins: [
     goLiveCheck(),

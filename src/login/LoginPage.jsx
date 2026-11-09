@@ -25,7 +25,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { alpha } from '@mui/material/styles';
 import { ctaFill } from '../common/theme/surfaces';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { sessionActions } from '../store';
 import { useLocalization, useTranslation } from '../common/components/LocalizationProvider';
 import LoginLayout from './LoginLayout';
@@ -420,6 +420,18 @@ const LoginPage = () => {
             )}
           </div>
         )}
+        {/* A11-07: the accessibility statement, reachable before signing in. */}
+        <div className={classes.extraContainer}>
+          <Link
+            component={RouterLink}
+            to="/accessibility"
+            className={classes.link}
+            underline="hover"
+            variant="body2"
+          >
+            {t('settingsAccessibility')}
+          </Link>
+        </div>
       </div>
       <ServerQrCodeDialog open={showQr} onClose={() => setShowQr(false)} />
     </LoginLayout>

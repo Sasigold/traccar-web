@@ -3122,5 +3122,7 @@
     "fleetInspectionCriticalPhoto": "Photo of the fault (required)",
     "fleetSignatureClear": "Clear the signature",
     "fleetSignatureSigned": "signed",
-    "driverVehicleOutOfService": "Your vehicle is marked \"not for driving\": {0}. Do not drive it until the fleet manager closes the fault."
+    "driverVehicleOutOfService": "Your vehicle is marked \"not for driving\": {0}. Do not drive it until the fleet manager closes the fault.",
+    "settingsAccessibility": "Accessibility statement",
+    "settingsAccessibilityDescription": "How accessible the system is, what is not yet, and how to reach the accessibility coordinator"
 }

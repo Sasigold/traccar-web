@@ -1,3 +1,4 @@
+import AccessibilityNewRoundedIcon from '@mui/icons-material/AccessibilityNewRounded';
 import PrivacyTipRoundedIcon from '@mui/icons-material/PrivacyTipRounded';
 import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedInRounded';
 import { useMemo } from 'react';
@@ -240,6 +241,15 @@ const useSectionCatalog = () => {
         id: 'help',
         titleKey: 'settingsGroupHelp',
         items: [
+          {
+            // A11-07
+            id: 'accessibility',
+            titleKey: 'settingsAccessibility',
+            descriptionKey: 'settingsAccessibilityDescription',
+            icon: AccessibilityNewRoundedIcon,
+            path: '/accessibility',
+            match: (pathname) => pathname === '/accessibility',
+          },
           {
             id: 'support',
             titleKey: 'settingsSupport',
