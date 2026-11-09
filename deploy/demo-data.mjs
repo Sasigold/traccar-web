@@ -12,7 +12,7 @@
  *   node deploy/demo-data.mjs clean    delete everything this script created
  *
  * Options (or environment variables):
- *   --url       TRACCAR_URL       web/API address, e.g. http://72.61.153.60:8082
+ *   --url       TRACCAR_URL       web/API address over HTTPS, e.g. https://traccar-staging.example.com
  *   --email     TRACCAR_EMAIL     admin user
  *   --password  TRACCAR_PASSWORD  admin password
  *   --token     TRACCAR_TOKEN     API token instead of email/password
@@ -21,6 +21,8 @@
  *   --interval  seconds between live updates (default 10)
  *   --no-osrm   do not fetch road geometry from router.project-osrm.org
  *   --allow-production   seed the production server anyway (refused by default, FND-04)
+ *   --allow-http         send the credentials over plain HTTP anyway (refused by default, SEC-11;
+ *                        http://localhost is always allowed)
  *
  * Everything created is tagged (uniqueId prefix "demo-il-", attribute demoData=true)
  * so "clean" removes exactly that and nothing else. Requires Node 18+.
@@ -40,6 +42,7 @@ const { values: args, positionals } = parseArgs({
     interval: { type: 'string', default: '10' },
     'no-osrm': { type: 'boolean', default: false },
     'allow-production': { type: 'boolean', default: false },
+    'allow-http': { type: 'boolean', default: false },
     help: { type: 'boolean', short: 'h', default: false },
   },
 });
@@ -69,6 +72,14 @@ const isProduction =
 if (isProduction && !args['allow-production']) {
   console.error(
     `${target.host} is the production server. Seed the staging server instead, or pass --allow-production.`,
+  );
+  process.exit(1);
+}
+// SEC-11: the admin password (Basic auth) or token must not cross the internet unencrypted.
+const local = ['localhost', '127.0.0.1', '::1'].includes(target.hostname);
+if (target.protocol !== 'https:' && !local && !args['allow-http']) {
+  console.error(
+    `${target.origin} is not HTTPS: the admin credentials would travel unencrypted. Use the HTTPS address, run on the server with http://localhost:8082, or pass --allow-http.`,
   );
   process.exit(1);
 }
