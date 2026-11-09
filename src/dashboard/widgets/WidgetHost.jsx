@@ -28,7 +28,8 @@ import { HEIGHT_PRESETS, WIDTH_PRESETS } from '../layout/model';
 import { presetOf } from './catalog';
 import ChartWidget, { resolveChart } from './ChartWidget';
 import { VizIcon } from './icons';
-import WidgetFrame from './WidgetFrame';
+import WidgetFrame, { WidgetState } from './WidgetFrame';
+import ErrorBoundary from '../../ErrorBoundary';
 import KpiGroupWidget from './special/KpiGroupWidget';
 import HeroWidget from './special/HeroWidget';
 import LiveMapWidget from './special/LiveMapWidget';
@@ -340,14 +341,20 @@ const WidgetHost = ({ id, config, editing, highlight, dragging, api }) => {
       quick={quick}
     >
       {(size) => (
-        <WidgetBody
-          config={config}
-          {...size}
-          table={table}
-          onSelect={onSelect}
-          exportRef={exportRef}
-          title={title}
-        />
+        // One widget failing leaves the rest of the dashboard working.
+        <ErrorBoundary
+          resetKey={JSON.stringify(config)}
+          fallback={(_, reset) => <WidgetState state="error" onRetry={reset} />}
+        >
+          <WidgetBody
+            config={config}
+            {...size}
+            table={table}
+            onSelect={onSelect}
+            exportRef={exportRef}
+            title={title}
+          />
+        </ErrorBoundary>
       )}
     </WidgetFrame>
   );

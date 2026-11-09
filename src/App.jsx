@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import SocketController from './SocketController';
@@ -11,7 +12,8 @@ import MotionController from './main/MotionController';
 import TermsDialog from './common/components/TermsDialog';
 import Loader from './common/components/Loader';
 import AppShell from './common/components/shell/AppShell';
-import fetchOrThrow from './common/util/fetchOrThrow';
+import PageErrorBoundary from './common/components/PageErrorBoundary';
+import fetchOrThrow, { UNAUTHORIZED_EVENT } from './common/util/fetchOrThrow';
 
 const App = () => {
   const dispatch = useDispatch();
@@ -47,6 +49,30 @@ const App = () => {
     [user, dispatch, navigate, newServer, location.pathname, location.search],
   );
 
+  // A request was refused as unauthorized: if the session itself is gone, sign out, and the
+  // check above sends the user to the login screen (and back here after signing in).
+  useEffect(() => {
+    let checking = false;
+    const onUnauthorized = async () => {
+      if (checking) {
+        return;
+      }
+      checking = true;
+      try {
+        const response = await fetch('api/session');
+        if (response.status === 401) {
+          dispatch(sessionActions.updateUser(null));
+        }
+      } catch {
+        // Offline: the connection status says so; keep the session.
+      } finally {
+        checking = false;
+      }
+    };
+    window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+  }, [dispatch]);
+
   if (user == null) {
     return <Loader />;
   }
@@ -67,7 +93,9 @@ const App = () => {
       <UpdateController />
       <MotionController />
       <AppShell>
-        <Outlet />
+        <PageErrorBoundary>
+          <Outlet />
+        </PageErrorBoundary>
       </AppShell>
     </>
   );

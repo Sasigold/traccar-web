@@ -2401,5 +2401,19 @@
     "eventHide": "Hide alert",
     "eventLocation": "Alert location",
     "eventReplayAround": "Replay around it",
-    "eventsClearedOne": "1 alert cleared"
+    "eventsClearedOne": "1 alert cleared",
+    "errorNetwork": "Cannot reach the server. Check the internet connection and try again.",
+    "errorTimeout": "The server did not answer in time. Try again in a moment.",
+    "errorUnauthorized": "Your session has ended. Please sign in again.",
+    "errorForbidden": "You do not have permission for this. An administrator can grant it.",
+    "errorNotFound": "Not found. It may have been deleted.",
+    "errorDuplicate": "An item with the same details already exists.",
+    "errorConflict": "Someone else changed this in the meantime. Refresh and try again.",
+    "errorServer": "Server error. Try again in a moment.",
+    "errorRequest": "The request failed. Check the details and try again.",
+    "errorPageTitle": "Something went wrong here",
+    "errorPageText": "The rest of the app keeps working. Try again, or reload the page.",
+    "errorWidgetText": "This widget could not load.",
+    "errorRetry": "Try again",
+    "errorReload": "Reload"
 }
