@@ -1,4 +1,5 @@
 import React from 'react';
+import { isChunkLoadError, reloadForNewBuild } from './common/util/staleBuild';
 
 // Catches a render error so it does not take the whole app down. `fallback(error, reset)`
 // renders the replacement; `resetKey` (for example the page address) clears the error when it
@@ -23,6 +24,16 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
+    // A page's file from an older build is gone (FND-05): reload once to get the new build.
+    if (
+      isChunkLoadError(error) &&
+      reloadForNewBuild({
+        storage: window.sessionStorage,
+        reload: () => window.location.reload(),
+      })
+    ) {
+      return;
+    }
     // For support: the details stay in the console.
     console.error(error, info?.componentStack);
   }

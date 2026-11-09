@@ -3,7 +3,24 @@ import react from '@vitejs/plugin-react-swc';
 import svgr from 'vite-plugin-svgr';
 import { VitePWA } from 'vite-plugin-pwa';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
+import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { buildEnvProblems } from './src/common/fleet/buildEnv.js';
+import { releaseFile } from './src/common/util/release.js';
+
+// FND-05: the build says which release it is, "1.0.0+<commit>", in the app (Preferences) and in
+// version.json next to index.html (the deploy check reads it).
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+const commit = () => {
+  if (process.env.GITHUB_SHA) {
+    return process.env.GITHUB_SHA;
+  }
+  try {
+    return execSync('git rev-parse HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch {
+    return '';
+  }
+};
 
 // Brand values baked into index.html and the PWA manifest at build time,
 // so the UI looks right whether Traccar or a plain static server serves it.
@@ -23,8 +40,17 @@ export default defineConfig(({ command, mode }) => {
       throw new Error(`Build environment (${mode}):\n- ${problems.join('\n- ')}`);
     }
   }
+  const release = releaseFile({
+    version: pkg.version,
+    sha: commit(),
+    environment: loadEnv(mode, process.cwd(), 'VITE_').VITE_APP_ENV || mode,
+    builtAt: new Date().toISOString(),
+  });
   return {
     base: './',
+    define: {
+      'import.meta.env.VITE_APP_VERSION': JSON.stringify(release.release),
+    },
     server: {
       port: 3000,
       proxy: {
@@ -72,6 +98,17 @@ export default defineConfig(({ command, mode }) => {
       },
       svgr(),
       react(),
+      {
+        name: 'release-file',
+        apply: 'build',
+        generateBundle() {
+          this.emitFile({
+            type: 'asset',
+            fileName: 'version.json',
+            source: `${JSON.stringify(release, null, 2)}\n`,
+          });
+        },
+      },
       VitePWA({
         injectRegister: false,
         includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon-180x180.png'],

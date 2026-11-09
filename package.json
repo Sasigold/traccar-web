@@ -1,6 +1,6 @@
 {
-  "name": "traccar",
-  "version": "6.17.0",
+  "name": "viper-fleet-web",
+  "version": "1.0.0",
   "type": "module",
   "private": true,
   "dependencies": {

@@ -47,6 +47,21 @@ Nothing here has been run yet; it needs SSH access to the server. Same server, s
    `node deploy/demo-data.mjs clean --url https://traccar-ovjj.srv2122641.hstgr.cloud --allow-production …`
    (it deletes only what the script created).
 
+## Releases and rollback (FND-05)
+
+Every build knows its release, `1.0.0+<commit>` (`package.json` version plus the commit): Preferences
+shows it and `version.json` next to `index.html` serves it. A deploy never deletes before the new page
+is in place: the new files are copied in beside the old ones, then `index.html`, `version.json` and
+`sw.js` are swapped by rename, and only files that none of the last five releases has are removed.
+Tabs opened before a deploy keep loading their chunks; one that misses a file reloads once
+(`src/common/util/staleBuild.js`). After the deploy, `deploy/smoke.sh` checks that the new release is
+served and that a script of its page downloads.
+
+- `sh deploy/deploy.sh releases` lists the kept releases and the current one.
+- `sh deploy/deploy.sh rollback` puts the previous one back (or `rollback <release>`), in seconds,
+  without a build. The "Roll back" workflow does the same from GitHub, for production or staging.
+- The database is not rolled back: migrations only add, and an older UI works with the newer schema.
+
 ## Deploying by hand
 
 `sh deploy/deploy.sh` builds before it uploads, so it needs the build's fleet database:

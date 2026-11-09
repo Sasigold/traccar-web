@@ -10,6 +10,10 @@ import NativeInterface from './common/components/NativeInterface';
 import ServerProvider from './ServerProvider';
 import ErrorBoundary from './ErrorBoundary';
 import AppThemeProvider from './AppThemeProvider';
+import { installStaleBuildRecovery } from './common/util/staleBuild';
+
+// FND-05: a tab from before a deploy reloads once instead of showing an error.
+installStaleBuildRecovery();
 
 const root = createRoot(document.getElementById('root'));
 root.render(

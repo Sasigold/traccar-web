@@ -102,10 +102,12 @@ jobs:
     - name: Deploy edge functions to staging
       run: sh deploy/functions.sh
 
-    - name: Verify site
+    - name: Verify the release is served and its scripts load
+      # On failure: sh deploy/deploy.sh rollback (the previous release is kept on the server).
       run: |
         sleep 3
-        curl -fsS --max-time 30 "$SITE_URL/" | grep -q '<div id="root"' && echo "Staging responds with the app shell."
+        release=$(sed -n 's/.*"release": *"\([^"]*\)".*/\1/p' build/version.json)
+        sh deploy/smoke.sh "$SITE_URL" "$release"
 
     - name: Remove the key
       if: always()
