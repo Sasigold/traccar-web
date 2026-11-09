@@ -158,6 +158,22 @@ the session.
 Without the migration, or with the fleet database disabled, the device, sensor and user pages still work;
 the customer and billing parts show why they are unavailable.
 
+## Security model and database tests
+
+- **Platform administrators.** Customers, the device registry and billing have no `org_id`; only users in
+  `public.platform_admins` hold `customers.*` / `billing.*`, whatever their organization role or overrides
+  say (`has_permission()` answers those keys with `is_platform_admin()`,
+  `20261109120000_security_hardening.sql`). The migration seeds the active owners and admins that are not
+  users of a customer. To add someone (as an existing platform admin, or as `postgres`):
+  `insert into public.platform_admins (user_id) select id from public.profiles where traccar_user_id = <id>;`
+  Nobody can remove themselves.
+- **Drivers** reach incident parties, claims, photos and checklist answers only through incidents and
+  inspections they may see. They upload files but never replace or delete them.
+- **Tests.** `supabase/tests/run.sh` applies every migration to a fresh Postgres on top of
+  `supabase/tests/base_standin.sql` (a stand-in for the VPS-only base schema) and runs
+  `supabase/tests/*.test.sql`. CI runs it on every pull request. Locally:
+  `PGHOST=... PGPORT=... PGUSER=postgres sh supabase/tests/run.sh`.
+
 ## Roadmap stage 0: fleet details in Traccar attributes
 
 Stage 0 of the roadmap works without the fleet database. Structured vehicle and driver details are stored
