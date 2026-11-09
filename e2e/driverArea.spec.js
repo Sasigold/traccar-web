@@ -19,7 +19,8 @@ const tables = {
   ],
 };
 
-const mockFleet = async (page) => {
+// `net.down` drops every write (no signal); `net.storageDown` only the photo uploads.
+const mockFleet = async (page, net = {}) => {
   const writes = [];
   await page.route('**/api/session/token', (route) => route.fulfill({ body: 'token' }));
   await page.route(`${FLEET}/**`, (route) => {
@@ -37,6 +38,12 @@ const mockFleet = async (page) => {
     }
     const name = url.pathname.split('/').at(-1);
     const single = (request.headers().accept || '').includes('vnd.pgrst.object');
+    if (
+      request.method() !== 'GET' &&
+      (net.down || (net.storageDown && url.pathname.includes('/storage/v1/')))
+    ) {
+      return route.abort('internetdisconnected');
+    }
     if (url.pathname.includes('/storage/v1/')) {
       writes.push({ name: 'storage', path: url.pathname });
       return route.fulfill({ json: { Key: url.pathname } });
@@ -119,9 +126,60 @@ test('a damage report starts with the camera and needs no manager fields', async
   });
   expect(writes.some((write) => write.name === 'storage')).toBe(true);
   expect(writes.find((write) => write.name === 'incident_photos').body).toMatchObject({
-    incident_id: 'incidents-1',
+    incident_id: incident.body.id,
     file_name: 'damage.jpg',
   });
+});
+
+// ADM-10: with no signal the report waits in the phone, and goes once the signal is back.
+const fillDamage = async (page) => {
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'damage.jpg',
+    mimeType: 'image/jpeg',
+    buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
+  });
+  await page.getByRole('button', { name: 'המשך' }).click();
+  await page.getByRole('button', { name: 'נזק', exact: true }).click();
+  await page.getByRole('group', { name: 'יש פצועים?' }).getByRole('button', { name: 'לא' }).click();
+  await page.getByRole('button', { name: 'המשך' }).click();
+  await page
+    .getByRole('group', { name: 'היה מעורב רכב או אדם נוסף?' })
+    .getByRole('button', { name: 'לא' })
+    .click();
+  await page.getByRole('button', { name: 'שליחת הדיווח' }).click();
+};
+
+test('with no signal the report waits in the phone and goes later, once', async ({ page }) => {
+  const net = { down: false };
+  const writes = await mockFleet(page, net);
+  await gotoReady(page, '/driver/damage');
+  await expect(page.getByText('רכב 12-345-67 · דנה לוי')).toBeVisible();
+  net.down = true;
+  await fillDamage(page);
+  await expect(page.getByRole('status').filter({ hasText: 'הדיווח נשמר בטלפון' })).toBeVisible();
+  expect(writes.filter((write) => write.name === 'incidents')).toHaveLength(0);
+
+  await page.getByRole('link', { name: 'חזרה לאזור הנהג' }).click();
+  await expect(page.getByText('ממתין לשליחה (1)')).toBeVisible();
+  net.down = false;
+  await page.getByRole('button', { name: 'לשלוח עכשיו' }).click();
+  await expect(page.getByText('ממתין לשליחה (1)')).toHaveCount(0);
+  expect(writes.filter((write) => write.name === 'incidents')).toHaveLength(1);
+  expect(writes.filter((write) => write.name === 'incident_photos')).toHaveLength(1);
+});
+
+test('photos that did not upload are sent again without a second report', async ({ page }) => {
+  const net = { storageDown: true };
+  const writes = await mockFleet(page, net);
+  await gotoReady(page, '/driver/damage');
+  await expect(page.getByText('רכב 12-345-67 · דנה לוי')).toBeVisible();
+  await fillDamage(page);
+  await expect(page.getByRole('alert').filter({ hasText: '1 תמונות לא עלו' })).toBeVisible();
+  net.storageDown = false;
+  await page.getByRole('button', { name: 'שליחה חוזרת של התמונות' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'הדיווח נשלח' })).toBeVisible();
+  expect(writes.filter((write) => write.name === 'incidents')).toHaveLength(1);
+  expect(writes.filter((write) => write.name === 'incident_photos')).toHaveLength(1);
 });
 
 // ADM-11: the first check creates the daily checklist; a failed critical item needs a photo and

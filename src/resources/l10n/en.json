@@ -3147,5 +3147,11 @@
     "replayEmpty": "No locations in this period. Try another period.",
     "shellMore": "More",
     "sheetExpand": "Expand the card",
-    "sheetCollapse": "Collapse the card"
+    "sheetCollapse": "Collapse the card",
+    "driverDamageQueued": "The report was saved on the phone at {0}",
+    "driverDamageQueuedText": "There is no signal right now. The report and its photos will be sent on their own when the signal is back, even if you close this screen.",
+    "driverDamagePartialCount": "The report was partly saved: {0} photos did not upload. Try again.",
+    "driverDamageRetry": "Send the photos again",
+    "driverOutboxWaiting": "Waiting to send ({0})",
+    "driverOutboxRetry": "Send now"
 }

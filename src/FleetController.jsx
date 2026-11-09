@@ -5,6 +5,9 @@ import { isFleetConfigured } from './common/fleet/config';
 import { clearFleetSession, ensureFleetSession } from './common/fleet/session';
 import { getFleetClient } from './common/fleet/client';
 import { loadFleetFeatures } from './common/fleet/features';
+import { useOutboxSync } from './common/fleet/useOutbox';
+// The senders of what the driver area queues (ADM-10).
+import './fleet/driverOutbox';
 
 const REFRESH_INTERVAL_MS = 30 * 60 * 1000;
 
@@ -15,6 +18,8 @@ const FleetController = () => {
   const userId = useSelector((state) => state.session.user?.id);
   // Share-link users never get a fleet database session (it would be organization-wide).
   const temporary = useSelector((state) => Boolean(state.session.user?.temporary));
+  // ADM-10: what waits in the phone goes when the session is up and the line is back.
+  useOutboxSync();
 
   useEffect(() => {
     if (!isFleetConfigured() || temporary) {

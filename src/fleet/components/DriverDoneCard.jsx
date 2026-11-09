@@ -2,6 +2,7 @@ import { Button, Paper, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { Link as RouterLink } from 'react-router-dom';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import ScheduleSendRoundedIcon from '@mui/icons-material/ScheduleSendRounded';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import { formatTime } from '../../common/util/formatter';
 
@@ -23,6 +24,10 @@ const useStyles = makeStyles()((theme) => ({
     fontSize: 64,
     color: theme.palette.success.main,
   },
+  pendingIcon: {
+    fontSize: 64,
+    color: theme.palette.text.secondary,
+  },
   action: {
     minHeight: 56,
     alignSelf: 'stretch',
@@ -31,12 +36,17 @@ const useStyles = makeStyles()((theme) => ({
 
 // After a driver sends a check or a report (ADM-09): what was sent and when, and one main
 // action, back to the driver area.
-const DriverDoneCard = ({ titleKey, time, children }) => {
+// `pending`: saved in the phone, not sent yet (ADM-10).
+const DriverDoneCard = ({ titleKey, time, children, pending }) => {
   const { classes } = useStyles();
   const t = useTranslation();
   return (
     <Paper elevation={0} className={classes.card} role="status">
-      <CheckCircleRoundedIcon className={classes.icon} />
+      {pending ? (
+        <ScheduleSendRoundedIcon className={classes.pendingIcon} />
+      ) : (
+        <CheckCircleRoundedIcon className={classes.icon} />
+      )}
       <Typography variant="h6" component="h2">
         {t(titleKey).replace('{0}', formatTime(time, 'clock'))}
       </Typography>

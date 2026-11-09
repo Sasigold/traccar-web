@@ -26,14 +26,14 @@ import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import { DateTimeField } from '../common/components/pickers';
 import { useCatch } from '../reactHelper';
-import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetProfile } from '../common/fleet/useFleet';
 import { fromLocalInput, toLocalInput } from '../common/fleet/incidents';
 import FleetNotice from './components/FleetNotice';
 import DriverDoneCard from './components/DriverDoneCard';
 import useDriverContext from './useDriverContext';
 import { incidentKey } from './IncidentsPage';
-import { uploadFleetFile } from './fleetData';
+import { enqueue, newId, sendItem, shrinkImage } from '../common/fleet/outbox';
+import './driverOutbox';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -210,7 +210,9 @@ const DriverDamagePage = () => {
   const [licensePhoto, setLicensePhoto] = useState([]);
   const [insurancePhoto, setInsurancePhoto] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [savedId, setSavedId] = useState(null);
+  // ADM-10: the report waits in the phone (the outbox) until it is through.
+  const [pending, setPending] = useState(null);
+  const [filesLeft, setFilesLeft] = useState(0);
   const [done, setDone] = useState(null);
 
   const set = (changes) => setReport((current) => ({ ...current, ...changes }));
@@ -220,14 +222,42 @@ const DriverDamagePage = () => {
   const submit = useCatch(async () => {
     setSaving(true);
     try {
-      const client = getFleetClient();
-      // The report is created once: a retry after a failed upload adds the files to it.
-      let incidentId = savedId;
-      if (!incidentId) {
-        const saved = unwrap(
-          await client
-            .from('incidents')
-            .insert({
+      // The report is put in the outbox once; pressing again only retries what is left.
+      let item = pending;
+      if (!item) {
+        const incidentId = newId();
+        const files = await Promise.all(
+          [
+            ...photos.map((file) => [file, file.name]),
+            ...licensePhoto.map((file) => [file, `party-license-${file.name}`]),
+            ...insurancePhoto.map((file) => [file, `party-insurance-${file.name}`]),
+          ].map(async ([file, label]) => {
+            const small = await shrinkImage(file);
+            return {
+              blob: small,
+              name: small.name,
+              type: small.type,
+              label,
+              lastModified: file.lastModified,
+            };
+          }),
+        );
+        const party = partyInvolved
+          ? {
+              id: newId(),
+              org_id: profile.org_id,
+              incident_id: incidentId,
+              role: 'third_party',
+              ...Object.fromEntries(
+                Object.entries(party).map(([key, value]) => [key, value.trim() || null]),
+              ),
+            }
+          : null;
+        item = await enqueue(
+          'damage',
+          {
+            incident: {
+              id: incidentId,
               org_id: profile.org_id,
               vehicle_id: assignment.vehicle_id,
               driver_id: context.driver.id,
@@ -239,44 +269,22 @@ const DriverDamagePage = () => {
               longitude: position?.longitude ?? null,
               address: place.trim() || null,
               reported_by: profile.id,
-            })
-            .select('id')
-            .single(),
+            },
+            party,
+          },
+          files,
         );
-        incidentId = saved.id;
-        setSavedId(incidentId);
-        if (partyInvolved) {
-          const filled = Object.fromEntries(
-            Object.entries(party).map(([key, value]) => [key, value.trim() || null]),
-          );
-          unwrap(
-            await client.from('incident_parties').insert({
-              org_id: profile.org_id,
-              incident_id: incidentId,
-              role: 'third_party',
-              ...filled,
-            }),
-          );
-        }
+        setPending(item);
       }
-      const files = [
-        ...photos.map((file) => [file, file.name]),
-        ...licensePhoto.map((file) => [file, `party-license-${file.name}`]),
-        ...insurancePhoto.map((file) => [file, `party-insurance-${file.name}`]),
-      ];
-      for (const [file, name] of files) {
-        const path = await uploadFleetFile(profile.org_id, 'incidents', file);
-        unwrap(
-          await client.from('incident_photos').insert({
-            org_id: profile.org_id,
-            incident_id: incidentId,
-            storage_path: path,
-            file_name: name,
-            taken_at: file.lastModified ? new Date(file.lastModified).toISOString() : null,
-          }),
-        );
+      const result = await sendItem(item);
+      if (result.sent) {
+        setDone({ time: new Date(), queued: false });
+      } else if (!result.item?.saved) {
+        // No line: the report stays in the phone and goes when there is one.
+        setDone({ time: new Date(), queued: true });
+      } else {
+        setFilesLeft(result.filesLeft);
       }
-      setDone(new Date());
     } finally {
       setSaving(false);
     }
@@ -294,7 +302,13 @@ const DriverDamagePage = () => {
       );
     }
     if (done) {
-      return <DriverDoneCard titleKey="driverDamageSent" time={done} />;
+      return done.queued ? (
+        <DriverDoneCard titleKey="driverDamageQueued" time={done.time} pending>
+          <Typography color="textSecondary">{t('driverDamageQueuedText')}</Typography>
+        </DriverDoneCard>
+      ) : (
+        <DriverDoneCard titleKey="driverDamageSent" time={done.time} />
+      );
     }
 
     const stepValid = [
@@ -451,7 +465,11 @@ const DriverDamagePage = () => {
                   />
                 </>
               )}
-              {savedId && <Alert severity="warning">{t('driverDamagePartial')}</Alert>}
+              {filesLeft > 0 && (
+                <Alert severity="warning" role="alert">
+                  {t('driverDamagePartialCount').replace('{0}', filesLeft)}
+                </Alert>
+              )}
             </>
           )}
         </Paper>
@@ -474,7 +492,7 @@ const DriverDamagePage = () => {
             </Button>
           ) : (
             <Button variant="contained" onClick={submit} disabled={!stepValid || saving}>
-              {t('driverDamageSend')}
+              {t(filesLeft > 0 ? 'driverDamageRetry' : 'driverDamageSend')}
             </Button>
           )}
         </div>

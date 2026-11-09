@@ -3147,5 +3147,11 @@
     "replayEmpty": "אין מיקומים בתקופה הזו. נסו תקופה אחרת.",
     "shellMore": "עוד",
     "sheetExpand": "הרחבת הכרטיס",
-    "sheetCollapse": "כיווץ הכרטיס"
+    "sheetCollapse": "כיווץ הכרטיס",
+    "driverDamageQueued": "הדיווח נשמר בטלפון {0}",
+    "driverDamageQueuedText": "אין כרגע קליטה. הדיווח והתמונות יישלחו לבד כשהקליטה תחזור, גם אם תסגרו את המסך.",
+    "driverDamagePartialCount": "הדיווח נשמר חלקית: {0} תמונות לא עלו. נסו שוב.",
+    "driverDamageRetry": "שליחה חוזרת של התמונות",
+    "driverOutboxWaiting": "ממתין לשליחה ({0})",
+    "driverOutboxRetry": "לשלוח עכשיו"
 }

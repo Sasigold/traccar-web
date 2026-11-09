@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link as RouterLink } from 'react-router-dom';
 import { Alert, Button, Paper, Typography } from '@mui/material';
+import ScheduleSendRoundedIcon from '@mui/icons-material/ScheduleSendRounded';
+import { useOutboxCount } from '../common/fleet/useOutbox';
+import { flushOutbox } from '../common/fleet/outbox';
 import { makeStyles } from 'tss-react/mui';
 import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
 import CarCrashRoundedIcon from '@mui/icons-material/CarCrashRounded';
@@ -80,6 +83,7 @@ const useStyles = makeStyles()((theme) => ({
 const DriverPortalPage = () => {
   const { classes, theme } = useStyles();
   const t = useTranslation();
+  const waiting = useOutboxCount();
   const label = useFleetLabel();
   const status = useFleetStatus();
   const profile = useFleetProfile();
@@ -150,6 +154,20 @@ const DriverPortalPage = () => {
     <PageLayout breadcrumbs={['fleetDriverPortal']} description={t('fleetDriverPortalDescription')}>
       <FleetNotice permission="inspections.write" />
       <div className={classes.root}>
+        {/* ADM-10: what waits in the phone for a line. */}
+        {waiting > 0 && (
+          <Alert
+            severity="info"
+            icon={<ScheduleSendRoundedIcon />}
+            action={
+              <Button color="inherit" size="small" onClick={() => flushOutbox()}>
+                {t('driverOutboxRetry')}
+              </Button>
+            }
+          >
+            {t('driverOutboxWaiting').replace('{0}', waiting)}
+          </Alert>
+        )}
         {data && !data.driver && <Alert severity="info">{t('fleetDriverPortalNotLinked')}</Alert>}
         {data?.outOfService && (
           <Alert severity="error" variant="filled">
