@@ -2885,5 +2885,15 @@
     "apiDocsLimitsHelp": "The limit comes with the organization's package and counts all keys together. Going over returns error 429 until the minute ends.",
     "apiDocsPerMinute": "Requests a minute",
     "apiDocsPerDay": "Requests a day",
-    "apiDocsUsedToday": "Requests in the last 24 hours"
+    "apiDocsUsedToday": "Requests in the last 24 hours",
+    "adminApi": "Public API",
+    "adminApiDescription": "The public API rate limit of every organization, by its package, and its use in the last 24 hours.",
+    "adminApiNone": "No organizations yet",
+    "adminApiOrganization": "Organization",
+    "adminApiPackage": "Package",
+    "adminApiCustom": "Custom",
+    "adminApiDefault": "Default",
+    "adminApiKeys": "Active keys",
+    "adminApiEdit": "Edit limit",
+    "adminApiRestore": "Back to the default"
 }

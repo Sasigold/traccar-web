@@ -5,6 +5,7 @@ import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import SellRoundedIcon from '@mui/icons-material/SellRounded';
 import ForumRoundedIcon from '@mui/icons-material/ForumRounded';
+import ApiRoundedIcon from '@mui/icons-material/ApiRounded';
 
 // Sections of the super admin area: the section menu and the command palette.
 export const adminSections = [
@@ -46,6 +47,13 @@ export const adminSections = [
         icon: ForumRoundedIcon,
         path: '/admin/messaging',
         match: (pathname) => pathname.startsWith('/admin/messaging'),
+      },
+      {
+        id: 'api',
+        titleKey: 'adminApi',
+        icon: ApiRoundedIcon,
+        path: '/admin/api',
+        match: (pathname) => pathname.startsWith('/admin/api'),
       },
     ],
   },

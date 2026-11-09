@@ -119,6 +119,7 @@ const AdminUsersPage = lazy(() => import('./admin/AdminUsersPage'));
 const BillingPage = lazy(() => import('./admin/BillingPage'));
 const PlansPage = lazy(() => import('./admin/PlansPage'));
 const MessagingPage = lazy(() => import('./admin/MessagingPage'));
+const ApiLimitsPage = lazy(() => import('./admin/ApiLimitsPage'));
 
 const Navigation = () => {
   const dispatch = useDispatch();
@@ -293,6 +294,7 @@ const Navigation = () => {
             <Route path="billing" element={<BillingPage />} />
             <Route path="plans" element={<PlansPage />} />
             <Route path="messaging" element={<MessagingPage />} />
+            <Route path="api" element={<ApiLimitsPage />} />
           </Route>
 
           <Route path="reports" element={<ReportVisits />}>

@@ -2885,5 +2885,15 @@
     "apiDocsLimitsHelp": "המגבלה נקבעת לפי החבילה של הארגון ונספרת לכל המפתחות יחד. מעבר לה מחזיר שגיאה 429 עד סוף הדקה.",
     "apiDocsPerMinute": "בקשות בדקה",
     "apiDocsPerDay": "בקשות ביום",
-    "apiDocsUsedToday": "בקשות ב-24 השעות האחרונות"
+    "apiDocsUsedToday": "בקשות ב-24 השעות האחרונות",
+    "adminApi": "API ציבורי",
+    "adminApiDescription": "מגבלת הקצב של ה-API הציבורי לכל ארגון, לפי החבילה שלו, והשימוש ב-24 השעות האחרונות.",
+    "adminApiNone": "אין עדיין ארגונים",
+    "adminApiOrganization": "ארגון",
+    "adminApiPackage": "חבילה",
+    "adminApiCustom": "מותאמת",
+    "adminApiDefault": "ברירת מחדל",
+    "adminApiKeys": "מפתחות פעילים",
+    "adminApiEdit": "עריכת מגבלה",
+    "adminApiRestore": "חזרה לברירת המחדל"
 }

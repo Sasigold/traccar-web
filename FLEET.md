@@ -495,7 +495,7 @@ explains it in the app, with a Power BI query that pages through a resource.
   tracking links. Both are callable only by the service role (migration `20261111100000_public_api.sql`,
   tests in `supabase/tests/public_api.test.sql`).
 - *Rate limit.* Per organization, all keys together: `api_limits` (the package; platform administrators
-  set it, default 60 a minute and 20,000 a day); `api_usage` counts per key and minute, kept two days. Over
+  set it on `/admin/api`, which reads `api_limits_overview()`; default 60 a minute and 20,000 a day); `api_usage` counts per key and minute, kept two days. Over
   the limit is 429 with `Retry-After`; the `X-RateLimit-*` headers show what is left.
 - *Deploy.* `sh deploy/migrate.sh`, then `sh deploy/functions.sh` (copies the function next to
   `traccar-auth`, restarts the edge runtime, checks `/v1`; `sh deploy/functions.sh rollback` puts the previous

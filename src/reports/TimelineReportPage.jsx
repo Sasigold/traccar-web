@@ -262,7 +262,14 @@ const TimelineReportPage = () => {
           </div>
         </div>
 
-        <Paper elevation={0} className={classes.chart}>
+        {/* It scrolls sideways on narrow screens, so the keyboard can reach it too. */}
+        <Paper
+          elevation={0}
+          className={classes.chart}
+          tabIndex={0}
+          role="region"
+          aria-label={t('reportTimeline')}
+        >
           <div className={classes.grid}>
             <span />
             <div className={classes.hours} aria-hidden>

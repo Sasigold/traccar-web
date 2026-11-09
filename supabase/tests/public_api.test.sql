@@ -129,6 +129,25 @@ begin
     'organization B sees its own';
 end $$;
 
+-- Only platform administrators see every organization's limits and usage.
+select pg_temp.as_user('00000000-0000-0000-0000-0000000002c1');
+do $$ begin
+  assert (select per_minute from public.api_limits_overview()
+           where org_id = 'a2000000-0000-0000-0000-000000000000') = 3, 'A''s package limit';
+  assert (select custom and active_keys = 1 and used_day = 4 from public.api_limits_overview()
+           where org_id = 'a2000000-0000-0000-0000-000000000000'), 'A''s keys and usage';
+  assert (select not custom and per_minute = 60 from public.api_limits_overview()
+           where org_id = 'b2000000-0000-0000-0000-000000000000'), 'B has the default';
+end $$;
+select pg_temp.as_user('00000000-0000-0000-0000-0000000002a1');
+do $$ begin
+  begin
+    perform public.api_limits_overview();
+    assert false, 'an owner does not see other organizations';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+
 -- An integration manager sees the organization's usage; another organization does not.
 select pg_temp.as_user('00000000-0000-0000-0000-0000000002a1');
 do $$ begin
