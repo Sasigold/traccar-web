@@ -1807,7 +1807,7 @@
     "fleetWebhookActive": "פעיל",
     "fleetWebhookPaused": "מושהה",
     "fleetWebhookSecret": "סוד לחתימה",
-    "fleetWebhookSecretHelp": "כל שליחה חתומה בכותרת X-ViperFleet-Signature (HMAC-SHA256 של גוף הבקשה).",
+    "fleetWebhookSecretHelp": "כל שליחה חתומה: X-ViperFleet-Signature היא v1=HMAC-SHA256 של \"<X-ViperFleet-Timestamp>.<גוף הבקשה>\". דחו שליחות שהזמן שלהן ישן מ-5 דקות. הכתובת חייבת להיות https ציבורית.",
     "fleetWebhookActionInsert": "חדש",
     "fleetWebhookActionStatus": "סטטוס",
     "fleetWebhookActionUpdate": "עדכון",

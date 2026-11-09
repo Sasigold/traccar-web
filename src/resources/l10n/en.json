@@ -1807,7 +1807,7 @@
     "fleetWebhookActive": "Active",
     "fleetWebhookPaused": "Paused",
     "fleetWebhookSecret": "Signing secret",
-    "fleetWebhookSecretHelp": "Every delivery is signed in the X-ViperFleet-Signature header (HMAC-SHA256 of the body).",
+    "fleetWebhookSecretHelp": "Every delivery is signed: X-ViperFleet-Signature is v1=HMAC-SHA256 of \"<X-ViperFleet-Timestamp>.<request body>\". Refuse deliveries whose timestamp is older than 5 minutes. The address must be a public https one.",
     "fleetWebhookActionInsert": "New",
     "fleetWebhookActionStatus": "Status",
     "fleetWebhookActionUpdate": "Update",
