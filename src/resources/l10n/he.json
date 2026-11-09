@@ -3369,5 +3369,7 @@
     "mapLoadFailed": "טעינת המפה נכשלה.",
     "mapRetry": "נסו שוב",
     "mapSwitchLayer": "החלפת שכבה",
-    "mapSearchNotFound": "לא נמצא מקום בשם הזה"
+    "mapSearchNotFound": "לא נמצא מקום בשם הזה",
+    "cardNoVideo": "המכשיר הזה לא תומך בווידאו חי",
+    "cardNoPosition": "לרכב הזה עדיין אין מיקום. הוא יופיע במפה אחרי הדיווח הראשון של המכשיר."
 }

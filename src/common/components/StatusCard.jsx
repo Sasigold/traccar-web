@@ -47,9 +47,7 @@ import FaultCodes from '../../fleet/components/FaultCodes';
 import { faultCodes } from '../fleet/fleetFields';
 import { useDeviceReadonly, useRestriction } from '../util/permissions';
 import usePositionAttributes from '../attributes/usePositionAttributes';
-import { useCatchCallback } from '../../reactHelper';
 import { useAttributePreference } from '../util/preferences';
-import fetchOrThrow from '../util/fetchOrThrow';
 import { formatSpeed } from '../util/formatter';
 import useActivityText, { toneColor } from './useActivityText';
 import { whatsappLink } from '../fleet/dispatch';
@@ -228,6 +226,21 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     },
     transform: 'translateX(-50%)',
   },
+  // LIV-14: the card rises in (220ms); with reduced motion it only fades in.
+  enter: {
+    animation: 'vf-card-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+    '@keyframes vf-card-in': {
+      from: { opacity: 0, transform: 'translateY(16px)' },
+      to: { opacity: 1, transform: 'none' },
+    },
+    '@media (prefers-reduced-motion: reduce)': {
+      animation: 'vf-card-fade 160ms linear',
+    },
+    '@keyframes vf-card-fade': {
+      from: { opacity: 0 },
+      to: { opacity: 1 },
+    },
+  },
   sheetRoot: {
     [theme.breakpoints.down('md')]: {
       left: 0,
@@ -253,6 +266,7 @@ const StatusCard = ({
 }) => {
   const { classes, cx, theme } = useStyles({ desktopPadding });
   const phone = useMediaQuery(theme.breakpoints.down('md'));
+  const [dragKey, setDragKey] = useState(0);
   const navigate = useNavigate();
   const t = useTranslation();
 
@@ -287,24 +301,15 @@ const StatusCard = ({
   const driverName = driver?.name || driverUniqueId;
   const driverPhone = driver?.attributes?.phone;
 
-  const handleGeofence = useCatchCallback(async () => {
-    const newItem = {
-      name: t('sharedGeofence'),
-      area: `CIRCLE (${position.latitude} ${position.longitude}, 50)`,
-    };
-    const response = await fetchOrThrow('api/geofences', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newItem),
-    });
-    const item = await response.json();
-    await fetchOrThrow('api/permissions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId: position.deviceId, geofenceId: item.id }),
-    });
-    navigate(`/settings/geofence/${item.id}`);
-  }, [navigate, position, t]);
+  // LIV-14: a new geofence opens as a draft; nothing is created until it is saved.
+  const handleGeofence = () =>
+    navigate(
+      `/settings/geofence?${new URLSearchParams({
+        latitude: position.latitude,
+        longitude: position.longitude,
+        deviceId: position.deviceId,
+      })}`,
+    );
 
   const moving = activity === 'moving';
   const plateNumber = device?.attributes?.plateNumber;
@@ -360,6 +365,12 @@ const StatusCard = ({
   // when the phone sheet is at its peek.
   const notices = (
     <>
+      {/* LIV-14: a vehicle that never reported says so instead of an empty card. */}
+      {!position && (
+        <Alert severity="info" className={classes.privacy}>
+          {t('cardNoPosition')}
+        </Alert>
+      )}
       {privacy && (
         <Alert severity="info" icon={<VisibilityOffRoundedIcon />} className={classes.privacy}>
           {t(privacy === 'private' ? 'privacyHiddenPrivate' : 'privacyHiddenHours')}
@@ -497,7 +508,12 @@ const StatusCard = ({
           (phone ? (
             // LIV-09: on a phone the card is a sheet at the bottom: a peek with the name, the
             // status and the actions, then half and full height for the details.
-            <Card elevation={0} className={cx(classes.card, classes.sheetCard)}>
+            <Card
+              elevation={0}
+              className={cx(classes.card, classes.sheetCard, classes.enter)}
+              role="region"
+              aria-label={device.name}
+            >
               <BottomSheet
                 sheetRef={setStatusCardElement}
                 topInset={theme.dimensions.topBarHeightMobile + 8}
@@ -514,13 +530,24 @@ const StatusCard = ({
             </Card>
           ) : (
             <Rnd
+              // LIV-14: a double click on the title puts a dragged card back in its place.
+              key={dragKey}
               default={{ x: 0, y: 0, width: 'auto', height: 'auto' }}
               enableResizing={false}
               dragHandleClassName="draggable-header"
               style={{ position: 'relative' }}
               onDragStop={statusCardMoved}
             >
-              <Card elevation={0} className={classes.card} ref={setStatusCardElement}>
+              <Card
+                elevation={0}
+                className={cx(classes.card, classes.enter)}
+                ref={setStatusCardElement}
+                role="region"
+                aria-label={device.name}
+                onDoubleClick={(event) => {
+                  if (event.target.closest('.draggable-header')) setDragKey((key) => key + 1);
+                }}
+              >
                 {top('draggable-header')}
                 {notices}
                 {details}
@@ -571,7 +598,10 @@ const StatusCard = ({
             <ListItemIcon>
               <VideocamRoundedIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>{t('linkLiveVideo')}</ListItemText>
+            <ListItemText
+              primary={t('linkLiveVideo')}
+              secondary={position.protocol !== 'jt808' ? t('cardNoVideo') : undefined}
+            />
           </MenuItem>
         )}
         {position && !readonly && (

@@ -3369,5 +3369,7 @@
     "mapLoadFailed": "The map did not load.",
     "mapRetry": "Try again",
     "mapSwitchLayer": "Switch layer",
-    "mapSearchNotFound": "No place by that name"
+    "mapSearchNotFound": "No place by that name",
+    "cardNoVideo": "This device does not support live video",
+    "cardNoPosition": "This vehicle has no location yet. It appears on the map after the device's first report."
 }

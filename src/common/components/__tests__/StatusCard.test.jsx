@@ -81,11 +81,8 @@ describe('the vehicle card', () => {
     expect(location.current.search).toBe('?deviceId=1');
   });
 
-  it('creates a geofence around the vehicle and opens it', async () => {
-    const api = fakeFetch({
-      'POST api/geofences': { id: 44, name: 'גדר וירטואלית' },
-      'POST api/permissions': new Response(null, { status: 204 }),
-    });
+  it('opens a draft geofence around the vehicle, creating nothing yet (LIV-14)', async () => {
+    const api = fakeFetch({});
     vi.stubGlobal('fetch', vi.fn(api.fetch));
     const { user } = await renderApp(
       <StatusCard deviceId={1} position={position} onClose={() => {}} />,
@@ -93,9 +90,9 @@ describe('the vehicle card', () => {
     );
     await user.click(await screen.findByRole('button', { name: 'פעולות נוספות' }));
     await user.click(await screen.findByRole('menuitem', { name: 'יצירת גדר וירטואלית' }));
-    await waitFor(() => expect(location.current.pathname).toBe('/settings/geofence/44'));
-    expect(JSON.parse(api.calls[0].body).area).toBe('CIRCLE (32.794 34.989, 50)');
-    expect(JSON.parse(api.calls[1].body)).toEqual({ deviceId: 1, geofenceId: 44 });
+    await waitFor(() => expect(location.current.pathname).toBe('/settings/geofence'));
+    expect(location.current.search).toBe('?latitude=32.794&longitude=34.989&deviceId=1');
+    expect(api.calls.filter((call) => call.method === 'POST')).toEqual([]);
   });
 
   it('hides what a read-only user cannot do', async () => {
