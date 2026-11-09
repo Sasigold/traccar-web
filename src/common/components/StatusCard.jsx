@@ -50,6 +50,7 @@ import useActivityText from './useActivityText';
 import { whatsappLink } from '../fleet/dispatch';
 import CommandDialog from './commands/CommandDialog';
 import CommandStatus from './commands/CommandStatus';
+import FocusedEventBanner from './FocusedEventBanner';
 
 const useStyles = makeStyles()((theme, { desktopPadding }) => ({
   card: {
@@ -388,6 +389,7 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                   {t('cardDriverName').replace('{0}', driverName)}
                 </div>
               )}
+              <FocusedEventBanner deviceId={deviceId} />
               <CommandStatus deviceId={deviceId} />
               <div className={classes.actions}>
                 {moving ? (

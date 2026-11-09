@@ -340,7 +340,7 @@ const CommandPalette = ({ open, onClose }) => {
         ? [
             {
               id: 'action-events',
-              title: t('reportEvents'),
+              title: t('sharedNotifications'),
               icon: NotificationsRoundedIcon,
               onSelect: openEvents,
             },

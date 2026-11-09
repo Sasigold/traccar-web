@@ -67,6 +67,37 @@ export const demoServer = (server) => {
       }
     });
   };
+  // Test hook: GET /api/demo/event?client=<id>&deviceId=1&type=alarm&alarm=sos[&speed=60]
+  // sends a live event to the pages whose demoClient cookie is <id> (so parallel tests do not
+  // see each other's alerts).
+  let demoEventId = 900000;
+  const sendDemoEvent = (params) => {
+    const deviceId = Number(params.get('deviceId') || 1);
+    const position = fleet.positions.find((item) => item.deviceId === deviceId);
+    demoEventId += 1;
+    const event = {
+      id: demoEventId,
+      type: params.get('type') || 'alarm',
+      deviceId,
+      eventTime: new Date().toISOString(),
+      positionId: position?.id || 0,
+      geofenceId: 0,
+      maintenanceId: 0,
+      attributes: {
+        ...(params.get('alarm') && { alarm: params.get('alarm') }),
+        ...(params.get('speed') && { speed: Number(params.get('speed')) }),
+      },
+    };
+    const text = JSON.stringify({ events: [event] });
+    let sent = 0;
+    sockets.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN && client.demoClient === params.get('client')) {
+        client.send(text);
+        sent += 1;
+      }
+    });
+    return { sent, event };
+  };
   server.middlewares.use((request, response, next) => {
     const url = new URL(request.url, 'http://localhost');
     if (!url.pathname.startsWith('/api/')) return next();
@@ -124,6 +155,9 @@ export const demoServer = (server) => {
       case '/api/calendars':
         data = [];
         break;
+      case '/api/demo/event':
+        data = sendDemoEvent(url.searchParams);
+        break;
       case '/api/commands/types':
         data = commandTypes.map((type) => ({ type }));
         break;
@@ -163,6 +197,7 @@ export const demoServer = (server) => {
   server.httpServer.on('upgrade', (request, socket, head) => {
     if (new URL(request.url, 'http://localhost').pathname === '/api/socket') {
       sockets.handleUpgrade(request, socket, head, (client) => {
+        client.demoClient = /(?:^|;\s*)demoClient=([^;]+)/.exec(request.headers.cookie || '')?.[1];
         fleet.advance();
         client.send(JSON.stringify({ devices: fleet.devices, positions: fleet.positions }));
       });

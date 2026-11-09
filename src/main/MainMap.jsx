@@ -18,6 +18,7 @@ import MapGeocoder from '../map/control/MapGeocoder';
 import MapScale from '../map/MapScale';
 import MapRuler from '../map/control/MapRuler';
 import MapFitFleet from '../map/control/MapFitFleet';
+import MapFocusedEvent from '../map/main/MapFocusedEvent';
 import useFeatures from '../common/util/useFeatures';
 
 const MainMap = ({ filteredPositions, selectedPosition }) => {
@@ -77,6 +78,7 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
         />
         <MapDefaultCamera filteredPositions={filteredPositions} />
         <MapSelectedDevice />
+        <MapFocusedEvent />
         <MapRuler positions={filteredPositions} onActiveChange={setRulerActive} />
         <MapFitFleet positions={filteredPositions} />
       </MapView>

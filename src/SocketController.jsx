@@ -4,7 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { commandsActions, devicesActions, messagesActions, sessionActions } from './store';
 import { useCatchCallback, useAsyncTask } from './reactHelper';
 import { snackBarDurationLongMs } from './common/util/duration';
-import alarm from './resources/alarm.mp3';
+import { playAlarm } from './common/util/alarmSound';
+import { eventSeverity } from './common/util/eventSeverity';
+import { formatNotificationTitle } from './common/util/formatter';
+import { useTranslation } from './common/components/LocalizationProvider';
 import { eventsActions } from './store/events';
 import useFeatures from './common/util/useFeatures';
 import { useAttributePreference } from './common/util/preferences';
@@ -20,16 +23,6 @@ import { RECONNECT_NOW_EVENT } from './common/components/shell/SocketStatusPill'
 const logoutCode = 4000;
 // The last-message time is stored at most this often (the pill shows minutes).
 const ACTIVITY_STEP_MS = 5000;
-
-let alarmAudio;
-const playAlarm = () => {
-  if (!alarmAudio) {
-    alarmAudio = new Audio(alarm);
-  }
-  alarmAudio.currentTime = 0;
-  // Browsers block sound until the user has interacted with the page; don't throw on that.
-  alarmAudio.play()?.catch?.(() => {});
-};
 
 const SocketController = () => {
   const dispatch = useDispatch();
@@ -57,19 +50,40 @@ const SocketController = () => {
 
   const features = useFeatures();
 
+  const t = useTranslation();
+
+  // Critical events sound (their banner is AlertBanner); warnings show a notice for a few
+  // seconds; the rest only raise the bell count. Events missed while offline (back-filled) still
+  // sound when critical, but bring no notices.
   const handleEvents = useCallback(
-    (events) => {
+    (events, { backfill = false } = {}) => {
       if (!features.disableEvents) {
         dispatch(eventsActions.add(events));
       }
-      if (
-        events.some(
-          (e) =>
-            soundEvents.includes(e.type) ||
-            (e.type === 'alarm' && soundAlarms.includes(e.attributes.alarm)),
-        )
-      ) {
+      const preferences = { soundAlarms, soundEvents };
+      if (events.some((event) => eventSeverity(event, preferences) === 'critical')) {
         playAlarm();
+      }
+      const warnings = backfill
+        ? []
+        : events.filter((event) => eventSeverity(event, preferences) === 'warning');
+      if (warnings.length && !features.disableEvents) {
+        const [latest] = warnings;
+        const devices = store.getState().devices.items;
+        const title = formatNotificationTitle(t, {
+          type: latest.type,
+          attributes: { alarms: latest.attributes?.alarm },
+        });
+        const name = devices[latest.deviceId]?.name;
+        dispatch(
+          messagesActions.push({
+            message: [title, name, warnings.length > 1 ? `+${warnings.length - 1}` : null]
+              .filter(Boolean)
+              .join(' · '),
+            severity: 'warning',
+            duration: 6000,
+          }),
+        );
       }
       events.forEach((event) => {
         if (event.attributes.message) {
@@ -83,7 +97,7 @@ const SocketController = () => {
         }
       });
     },
-    [features, dispatch, soundEvents, soundAlarms],
+    [features, dispatch, soundEvents, soundAlarms, store, t],
   );
 
   const handleEventsRef = useRef(handleEvents);
@@ -127,7 +141,7 @@ const SocketController = () => {
         }
         if (events.length) {
           events.sort((a, b) => Date.parse(b.eventTime) - Date.parse(a.eventTime));
-          handleEventsRef.current(events.slice(0, 50));
+          handleEventsRef.current(events.slice(0, 50), { backfill: true });
         }
       } catch {
         // best effort: the live feed continues either way

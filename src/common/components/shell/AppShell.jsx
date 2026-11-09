@@ -11,6 +11,7 @@ import MobileTabs from './MobileTabs';
 import MobileDrawer from './MobileDrawer';
 import CommandPalette from './CommandPalette';
 import EventsDrawer from './EventsDrawer';
+import AlertBanner from './AlertBanner';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -144,6 +145,16 @@ const AppShell = ({ children }) => {
           <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
         )}
         {!features.disableEvents && <EventsDrawer open={eventsOpen} onClose={closeEvents} />}
+        {!features.disableEvents && (
+          <AlertBanner
+            // Clear of the alerts side panel while it is open on desktop.
+            endInset={
+              desktop && eventsOpen
+                ? `calc(${theme.dimensions.eventsDrawerWidth} + ${theme.spacing(4)})`
+                : 0
+            }
+          />
+        )}
         <CommandPalette open={paletteOpen} onClose={closePalette} />
       </div>
     </ShellContext>

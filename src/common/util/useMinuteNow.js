@@ -9,6 +9,8 @@ let timer = null;
 const subscribe = (listener) => {
   listeners.add(listener);
   if (!timer) {
+    // The clock was idle (nobody listening): catch up before the first tick.
+    now = Date.now();
     timer = setInterval(() => {
       now = Date.now();
       listeners.forEach((l) => l());

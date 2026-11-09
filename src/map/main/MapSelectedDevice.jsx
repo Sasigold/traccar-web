@@ -72,6 +72,7 @@ const MapSelectedDevice = () => {
   const { classes } = useStyles();
   const dispatch = useDispatch();
   const cardHidden = useSelector((state) => state.devices.cardHidden);
+  const followReleaseTime = useSelector((state) => state.devices.followReleaseTime);
   const deviceName = useSelector((state) => state.devices.items[state.devices.selectedId]?.name);
   const currentTime = useSelector((state) => state.devices.selectTime);
   const currentId = useSelector((state) => state.devices.selectedId);
@@ -262,6 +263,16 @@ const MapSelectedDevice = () => {
     }
     // eslint-disable-next-line @eslint-react/exhaustive-deps
   }, [currentId, previousId, currentTime, previousTime, mapFollow, position, selectZoom]);
+
+  // Released from outside (for example to show where an alert happened).
+  useEffect(() => {
+    if (followReleaseTime && followingRef.current && trackRef.current) {
+      followingRef.current = false;
+      setFollowing(false);
+      setReleased(true);
+      stopLoop();
+    }
+  }, [followReleaseTime]);
 
   useEffect(() => {
     if (!currentId) {

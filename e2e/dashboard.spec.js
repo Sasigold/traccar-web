@@ -66,6 +66,8 @@ test.describe('dashboard', () => {
     page,
     isMobile,
   }) => {
+    // About 17 s alone, but close to the 60 s limit when two workers share a small CI machine.
+    test.slow();
     await page.getByRole('button', { name: 'התאמה אישית' }).click();
     await page.getByRole('button', { name: 'הוספת רכיב' }).click();
     await page.getByRole('button', { name: /אירועים לפי סוג/ }).click();
