@@ -5,6 +5,7 @@ import useAttributeUnits from '../common/util/useAttributeUnits';
 import { attributeFromRaw, attributeUnitString } from '../common/util/attributeUnits';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import { isTimeType, maintenanceStatus, sortByUrgency } from '../common/fleet/maintenanceStatus';
+import { formatGrouped } from '../common/util/formatter';
 
 const DAY = 86400000;
 const CONCURRENCY = 6;
@@ -24,7 +25,7 @@ export const useMaintenanceFormat = () => {
     const dataType = positionAttributes[type]?.dataType;
     const value = attributeFromRaw(raw, dataType, units);
     const unit = attributeUnitString(dataType, units, t);
-    const rounded = Math.round(value).toLocaleString();
+    const rounded = formatGrouped(Math.round(value), 0);
     return unit ? `${rounded} ${unit}` : rounded;
   };
 };

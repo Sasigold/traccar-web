@@ -12,6 +12,7 @@ import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetError, useFleetLabel, useFleetStatus } from '../common/fleet/useFleet';
 import SettingsMenu from './components/SettingsMenu';
 import { ExpiryChip } from './components/FleetDocumentsSection';
+import { formatTime } from '../common/util/formatter';
 
 const useStyles = makeStyles()(() => ({
   row: {
@@ -131,7 +132,7 @@ const FleetDocumentsPage = () => {
               </TableCell>
               <TableCell>{label(item)}</TableCell>
               <TableCell>{item.title || item.file_name}</TableCell>
-              <TableCell>{new Date(item.expires_at).toLocaleDateString()}</TableCell>
+              <TableCell>{formatTime(item.expires_at, 'date')}</TableCell>
               <TableCell>
                 <ExpiryChip expiresAt={item.expires_at} reminderDays={item.reminder_days} />
               </TableCell>

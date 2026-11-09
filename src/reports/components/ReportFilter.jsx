@@ -23,6 +23,7 @@ import { useRestriction } from '../../common/util/permissions';
 import { deviceEquality } from '../../common/util/deviceEquality';
 import { reportsActions } from '../../store';
 import ReportIntro from './ReportIntro';
+import { getFormatLocale } from '../../common/util/formatter';
 import { DateRangeField } from '../../common/components/pickers';
 
 const getPeriodRange = (period) => {
@@ -130,7 +131,7 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
     }
   }, [deviceIds, groupIds, from, to, onShow]);
 
-  const dateFormat = new Intl.DateTimeFormat(undefined, {
+  const dateFormat = new Intl.DateTimeFormat(getFormatLocale(), {
     year: 'numeric',
     month: period === 'month' ? 'long' : 'short',
     day: period === 'month' ? undefined : 'numeric',

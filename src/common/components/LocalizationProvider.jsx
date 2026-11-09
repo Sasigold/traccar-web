@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import dayjs from 'dayjs';
 import usePersistedState from '../util/usePersistedState';
 import Loader from './Loader';
+import { setFormatLanguage } from '../util/formatter';
 
 import en from '../../resources/l10n/en.json';
 import he from '../../resources/l10n/he.json';
@@ -60,6 +61,8 @@ const ResolvedLocalizationProvider = ({ language, setLocalLanguage, children }) 
   const { data, dayjsName } = use(loadLocale(language));
 
   const direction = /^(ar|he|fa)$/.test(language) ? 'rtl' : 'ltr';
+  // Before the children render, so their first paint already uses the app language.
+  setFormatLanguage(language);
 
   const value = useMemo(
     () => ({
@@ -74,7 +77,8 @@ const ResolvedLocalizationProvider = ({ language, setLocalLanguage, children }) 
   useEffect(() => {
     dayjs.locale(dayjsName);
     document.dir = direction;
-  }, [dayjsName, direction]);
+    document.documentElement.lang = language;
+  }, [dayjsName, direction, language]);
 
   return <LocalizationContext value={value}>{children}</LocalizationContext>;
 };

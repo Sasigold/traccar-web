@@ -50,6 +50,7 @@ import {
   syncComputedAttributes,
 } from './adminApi';
 import { DateField } from '../common/components/pickers';
+import { formatGrouped } from '../common/util/formatter';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -406,7 +407,7 @@ const DeviceSetupPage = () => {
                 label={t('adminOdometerKm')}
                 helperText={
                   currentKm !== null
-                    ? t('adminOdometerCurrent').replace('{0}', currentKm.toLocaleString())
+                    ? t('adminOdometerCurrent').replace('{0}', formatGrouped(currentKm, 0))
                     : t('adminOdometerHelp')
                 }
                 value={odometerKm}

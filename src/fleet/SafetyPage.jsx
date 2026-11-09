@@ -30,7 +30,7 @@ import TableToolbar from '../common/components/table/TableToolbar';
 import TableShimmer from '../common/components/TableShimmer';
 import SettingsMenu from '../settings/components/SettingsMenu';
 import { useAsyncTask, useCatch } from '../reactHelper';
-import { formatTime } from '../common/util/formatter';
+import { formatGrouped, formatTime } from '../common/util/formatter';
 import exportExcel from '../common/util/exportExcel';
 import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
@@ -408,7 +408,7 @@ const SafetyPage = () => {
                       label={row.score ?? t('fleetSafetyTooLittle')}
                     />
                   </TableCell>
-                  <TableCell className={classes.number}>{row.km.toLocaleString()}</TableCell>
+                  <TableCell className={classes.number}>{formatGrouped(row.km, 0)}</TableCell>
                   <TableCell>
                     {Object.entries(row.counts)
                       .map(

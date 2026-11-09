@@ -38,6 +38,7 @@ import {
 } from '../../common/fleet/useFleet';
 import FormSection from './FormSection';
 import { DateField } from '../../common/components/pickers';
+import { formatTime } from '../../common/util/formatter';
 
 const useStyles = makeStyles()((theme) => ({
   table: {
@@ -97,7 +98,7 @@ export const ExpiryChip = ({ expiresAt, reminderDays }) => {
   );
 };
 
-const formatDate = (value) => (value ? new Date(value).toLocaleDateString() : '');
+const formatDate = (value) => formatTime(value, 'date');
 
 const safeFileName = (name) => name.replace(/[^\w.\-֐-׿]+/g, '_');
 

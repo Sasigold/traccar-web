@@ -6,7 +6,9 @@ import {
   formatDistance,
   formatNumericHours,
   formatSpeed,
+  formatTime,
   formatVolume,
+  setFormatLanguage,
 } from '../formatter';
 
 const t = (key) => key;
@@ -21,8 +23,13 @@ describe('unit formatting', () => {
     expect(formatDistance(12345, 'km', t)).toBe('12.3 sharedKm');
   });
 
-  it('shows volume with one decimal', () => {
-    expect(formatVolume(42.04, 'ltr', t)).toBe('42.0 sharedLiterAbbreviation');
+  it('shows volume with at most one decimal', () => {
+    expect(formatVolume(42.04, 'ltr', t)).toBe('42 sharedLiterAbbreviation');
+    expect(formatVolume(42.35, 'ltr', t)).toBe('42.4 sharedLiterAbbreviation');
+  });
+
+  it('groups thousands and drops a trailing zero', () => {
+    expect(formatDistance(12000000, 'km', t)).toBe('12,000 sharedKm');
   });
 
   it('formats hours and minutes', () => {
@@ -53,5 +60,28 @@ describe('alarms', () => {
   it('translates each alarm in a comma list', () => {
     expect(formatAlarm('sos,overspeed', t)).toBe('alarmSos, alarmOverspeed');
     expect(formatAlarm(null, t)).toBe('');
+  });
+});
+
+describe('dates follow the app language, not the browser', () => {
+  const value = new Date(2026, 10, 8, 22, 28, 5);
+
+  it('Hebrew: day first, 24 hours, no comma', () => {
+    setFormatLanguage('he');
+    expect(formatTime(value, 'date')).toBe('08.11.2026');
+    expect(formatTime(value, 'minutes')).toBe('08.11.2026 22:28');
+    expect(formatTime(value)).toBe('08.11.2026 22:28:05');
+  });
+
+  it('English in Israel: day first, 24 hours', () => {
+    setFormatLanguage('en');
+    expect(formatTime(value, 'date')).toBe('08/11/2026');
+    expect(formatTime(value, 'time')).toBe('22:28:05');
+    setFormatLanguage('he');
+  });
+
+  it('returns an empty string for missing or invalid values', () => {
+    expect(formatTime(null)).toBe('');
+    expect(formatTime('not a date')).toBe('');
   });
 });
