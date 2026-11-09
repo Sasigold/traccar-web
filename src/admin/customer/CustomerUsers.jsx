@@ -35,6 +35,8 @@ import FormSection from '../../settings/components/FormSection';
 import EmptyState from '../../common/components/table/EmptyState';
 import PasswordField from '../../common/components/PasswordField';
 import { assignUser, createTraccarUser, syncCustomerAccess } from '../adminApi';
+import { useConfirm } from '../../common/components/confirm/ConfirmProvider';
+import { keepOnBackdrop } from '../../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   name: {
@@ -63,6 +65,7 @@ const useStyles = makeStyles()((theme) => ({
 const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged }) => {
   const { classes } = useStyles();
   const t = useTranslation();
+  const confirm = useConfirm();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [dialog, setDialog] = useState(null);
@@ -103,7 +106,16 @@ const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged })
     directory.reload();
   });
 
-  const handleUnlink = useCatch(async (userId) => {
+  const handleUnlink = useCatch(async (userId, name) => {
+    if (
+      !(await confirm({
+        title: t('adminUnlinkUserConfirm').replace('{0}', name || userId),
+        message: t('adminUnlinkUserConsequence'),
+        confirmLabel: t('adminUnlinkUser'),
+      }))
+    ) {
+      return;
+    }
     await assignUser(userId, null);
     directory.reload();
   });
@@ -224,7 +236,7 @@ const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged })
                         <IconButton
                           size="small"
                           aria-label={t('adminUnassign')}
-                          onClick={() => handleUnlink(user.id)}
+                          onClick={() => handleUnlink(user.id, user.name)}
                         >
                           <LinkOffRoundedIcon fontSize="small" />
                         </IconButton>
@@ -245,7 +257,7 @@ const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged })
         </div>
       )}
 
-      <Dialog open={dialog === 'link'} onClose={close} maxWidth="xs" fullWidth>
+      <Dialog open={dialog === 'link'} onClose={keepOnBackdrop(close)} maxWidth="xs" fullWidth>
         <DialogTitle>{t('adminLinkUser')}</DialogTitle>
         <DialogContent className={classes.form}>
           <Autocomplete
@@ -270,7 +282,7 @@ const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged })
         </DialogActions>
       </Dialog>
 
-      <Dialog open={dialog === 'create'} onClose={close} maxWidth="xs" fullWidth>
+      <Dialog open={dialog === 'create'} onClose={keepOnBackdrop(close)} maxWidth="xs" fullWidth>
         <DialogTitle>{t('adminCreateUser')}</DialogTitle>
         <DialogContent className={classes.form}>
           <TextField

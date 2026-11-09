@@ -5,6 +5,8 @@ import { makeStyles } from 'tss-react/mui';
 import MenuOpenRoundedIcon from '@mui/icons-material/MenuOpenRounded';
 import BackIcon from '../BackIcon';
 import { useTranslation } from '../LocalizationProvider';
+import { useConfirm } from '../confirm/ConfirmProvider';
+import { goBack, useLeaveGuard } from '../confirm/unsavedChanges';
 
 const crumbLinks = {
   settingsTitle: '/settings',
@@ -69,6 +71,8 @@ const PageHeader = ({ breadcrumbs, title, description, actions, onOpenMenu, back
   const theme = useTheme();
   const navigate = useNavigate();
   const t = useTranslation();
+  // ADM-05: unsaved changes are asked about before leaving.
+  const leave = useLeaveGuard(useConfirm(), t);
 
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
 
@@ -79,7 +83,11 @@ const PageHeader = ({ breadcrumbs, title, description, actions, onOpenMenu, back
   return (
     <header className={classes.root}>
       {(!desktop || back) && (
-        <IconButton edge="start" onClick={() => navigate(backTo ?? -1)} aria-label={t('a11yBack')}>
+        <IconButton
+          edge="start"
+          onClick={() => leave(() => (backTo != null ? navigate(backTo) : goBack(navigate)))}
+          aria-label={t('a11yBack')}
+        >
           <BackIcon />
         </IconButton>
       )}

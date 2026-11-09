@@ -106,6 +106,7 @@ const GroupsPage = () => {
               <TableCell className={classes.columnAction} padding="none">
                 <CollectionActions
                   itemId={item.id}
+                  itemName={item.name}
                   editPath="/settings/group"
                   endpoint="groups"
                   onReload={reload}

@@ -259,6 +259,7 @@ const DevicesPage = () => {
                 <TableCell className={settingsClasses.columnAction} padding="none">
                   <CollectionActions
                     itemId={item.id}
+                    itemName={item.name}
                     editPath="/settings/device"
                     endpoint="devices"
                     onReload={reload}

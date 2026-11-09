@@ -95,6 +95,7 @@ const NotificationsPage = () => {
               <TableCell className={classes.columnAction} padding="none">
                 <CollectionActions
                   itemId={item.id}
+                  itemName={item.description}
                   editPath="/settings/notification"
                   endpoint="notifications"
                   onReload={reload}

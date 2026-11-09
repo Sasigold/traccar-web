@@ -28,6 +28,7 @@ import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import FleetNotice from './components/FleetNotice';
 import { useVendors } from './fleetData';
+import { keepOnBackdrop } from '../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -104,7 +105,7 @@ export const VendorDialog = ({ vendor, onClose, onSaved }) => {
   );
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="xs">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="xs">
       <DialogTitle>{t(form.id ? 'fleetVendorEdit' : 'fleetVendorAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>

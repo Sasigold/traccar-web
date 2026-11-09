@@ -54,6 +54,7 @@ import {
   useFleetVehicles,
 } from './stage5Data';
 import { DateTimeField } from '../common/components/pickers';
+import { keepOnBackdrop } from '../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -213,7 +214,7 @@ const JobDialog = ({ job, pois, vehicles, drivers, onClose, onSaved }) => {
   const none = { value: '', label: '—' };
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="sm">
       <DialogTitle>{t(form.id ? 'fleetJobEdit' : 'fleetJobAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>
@@ -326,7 +327,7 @@ const TrackingDialog = ({ job, deviceId, eta, onClose, onSaved }) => {
     : '';
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="sm">
       <DialogTitle>{t('fleetJobTracking')}</DialogTitle>
       <DialogContent>
         <div className={classes.stack}>

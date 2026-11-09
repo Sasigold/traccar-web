@@ -54,6 +54,8 @@ import {
   loadOpenAlerts,
   validRecipientAddress,
 } from './alerts';
+import { useConfirm } from '../common/components/confirm/ConfirmProvider';
+import { keepOnBackdrop } from '../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   row: {
@@ -98,6 +100,7 @@ const deliveryColor = {
 const AlertsPage = () => {
   const { classes } = useStyles();
   const t = useTranslation();
+  const confirm = useConfirm();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const label = useFleetLabel();
@@ -164,7 +167,16 @@ const AlertsPage = () => {
     reload();
   });
 
-  const removeRecipient = useCatch(async (id) => {
+  const removeRecipient = useCatch(async (id, name) => {
+    if (
+      !(await confirm({
+        title: t('sharedRemoveNamed').replace('{0}', name || ''),
+        message: t('alertRecipientRemoveConsequence'),
+        confirmLabel: t('sharedRemove'),
+      }))
+    ) {
+      return;
+    }
     unwrap(await getFleetClient().from('alert_recipients').delete().eq('id', id));
     reload();
   });
@@ -347,7 +359,7 @@ const AlertsPage = () => {
                     <Tooltip title={t('sharedRemove')}>
                       <IconButton
                         size="small"
-                        onClick={() => removeRecipient(row.id)}
+                        onClick={() => removeRecipient(row.id, row.name)}
                         aria-label={t('sharedRemove')}
                       >
                         <DeleteOutlineRoundedIcon fontSize="small" />
@@ -397,7 +409,12 @@ const AlertsPage = () => {
           </>
         )}
       </DataTable>
-      <Dialog open={Boolean(editing)} onClose={() => setEditing(null)} fullWidth maxWidth="xs">
+      <Dialog
+        open={Boolean(editing)}
+        onClose={keepOnBackdrop(() => setEditing(null))}
+        fullWidth
+        maxWidth="xs"
+      >
         <DialogTitle>{t(editing?.id ? 'fleetRecipientEdit' : 'fleetRecipientAdd')}</DialogTitle>
         {editing && (
           <DialogContent>

@@ -13,6 +13,8 @@ import AppThemeProvider from './AppThemeProvider';
 import { installStaleBuildRecovery } from './common/util/staleBuild';
 import { installTelemetry } from './common/telemetry/install';
 import TelemetryRoute from './common/telemetry/TelemetryRoute';
+import { ConfirmProvider } from './common/components/confirm/ConfirmProvider';
+import UnsavedChangesGuard from './common/components/confirm/UnsavedChangesGuard';
 
 // FND-05: a tab from before a deploy reloads once instead of showing an error.
 installStaleBuildRecovery();
@@ -27,14 +29,17 @@ root.render(
         <StyledEngineProvider injectFirst>
           <AppThemeProvider>
             <CssBaseline enableColorScheme />
-            <ServerProvider>
-              <BrowserRouter basename={new URL(document.baseURI).pathname}>
-                <TelemetryRoute />
-                <Navigation />
-              </BrowserRouter>
-              <MessageHandler />
-              <NativeInterface />
-            </ServerProvider>
+            <ConfirmProvider>
+              <ServerProvider>
+                <BrowserRouter basename={new URL(document.baseURI).pathname}>
+                  <TelemetryRoute />
+                  <UnsavedChangesGuard />
+                  <Navigation />
+                </BrowserRouter>
+                <MessageHandler />
+                <NativeInterface />
+              </ServerProvider>
+            </ConfirmProvider>
           </AppThemeProvider>
         </StyledEngineProvider>
       </LocalizationProvider>

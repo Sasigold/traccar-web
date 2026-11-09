@@ -192,6 +192,7 @@ const MaintenacesPage = () => {
               <TableCell className={classes.columnAction} padding="none">
                 <CollectionActions
                   itemId={item.id}
+                  itemName={item.name}
                   editPath="/settings/maintenance"
                   endpoint="maintenance"
                   onReload={reload}

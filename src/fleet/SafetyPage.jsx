@@ -51,6 +51,7 @@ import { money } from './fleetData';
 import { assignmentResolver, loadAssignments, loadDriving, loadSafetySettings } from './safetyData';
 import { formatDays } from '../common/util/plural';
 import { violationUrgency, violationsByDriver } from '../common/fleet/violations';
+import { keepOnBackdrop } from '../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   number: {
@@ -106,7 +107,7 @@ const SettingsDialog = ({ settings, onClose, onSaved }) => {
   });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="sm">
       <DialogTitle>{t('fleetSafetySettings')}</DialogTitle>
       <DialogContent>
         <div className={classes.settings}>

@@ -34,6 +34,7 @@ import {
   violationUrgency,
 } from '../../common/fleet/violations';
 import printTransferLetter, { openLetterWindow } from './printTransferLetter';
+import { keepOnBackdrop } from '../../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -289,7 +290,7 @@ const ViolationDialog = ({ violation, onClose, onSaved }) => {
   });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="sm">
       <DialogTitle>{t(violation ? 'fleetViolationEdit' : 'fleetViolationAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>

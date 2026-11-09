@@ -27,6 +27,7 @@ import AdminMenu from './components/AdminMenu';
 import AdminGate from './components/AdminGate';
 import StateChip from './components/StateChip';
 import { useAdminAccess } from './useAdmin';
+import { keepOnBackdrop } from '../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   number: {
@@ -158,7 +159,7 @@ const ApiLimitsPage = () => {
         </DataTable>
       )}
       {editing && (
-        <Dialog open onClose={() => setEditing(null)} maxWidth="xs" fullWidth>
+        <Dialog open onClose={keepOnBackdrop(() => setEditing(null))} maxWidth="xs" fullWidth>
           <DialogTitle>{editing.name}</DialogTitle>
           <DialogContent className={classes.form}>
             <TextField

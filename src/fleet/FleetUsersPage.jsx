@@ -37,6 +37,7 @@ import {
 } from '../common/fleet/permissionsCatalog';
 import FleetNotice from './components/FleetNotice';
 import { applyRole } from './users';
+import { useConfirm } from '../common/components/confirm/ConfirmProvider';
 
 const useStyles = makeStyles()((theme) => ({
   nowrap: {
@@ -154,6 +155,7 @@ const OverridesDialog = ({ user, onClose }) => {
 const FleetUsersPage = () => {
   const { classes } = useStyles();
   const t = useTranslation();
+  const confirm = useConfirm();
   const me = useFleetProfile();
   const canRead = useFleetPermission('users.read');
   const canManage = useFleetPermission('users.manage');
@@ -193,6 +195,16 @@ const FleetUsersPage = () => {
   });
 
   const setActive = useCatch(async (row, active) => {
+    if (
+      !active &&
+      !(await confirm({
+        title: t('fleetUserDeactivateConfirm').replace('{0}', row.full_name || row.email || ''),
+        message: t('fleetUserDeactivateConsequence'),
+        confirmLabel: t('fleetUserDeactivate'),
+      }))
+    ) {
+      return;
+    }
     unwrap(await getFleetClient().from('profiles').update({ is_active: active }).eq('id', row.id));
     reload();
   });

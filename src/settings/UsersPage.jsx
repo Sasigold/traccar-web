@@ -149,6 +149,7 @@ const UsersPage = () => {
               <TableCell className={classes.columnAction} padding="none">
                 <CollectionActions
                   itemId={item.id}
+                  itemName={item.name}
                   editPath="/settings/user"
                   endpoint="users"
                   onReload={reload}

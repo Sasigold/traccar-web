@@ -40,6 +40,7 @@ import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import { circleArea, pairVisits, visitTotals } from '../common/fleet/visits';
 import FleetNotice from './components/FleetNotice';
 import { camel, cleanPayload, toNumber, useFleetRows } from './stage5Data';
+import { keepOnBackdrop } from '../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -160,7 +161,7 @@ const PoiDialog = ({ poi, onClose, onSaved }) => {
   const ltr = { slotProps: { htmlInput: { dir: 'ltr' } } };
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="sm">
       <DialogTitle>{t(form.id ? 'fleetPoiEdit' : 'fleetPoiAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>

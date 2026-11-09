@@ -32,6 +32,7 @@ import {
 } from '../../common/fleet/fuelImport';
 import { formatTime } from '../../common/util/formatter';
 import { ensureVehicle, money } from '../fleetData';
+import { keepOnBackdrop } from '../../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   body: {
@@ -182,7 +183,7 @@ const FuelImportDialog = ({ onClose, onImported }) => {
   });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="md">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="md">
       <DialogTitle>{t('fleetFuelImport')}</DialogTitle>
       <DialogContent>
         <div className={classes.body}>

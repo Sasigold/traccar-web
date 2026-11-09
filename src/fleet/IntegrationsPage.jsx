@@ -47,6 +47,8 @@ import {
 } from '../common/fleet/integrations';
 import FleetNotice from './components/FleetNotice';
 import { camel, useFleetRows } from './stage5Data';
+import { useConfirm } from '../common/components/confirm/ConfirmProvider';
+import { keepOnBackdrop } from '../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   stack: {
@@ -102,7 +104,7 @@ const KeyDialog = ({ onClose, onSaved }) => {
   });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="sm">
       <DialogTitle>{t('fleetApiKeyAdd')}</DialogTitle>
       <DialogContent>
         {created ? (
@@ -195,7 +197,7 @@ const WebhookDialog = ({ webhook, onClose, onSaved }) => {
   });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="sm">
       <DialogTitle>{t(form.id ? 'fleetWebhookEdit' : 'fleetWebhookAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.stack}>
@@ -282,6 +284,7 @@ const deliveryColor = { queued: 'default', sending: 'info', sent: 'success', fai
 const IntegrationsPage = () => {
   const { classes } = useStyles();
   const t = useTranslation();
+  const confirm = useConfirm();
   const canManage = useFleetPermission('integrations.manage');
   const [view, setView] = useState('keys');
   const [dialog, setDialog] = useState(null);
@@ -313,6 +316,15 @@ const IntegrationsPage = () => {
   );
 
   const revoke = useCatch(async (key) => {
+    if (
+      !(await confirm({
+        title: t('integrationsRevokeConfirm').replace('{0}', key.name),
+        message: t('integrationsRevokeConsequence'),
+        confirmLabel: t('integrationsRevoke'),
+      }))
+    ) {
+      return;
+    }
     unwrap(
       await getFleetClient()
         .from('api_keys')

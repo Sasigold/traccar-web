@@ -17,6 +17,7 @@ import { getFleetClient, unwrap } from '../../common/fleet/client';
 import { useFleetProfile } from '../../common/fleet/useFleet';
 import { ensureVehicle, uploadFleetFile } from '../fleetData';
 import { DateField } from '../../common/components/pickers';
+import { keepOnBackdrop } from '../../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -96,7 +97,7 @@ const ExpenseDialog = ({ onClose, onSaved }) => {
   const set = (key) => (event) => setForm({ ...form, [key]: event.target.value });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="xs">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="xs">
       <DialogTitle>{t('fleetExpenseAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>

@@ -44,6 +44,13 @@ import {
 import { maintenanceStatus } from '../common/fleet/maintenanceStatus';
 import { garageLicenseIssue } from '../common/fleet/safetyOfficer';
 import FleetNotice from './components/FleetNotice';
+import { useConfirm } from '../common/components/confirm/ConfirmProvider';
+import {
+  discardUnsavedChanges,
+  goBack,
+  useFormChanges,
+  useLeaveGuard,
+} from '../common/components/confirm/unsavedChanges';
 import { VendorDialog } from './VendorsPage';
 import { workOrderStatusKey, workOrderTypeKey } from './WorkOrdersPage';
 import {
@@ -194,6 +201,10 @@ const WorkOrderPage = () => {
 
   const closing = order && order.status === 'done' && order.closed_at == null;
 
+  // ADM-05: unsaved changes are asked about before leaving.
+  const leave = useLeaveGuard(useConfirm(), t);
+  useFormChanges({ order, items, deviceId, invoice: invoice?.name, resetIds }, Boolean(order));
+
   const handleSave = useCatch(async () => {
     setSaving(true);
     try {
@@ -242,6 +253,7 @@ const WorkOrderPage = () => {
           await markMaintenanceDone(target, state.current);
         }
       }
+      discardUnsavedChanges();
       navigate('/fleet/work-orders');
     } finally {
       setSaving(false);
@@ -258,7 +270,7 @@ const WorkOrderPage = () => {
       footer={
         canWrite && (
           <SaveBar
-            onCancel={() => navigate(-1)}
+            onCancel={() => leave(() => goBack(navigate))}
             onSave={handleSave}
             saving={saving}
             disabled={!valid}

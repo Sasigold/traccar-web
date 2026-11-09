@@ -42,6 +42,13 @@ import {
   toLocalInput,
 } from '../common/fleet/incidents';
 import FleetNotice from './components/FleetNotice';
+import { useConfirm } from '../common/components/confirm/ConfirmProvider';
+import {
+  discardUnsavedChanges,
+  goBack,
+  useFormChanges,
+  useLeaveGuard,
+} from '../common/components/confirm/unsavedChanges';
 import { incidentKey } from './IncidentsPage';
 import {
   ensureDriver,
@@ -248,6 +255,13 @@ const IncidentPage = () => {
     }
   };
 
+  // ADM-05: unsaved changes are asked about before leaving.
+  const leave = useLeaveGuard(useConfirm(), t);
+  useFormChanges(
+    { incident, parties, claim, deviceId, driverId, photos: newPhotos.length },
+    Boolean(incident),
+  );
+
   const handleSave = useCatch(async () => {
     setSaving(true);
     try {
@@ -322,6 +336,7 @@ const IncidentPage = () => {
             ),
         );
       }
+      discardUnsavedChanges();
       navigate('/fleet/incidents');
     } finally {
       setSaving(false);
@@ -372,7 +387,7 @@ const IncidentPage = () => {
       footer={
         canWrite && (
           <SaveBar
-            onCancel={() => navigate(-1)}
+            onCancel={() => leave(() => goBack(navigate))}
             onSave={handleSave}
             saving={saving}
             disabled={!valid}

@@ -7,6 +7,8 @@ import { ctaFill } from '../../theme/surfaces';
 import { useTranslation } from '../LocalizationProvider';
 import useNavItems from './navItems';
 import { UserMenuPopover, userInitial } from './UserMenu';
+import { useConfirm } from '../confirm/ConfirmProvider';
+import { useLeaveGuard } from '../confirm/unsavedChanges';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -67,6 +69,8 @@ const MobileTabs = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const t = useTranslation();
+  // ADM-05: unsaved changes are asked about before leaving.
+  const leave = useLeaveGuard(useConfirm(), t);
   const items = useNavItems().filter((item) => !item.mobileHidden);
 
   const user = useSelector((state) => state.session.user);
@@ -89,7 +93,7 @@ const MobileTabs = () => {
           } else {
             const item = items.find((it) => it.key === value);
             if (item) {
-              navigate(item.path);
+              leave(() => navigate(item.path));
             }
           }
         }}

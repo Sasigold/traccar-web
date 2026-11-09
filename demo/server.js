@@ -208,6 +208,22 @@ export const demoServer = (server) => {
           );
           if (data) break;
         }
+        // One item of a listed collection (the edit pages load it this way).
+        {
+          const [, name, rawId] =
+            /^\/api\/(groups|geofences|maintenance)\/(\d+)$/.exec(url.pathname) || [];
+          if (name) {
+            const id = Number(rawId);
+            const lists = { groups, geofences, maintenance: createMaintenance() };
+            data = overlayOne(
+              sandbox,
+              name,
+              lists[name].find((item) => item.id === id),
+              id,
+            );
+            if (data) break;
+          }
+        }
         // In a sandbox, any other collection lists what the test saved into it.
         if (sandbox) {
           const [, collection, id] = /^\/api\/([a-z]+)(?:\/(\d+))?$/.exec(url.pathname) || [];

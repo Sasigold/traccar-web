@@ -140,6 +140,7 @@ const DriversPage = () => {
               <TableCell className={settingsClasses.columnAction} padding="none">
                 <CollectionActions
                   itemId={item.id}
+                  itemName={item.name}
                   editPath="/settings/driver"
                   endpoint="drivers"
                   onReload={reload}

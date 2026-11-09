@@ -31,6 +31,7 @@ import { useFleetPermission, useFleetProfile, useFleetReady } from '../common/fl
 import { sensorRows } from '../common/fleet/sensors';
 import { ensureVehicle } from './fleetData';
 import { toNumber, useFleetRows } from './stage5Data';
+import { keepOnBackdrop } from '../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -94,7 +95,7 @@ const LimitsDialog = ({ device, limits, onClose, onSaved }) => {
   );
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="sm">
       <DialogTitle>
         {t('fleetSensorsLimits')} · {device.name}
       </DialogTitle>

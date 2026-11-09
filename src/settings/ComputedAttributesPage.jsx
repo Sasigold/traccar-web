@@ -86,6 +86,7 @@ const ComputedAttributesPage = () => {
                 <TableCell className={classes.columnAction} padding="none">
                   <CollectionActions
                     itemId={item.id}
+                    itemName={item.description}
                     editPath="/settings/attribute"
                     endpoint="attributes/computed"
                     onReload={reload}

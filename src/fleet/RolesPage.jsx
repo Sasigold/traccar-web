@@ -28,6 +28,7 @@ import {
   roleLabelKey,
 } from '../common/fleet/permissionsCatalog';
 import FleetNotice from './components/FleetNotice';
+import { useConfirm } from '../common/components/confirm/ConfirmProvider';
 
 const useStyles = makeStyles()((theme) => ({
   area: {
@@ -52,6 +53,7 @@ const areas = PERMISSION_AREAS.filter((area) => area.area !== 'billing');
 const RolesPage = () => {
   const { classes, cx } = useStyles();
   const t = useTranslation();
+  const confirm = useConfirm();
   const profile = useFleetProfile();
   const canRead = useFleetPermission('users.read');
   const canManage = useFleetPermission('roles.manage');
@@ -102,6 +104,15 @@ const RolesPage = () => {
   });
 
   const resetAll = useCatch(async () => {
+    if (
+      !(await confirm({
+        title: t('rolesResetConfirm'),
+        message: t('rolesResetConsequence'),
+        confirmLabel: t('rolesReset'),
+      }))
+    ) {
+      return;
+    }
     unwrap(
       await getFleetClient().from('org_role_permissions').delete().eq('org_id', profile.org_id),
     );

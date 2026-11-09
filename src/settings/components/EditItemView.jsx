@@ -1,4 +1,12 @@
 import { useState } from 'react';
+import { useTranslation } from '../../common/components/LocalizationProvider';
+import { useConfirm } from '../../common/components/confirm/ConfirmProvider';
+import {
+  discardUnsavedChanges,
+  goBack,
+  useFormChanges,
+  useLeaveGuard,
+} from '../../common/components/confirm/unsavedChanges';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Skeleton } from '@mui/material';
 import { useCatch, useAsyncTask } from '../../reactHelper';
@@ -24,6 +32,10 @@ const EditItemView = ({
 
   const { id } = useParams();
   const [saving, setSaving] = useState(false);
+  const t = useTranslation();
+  const leave = useLeaveGuard(useConfirm(), t);
+  // ADM-05: anything different from the item as loaded is an unsaved change.
+  useFormChanges(item, Boolean(item));
 
   useAsyncTask(
     async ({ signal }) => {
@@ -56,7 +68,8 @@ const EditItemView = ({
       if (onItemSaved) {
         await onItemSaved(await response.json());
       }
-      navigate(-1);
+      discardUnsavedChanges();
+      goBack(navigate);
     } finally {
       setSaving(false);
     }
@@ -70,7 +83,7 @@ const EditItemView = ({
       description={description}
       footer={
         <SaveBar
-          onCancel={() => navigate(-1)}
+          onCancel={() => leave(() => goBack(navigate))}
           onSave={handleSave}
           saving={saving}
           disabled={!item || !validate()}

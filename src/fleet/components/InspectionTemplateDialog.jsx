@@ -19,6 +19,7 @@ import { useCatch } from '../../reactHelper';
 import { fleetSave } from '../../common/fleet/fleetSave';
 import { useFleetProfile } from '../../common/fleet/useFleet';
 import { DEFAULT_CHECKLIST, FREQUENCIES, ITEM_TYPES } from '../../common/fleet/inspections';
+import { keepOnBackdrop } from '../../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -93,7 +94,7 @@ const InspectionTemplateDialog = ({ template, onClose, onSaved }) => {
   });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="md">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="md">
       <DialogTitle>
         {t(template.id ? 'fleetInspectionTemplateEdit' : 'fleetInspectionTemplateAdd')}
       </DialogTitle>

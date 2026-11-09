@@ -84,6 +84,7 @@ const CommandsPage = () => {
                 <TableCell className={classes.columnAction} padding="none">
                   <CollectionActions
                     itemId={item.id}
+                    itemName={item.description}
                     editPath="/settings/command"
                     endpoint="commands"
                     onReload={reload}

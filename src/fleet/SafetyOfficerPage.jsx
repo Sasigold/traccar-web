@@ -52,6 +52,7 @@ import SafetyRecordDialog from './components/SafetyRecordDialog';
 import { openLetterWindow } from './components/printTransferLetter';
 import printQuarterReport from './components/printQuarterReport';
 import { ensureDriver, ensureVehicle, openFleetFile, uploadFleetFile } from './fleetData';
+import { keepOnBackdrop } from '../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   number: {
@@ -118,7 +119,7 @@ const RulesDialog = ({ rules, onClose, onSaved }) => {
   });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="sm">
       <DialogTitle>{t('safetyOfficerRules')}</DialogTitle>
       <DialogContent>
         <div className={classes.rules}>
@@ -172,7 +173,7 @@ const ProfessionalsDialog = ({ drivers, onClose, onSaved }) => {
   });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="xs">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="xs">
       <DialogTitle>{t('safetyProfessionals')}</DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="textSecondary" gutterBottom>
@@ -242,7 +243,7 @@ const TachographDialog = ({ initial, onClose, onSaved }) => {
   const valid = form.downloaded_at && (form.kind === 'vehicle' ? form.deviceId : form.driverId);
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="xs">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="xs">
       <DialogTitle>{t('safetyTachographAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>
@@ -332,7 +333,7 @@ const ProcedureDialog = ({ onClose, onSaved }) => {
   });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="xs">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="xs">
       <DialogTitle>{t('safetyProcedureAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>
@@ -377,7 +378,7 @@ const ProceduresDialog = ({ procedures, canWrite, onAdd, onClose }) => {
   const { classes } = useStyles();
   const t = useTranslation();
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="sm">
       <DialogTitle>{t('safetyProcedures')}</DialogTitle>
       <DialogContent>
         {procedures.length === 0 && (

@@ -74,6 +74,7 @@ const CalendarsPage = () => {
               <TableCell className={classes.columnAction} padding="none">
                 <CollectionActions
                   itemId={item.id}
+                  itemName={item.name}
                   editPath="/settings/calendar"
                   endpoint="calendars"
                   onReload={reload}
