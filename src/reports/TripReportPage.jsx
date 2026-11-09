@@ -98,6 +98,7 @@ const TripReportPage = () => {
     'averageSpeed',
   ]);
   const [tripType, setTripType] = useState(null);
+  const [driver, setDriver] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [queried, setQueried] = useState(false);
@@ -105,8 +106,25 @@ const TripReportPage = () => {
   const [hiddenRows, setHiddenRows] = useState(0);
   const [route, setRoute] = useState(null);
 
+  // REP-05: the drivers who drove in the result, to show one driver's trips.
+  const driverOptions = useMemo(() => {
+    const names = new Map();
+    items.forEach((item) => {
+      if (item.driverUniqueId) {
+        names.set(item.driverUniqueId, item.driverName || item.driverUniqueId);
+      }
+    });
+    return [...names]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [items]);
+  // A driver who is not in a new result stops filtering it.
+  const activeDriver = driverOptions.some((option) => option.id === driver) ? driver : null;
+
   const filteredItems = items.filter(
-    (item) => !tripType || item.business === (tripType === 'business'),
+    (item) =>
+      (!tripType || item.business === (tripType === 'business')) &&
+      (!activeDriver || item.driverUniqueId === activeDriver),
   );
 
   const markers = selectedItem && [
@@ -353,6 +371,20 @@ const TripReportPage = () => {
                   }}
                 />
               </div>
+              {driverOptions.length > 0 && (
+                <div className={classes.filterItem}>
+                  <SelectField
+                    fullWidth
+                    label={t('sharedDriver')}
+                    value={activeDriver}
+                    data={driverOptions}
+                    onChange={(event) => {
+                      setDriver(event.target.value || null);
+                      setSelectedItem(null);
+                    }}
+                  />
+                </div>
+              )}
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
             </ReportFilter>
           </div>

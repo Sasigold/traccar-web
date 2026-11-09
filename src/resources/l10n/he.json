@@ -3129,5 +3129,14 @@
     "dashboardVehicleReplay": "שחזור המסלול בתקופה",
     "dashboardVehicleNow": "איפה הוא עכשיו, במפה",
     "reportShowTrips": "הנסיעות",
-    "reportReplayStop": "שחזור המסלול סביב העצירה"
+    "reportReplayStop": "שחזור המסלול סביב העצירה",
+    "vehiclePickerWholeGroup": "בחירת כל הקבוצה",
+    "vehiclePickerOneVehicle": "רכב אחד",
+    "vehiclePickerOneGroup": "קבוצה אחת",
+    "vehiclePickerGroups": "{0} קבוצות",
+    "vehiclePickerPlaceholder": "בחרו רכבים",
+    "vehiclePickerSearch": "חיפוש לפי שם, מספר רישוי או מזהה",
+    "vehiclePickerNone": "לא נבחרו רכבים",
+    "vehiclePickerClear": "ניקוי",
+    "vehiclePickerDone": "סיום"
 }

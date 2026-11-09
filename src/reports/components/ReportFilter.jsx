@@ -18,9 +18,8 @@ import useReportStyles from '../common/useReportStyles';
 import SplitButton from '../../common/components/SplitButton';
 import ScheduleDialog from './ScheduleDialog';
 import { useReportsSectionItems } from './reportsSections';
-import SelectField from '../../common/components/SelectField';
+import VehiclePicker from '../../common/components/vehiclePicker/VehiclePicker';
 import { useRestriction } from '../../common/util/permissions';
-import { deviceEquality } from '../../common/util/deviceEquality';
 import { reportsActions } from '../../store';
 import ReportIntro from './ReportIntro';
 import { getFormatLocale } from '../../common/util/formatter';
@@ -67,22 +66,8 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
 
   const readonly = useRestriction('readonly');
 
-  const devices = useSelector((state) => state.devices.items, deviceEquality(['id', 'name']));
-  const groups = useSelector((state) => state.groups.items);
   const savedPeriod = useSelector((state) => state.reports.period);
   const savedRange = useSelector((state) => state.reports.range);
-  const deviceList = useMemo(
-    () => [
-      { id: 'all', name: t('notificationAlways') },
-      ...Object.values(devices).sort((a, b) => a.name.localeCompare(b.name)),
-    ],
-    [devices, t],
-  );
-  const groupList = useMemo(
-    () => Object.values(groups).sort((a, b) => a.name.localeCompare(b.name)),
-    [groups],
-  );
-
   const deviceIds = useMemo(
     () => searchParams.getAll('deviceId').map((it) => (it === 'all' ? it : Number(it))),
     [searchParams],
@@ -222,38 +207,19 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
     <div className={classes.filter}>
       <ReportIntro hint={hint} />
       {deviceType !== 'none' && (
-        <div className={classes.filterItem}>
-          <SelectField
+        <div className={classes.filterItem} style={{ flexBasis: 260 }}>
+          {/* REP-05: one picker for vehicles and groups, with search by plate. */}
+          <VehiclePicker
             label={t(deviceType === 'multiple' ? 'deviceTitle' : 'reportDevice')}
-            data={
-              deviceType === 'multiple' ? deviceList : deviceList.filter((it) => it.id !== 'all')
-            }
-            value={deviceType === 'multiple' ? deviceIds : deviceIds.find(() => true)}
-            allValue="all"
-            onChange={(e) => {
-              const values =
-                deviceType === 'multiple' ? e.target.value : [e.target.value].filter((id) => id);
-              updateReportParams(searchParams, setSearchParams, 'deviceId', values);
-            }}
             multiple={deviceType === 'multiple'}
-            singleLine={deviceType === 'multiple'}
-            fullWidth
-          />
-        </div>
-      )}
-      {deviceType === 'multiple' && (
-        <div className={classes.filterItem}>
-          <SelectField
-            label={t('settingsGroups')}
-            data={groupList}
-            value={groupIds}
-            onChange={(e) => {
-              const values = e.target.value;
-              updateReportParams(searchParams, setSearchParams, 'groupId', values);
+            value={{ deviceIds, groupIds: deviceType === 'multiple' ? groupIds : [] }}
+            onChange={(selection) => {
+              const newParams = new URLSearchParams(searchParams);
+              ['deviceId', 'groupId', 'from', 'to'].forEach((key) => newParams.delete(key));
+              selection.deviceIds.forEach((id) => newParams.append('deviceId', id));
+              selection.groupIds.forEach((id) => newParams.append('groupId', id));
+              setSearchParams(newParams, { replace: true });
             }}
-            multiple
-            singleLine
-            fullWidth
           />
         </div>
       )}

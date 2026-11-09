@@ -3129,5 +3129,14 @@
     "dashboardVehicleReplay": "Replay the period",
     "dashboardVehicleNow": "Where it is now, on the map",
     "reportShowTrips": "Trips",
-    "reportReplayStop": "Replay around the stop"
+    "reportReplayStop": "Replay around the stop",
+    "vehiclePickerWholeGroup": "Select the whole group",
+    "vehiclePickerOneVehicle": "1 vehicle",
+    "vehiclePickerOneGroup": "1 group",
+    "vehiclePickerGroups": "{0} groups",
+    "vehiclePickerPlaceholder": "Choose vehicles",
+    "vehiclePickerSearch": "Search by name, plate or ID",
+    "vehiclePickerNone": "No vehicles chosen",
+    "vehiclePickerClear": "Clear",
+    "vehiclePickerDone": "Done"
 }
