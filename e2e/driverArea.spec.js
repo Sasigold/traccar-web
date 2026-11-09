@@ -283,3 +283,14 @@ test('the driver answers a self-review in 30 seconds', async ({ page }) => {
     .poll(() => writes.find((write) => write.name === 'safety_driver_ack')?.body)
     .toEqual({ p_id: 'sr1', p_answer: 'my_mistake' });
 });
+
+// SAF-02: the QR in the cabin opens the check-in; the database checks the code.
+test('the driver checks in to a vehicle from its QR link', async ({ page }) => {
+  const writes = await mockFleet(page);
+  await gotoReady(page, '/driver/checkin?d=1&c=abc123');
+  await expect(page.getByRole('status').filter({ hasText: 'נרשמתם לרכב' })).toBeVisible();
+  expect(writes.find((write) => write.name === 'driver_check_in').body).toEqual({
+    p_device: 1,
+    p_code: 'abc123',
+  });
+});

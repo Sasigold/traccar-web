@@ -19,6 +19,8 @@ import { makeStyles } from 'tss-react/mui';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
+import QrCode2RoundedIcon from '@mui/icons-material/QrCode2Rounded';
+import CheckInQrDialog from './components/CheckInQrDialog';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import SettingsMenu from '../settings/components/SettingsMenu';
@@ -182,7 +184,7 @@ const useFleetFacts = (deviceId) => {
     const client = getFleetClient();
     const { data: vehicle } = await client
       .from('vehicles')
-      .select('id, plate_number')
+      .select('id, plate_number, checkin_code')
       .eq('traccar_device_id', deviceId)
       .maybeSingle();
     if (!vehicle) {
@@ -297,6 +299,9 @@ const VehiclePage = () => {
   const expiries = useExpiries();
   const traccar = useTraccarFacts(deviceId);
   const fleet = useFleetFacts(deviceId);
+  // SAF-02: the cabin QR for the drivers' check-in.
+  const canWriteVehicles = useFleetPermission('vehicles.write');
+  const [qrOpen, setQrOpen] = useState(false);
 
   const expiry = nearestExpiry(expiries.rows, deviceId);
   const maintenance = nextMaintenance(traccar.maintenances, position);
@@ -365,6 +370,11 @@ const VehiclePage = () => {
             >
               {t('reportReplay')}
             </Button>
+            {fleet?.vehicle?.checkin_code && canWriteVehicles && (
+              <Button startIcon={<QrCode2RoundedIcon />} onClick={() => setQrOpen(true)}>
+                {t('checkinQrTitle')}
+              </Button>
+            )}
             <Button
               variant="outlined"
               startIcon={<EditRoundedIcon />}
@@ -583,6 +593,14 @@ const VehiclePage = () => {
 
         {tab === 'history' && <HistorySection entity="vehicle" traccarId={device.id} />}
       </div>
+      {qrOpen && fleet?.vehicle && (
+        <CheckInQrDialog
+          vehicle={fleet.vehicle}
+          deviceId={deviceId}
+          name={device.name}
+          onClose={() => setQrOpen(false)}
+        />
+      )}
     </PageLayout>
   );
 };

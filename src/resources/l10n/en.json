@@ -3310,5 +3310,19 @@
     "safetyStatusPending": "Waiting for review",
     "safetyStatusCoaching": "Coaching",
     "safetyStatusPraise": "Praise",
-    "safetyStatusDismissed": "Dismissed"
+    "safetyStatusDismissed": "Dismissed",
+    "driverCheckIn": "Vehicle check-in",
+    "driverCheckInHelp": "Scan the code in the vehicle. From now on the vehicle's trips are recorded as yours.",
+    "driverCheckInDone": "Checked in at {0} ✓",
+    "driverCheckInFailed": "The code does not match a vehicle of your organization. Scan again or ask the fleet manager.",
+    "driverCheckInNotQr": "This is not a vehicle check-in code.",
+    "driverCheckInCamera": "No access to the camera. Allow it in the browser and try again.",
+    "checkinQrTitle": "Vehicle check-in code",
+    "checkinQrHelp": "Print it and stick it in the vehicle. A driver who scans it from the driver area becomes the driver of the trips from then on.",
+    "checkinNewCode": "New code",
+    "checkinNewCodeConfirm": "The printed code stops working, and the new one needs to be printed and stuck in.",
+    "tripsWithoutDriver": "No identified driver",
+    "insightTitle_noDriver": "{trips} trips yesterday with no identified driver",
+    "insightWhy_noDriver": "In {vehicles} vehicles, among them {name}. Without it, scores and pay are off. A check-in with the vehicle's code fixes it.",
+    "insightWhy_noDriverOne": "All in {name}. Without it, scores and pay are off. A check-in with the vehicle's code fixes it."
 }

@@ -80,7 +80,24 @@ describe('morning insights (AI-02)', () => {
       },
       now,
     );
-    expect(findings.map((finding) => finding.kind).sort()).toEqual(['afterHours', 'faultMany']);
+    expect(findings.map((finding) => finding.kind).sort()).toEqual([
+      'afterHours',
+      'faultMany',
+      'noDriver',
+    ]);
     expect(findings.find((finding) => finding.kind === 'faultMany').values.vehicles).toBe(2);
+  });
+});
+
+describe('trips without a driver (SAF-02)', () => {
+  it("counts yesterday's trips with no identified or assigned driver", () => {
+    const trips = [
+      { deviceId: 1, driverUniqueId: 'tag', startTime: new Date(2026, 10, 8, 10).toISOString() },
+      { deviceId: 2, startTime: new Date(2026, 10, 8, 10).toISOString() },
+      { deviceId: 3, startTime: new Date(2026, 10, 8, 11).toISOString() },
+    ];
+    const resolve = (deviceId) => (deviceId === 2 ? 'assigned' : null);
+    const [finding] = computeInsights({ devices, trips, resolve }, now);
+    expect(finding).toMatchObject({ kind: 'noDriver', values: { trips: 1, name: 'ואן' } });
   });
 });

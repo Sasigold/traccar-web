@@ -12,6 +12,8 @@ import { computeInsights } from '../common/fleet/insights';
 import { glass } from '../common/theme/surfaces';
 import { useRestriction } from '../common/util/permissions';
 import usePersistedState from '../common/util/usePersistedState';
+import { useFleetReady } from '../common/fleet/useFleet';
+import { assignmentResolver, loadAssignments } from '../fleet/safetyData';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -87,7 +89,7 @@ const DAY = 86400000;
 const todayKey = () => new Date().toLocaleDateString('en-CA');
 
 // The fleet's last 28 days by day, and yesterday's trips: two report requests, once a day.
-const loadFindings = async (devices, positions, signal) => {
+const loadFindings = async (devices, positions, drivers, fleetReady, signal) => {
   const ids = Object.keys(devices);
   if (!ids.length) return [];
   const now = new Date();
@@ -113,7 +115,13 @@ const loadFindings = async (devices, positions, signal) => {
     get('summary', query(new Date(today.getTime() - 28 * DAY), now, { daily: 'true' })),
     get('trips', query(new Date(today.getTime() - DAY), new Date(today.getTime() - 1))),
   ]);
-  return computeInsights({ daily, trips, positions, devices }, now);
+  // SAF-02: assigned drivers count as known (fleet database, when there is one).
+  let resolve = null;
+  if (fleetReady) {
+    const byId = Object.fromEntries(Object.values(drivers).map((driver) => [driver.id, driver]));
+    resolve = assignmentResolver(await loadAssignments().catch(() => []), byId);
+  }
+  return computeInsights({ daily, trips, positions, devices, resolve }, now);
 };
 
 // AI-02: up to four findings each morning, beside the map: the title, why, and a link to the
@@ -123,6 +131,8 @@ const MorningInsights = ({ className }) => {
   const t = useTranslation();
   const devices = useSelector((state) => state.devices.items);
   const positions = useSelector((state) => state.session.positions);
+  const drivers = useSelector((state) => state.drivers.items);
+  const fleetReady = useFleetReady();
   const userId = useSelector((state) => state.session.user?.id);
   const readonly = useRestriction('readonly');
   const disableReports = useRestriction('disableReports');
@@ -142,7 +152,7 @@ const MorningInsights = ({ className }) => {
     const controller = new AbortController();
     // After the map has settled: the findings are not urgent.
     const timer = setTimeout(() => {
-      loadFindings(devices, positions, controller.signal)
+      loadFindings(devices, positions, drivers, fleetReady, controller.signal)
         .then((result) => {
           window.sessionStorage.setItem(key, JSON.stringify(result));
           setFindings(result);

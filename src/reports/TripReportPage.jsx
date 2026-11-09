@@ -28,6 +28,9 @@ import PlayCircleRoundedIcon from '@mui/icons-material/PlayCircleRounded';
 import ResizeHandle from './components/ResizeHandle';
 import usePersistedState from '../common/util/usePersistedState';
 import { useCatch, useCatchCallback, useAsyncTask } from '../reactHelper';
+import { useFleetReady } from '../common/fleet/useFleet';
+import { assignmentResolver, loadAssignments } from '../fleet/safetyData';
+import { tripDriverKey } from '../common/fleet/checkin';
 import useReportStyles from './common/useReportStyles';
 import MapView from '../map/core/MapView';
 import MapRoutePath from '../map/MapRoutePath';
@@ -78,6 +81,9 @@ const TOTALS = {
   averageSpeed: 'avg:duration',
 };
 
+// The driver filter's choice for trips nobody is known to have driven (SAF-02).
+const NO_DRIVER = '__none';
+
 const TripReportPage = () => {
   const navigate = useNavigate();
   const { classes } = useReportStyles();
@@ -106,6 +112,19 @@ const TripReportPage = () => {
   const [hiddenRows, setHiddenRows] = useState(0);
   const [route, setRoute] = useState(null);
 
+  // SAF-02: a trip without an identified driver may still have an assigned one (check-in or a
+  // fixed assignment in the fleet database).
+  const fleetReady = useFleetReady();
+  const traccarDrivers = useSelector((state) => state.drivers.items);
+  const [resolve, setResolve] = useState(null);
+  useAsyncTask(async () => {
+    if (!fleetReady) return;
+    const byId = Object.fromEntries(Object.values(traccarDrivers).map((item) => [item.id, item]));
+    const assignments = await loadAssignments().catch(() => []);
+    setResolve(() => assignmentResolver(assignments, byId));
+  }, [fleetReady, traccarDrivers]);
+  const unassigned = (item) => !tripDriverKey(item, resolve);
+
   // REP-05: the drivers who drove in the result, to show one driver's trips.
   const driverOptions = useMemo(() => {
     const names = new Map();
@@ -114,17 +133,21 @@ const TripReportPage = () => {
         names.set(item.driverUniqueId, item.driverName || item.driverUniqueId);
       }
     });
-    return [...names]
+    const options = [...names]
       .map(([id, name]) => ({ id, name }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [items]);
+    return items.some((item) => !tripDriverKey(item, resolve))
+      ? [...options, { id: NO_DRIVER, name: t('tripsWithoutDriver') }]
+      : options;
+  }, [items, resolve, t]);
   // A driver who is not in a new result stops filtering it.
   const activeDriver = driverOptions.some((option) => option.id === driver) ? driver : null;
 
   const filteredItems = items.filter(
     (item) =>
       (!tripType || item.business === (tripType === 'business')) &&
-      (!activeDriver || item.driverUniqueId === activeDriver),
+      (!activeDriver ||
+        (activeDriver === NO_DRIVER ? unassigned(item) : item.driverUniqueId === activeDriver)),
   );
 
   const markers = selectedItem && [

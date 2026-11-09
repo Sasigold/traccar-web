@@ -12,7 +12,7 @@ const per100 = (fuel, distance) => (distance > 0 ? (fuel / distance) * 100000 : 
 // daily: summary rows with daily=true ({ deviceId, startTime, distance (m), spentFuel (l) }).
 // trips: yesterday's trips. positions: the live positions (for fault codes).
 export const computeInsights = (
-  { daily = [], trips = [], positions = {}, devices = {}, policy = null },
+  { daily = [], trips = [], positions = {}, devices = {}, policy = null, resolve = null },
   now = new Date(),
 ) => {
   const today = new Date(now);
@@ -108,6 +108,24 @@ export const computeInsights = (
       kind: 'afterHours',
       score: 35 + Math.min(outside.length, 10) * 2,
       values: { trips: outside.length, vehicles: vehicles.length, name: name(vehicles[0]) },
+      link: `/reports/trips?${vehicles.map((id) => `deviceId=${id}`).join('&')}&${range(yesterday, today.getTime() - 1)}`,
+    });
+  }
+
+  // SAF-02: yesterday's trips nobody is known to have driven.
+  const unknown = trips.filter(
+    (trip) =>
+      devices[trip.deviceId] &&
+      !(trip.driverUniqueId || resolve?.(trip.deviceId, Date.parse(trip.startTime))),
+  );
+  if (unknown.length) {
+    const vehicles = [...new Set(unknown.map((trip) => trip.deviceId))];
+    const yesterday = today.getTime() - DAY;
+    findings.push({
+      id: 'no-driver',
+      kind: 'noDriver',
+      score: 30 + Math.min(unknown.length, 10),
+      values: { trips: unknown.length, vehicles: vehicles.length, name: name(vehicles[0]) },
       link: `/reports/trips?${vehicles.map((id) => `deviceId=${id}`).join('&')}&${range(yesterday, today.getTime() - 1)}`,
     });
   }

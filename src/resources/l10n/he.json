@@ -3310,5 +3310,19 @@
     "safetyStatusPending": "ממתין לבדיקה",
     "safetyStatusCoaching": "באימון",
     "safetyStatusPraise": "להוקרה",
-    "safetyStatusDismissed": "נדחה"
+    "safetyStatusDismissed": "נדחה",
+    "driverCheckIn": "צ'ק-אין לרכב",
+    "driverCheckInHelp": "סרקו את הקוד שמודבק ברכב. מעכשיו הנסיעות ברכב יירשמו עליכם.",
+    "driverCheckInDone": "נרשמתם לרכב ב-{0} ✓",
+    "driverCheckInFailed": "הקוד לא מתאים לרכב בארגון שלכם. נסו לסרוק שוב או פנו למנהל הצי.",
+    "driverCheckInNotQr": "זה לא קוד צ'ק-אין של רכב.",
+    "driverCheckInCamera": "אין גישה למצלמה. אפשרו גישה בדפדפן ונסו שוב.",
+    "checkinQrTitle": "קוד צ'ק-אין לרכב",
+    "checkinQrHelp": "הדפיסו והדביקו ברכב. נהג שסורק את הקוד מאזור הנהג נרשם כנהג של הנסיעות מאותו רגע.",
+    "checkinNewCode": "קוד חדש",
+    "checkinNewCodeConfirm": "הקוד המודפס הקיים יפסיק לעבוד, וצריך להדפיס ולהדביק את החדש.",
+    "tripsWithoutDriver": "בלי נהג מזוהה",
+    "insightTitle_noDriver": "{trips} נסיעות אתמול בלי נהג מזוהה",
+    "insightWhy_noDriver": "ב-{vehicles} רכבים, ביניהם {name}. בלי שיוך, הציון והשכר לא מדויקים. צ'ק-אין בקוד שברכב פותר את זה.",
+    "insightWhy_noDriverOne": "כולן ב-{name}. בלי שיוך, הציון והשכר לא מדויקים. צ'ק-אין בקוד שברכב פותר את זה."
 }

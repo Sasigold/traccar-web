@@ -8,6 +8,7 @@ import { flushOutbox } from '../common/fleet/outbox';
 import { makeStyles } from 'tss-react/mui';
 import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
 import CarCrashRoundedIcon from '@mui/icons-material/CarCrashRounded';
+import QrCodeScannerRoundedIcon from '@mui/icons-material/QrCodeScannerRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded';
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
@@ -223,6 +224,16 @@ const DriverPortalPage = () => {
                 >
                   <CarCrashRoundedIcon />
                   {t('fleetIncidentAdd')}
+                </Button>
+                {/* SAF-02: the QR in the cabin makes the trips from now on the driver's. */}
+                <Button
+                  variant="outlined"
+                  className={classes.action}
+                  component={RouterLink}
+                  to="/driver/checkin"
+                >
+                  <QrCodeScannerRoundedIcon />
+                  {t('driverCheckIn')}
                 </Button>
               </div>
             </Paper>
