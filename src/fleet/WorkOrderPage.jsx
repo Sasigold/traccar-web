@@ -138,7 +138,13 @@ const WorkOrderPage = () => {
       return;
     }
     if (!id) {
-      setOrder({ title: '', type: 'service', status: 'open', notes: '' });
+      // AI-03: a fault card opens a repair order with its title and notes filled in.
+      setOrder({
+        title: searchParams.get('title') || '',
+        type: searchParams.get('type') === 'repair' ? 'repair' : 'service',
+        status: 'open',
+        notes: searchParams.get('notes') || '',
+      });
       setItems([emptyItem()]);
       return;
     }
@@ -156,6 +162,7 @@ const WorkOrderPage = () => {
     setOrder(row);
     setDeviceId(String(row.vehicles?.traccar_device_id || ''));
     setItems((lines || []).map((line) => ({ ...line, key: line.id })));
+    // eslint-disable-next-line @eslint-react/exhaustive-deps -- the address fills a new order once
   }, [id, canRead]);
 
   // Traccar maintenance linked to the chosen vehicle, offered for reset when closing.

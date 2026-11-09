@@ -107,7 +107,7 @@ const RESERVED = new Set(['select', 'order', 'limit', 'offset', 'on_conflict', '
 
 export const fakeFleet = async (
   page,
-  { users = {}, tables = {}, rpc = {}, defaults = {}, orgScoped = false } = {},
+  { users = {}, tables = {}, rpc = {}, defaults = {}, orgScoped = false, functions = {} } = {},
 ) => {
   const state = {
     tables: Object.fromEntries(
@@ -350,6 +350,12 @@ export const fakeFleet = async (
         profile: user.profile,
         permissions: user.permissions,
       });
+    }
+    // Other edge functions: `functions['fleet-ai/dtc'] = (body, state) => answer`.
+    const fn = /^\/functions\/v1\/(.+)$/.exec(url.pathname)?.[1];
+    if (fn && functions[fn]) {
+      const answer = await functions[fn](request.postDataJSON(), state);
+      return json(route, answer, answer?.error ? answer.status || 400 : 200);
     }
     if (url.pathname.startsWith('/rest/v1/rpc/')) {
       const name = url.pathname.split('/').pop();

@@ -14,7 +14,7 @@ set -eu
 HOST="${DEPLOY_HOST:-root@72.61.153.60}"
 FLEET_DIR="${FLEET_DIR:-/docker/viper-fleet}"
 FLEET_URL="${FLEET_URL:-https://viper-fleet-api.srv2122641.hstgr.cloud}"
-FUNCTIONS="public-api billing-documents"
+FUNCTIONS="public-api billing-documents fleet-ai"
 
 cd "$(dirname "$0")/..
 . deploy/lib.sh

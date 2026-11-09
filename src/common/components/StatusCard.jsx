@@ -398,7 +398,7 @@ const StatusCard = ({
             <div className={classes.row}>
               <span className={classes.rowLabel}>{t('fleetFaultCodes')}</span>
               <span className={classes.rowValue}>
-                <FaultCodes position={position} />
+                <FaultCodes position={position} deviceId={deviceId} driverPhone={driverPhone} />
               </span>
             </div>
           )}
