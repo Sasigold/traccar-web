@@ -5,6 +5,7 @@ const pages = [
   ['dashboard', '/dashboard'],
   ['reports', '/reports'],
   ['combined report', '/reports/combined'],
+  ['daily timeline', '/reports/timeline'],
   ['trips report', '/reports/trips'],
   ['preferences', '/settings/preferences'],
   ['devices', '/fleet/vehicles'],

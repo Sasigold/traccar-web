@@ -2798,5 +2798,15 @@
     "reportScheduleEveryWeek": "כל יום {0} ב־{1}",
     "reportScheduleOpen": "פתיחת הדוח",
     "reportScheduledNone": "אין דוחות שנשלחים בקביעות",
-    "reportScheduledNoneHelp": "בחרו דוח, רכבים, ולחצו על \"שליחה קבועה במייל\"."
+    "reportScheduledNoneHelp": "בחרו דוח, רכבים, ולחצו על \"שליחה קבועה במייל\".",
+    "reportTimeline": "ציר זמן יומי",
+    "reportTimelineDescription": "מה כל רכב עשה לאורך היום: נסיעה, סרק, חניה ופערים בנתונים. לחיצה על נסיעה פותחת את שחזור המסלול.",
+    "timelineDay": "יום",
+    "timelineDriving": "נסיעה",
+    "timelineIdle": "סרק",
+    "timelineParked": "חניה",
+    "timelineNodata": "אין נתונים",
+    "timelineTotals": "נסיעה {0} · סרק {1}",
+    "timelineNoTrips": "בלי נסיעות",
+    "timelineLimit": "מוצגים {0} רכבים. בחרו רכבים בדוח אחר והגיעו מכאן כדי לראות אחרים."
 }

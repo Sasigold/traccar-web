@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import ViewTimelineRoundedIcon from '@mui/icons-material/ViewTimelineRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
@@ -62,6 +63,15 @@ export const useReportsSections = () => {
           id: 'activity',
           titleKey: 'reportsGroupActivity',
           items: [
+            {
+              id: 'timeline',
+              descriptionKey: 'reportTimelineDescription',
+              titleKey: 'reportTimeline',
+              icon: ViewTimelineRoundedIcon,
+              path: '/reports/timeline',
+              match: exact('/reports/timeline'),
+              carry: true,
+            },
             {
               id: 'summary',
               descriptionKey: 'reportSummaryDescription',

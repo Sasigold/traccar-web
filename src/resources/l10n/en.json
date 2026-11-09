@@ -2798,5 +2798,15 @@
     "reportScheduleEveryWeek": "Every {0} at {1}",
     "reportScheduleOpen": "Open the report",
     "reportScheduledNone": "No scheduled reports",
-    "reportScheduledNoneHelp": "Pick a report and vehicles, then choose \"Email on a schedule\"."
+    "reportScheduledNoneHelp": "Pick a report and vehicles, then choose \"Email on a schedule\".",
+    "reportTimeline": "Daily timeline",
+    "reportTimelineDescription": "What each vehicle did across the day: driving, idling, parking and gaps in the data. Selecting a trip opens its replay.",
+    "timelineDay": "Day",
+    "timelineDriving": "Driving",
+    "timelineIdle": "Idling",
+    "timelineParked": "Parked",
+    "timelineNodata": "No data",
+    "timelineTotals": "Driving {0} · idling {1}",
+    "timelineNoTrips": "No trips",
+    "timelineLimit": "{0} vehicles are shown. Select vehicles in another report and come here to see others."
 }

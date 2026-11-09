@@ -48,6 +48,7 @@ const EquipmentPage = lazy(() => import('./fleet/EquipmentPage'));
 const SensorsPage = lazy(() => import('./fleet/SensorsPage'));
 const IntegrationsPage = lazy(() => import('./fleet/IntegrationsPage'));
 const ReportsHubPage = lazy(() => import('./reports/ReportsHubPage'));
+const TimelineReportPage = lazy(() => import('./reports/TimelineReportPage'));
 const CombinedReportPage = lazy(() => import('./reports/CombinedReportPage'));
 const PositionsReportPage = lazy(() => import('./reports/PositionsReportPage'));
 const ServerPage = lazy(() => import('./settings/ServerPage'));
@@ -292,6 +293,7 @@ const Navigation = () => {
           <Route path="reports" element={<ReportVisits />}>
             <Route index element={<ReportsHubPage />} />
             <Route path="combined" element={<CombinedReportPage />} />
+            <Route path="timeline" element={<TimelineReportPage />} />
             <Route path="chart" element={<ChartReportPage />} />
             <Route path="events" element={<EventReportPage />} />
             <Route path="geofences" element={<GeofenceReportPage />} />
