@@ -2368,5 +2368,17 @@
     "cardNoDriver": "לא זוהה נהג ברכב",
     "cardNoDriverPhone": "אין מספר טלפון לנהג",
     "cardDriverName": "נהג: {0}",
-    "cardWhatsappGreeting": "שלום {0}, "
+    "cardWhatsappGreeting": "שלום {0}, ",
+    "commandDialogTitle": "שליחת פקודה",
+    "commandQuick": "פקודות נפוצות",
+    "commandOther": "פקודה אחרת",
+    "commandEngineStopWarning": "דימום מנוע עוצר את הרכב מרחוק. שלחו רק כשברור שזה בטוח.",
+    "commandMovingWarning": "הרכב נוסע עכשיו ({0}). דימום מנוע בזמן נסיעה מסוכן.",
+    "commandConfirmPlate": "לאישור, הקלידו את מספר הרישוי {0}",
+    "commandConfirmName": "לאישור, הקלידו את שם הרכב {0}",
+    "commandStatusSent": "נשלחה ב-{0} · ממתינה לתשובה",
+    "commandStatusQueued": "בתור מ-{0} · תישלח כשהרכב יתחבר",
+    "commandStatusDelivered": "נמסרה לרכב · ממתינה לתשובה",
+    "commandStatusAnswered": "תשובה ב-{0}",
+    "commandStatusHide": "הסתרת מצב הפקודה"
 }

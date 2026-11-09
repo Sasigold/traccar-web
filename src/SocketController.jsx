@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { devicesActions, messagesActions, sessionActions } from './store';
+import { commandsActions, devicesActions, messagesActions, sessionActions } from './store';
 import { useCatchCallback, useAsyncTask } from './reactHelper';
 import { snackBarDurationLongMs } from './common/util/duration';
 import alarm from './resources/alarm.mp3';
@@ -195,6 +195,11 @@ const SocketController = () => {
         dispatch(devicesActions.update(data.devices));
       }
       if (data.positions) {
+        // Command replies are read here, before the throttle can merge them away.
+        const replies = data.positions.filter((position) => position.attributes?.result != null);
+        if (replies.length) {
+          dispatch(commandsActions.results(replies));
+        }
         dispatch(sessionActions.updatePositions(data.positions));
       }
       if (data.events) {

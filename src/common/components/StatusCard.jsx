@@ -48,6 +48,8 @@ import fetchOrThrow from '../util/fetchOrThrow';
 import { formatSpeed } from '../util/formatter';
 import useActivityText from './useActivityText';
 import { whatsappLink } from '../fleet/dispatch';
+import CommandDialog from './commands/CommandDialog';
+import CommandStatus from './commands/CommandStatus';
 
 const useStyles = makeStyles()((theme, { desktopPadding }) => ({
   card: {
@@ -247,6 +249,7 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [driverAnchor, setDriverAnchor] = useState(null);
+  const [commandOpen, setCommandOpen] = useState(false);
 
   const speedUnit = useAttributePreference('speedUnit');
   const { activity, label: activityLabel, tone } = useActivityText(device, position);
@@ -385,6 +388,7 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                   {t('cardDriverName').replace('{0}', driverName)}
                 </div>
               )}
+              <CommandStatus deviceId={deviceId} />
               <div className={classes.actions}>
                 {moving ? (
                   <ButtonBase
@@ -407,8 +411,9 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                 )}
                 <ButtonBase
                   className={classes.action}
-                  onClick={() => navigate(`/settings/device/${deviceId}/command`)}
+                  onClick={() => setCommandOpen(true)}
                   disabled={disableActions}
+                  aria-haspopup="dialog"
                 >
                   <SendRoundedIcon fontSize="small" />
                   {t('cardCommand')}
@@ -548,6 +553,7 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
           </MenuItem>
         )}
       </Menu>
+      {commandOpen && <CommandDialog deviceId={deviceId} onClose={() => setCommandOpen(false)} />}
       <Menu
         anchorEl={driverAnchor}
         open={Boolean(driverAnchor)}

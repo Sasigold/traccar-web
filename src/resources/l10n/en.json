@@ -2368,5 +2368,17 @@
     "cardNoDriver": "No driver identified in this vehicle",
     "cardNoDriverPhone": "The driver has no phone number",
     "cardDriverName": "Driver: {0}",
-    "cardWhatsappGreeting": "Hi {0}, "
+    "cardWhatsappGreeting": "Hi {0}, ",
+    "commandDialogTitle": "Send a command",
+    "commandQuick": "Common commands",
+    "commandOther": "Other command",
+    "commandEngineStopWarning": "Engine stop shuts the vehicle down remotely. Send it only when you know it is safe.",
+    "commandMovingWarning": "The vehicle is moving ({0}). Stopping the engine while driving is dangerous.",
+    "commandConfirmPlate": "To confirm, type the plate number {0}",
+    "commandConfirmName": "To confirm, type the vehicle name {0}",
+    "commandStatusSent": "Sent at {0} · waiting for a reply",
+    "commandStatusQueued": "Queued at {0} · goes out when the vehicle connects",
+    "commandStatusDelivered": "Delivered to the vehicle · waiting for a reply",
+    "commandStatusAnswered": "Replied at {0}",
+    "commandStatusHide": "Hide command status"
 }

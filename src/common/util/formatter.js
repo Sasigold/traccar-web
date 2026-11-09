@@ -88,6 +88,8 @@ export const formatTime = (value, format) => {
         return cached('date', dateConfig).format(d);
       case 'time':
         return cached('date', secondConfig).format(d);
+      case 'clock':
+        return cached('date', minuteConfig).format(d);
       case 'minutes':
         return `${cached('date', dateConfig).format(d)} ${cached('date', minuteConfig).format(d)}`;
       default:
