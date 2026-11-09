@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import useVisiblePositions from '../common/fleet/usePrivacy';
 import { logPrivacyView } from '../common/fleet/privacyData';
 import DeviceList from './DeviceList';
+import MorningInsights from './MorningInsights';
 import { rememberDevice } from '../common/util/recentDevices';
 import StatusCard from '../common/components/StatusCard';
 import EmptyState from '../common/components/table/EmptyState';
@@ -95,6 +96,21 @@ const useStyles = makeStyles()((theme) => ({
   contentMap: {
     pointerEvents: 'auto',
     gridArea: '1 / 1',
+    position: 'relative',
+  },
+  // AI-02: beside the map, clear of the map controls at the end side.
+  insights: {
+    position: 'absolute',
+    zIndex: theme.layers.panel,
+    [theme.breakpoints.up('md')]: {
+      top: theme.dimensions.panelGap,
+      insetInlineEnd: 76,
+    },
+    [theme.breakpoints.down('md')]: {
+      top: theme.spacing(1.5),
+      insetInlineStart: theme.spacing(1.5),
+      zIndex: 3,
+    },
   },
   contentList: {
     pointerEvents: 'auto',
@@ -200,6 +216,7 @@ const MainPage = () => {
           <MainMap filteredPositions={filteredPositions} selectedPosition={selectedPosition} />
         </Suspense>
       )}
+      {desktop && <MorningInsights className={classes.insights} />}
       <div className={cx(classes.sidebar, desktop && !devicesOpen && classes.sidebarCollapsed)}>
         {(!desktop || !features.disableDeviceList) && (
           <div className={classes.panel}>
@@ -232,6 +249,7 @@ const MainPage = () => {
                       selectedPosition={selectedPosition}
                     />
                   </Suspense>
+                  <MorningInsights className={classes.insights} />
                 </div>
               )}
               {!features.disableDeviceList && (

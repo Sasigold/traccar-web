@@ -3263,5 +3263,21 @@
     "scanOdometer": "Odometer",
     "scanLines": "Lines",
     "scanSubtotal": "Before VAT",
-    "scanVat": "VAT"
+    "scanVat": "VAT",
+    "insightsTitle": "This morning",
+    "insightsEvidence": "See the evidence",
+    "insightsHideToday": "Hide for today",
+    "insightTitle_notMoving": "{name} has not moved for {days} days",
+    "insightWhy_notMoving": "It usually drives every day. It may be off the road, in repair, or its device is not reporting.",
+    "insightTitle_fuelJump": "{name}'s fuel use jumped",
+    "insightWhy_fuelJump": "{now} l/100 km this week, against {before} in the weeks before. Check fill-ups, tire pressure and idling.",
+    "insightTitle_distanceJump": "{name} drove much more than usual this week",
+    "insightWhy_distanceJump": "{now} km this week, against about {before} km in a usual week.",
+    "insightTitle_afterHours": "{trips} trips yesterday outside working hours",
+    "insightWhy_afterHours": "In {vehicles} vehicles, among them {name}. If this was not planned, have a look.",
+    "insightTitle_fault": "Fault code {code} on {name}",
+    "insightWhy_fault": "The vehicle reports a fault now. Open its card to see what it is and whether it can keep driving.",
+    "insightTitle_faultMany": "Fault code {code} on {vehicles} vehicles",
+    "insightWhy_faultMany": "The same fault on several vehicles may point to a shared cause: fuel, a garage, or a series.",
+    "insightWhy_afterHoursOne": "All of them by {name}. If this was not planned, have a look."
 }

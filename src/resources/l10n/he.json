@@ -3263,5 +3263,21 @@
     "scanOdometer": "קילומטראז'",
     "scanLines": "שורות",
     "scanSubtotal": "לפני מע\"מ",
-    "scanVat": "מע\"מ"
+    "scanVat": "מע\"מ",
+    "insightsTitle": "תובנות הבוקר",
+    "insightsEvidence": "לראיות",
+    "insightsHideToday": "הסתרה להיום",
+    "insightTitle_notMoving": "{name} לא זז כבר {days} ימים",
+    "insightWhy_notMoving": "בדרך כלל הוא נוסע כל יום. אולי הוא מושבת, בתיקון או שהמכשיר לא מדווח.",
+    "insightTitle_fuelJump": "צריכת הדלק של {name} קפצה",
+    "insightWhy_fuelJump": "השבוע {now} ליטר ל-100 ק\"מ, לעומת {before} בשבועות שלפני. כדאי לבדוק תדלוקים, לחץ אוויר וסרק.",
+    "insightTitle_distanceJump": "{name} נסע השבוע הרבה יותר מהרגיל",
+    "insightWhy_distanceJump": "{now} ק\"מ השבוע, לעומת כ-{before} ק\"מ בשבוע רגיל.",
+    "insightTitle_afterHours": "{trips} נסיעות אתמול מחוץ לשעות העבודה",
+    "insightWhy_afterHours": "ב-{vehicles} רכבים, ביניהם {name}. אם זה לא מתוכנן, כדאי לבדוק.",
+    "insightTitle_fault": "קוד תקלה {code} ב-{name}",
+    "insightWhy_fault": "הרכב מדווח עכשיו על תקלה. פתחו את הכרטיס שלו כדי לראות מה זה ואם אפשר להמשיך לנסוע.",
+    "insightTitle_faultMany": "קוד תקלה {code} ב-{vehicles} רכבים",
+    "insightWhy_faultMany": "אותה תקלה בכמה רכבים יכולה להעיד על בעיה משותפת: דלק, מוסך או סדרה.",
+    "insightWhy_afterHoursOne": "כולן של {name}. אם זה לא מתוכנן, כדאי לבדוק."
 }
