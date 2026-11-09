@@ -2656,5 +2656,21 @@
     "safetyGarageLicenseUntil": "רישיון בתוקף עד",
     "safetyGarageUnlicensedWarning": "המוסך הזה לא מורשה. לפי תקנה 585 יש להשתמש רק במוסכים מורשים.",
     "safetyGarageUnknownWarning": "לא נרשם אם המוסך מורשה. אפשר לעדכן בכרטיס הספק.",
-    "safetyGarageExpiredWarning": "רישיון המוסך פג. כדאי לבדוק אותו לפני שליחת הרכב."
+    "safetyGarageExpiredWarning": "רישיון המוסך פג. כדאי לבדוק אותו לפני שליחת הרכב.",
+    "setupTitle": "הקמת הצי",
+    "setupProgress": "{0} מתוך {1} שלבים הושלמו",
+    "setupDismiss": "הסתרת כרטיס ההקמה",
+    "setupDone": "הושלם",
+    "setupContinue": "המשך",
+    "setupStepVehicles": "רכב ומכשיר",
+    "setupStepDrivers": "נהגים",
+    "setupStepAssignments": "שיוך נהג לרכב",
+    "setupStepUsers": "משתמשים",
+    "setupStepAlerts": "מי מקבל התראות",
+    "setupStepInspections": "תבנית בדיקת בוקר",
+    "setupStepMaintenance": "תוכנית טיפולים",
+    "deviceEmptyReadonly": "הרכבים יופיעו אחרי ההתקנה",
+    "deviceEmptyReadonlyHelp": "מתקין מטעמנו מחבר את המכשירים לרכבים. אחרי הדיווח הראשון הרכבים יופיעו כאן.",
+    "deviceRegisterFirstHelp": "רכב עם מכשיר מעקב: שם ומזהה המכשיר, ואחר כך נהג ותוקפים. הרכב יופיע במפה אחרי הדיווח הראשון.",
+    "deviceSetupWizard": "אשף הקמת רכב"
 }

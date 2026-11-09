@@ -17,7 +17,7 @@ import usePersistedState from '../common/util/usePersistedState';
 import useFilter from './useFilter';
 import MainToolbar from './MainToolbar';
 import { useAttributePreference } from '../common/util/preferences';
-import { useDeviceReadonly, useRestriction } from '../common/util/permissions';
+import { useAdministrator, useDeviceReadonly, useRestriction } from '../common/util/permissions';
 import useFeatures from '../common/util/useFeatures';
 import { glass } from '../common/theme/surfaces';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -121,6 +121,7 @@ const MainPage = () => {
 
   const features = useFeatures();
   const deviceReadonly = useDeviceReadonly();
+  const administrator = useAdministrator();
 
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
   const readonly = useRestriction('readonly');
@@ -230,15 +231,25 @@ const MainPage = () => {
                   style={devicesOpen ? {} : { visibility: 'hidden' }}
                 >
                   {showEmpty ? (
+                    // Who is looking decides what an empty fleet says (ADM-01): a viewer waits
+                    // for the installation, the operator opens the setup wizard, a manager adds
+                    // the first vehicle.
                     <EmptyState
                       className={classes.empty}
                       icon={<DnsRoundedIcon />}
-                      title={t('deviceRegisterFirst')}
-                      description={t('settingsDevicesDescription')}
+                      title={t(deviceReadonly ? 'deviceEmptyReadonly' : 'deviceRegisterFirst')}
+                      description={t(
+                        deviceReadonly ? 'deviceEmptyReadonlyHelp' : 'deviceRegisterFirstHelp',
+                      )}
                       action={
                         !deviceReadonly && (
-                          <Button variant="contained" onClick={() => navigate('/settings/device')}>
-                            {t('shellAddDevice')}
+                          <Button
+                            variant="contained"
+                            onClick={() =>
+                              navigate(administrator ? '/admin/device' : '/settings/device')
+                            }
+                          >
+                            {t(administrator ? 'deviceSetupWizard' : 'shellAddDevice')}
                           </Button>
                         )
                       }

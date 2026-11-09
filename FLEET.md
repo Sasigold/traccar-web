@@ -26,6 +26,17 @@ login (Traccar administrators become fleet `admin`, the very first user becomes 
 - `src/settings/FleetDocumentsPage.jsx` - `/settings/fleet-documents`, all documents by expiry.
 - `src/settings/components/FleetRoleSection.jsx` - fleet role + permissions card on the user page.
 
+## Setting up a new account
+
+Owners, admins and managers see a "Set up your fleet" card on `/fleet` and `/dashboard`
+(`src/fleet/components/FleetSetupCard.jsx`) until every step is done or they close it (per organization, in
+the browser). The steps, in order, are computed from the data (`src/common/fleet/fleetSetup.js`): vehicle
+and device, drivers, assignment, users (more than the owner), alert recipients, a morning check template and
+a maintenance plan; steps the user may not do are left out. Only the next step has the main action
+(outlined on the dashboard, which has its own). With no vehicles yet, the map's empty list says what the
+person can do: a viewer waits for the installation, the operator opens the vehicle setup wizard, a manager
+adds the first vehicle.
+
 ## Data model (server side)
 
 Schema and migrations live on the VPS in `/docker/viper-fleet/migrations/`; the edge function in

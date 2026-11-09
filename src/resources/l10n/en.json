@@ -2656,5 +2656,21 @@
     "safetyGarageLicenseUntil": "Licence valid until",
     "safetyGarageUnlicensedWarning": "This garage is not licensed. Regulation 585 requires licensed garages only.",
     "safetyGarageUnknownWarning": "Whether this garage is licensed is not recorded. Update it on the vendor card.",
-    "safetyGarageExpiredWarning": "The garage's licence has expired. Check it before sending the vehicle."
+    "safetyGarageExpiredWarning": "The garage's licence has expired. Check it before sending the vehicle.",
+    "setupTitle": "Set up your fleet",
+    "setupProgress": "{0} of {1} steps done",
+    "setupDismiss": "Hide the setup card",
+    "setupDone": "done",
+    "setupContinue": "Continue",
+    "setupStepVehicles": "Vehicle and device",
+    "setupStepDrivers": "Drivers",
+    "setupStepAssignments": "Assign drivers to vehicles",
+    "setupStepUsers": "Users",
+    "setupStepAlerts": "Who gets alerts",
+    "setupStepInspections": "Morning check template",
+    "setupStepMaintenance": "Maintenance plan",
+    "deviceEmptyReadonly": "Vehicles appear after installation",
+    "deviceEmptyReadonlyHelp": "Our installer connects the devices to the vehicles. They appear here after their first report.",
+    "deviceRegisterFirstHelp": "A vehicle with its tracking device: a name and the device ID, then a driver and validity dates. It appears on the map after its first report.",
+    "deviceSetupWizard": "Vehicle setup wizard"
 }

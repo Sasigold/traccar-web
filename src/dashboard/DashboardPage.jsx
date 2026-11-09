@@ -33,6 +33,7 @@ import PublishRoundedIcon from '@mui/icons-material/PublishRounded';
 import TvRoundedIcon from '@mui/icons-material/TvRounded';
 import FullscreenExitRoundedIcon from '@mui/icons-material/FullscreenExitRounded';
 import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded';
+import FleetSetupCard from '../fleet/components/FleetSetupCard';
 import PageLayout from '../common/components/PageLayout';
 import EmptyState from '../common/components/table/EmptyState';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -67,6 +68,12 @@ import DrillDialog from './components/DrillDialog';
 const TV_ROTATION = 60000;
 
 const useStyles = makeStyles()((theme) => ({
+  setup: {
+    margin: theme.spacing(0, 3, 2),
+    [theme.breakpoints.down('md')]: {
+      margin: theme.spacing(0, 2, 2),
+    },
+  },
   root: {
     display: 'flex',
     flexDirection: 'column',
@@ -635,6 +642,7 @@ const DashboardPage = () => {
       description={dashboardName(dashboard, t)}
       actions={actions}
     >
+      <FleetSetupCard className={classes.setup} quiet />
       {content}
       <NameDialog
         open={Boolean(naming)}
