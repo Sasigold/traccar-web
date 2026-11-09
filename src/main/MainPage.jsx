@@ -160,6 +160,15 @@ const MainPage = () => {
     }
   }, [desktop, mapOnSelect, selectedDeviceId]);
 
+  // A driver starts in the driver area (ADM-09), once per session; the map stays one tab away.
+  const driverRole = useSelector((state) => state.fleet.profile?.role === 'driver');
+  useEffect(() => {
+    if (driverRole && !sessionStorage.getItem('driverLanded')) {
+      sessionStorage.setItem('driverLanded', '1');
+      navigate('/driver', { replace: true });
+    }
+  }, [driverRole, navigate]);
+
   useEffect(() => {
     if (selectedDeviceId) {
       rememberDevice(selectedDeviceId);

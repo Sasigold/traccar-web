@@ -26,6 +26,21 @@ login (Traccar administrators become fleet `admin`, the very first user becomes 
 - `src/settings/FleetDocumentsPage.jsx` - `/settings/fleet-documents`, all documents by expiry.
 - `src/settings/components/FleetRoleSection.jsx` - fleet role + permissions card on the user page.
 
+## Driver area
+
+A driver (fleet role `driver`) starts in the driver area, once per session, and it is their first tab. The
+area fills in the driver and the vehicle assigned to them now (`src/fleet/useDriverContext.js`) and never asks
+for them:
+
+- `/driver/check` is the morning check (`InspectionPage` in driver mode): large buttons, no vehicle or driver
+  pickers, and a confirmation card with the time when it is sent. Drivers read the check templates with
+  `inspections.write` (`supabase/migrations/20261110170000_driver_area.sql`; before it they could not).
+- `/driver/damage` is a damage report in three steps that starts with the camera: photos, what happened (large
+  type cards, "is anyone hurt?" with the emergency numbers, time and place filled in) and the other party
+  (photos of their licence and insurance certificate). None of the manager's fields (fault, cost, claim). The
+  report is created once; sending again after a failed upload only adds the photos.
+- One main action per screen: the next thing the driver should do.
+
 ## Where things are (fleet area and settings)
 
 The fleet area has its own menu, grouped by the work people do (`useFleetSections` in

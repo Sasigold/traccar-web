@@ -174,7 +174,7 @@ const DriverPortalPage = () => {
                   variant="contained"
                   className={classes.action}
                   component={RouterLink}
-                  to={`/fleet/inspection${deviceId ? `?deviceId=${deviceId}` : ''}`}
+                  to="/driver/check"
                 >
                   <FactCheckRoundedIcon />
                   {t('fleetDriverPortalMorningCheck')}
@@ -183,7 +183,7 @@ const DriverPortalPage = () => {
                   variant="outlined"
                   className={classes.action}
                   component={RouterLink}
-                  to={`/fleet/incident${deviceId ? `?deviceId=${deviceId}` : ''}`}
+                  to="/driver/damage"
                 >
                   <CarCrashRoundedIcon />
                   {t('fleetIncidentAdd')}

@@ -34,6 +34,7 @@ const InspectionPage = lazy(() => import('./fleet/InspectionPage'));
 const RolesPage = lazy(() => import('./fleet/RolesPage'));
 const FleetUsersPage = lazy(() => import('./fleet/FleetUsersPage'));
 const DriverPortalPage = lazy(() => import('./fleet/DriverPortalPage'));
+const DriverDamagePage = lazy(() => import('./fleet/DriverDamagePage'));
 const SafetyPage = lazy(() => import('./fleet/SafetyPage'));
 const SafetyOfficerPage = lazy(() => import('./fleet/SafetyOfficerPage'));
 const PrivacyPage = lazy(() => import('./fleet/PrivacyPage'));
@@ -186,7 +187,11 @@ const Navigation = () => {
           <Route path="emulator" element={<EmulatorPage />} />
           <Route path="stream" element={<StreamPage />} />
 
-          <Route path="driver" element={<DriverPortalPage />} />
+          <Route path="driver">
+            <Route index element={<DriverPortalPage />} />
+            <Route path="check" element={<InspectionPage driverMode />} />
+            <Route path="damage" element={<DriverDamagePage />} />
+          </Route>
           <Route path="fleet">
             <Route index element={<FleetHubPage />} />
             <Route path="expiries" element={<ExpiriesPage />} />

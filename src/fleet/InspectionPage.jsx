@@ -16,6 +16,8 @@ import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import PhotoCameraRoundedIcon from '@mui/icons-material/PhotoCameraRounded';
+import useDriverContext from './useDriverContext';
+import DriverDoneCard from './components/DriverDoneCard';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import FormPage from '../settings/components/FormPage';
 import FormSection from '../settings/components/FormSection';
@@ -68,12 +70,21 @@ const useStyles = makeStyles()((theme) => ({
       gap: 4,
     },
   },
+  // Gloves: the driver's buttons are 56px high.
+  big: {
+    '& .MuiToggleButton-root, & .MuiButton-root': {
+      minHeight: 56,
+      minWidth: 112,
+    },
+  },
 }));
 
 // Roadmap stage 2: fill in a checklist for a vehicle (or view a filled one).
 // Failed items open issues; the inspection fails when any item fails.
-const InspectionPage = () => {
-  const { classes } = useStyles();
+// driverMode (/driver/check, ADM-09): the driver and the assigned vehicle are filled in and locked,
+// the controls are large, and sending ends on a confirmation instead of the manager's list.
+const InspectionPage = ({ driverMode = false }) => {
+  const { classes, cx } = useStyles();
   const t = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams();
@@ -95,9 +106,14 @@ const InspectionPage = () => {
   const [saved, setSaved] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showMissing, setShowMissing] = useState(false);
+  const [done, setDone] = useState(null);
+  const driverContext = useDriverContext(driverMode);
+  const assigned = driverMode ? driverContext?.assignment : null;
+  const selectedDeviceId = assigned ? String(assigned.traccar_device_id) : deviceId;
 
   useAsyncTask(async () => {
-    if (!canRead) {
+    // Filling in a check needs the templates: inspections.write is enough (drivers have no .read).
+    if (!canRead && !(canFill && !id)) {
       return;
     }
     const client = getFleetClient();
@@ -125,7 +141,7 @@ const InspectionPage = () => {
     if (rows?.length === 1) {
       setTemplateId((current) => current || rows[0].id);
     }
-  }, [id, canRead]);
+  }, [id, canRead, canFill]);
 
   const template = templates.find((it) => it.id === templateId);
   const items = useMemo(() => template?.inspection_template_items || [], [template]);
@@ -142,10 +158,17 @@ const InspectionPage = () => {
     setSaving(true);
     try {
       const client = getFleetClient();
-      const vehicleId = await ensureVehicle(devices[deviceId], profile);
-      const driver = Object.values(drivers).find((it) => String(it.id) === driverId);
-      const driverRowId = driver ? await ensureDriver(driver, profile) : null;
-      const position = positions[deviceId];
+      let vehicleId;
+      let driverRowId;
+      if (driverMode) {
+        vehicleId = assigned.vehicle_id;
+        driverRowId = driverContext.driver.id;
+      } else {
+        vehicleId = await ensureVehicle(devices[deviceId], profile);
+        const driver = Object.values(drivers).find((it) => String(it.id) === driverId);
+        driverRowId = driver ? await ensureDriver(driver, profile) : null;
+      }
+      const position = positions[selectedDeviceId];
       const result = inspectionResult(items, answers);
       const inspection = unwrap(
         await client
@@ -198,7 +221,11 @@ const InspectionPage = () => {
       if (issues.length) {
         unwrap(await client.from('issues').insert(issues));
       }
-      navigate('/fleet/inspections');
+      if (driverMode) {
+        setDone(new Date());
+      } else {
+        navigate('/fleet/inspections');
+      }
     } finally {
       setSaving(false);
     }
@@ -211,7 +238,7 @@ const InspectionPage = () => {
         return (
           <ToggleButtonGroup
             exclusive
-            className={classes.toggle}
+            className={cx(classes.toggle, driverMode && classes.big)}
             value={value.value ?? null}
             onChange={(_, next) => next && answer(item.id, { value: next })}
             aria-label={item.label}
@@ -247,7 +274,7 @@ const InspectionPage = () => {
             component="label"
             variant="outlined"
             startIcon={<PhotoCameraRoundedIcon />}
-            sx={{ alignSelf: 'flex-start' }}
+            sx={{ alignSelf: 'flex-start', minHeight: driverMode ? 56 : undefined }}
           >
             {value.photo ? value.photo.name : t('fleetInspectionTakePhoto')}
             <input
@@ -340,17 +367,25 @@ const InspectionPage = () => {
     );
   }
 
-  const valid = deviceId && devices[deviceId] && template;
+  const valid = driverMode ? assigned && template : deviceId && devices[deviceId] && template;
+
+  if (driverMode && done) {
+    return (
+      <FormPage breadcrumbs={['fleetDriverPortal']} title={t('fleetDriverPortalMorningCheck')}>
+        <DriverDoneCard titleKey="driverCheckSent" time={done} />
+      </FormPage>
+    );
+  }
 
   return (
     <FormPage
-      menu={<SettingsMenu />}
-      breadcrumbs={['fleetTitle', 'fleetInspectionsPage']}
-      title={t('fleetInspectionAdd')}
+      menu={driverMode ? undefined : <SettingsMenu />}
+      breadcrumbs={driverMode ? ['fleetDriverPortal'] : ['fleetTitle', 'fleetInspectionsPage']}
+      title={t(driverMode ? 'fleetDriverPortalMorningCheck' : 'fleetInspectionAdd')}
       footer={
         canFill && (
           <SaveBar
-            onCancel={() => navigate(-1)}
+            onCancel={() => navigate(driverMode ? '/driver' : -1)}
             onSave={handleSave}
             saving={saving}
             disabled={!valid}
@@ -361,54 +396,72 @@ const InspectionPage = () => {
     >
       <FleetNotice permission="inspections.write" />
       <FormSection title={t('fleetInspectionAdd')} icon={<FactCheckRoundedIcon />}>
+        {driverMode && driverContext && !assigned && (
+          <Alert severity="info">{t('driverNoVehicle')}</Alert>
+        )}
+        {driverMode && assigned && (
+          <Typography variant="body1">
+            {devices[assigned.traccar_device_id]?.name || assigned.plate_number}
+            {' · '}
+            <span dir="ltr">{assigned.plate_number}</span>
+            {' · '}
+            {driverContext.driver.full_name}
+          </Typography>
+        )}
         <div className={classes.top}>
-          <TextField
-            select
-            label={t('fleetEntityVehicle')}
-            value={deviceId}
-            onChange={(event) => setDeviceId(event.target.value)}
-          >
-            {Object.values(devices)
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((device) => (
-                <MenuItem key={device.id} value={String(device.id)}>
-                  {device.name}
+          {!driverMode && (
+            <TextField
+              select
+              label={t('fleetEntityVehicle')}
+              value={deviceId}
+              onChange={(event) => setDeviceId(event.target.value)}
+            >
+              {Object.values(devices)
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((device) => (
+                  <MenuItem key={device.id} value={String(device.id)}>
+                    {device.name}
+                  </MenuItem>
+                ))}
+            </TextField>
+          )}
+          {(!driverMode || templates.length > 1) && (
+            <TextField
+              select
+              label={t('fleetInspectionTemplate')}
+              value={templateId}
+              onChange={(event) => setTemplateId(event.target.value)}
+            >
+              {templates.map((it) => (
+                <MenuItem key={it.id} value={it.id}>
+                  {it.name}
                 </MenuItem>
               ))}
-          </TextField>
-          <TextField
-            select
-            label={t('fleetInspectionTemplate')}
-            value={templateId}
-            onChange={(event) => setTemplateId(event.target.value)}
-          >
-            {templates.map((it) => (
-              <MenuItem key={it.id} value={it.id}>
-                {it.name}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            label={t('sharedDriver')}
-            value={driverId}
-            onChange={(event) => setDriverId(event.target.value)}
-          >
-            <MenuItem value="">&nbsp;</MenuItem>
-            {Object.values(drivers)
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((driver) => (
-                <MenuItem key={driver.id} value={String(driver.id)}>
-                  {driver.name}
-                </MenuItem>
-              ))}
-          </TextField>
+            </TextField>
+          )}
+          {!driverMode && (
+            <TextField
+              select
+              label={t('sharedDriver')}
+              value={driverId}
+              onChange={(event) => setDriverId(event.target.value)}
+            >
+              <MenuItem value="">&nbsp;</MenuItem>
+              {Object.values(drivers)
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((driver) => (
+                  <MenuItem key={driver.id} value={String(driver.id)}>
+                    {driver.name}
+                  </MenuItem>
+                ))}
+            </TextField>
+          )}
         </div>
-        {canRead && templates.length === 0 && (
+        {(canRead || canFill) && templates.length === 0 && (
           <Alert severity="info">{t('fleetInspectionNoTemplates')}</Alert>
         )}
       </FormSection>
-      {template && (
+      {template && (!driverMode || assigned) && (
         <FormSection title={template.name}>
           {showMissing && missing.length > 0 && (
             <Alert severity="warning">
