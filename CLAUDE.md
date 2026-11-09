@@ -34,6 +34,13 @@ The rules you will need most often:
   `makeStyles`, so anything that must not flip gets an inline `style` or `dir="ltr"`.
 - **Strings**: add every new string to both `src/resources/l10n/he.json` and `en.json`.
 
+## Continuing the review roadmap
+
+The work follows the review report's roadmap, item by item. Before starting, read
+**[docs/roadmap/PROGRESS.md](docs/roadmap/PROGRESS.md)** (what is done, what is next, what waits on the owner, how to
+test) and **[docs/roadmap/ITEMS.md](docs/roadmap/ITEMS.md)** (all 213 items with their status). Update both when an item
+is done.
+
 ## Workflow
 
 - `npm install`, then `npm start` (needs a Traccar server on :8082) or `npm run demo` (built-in mock server).
