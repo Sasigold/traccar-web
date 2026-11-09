@@ -1,5 +1,6 @@
 import { Buffer } from 'node:buffer';
 import { test, expect, gotoReady, FLEET } from './fixtures';
+import { fakeFleet, writeMode } from './fakeFleet';
 
 // A driver linked to the demo's Delivery Van (device 1).
 const tables = {
@@ -121,4 +122,81 @@ test('a damage report starts with the camera and needs no manager fields', async
     incident_id: 'incidents-1',
     file_name: 'damage.jpg',
   });
+});
+
+// ADM-11: the first check creates the daily checklist; a failed critical item needs a photo and
+// a comment, and ends with "do not drive".
+test('a failed critical item stops the driver, with a photo and a comment', async ({ page }) => {
+  await writeMode(page);
+  const fleet = await fakeFleet(page, {
+    users: {
+      1: {
+        profile: { id: 'p1', org_id: 'o1', role: 'driver' },
+        permissions: ['incidents.write', 'inspections.write'],
+      },
+    },
+    tables: {
+      drivers: [{ id: 'd1', full_name: 'דנה לוי', traccar_driver_id: 1, profile_id: 'p1' }],
+      current_assignments: tables.current_assignments,
+    },
+    rpc: {
+      inspection_default_template: (body, state) => {
+        state.tables.inspection_templates = [
+          { id: 'tpl-default', name: 'בדיקת בוקר', active: true },
+        ];
+        state.tables.inspection_template_items = [
+          {
+            id: 'i1',
+            template_id: 'tpl-default',
+            inspection_template_id: 'tpl-default',
+            label: 'בלמים',
+            type: 'pass_fail',
+            critical: true,
+            sort_order: 0,
+          },
+          {
+            id: 'i2',
+            template_id: 'tpl-default',
+            inspection_template_id: 'tpl-default',
+            label: 'צופר',
+            type: 'pass_fail',
+            critical: false,
+            sort_order: 1,
+          },
+        ];
+        return 'tpl-default';
+      },
+    },
+  });
+
+  await gotoReady(page, '/driver/check');
+  await expect(page.getByRole('group', { name: 'בלמים' })).toBeVisible();
+  await expect(page.getByText('נותרו 2 סעיפים למילוי')).toBeVisible();
+
+  // "All OK", then the brakes fail.
+  await page.getByRole('button', { name: 'הכול תקין' }).click();
+  await expect(page.getByText(/נותרו/)).toHaveCount(0);
+  await page.getByRole('group', { name: 'בלמים' }).getByRole('button', { name: 'לא תקין' }).click();
+  await expect(page.getByText(/סעיף קריטי נכשל/)).toBeVisible();
+  await expect(page.getByText('נותרו 1 סעיפים למילוי')).toBeVisible();
+
+  await page.getByRole('button', { name: 'שליחת הבדיקה' }).click();
+  expect(fleet.tables.inspections || []).toHaveLength(0);
+  await page.getByLabel('מה הבעיה').fill('הדוושה רכה');
+  await page
+    .locator('input[type="file"]')
+    .first()
+    .setInputFiles({
+      name: 'brakes.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYPj/HwADAQH/rM3H5AAAAABJRU5ErkJggg==',
+        'base64',
+      ),
+    });
+  await page.getByRole('button', { name: 'שליחת הבדיקה' }).click();
+  await expect(page.getByText('אין לצאת לנסיעה.')).toBeVisible();
+  expect(fleet.tables.inspections[0]).toMatchObject({ result: 'fail', driver_id: 'd1' });
+  expect(fleet.tables.issues[0]).toMatchObject({ severity: 'critical', title: 'בלמים' });
+  expect([...fleet.files.keys()][0]).toMatch(/^o1\/inspections\/.*brakes\.png$/);
 });

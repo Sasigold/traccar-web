@@ -3113,5 +3113,14 @@
     "validationDuplicate": "כבר קיים: {0}",
     "sharedComingSoon": "בקרוב",
     "fleetOutboxNotConnected": "השליחה עוד לא מחוברת: אף ערוץ (וואטסאפ, SMS, מייל) לא הוגדר. ההודעות שכאן יישלחו כשהחיבור יופעל במסך ערוצי השליחה בניהול השירות.",
-    "fleetApiGatewayMissing": "שער ה-API עוד לא הותקן בשרת, ולכן המפתחות כאן לא פעילים. הם יעבדו מיד אחרי התקנת השער (פונקציית public-api)."
+    "fleetApiGatewayMissing": "שער ה-API עוד לא הותקן בשרת, ולכן המפתחות כאן לא פעילים. הם יעבדו מיד אחרי התקנת השער (פונקציית public-api).",
+    "fleetInspectionDoNotDrive": "אין לצאת לנסיעה.",
+    "fleetInspectionDoNotDriveHelp": "בדיקה קריטית נכשלה. הרכב סומן \"לא לנסיעה\" והתקלה הועברה למנהל הצי. חכו להוראות.",
+    "fleetInspectionAllOk": "הכול תקין",
+    "fleetInspectionRemaining": "נותרו {0} סעיפים למילוי",
+    "fleetInspectionCriticalFailed": "סעיף קריטי נכשל: צלמו את התקלה וכתבו מה ראיתם. אחרי השליחה הרכב יסומן \"לא לנסיעה\".",
+    "fleetInspectionCriticalPhoto": "צילום התקלה (חובה)",
+    "fleetSignatureClear": "ניקוי החתימה",
+    "fleetSignatureSigned": "נחתם",
+    "driverVehicleOutOfService": "הרכב שלכם סומן \"לא לנסיעה\": {0}. אין לנסוע בו עד שמנהל הצי יסגור את התקלה."
 }

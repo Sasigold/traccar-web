@@ -137,7 +137,8 @@ export const fakeFleet = async (
 
   const filtersOf = (params) =>
     [...params.entries()]
-      .filter(([key]) => !RESERVED.has(key))
+      // Ordering and limits of an embed (items.order=sort_order) are not filters.
+      .filter(([key]) => !RESERVED.has(key) && !/\.(order|limit|offset)$/.test(key))
       .map(([key, raw]) => {
         const negate = raw.startsWith('not.');
         const value = negate ? raw.slice(4) : raw;

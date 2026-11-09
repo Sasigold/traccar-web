@@ -121,9 +121,21 @@ const DriverPortalPage = () => {
         .order('started_at', { ascending: false })
         .limit(5),
     ]);
+    const current = (assignment.data || [])[0] || null;
+    // ADM-11: an open critical fault keeps the vehicle off the road.
+    const outOfService = current?.vehicle_id
+      ? (
+          await client
+            .from('vehicle_out_of_service')
+            .select('reasons')
+            .eq('vehicle_id', current.vehicle_id)
+            .maybeSingle()
+        ).data
+      : null;
     setData({
       driver,
-      assignment: (assignment.data || [])[0] || null,
+      outOfService,
+      assignment: current,
       documents: documents.data || [],
       incidents: incidents.data || [],
       inspections: inspections.data || [],
@@ -139,6 +151,11 @@ const DriverPortalPage = () => {
       <FleetNotice permission="inspections.write" />
       <div className={classes.root}>
         {data && !data.driver && <Alert severity="info">{t('fleetDriverPortalNotLinked')}</Alert>}
+        {data?.outOfService && (
+          <Alert severity="error" variant="filled">
+            {t('driverVehicleOutOfService').replace('{0}', data.outOfService.reasons || '')}
+          </Alert>
+        )}
         {data?.driver && (
           <>
             <Paper elevation={0} className={classes.card}>

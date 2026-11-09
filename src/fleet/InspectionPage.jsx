@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -32,9 +32,13 @@ import {
   inspectionResult,
   issuesFromFailures,
   missingAnswers,
+  allPassing,
+  criticalWithoutEvidence,
+  failedCritical,
 } from '../common/fleet/inspections';
 import { odometerKm } from '../common/fleet/workOrders';
 import FleetNotice from './components/FleetNotice';
+import SignaturePad from './components/SignaturePad';
 import { ensureDriver, ensureVehicle, openFleetFile, uploadFleetFile } from './fleetData';
 
 const useStyles = makeStyles()((theme) => ({
@@ -45,6 +49,11 @@ const useStyles = makeStyles()((theme) => ({
     [theme.breakpoints.down('sm')]: {
       gridTemplateColumns: 'minmax(0, 1fr)',
     },
+  },
+  // ADM-11: an item still to answer, after an attempt to send.
+  itemMissing: {
+    borderInlineStart: `3px solid ${theme.palette.error.main}`,
+    paddingInlineStart: theme.spacing(1.5),
   },
   item: {
     display: 'flex',
@@ -107,6 +116,8 @@ const InspectionPage = ({ driverMode = false }) => {
   const [saving, setSaving] = useState(false);
   const [showMissing, setShowMissing] = useState(false);
   const [done, setDone] = useState(null);
+  // ADM-11: the check ended with a failed critical item: the driver must not drive.
+  const [stopped, setStopped] = useState(false);
   const driverContext = useDriverContext(driverMode);
   const assigned = driverMode ? driverContext?.assignment : null;
   const selectedDeviceId = assigned ? String(assigned.traccar_device_id) : deviceId;
@@ -137,21 +148,71 @@ const InspectionPage = ({ driverMode = false }) => {
         .order('name')
         .order('sort_order', { referencedTable: 'inspection_template_items' }),
     );
-    setTemplates(rows || []);
-    if (rows?.length === 1) {
-      setTemplateId((current) => current || rows[0].id);
+    let list = rows || [];
+    // ADM-11: no checklist yet: the organization gets the daily one, so the check never blocks.
+    if (!list.length && canFill) {
+      await client.rpc('inspection_default_template');
+      list =
+        unwrap(
+          await client
+            .from('inspection_templates')
+            .select('*, inspection_template_items(*)')
+            .eq('active', true)
+            .order('name')
+            .order('sort_order', { referencedTable: 'inspection_template_items' }),
+        ) || [];
+    }
+    setTemplates(list);
+    if (list.length === 1) {
+      setTemplateId((current) => current || list[0].id);
     }
   }, [id, canRead, canFill]);
 
   const template = templates.find((it) => it.id === templateId);
   const items = useMemo(() => template?.inspection_template_items || [], [template]);
   const missing = missingAnswers(items, answers);
+  const needEvidence = criticalWithoutEvidence(items, answers);
+  const remaining = missing.length + needEvidence.length;
+
+  // ADM-11: a draft on this device, so a reload or a lost connection keeps what was filled in.
+  // Photos and signatures are files and are not kept.
+  const draftKey = template && `vfInspectionDraft:${template.id}:${selectedDeviceId || ''}`;
+  const [restored, setRestored] = useState(null);
+  useEffect(() => {
+    if (!draftKey || restored === draftKey) return;
+    try {
+      const draft = JSON.parse(window.localStorage.getItem(draftKey) || 'null');
+      if (draft) {
+        setAnswers(draft.answers || {});
+        setNotes(draft.notes || '');
+      }
+    } catch {
+      // no draft
+    }
+    setRestored(draftKey);
+  }, [draftKey, restored]);
+  useEffect(() => {
+    if (!draftKey || restored !== draftKey) return;
+    const plain = Object.fromEntries(
+      Object.entries(answers).map(([key, value]) => [
+        key,
+        Object.fromEntries(
+          Object.entries(value).filter(([field]) => field !== 'photo' && field !== 'signature'),
+        ),
+      ]),
+    );
+    try {
+      window.localStorage.setItem(draftKey, JSON.stringify({ answers: plain, notes }));
+    } catch {
+      // storage full or unavailable: the form still works
+    }
+  }, [draftKey, restored, answers, notes]);
 
   const answer = (itemId, changes) =>
     setAnswers((current) => ({ ...current, [itemId]: { ...current[itemId], ...changes } }));
 
   const handleSave = useCatch(async () => {
-    if (missing.length) {
+    if (remaining) {
       setShowMissing(true);
       return;
     }
@@ -193,9 +254,10 @@ const InspectionPage = ({ driverMode = false }) => {
       const rows = [];
       for (const [index, item] of items.entries()) {
         const value = answers[item.id] || {};
-        const photoPath = value.photo
-          ? await uploadFleetFile(profile.org_id, 'inspections', value.photo)
-          : null;
+        const file =
+          value.photo ||
+          (value.signature && new File([value.signature], 'signature.png', { type: 'image/png' }));
+        const photoPath = file ? await uploadFleetFile(profile.org_id, 'inspections', file) : null;
         rows.push({
           org_id: profile.org_id,
           inspection_id: inspection.id,
@@ -221,6 +283,12 @@ const InspectionPage = ({ driverMode = false }) => {
       if (issues.length) {
         unwrap(await client.from('issues').insert(issues));
       }
+      try {
+        window.localStorage.removeItem(draftKey);
+      } catch {
+        // nothing to remove
+      }
+      setStopped(failedCritical(items, answers));
       if (driverMode) {
         setDone(new Date());
       } else {
@@ -288,11 +356,9 @@ const InspectionPage = ({ driverMode = false }) => {
         );
       case 'signature':
         return (
-          <TextField
-            size="small"
-            label={t('fleetInspectionSignature')}
-            value={value.value ?? ''}
-            onChange={(event) => answer(item.id, { value: event.target.value })}
+          <SignaturePad
+            label={item.label || t('fleetInspectionSignature')}
+            onChange={(blob) => answer(item.id, { signature: blob, value: blob ? 'signed' : null })}
           />
         );
       default:
@@ -329,7 +395,15 @@ const InspectionPage = ({ driverMode = false }) => {
             }
           >
             {saved.inspection_items.map((item) => (
-              <div key={item.id} className={classes.item}>
+              <div
+                key={item.id}
+                className={cx(
+                  classes.item,
+                  showMissing &&
+                    (missing.includes(item) || needEvidence.includes(item)) &&
+                    classes.itemMissing,
+                )}
+              >
                 <div className={classes.itemHead}>
                   <Typography variant="body2" fontWeight={600}>
                     {item.label}
@@ -372,7 +446,14 @@ const InspectionPage = ({ driverMode = false }) => {
   if (driverMode && done) {
     return (
       <FormPage breadcrumbs={['fleetDriverPortal']} title={t('fleetDriverPortalMorningCheck')}>
-        <DriverDoneCard titleKey="driverCheckSent" time={done} />
+        {stopped ? (
+          <Alert severity="error" variant="filled" sx={{ m: 2 }}>
+            <strong>{t('fleetInspectionDoNotDrive')}</strong>
+            <div>{t('fleetInspectionDoNotDriveHelp')}</div>
+          </Alert>
+        ) : (
+          <DriverDoneCard titleKey="driverCheckSent" time={done} />
+        )}
       </FormPage>
     );
   }
@@ -462,11 +543,25 @@ const InspectionPage = ({ driverMode = false }) => {
         )}
       </FormSection>
       {template && (!driverMode || assigned) && (
-        <FormSection title={template.name}>
-          {showMissing && missing.length > 0 && (
-            <Alert severity="warning">
-              {t('fleetInspectionMissing').replace('{0}', String(missing.length))}
+        <FormSection
+          title={template.name}
+          actions={
+            <Button
+              variant="outlined"
+              startIcon={<CheckRoundedIcon />}
+              onClick={() => setAnswers((current) => allPassing(items, current))}
+            >
+              {t('fleetInspectionAllOk')}
+            </Button>
+          }
+        >
+          {remaining > 0 && (
+            <Alert severity={showMissing ? 'warning' : 'info'} role="status">
+              {t('fleetInspectionRemaining').replace('{0}', String(remaining))}
             </Alert>
+          )}
+          {failedCritical(items, answers) && (
+            <Alert severity="error">{t('fleetInspectionCriticalFailed')}</Alert>
           )}
           {items.map((item) => {
             const passed = evaluateItem(item, answers[item.id]?.value);
@@ -482,10 +577,31 @@ const InspectionPage = ({ driverMode = false }) => {
                 {passed === false && (
                   <TextField
                     size="small"
+                    required={item.critical}
                     label={t('fleetInspectionFailComment')}
                     value={answers[item.id]?.comment || ''}
                     onChange={(event) => answer(item.id, { comment: event.target.value })}
                   />
+                )}
+                {passed === false && item.critical && item.type !== 'photo' && (
+                  <Button
+                    component="label"
+                    variant="outlined"
+                    color={answers[item.id]?.photo ? 'primary' : 'error'}
+                    startIcon={<PhotoCameraRoundedIcon />}
+                    sx={{ alignSelf: 'flex-start' }}
+                  >
+                    {answers[item.id]?.photo
+                      ? answers[item.id].photo.name
+                      : t('fleetInspectionCriticalPhoto')}
+                    <input
+                      hidden
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={(event) => answer(item.id, { photo: event.target.files[0] })}
+                    />
+                  </Button>
                 )}
               </div>
             );

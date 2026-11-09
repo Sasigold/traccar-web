@@ -3113,5 +3113,14 @@
     "validationDuplicate": "Already exists: {0}",
     "sharedComingSoon": "soon",
     "fleetOutboxNotConnected": "Sending is not connected yet: no channel (WhatsApp, SMS, e-mail) is set up. The messages here will be sent once a channel is set up in service management.",
-    "fleetApiGatewayMissing": "The API gateway is not installed on the server yet, so the keys here do not work. They will work as soon as the gateway (the public-api function) is installed."
+    "fleetApiGatewayMissing": "The API gateway is not installed on the server yet, so the keys here do not work. They will work as soon as the gateway (the public-api function) is installed.",
+    "fleetInspectionDoNotDrive": "Do not drive.",
+    "fleetInspectionDoNotDriveHelp": "A critical check failed. The vehicle is marked \"not for driving\" and the fault went to the fleet manager. Wait for instructions.",
+    "fleetInspectionAllOk": "All OK",
+    "fleetInspectionRemaining": "{0} items left to fill in",
+    "fleetInspectionCriticalFailed": "A critical item failed: take a photo of the fault and write what you saw. After sending, the vehicle is marked \"not for driving\".",
+    "fleetInspectionCriticalPhoto": "Photo of the fault (required)",
+    "fleetSignatureClear": "Clear the signature",
+    "fleetSignatureSigned": "signed",
+    "driverVehicleOutOfService": "Your vehicle is marked \"not for driving\": {0}. Do not drive it until the fleet manager closes the fault."
 }
