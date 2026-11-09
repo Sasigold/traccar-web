@@ -169,8 +169,9 @@ export const sendFiles = async (item, mark, send, limit = 3) => {
 
 // ─── photos ─────────────────────────────────────────────────────────────────
 
-// A photo is made at most `max` px on its long side (JPEG) before it is stored. Anything that is
-// not an image, or a browser without canvas, keeps the original.
+// A photo is made at most `max` px on its long side and drawn again as a new JPEG before it is
+// stored: that also drops its EXIF data, the GPS position included (SEC-17). Anything that is
+// not an image, or a browser that cannot decode it (HEIC in most), keeps the original.
 export const shrinkImage = async (file, max = 1600) => {
   if (!file?.type?.startsWith('image/') || file.type === 'image/svg+xml') return file;
   if (typeof createImageBitmap === 'undefined' || typeof OffscreenCanvas === 'undefined') {
@@ -179,7 +180,6 @@ export const shrinkImage = async (file, max = 1600) => {
   try {
     const bitmap = await createImageBitmap(file);
     const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
-    if (scale === 1 && file.size < 1_500_000) return file;
     const canvas = new OffscreenCanvas(
       Math.round(bitmap.width * scale),
       Math.round(bitmap.height * scale),

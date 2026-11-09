@@ -68,3 +68,13 @@ describe('outbox (ADM-10)', () => {
     expect(alreadySaved({ code: '42501' })).toBe(false);
   });
 });
+
+describe('uploads (SEC-17)', () => {
+  it('opens only images in the browser; anything else downloads', async () => {
+    const { isImagePath } = await import('../../../fleet/fleetData');
+    expect(isImagePath('o1/incidents/x-photo.JPG')).toBe(true);
+    expect(isImagePath('o1/work-orders/x-invoice.pdf')).toBe(false);
+    expect(isImagePath('o1/docs/x-page.html')).toBe(false);
+    expect(isImagePath('o1/docs/x-logo.svg')).toBe(false);
+  });
+});

@@ -109,13 +109,14 @@ test('an incident is reported with a photo, and the photo comes back', async ({ 
   expect(
     fleet.tables.vehicles.find((row) => row.id === incident.vehicle_id).traccar_device_id,
   ).toBe(2);
-  // The photo is stored under the organization's incidents folder, byte for byte.
+  // The photo is stored under the organization's incidents folder, drawn again as a JPEG
+  // (SEC-17: that drops any GPS position in it).
   const [photo] = fleet.tables.incident_photos;
   expect(photo).toMatchObject({ org_id: ORG, incident_id: incident.id, file_name: 'bumper.png' });
-  expect(photo.storage_path).toMatch(new RegExp(`^${ORG}/incidents/[0-9a-f-]{36}-bumper\\.png$`));
+  expect(photo.storage_path).toMatch(new RegExp(`^${ORG}/incidents/[0-9a-f-]{36}-bumper\\.jpg$`));
   const stored = fleet.files.get(photo.storage_path);
-  expect(stored.type).toBe('image/png');
-  expect(Buffer.compare(stored.body, PHOTO)).toBe(0);
+  expect(stored.type).toBe('image/jpeg');
+  expect([...stored.body.subarray(0, 2)]).toEqual([0xff, 0xd8]);
 
   // Opening the incident shows the photo, through a signed address.
   await page.getByRole('row', { name: new RegExp(String(incident.number)) }).click();

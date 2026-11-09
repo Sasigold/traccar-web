@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { shrinkImage } from '../common/fleet/outbox';
 import { useFleetQuery } from '../common/data/fleetQuery';
 import { getFleetClient, unwrap } from '../common/fleet/client';
 import { saveFleetRecord } from './fleetRecords';
@@ -10,7 +11,9 @@ const safeName = (name) => name.replace(/[^\w.-]+/g, '_').slice(-80);
 
 // <org>/<area>/<uuid>-<name>; the area (work-orders, incidents, inspections, expenses) picks
 // the storage permission, see fleet_file_permission() in the stage 2 migration.
-export const uploadFleetFile = async (orgId, area, file) => {
+// SEC-17: photos are drawn again before upload (smaller, and without their GPS position).
+export const uploadFleetFile = async (orgId, area, original) => {
+  const file = await shrinkImage(original, 2400);
   const path = `${orgId}/${area}/${crypto.randomUUID()}-${safeName(file.name)}`;
   unwrap(
     await getFleetClient()
@@ -20,9 +23,15 @@ export const uploadFleetFile = async (orgId, area, file) => {
   return path;
 };
 
+// Images open in the browser; anything else is downloaded, so a file can never run as a page
+// (SEC-17).
+export const isImagePath = (path) => /\.(jpe?g|png|webp|gif|heic)$/i.test(path || '');
+
 export const openFleetFile = async (path) => {
   const { signedUrl } = unwrap(
-    await getFleetClient().storage.from(FILES_BUCKET).createSignedUrl(path, 120),
+    await getFleetClient()
+      .storage.from(FILES_BUCKET)
+      .createSignedUrl(path, 120, isImagePath(path) ? undefined : { download: true }),
   );
   window.open(signedUrl, '_blank', 'noopener');
 };
