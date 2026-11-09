@@ -1,4 +1,5 @@
 import { useCallback, useReducer, useState } from 'react';
+import ImpersonateDialog from '../common/components/ImpersonateDialog';
 import { useNavigate } from 'react-router-dom';
 import {
   TableRow,
@@ -12,7 +13,7 @@ import {
 import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
 import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
 import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
-import { useCatch, useAsyncTask, useScrollToLoad, pageSize } from '../reactHelper';
+import { useAsyncTask, useScrollToLoad, pageSize } from '../reactHelper';
 import { formatTime } from '../common/util/formatter';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
@@ -40,10 +41,12 @@ const UsersPage = () => {
   const [hasMore, setHasMore] = useState(true);
   const [temporary, setTemporary] = useState(false);
 
-  const handleLogin = useCatch(async (userId) => {
-    await fetchOrThrow(`api/session/${userId}`);
-    window.location.replace(document.baseURI);
-  });
+  // SEC-13: "log in as" asks for a reason and records it.
+  const [impersonating, setImpersonating] = useState(null);
+  const handleLogin = (userId) =>
+    setImpersonating(
+      items.find((item) => item.id === userId) || { id: userId, name: String(userId) },
+    );
 
   const actionLogin = {
     key: 'login',
@@ -164,6 +167,9 @@ const UsersPage = () => {
         </TableBody>
       </DataTable>
       <AddFab editPath="/settings/user" />
+      {impersonating && (
+        <ImpersonateDialog user={impersonating} onClose={() => setImpersonating(null)} />
+      )}
     </PageLayout>
   );
 };

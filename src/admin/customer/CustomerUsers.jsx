@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import ImpersonateDialog from '../../common/components/ImpersonateDialog';
 import { useNavigate } from 'react-router-dom';
 import {
   Autocomplete,
@@ -29,7 +30,6 @@ import SyncRoundedIcon from '@mui/icons-material/SyncRounded';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import { useCatch } from '../../reactHelper';
-import fetchOrThrow from '../../common/util/fetchOrThrow';
 import { messagesActions } from '../../store';
 import FormSection from '../../settings/components/FormSection';
 import EmptyState from '../../common/components/table/EmptyState';
@@ -144,10 +144,12 @@ const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged })
     }
   });
 
-  const handleLogin = useCatch(async (userId) => {
-    await fetchOrThrow(`api/session/${userId}`);
-    window.location.replace(document.baseURI);
-  });
+  // SEC-13: "log in as" asks for a reason and records it.
+  const [impersonating, setImpersonating] = useState(null);
+  const handleLogin = (userId) =>
+    setImpersonating(
+      rows.find((item) => item.id === userId) || { id: userId, name: String(userId) },
+    );
 
   return (
     <FormSection
@@ -319,6 +321,9 @@ const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged })
           </Button>
         </DialogActions>
       </Dialog>
+      {impersonating && (
+        <ImpersonateDialog user={impersonating} onClose={() => setImpersonating(null)} />
+      )}
     </FormSection>
   );
 };

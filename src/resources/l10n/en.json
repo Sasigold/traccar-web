@@ -3351,5 +3351,12 @@
     "fuelIdleNoPrice": "Enter a fuel price to see the cost in shekels",
     "fuelPrice": "Price per liter this month (₪)",
     "fuelPriceHelp": "The regulated price published at the start of each month",
-    "fuelIdleRate": "Idle use (liters per hour)"
+    "fuelIdleRate": "Idle use (liters per hour)",
+    "impersonateTitle": "Log in as {0}",
+    "impersonateHelp": "You will see the system exactly as this user does and can act for them. It is recorded in the activity log with your name and the reason.",
+    "impersonateReason": "Reason",
+    "impersonateReasonHelp": "For example: checking a problem reported in the trips report",
+    "impersonateGo": "Log in",
+    "impersonateBanner": "You are logged in as {0} (from {1}'s account). Everything you do here is recorded.",
+    "impersonateBack": "Back to my account"
 }

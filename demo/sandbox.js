@@ -106,6 +106,18 @@ const session = async (sandbox, request, response, url, send) => {
     }
     return true;
   }
+  // "Log in as" another user (SEC-13): GET /api/session/<id> switches the sandbox's session.
+  const switchTo = /^\/api\/session\/(\d+)$/.exec(url.pathname);
+  if (switchTo && request.method === 'GET') {
+    const user = DEMO_USERS.find((item) => item.id === Number(switchTo[1]));
+    if (sandbox.userId == null || !user) {
+      response.writeHead(404).end('Unknown user.');
+    } else {
+      sandbox.userId = user.id;
+      send(user);
+    }
+    return true;
+  }
   if (url.pathname !== '/api/session') {
     return false;
   }

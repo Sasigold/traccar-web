@@ -1,7 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { createDrivers, createFleet, createMaintenance, maintenanceFor } from './fleet.js';
 import { eventTypes, findEvent, geofences, report, sampleEvent } from './reports.js';
-import { handleSandbox, overlay, overlayOne, sandboxOf } from './sandbox.js';
+import { DEMO_USERS, handleSandbox, overlay, overlayOne, sandboxOf } from './sandbox.js';
 
 const commandTypes = ['positionSingle', 'engineStop', 'engineResume', 'custom'];
 
@@ -187,6 +187,10 @@ export const demoServer = (server) => {
         break;
       case '/api/calendars':
         data = listed('calendars', []);
+        break;
+      // The demo's users, in write mode (SEC-13 "log in as" works on them).
+      case '/api/users':
+        data = sandbox ? listed('users', DEMO_USERS) : [];
         break;
       case '/api/demo/event':
         data = sendDemoEvent(url.searchParams);

@@ -11,6 +11,7 @@ import MobileTabs from './MobileTabs';
 import CommandPalette from './CommandPalette';
 import EventsDrawer from './EventsDrawer';
 import AlertBanner from './AlertBanner';
+import ImpersonationBanner from './ImpersonationBanner';
 import { useAiAvailable } from '../../fleet/useAi';
 
 // AI-01: loaded the first time it is opened.
@@ -146,6 +147,7 @@ const AppShell = ({ children }) => {
       <div className={cx(classes.root, showRail && classes.withRail)} style={vars}>
         {showRail && <NavRail />}
         <TopBar />
+        <ImpersonationBanner />
         <main
           className={classes.content}
           style={showTabs ? undefined : { paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
