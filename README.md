@@ -55,8 +55,8 @@ boards from live fleet state, period activity and fleet-database widgets, in any
 pie, bars, columns, line, area, table), with a gapless drag-and-resize layout. See the "Dashboard"
 section in [FLEET.md](FLEET.md).
 
-Custom UI strings live in `src/resources/l10n/en.json` and `he.json`. Do not run the
-`translation.yml` workflow: it force-pulls `he.json` from Transifex and would drop them.
+Custom UI strings live in `src/resources/l10n/en.json` and `he.json` and are maintained in this repository.
+The upstream Transifex workflow was removed because it force-pulled `he.json` and dropped them.
 
 ### נתוני דמו לשרת האמיתי
 

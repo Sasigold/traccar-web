@@ -41,6 +41,6 @@ The rules you will need most often:
 - CI (`.github/workflows/ci.yml`: lint, unit tests, build, e2e and WCAG checks) runs on every pull request
   into `main`, and the deploy only runs after it passes. Keep `npm test` and `npm run test:e2e` green.
 - Check visual changes in Hebrew/RTL, in light and dark mode, on desktop and mobile widths.
-- Do not run the `translation.yml` workflow. It force-pulls `he.json` from Transifex and drops the custom
-  strings.
+- Strings are maintained here, not in Transifex: the upstream `translation.yml` workflow (which force-pulled
+  `he.json` and dropped the custom strings) was removed. Don't bring it back.
 - To deploy, run `sh deploy/deploy.sh` (see README).
