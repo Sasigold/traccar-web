@@ -1,6 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { createDrivers, createFleet, createMaintenance, maintenanceFor } from './fleet.js';
 import { eventTypes, findEvent, geofences, report, sampleEvent } from './reports.js';
+import { handleSandbox, overlay, overlayOne, sandboxOf } from './sandbox.js';
 
 const commandTypes = ['positionSingle', 'engineStop', 'engineResume', 'custom'];
 
@@ -107,27 +108,50 @@ export const demoServer = (server) => {
       sendCommand(request, response);
       return;
     }
+    const send = (value) => {
+      response.setHeader('Content-Type', 'application/json');
+      response.end(JSON.stringify(value));
+    };
+    // FND-07: a test's own writable sandbox (cookie demoWrite), see sandbox.js.
+    const sandbox = sandboxOf(request);
+    if (sandbox) {
+      handleSandbox(sandbox, request, response, url, send).then((handled) => {
+        if (handled) return;
+        if (request.method !== 'GET') {
+          response.writeHead(404).end('Unavailable in this demo.');
+        } else if (sandbox.userId == null && url.pathname !== '/api/server') {
+          response.writeHead(401).end('Not signed in.');
+        } else {
+          read(url, response, send, sandbox);
+        }
+      });
+      return;
+    }
     if (request.method !== 'GET') {
       response.writeHead(403).end('This demo is read-only.');
       return;
     }
+    read(url, response, send, null);
+  });
+  const read = (url, response, send, sandbox) => {
     fleet.advance();
     let data;
+    const listed = (collection, items) => overlay(sandbox, collection, items);
     switch (url.pathname) {
       case '/api/server':
-        data = settings;
+        data = sandbox ? { ...settings, readonly: false } : settings;
         break;
       case '/api/session':
         data = user;
         break;
       case '/api/devices':
-        data = fleet.devices;
+        data = listed('devices', fleet.devices);
         break;
       case '/api/positions':
         data = fleet.query(url.searchParams);
         break;
       case '/api/geofences':
-        data = geofences;
+        data = listed('geofences', geofences);
         break;
       case '/api/notifications/types':
         data = eventTypes.map((type) => ({ type }));
@@ -142,18 +166,21 @@ export const demoServer = (server) => {
         data = report(fleet, url.pathname.split('/').at(-1), url.searchParams);
         break;
       case '/api/drivers':
-        data = createDrivers();
+        data = listed('drivers', createDrivers());
         break;
       case '/api/maintenance':
-        data = url.searchParams.has('deviceId')
-          ? maintenanceFor(url.searchParams.get('deviceId'))
-          : createMaintenance();
+        data = listed(
+          'maintenance',
+          url.searchParams.has('deviceId')
+            ? maintenanceFor(url.searchParams.get('deviceId'))
+            : createMaintenance(),
+        );
         break;
       case '/api/groups':
-        data = groups;
+        data = listed('groups', groups);
         break;
       case '/api/calendars':
-        data = [];
+        data = listed('calendars', []);
         break;
       case '/api/demo/event':
         data = sendDemoEvent(url.searchParams);
@@ -166,10 +193,25 @@ export const demoServer = (server) => {
         break;
       default:
         if (/^\/api\/devices\/\d+$/.test(url.pathname)) {
-          data = fleet.devices.find(
-            (device) => device.id === Number(url.pathname.split('/').at(-1)),
+          const id = Number(url.pathname.split('/').at(-1));
+          data = overlayOne(
+            sandbox,
+            'devices',
+            fleet.devices.find((device) => device.id === id),
+            id,
           );
           if (data) break;
+        }
+        // In a sandbox, any other collection lists what the test saved into it.
+        if (sandbox) {
+          const [, collection, id] = /^\/api\/([a-z]+)(?:\/(\d+))?$/.exec(url.pathname) || [];
+          if (collection && id) {
+            data = overlayOne(sandbox, collection, null, Number(id));
+            if (data) break;
+          } else if (collection) {
+            data = listed(collection, []);
+            break;
+          }
         }
         if (/^\/api\/drivers\/\d+$/.test(url.pathname)) {
           data = createDrivers().find(
@@ -191,15 +233,20 @@ export const demoServer = (server) => {
         response.writeHead(404).end('Unavailable in this demo.');
         return;
     }
-    response.setHeader('Content-Type', 'application/json');
-    response.end(JSON.stringify(data));
-  });
+    send(data);
+  };
   server.httpServer.on('upgrade', (request, socket, head) => {
     if (new URL(request.url, 'http://localhost').pathname === '/api/socket') {
       sockets.handleUpgrade(request, socket, head, (client) => {
         client.demoClient = /(?:^|;\s*)demoClient=([^;]+)/.exec(request.headers.cookie || '')?.[1];
+        client.sandbox = sandboxOf(request);
         fleet.advance();
-        client.send(JSON.stringify({ devices: fleet.devices, positions: fleet.positions }));
+        client.send(
+          JSON.stringify({
+            devices: overlay(client.sandbox, 'devices', fleet.devices),
+            positions: fleet.positions,
+          }),
+        );
       });
     }
   });
@@ -208,7 +255,15 @@ export const demoServer = (server) => {
     fleet.advance();
     const message = JSON.stringify({ devices: fleet.devices, positions: fleet.positions });
     sockets.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) client.send(message);
+      if (client.readyState !== WebSocket.OPEN) return;
+      client.send(
+        client.sandbox
+          ? JSON.stringify({
+              devices: overlay(client.sandbox, 'devices', fleet.devices),
+              positions: fleet.positions,
+            })
+          : message,
+      );
     });
   }, 5000);
   server.httpServer.on('close', () => {
