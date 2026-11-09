@@ -180,23 +180,70 @@ export const Faq = () => (
 const YEAR = new Date().getFullYear();
 const SIZES = ['1–10', '11–50', '51–200', '200+'];
 
+const whatsappHref = (phone, text) => {
+  const digits = String(phone).replace(/\D/g, '');
+  const number = digits.startsWith('0') ? `972${digits.slice(1)}` : digits;
+  return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
+};
+
+// Sends the demo request through the first configured channel (see src/config.js). Success is
+// shown only when a channel took the request.
+const sendLead = async (lead) => {
+  const text = [
+    'תיאום הדגמה · viper fleet',
+    `שם: ${lead.name}`,
+    `חברה: ${lead.company || '-'}`,
+    `טלפון: ${lead.phone}`,
+    `גודל צי: ${lead.size}`,
+  ].join('\n');
+  if (site.leadEndpoint) {
+    const response = await fetch(site.leadEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...lead, source: 'website', page: window.location.href }),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return 'endpoint';
+  }
+  if (site.whatsapp) {
+    window.open(whatsappHref(site.whatsapp, text), '_blank', 'noopener');
+    return 'whatsapp';
+  }
+  if (site.contactEmail) {
+    window.location.href = `mailto:${site.contactEmail}?subject=${encodeURIComponent(
+      'תיאום הדגמה · viper fleet',
+    )}&body=${encodeURIComponent(text)}`;
+    return 'email';
+  }
+  throw new Error('not configured');
+};
+
 export const Contact = () => {
-  const [sent, setSent] = useState(false);
-  const onSubmit = (event) => {
+  // idle | sending | endpoint | whatsapp | email | error
+  const [state, setState] = useState('idle');
+  const sent = ['endpoint', 'whatsapp', 'email'].includes(state);
+  const onSubmit = async (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const body = [
-      `שם: ${data.get('name')}`,
-      `חברה: ${data.get('company')}`,
-      `טלפון: ${data.get('phone')}`,
-      `גודל צי: ${data.get('size')}`,
-    ].join('\n');
-    if (site.contactEmail) {
-      window.location.href = `mailto:${site.contactEmail}?subject=${encodeURIComponent(
-        'תיאום הדגמה · viper fleet',
-      )}&body=${encodeURIComponent(body)}`;
+    // Honeypot: people never fill the hidden field, bots usually do.
+    if (data.get('website')) {
+      return;
     }
-    setSent(true);
+    setState('sending');
+    try {
+      setState(
+        await sendLead({
+          name: data.get('name'),
+          company: data.get('company'),
+          phone: data.get('phone'),
+          size: data.get('size'),
+        }),
+      );
+    } catch {
+      setState('error');
+    }
   };
 
   return (
@@ -227,8 +274,14 @@ export const Contact = () => {
               <span className="form__check">
                 <Icon name="check" size={28} />
               </span>
-              <strong>תודה. קיבלנו.</strong>
-              <p>נחזור אליכם בהקדם לתיאום ההדגמה.</p>
+              <strong>{state === 'endpoint' ? 'תודה. קיבלנו.' : 'כמעט סיימנו.'}</strong>
+              <p>
+                {state === 'endpoint'
+                  ? 'נחזור אליכם בהקדם לתיאום ההדגמה.'
+                  : state === 'whatsapp'
+                    ? 'נפתח וואטסאפ עם הפרטים. שלחו את ההודעה ונחזור אליכם.'
+                    : 'נפתחה הודעת מייל עם הפרטים. שלחו אותה ונחזור אליכם.'}
+              </p>
             </div>
           ) : (
             <>
@@ -255,8 +308,29 @@ export const Contact = () => {
                   ))}
                 </div>
               </fieldset>
-              <button type="submit" className="btn btn--primary btn--block">
-                תיאום הדגמה
+              <label className="form__trap" aria-hidden="true">
+                <span>אתר</span>
+                <input name="website" tabIndex={-1} autoComplete="off" />
+              </label>
+              {state === 'error' && (
+                <p className="form__error" role="alert">
+                  לא הצלחנו לשלוח את הפרטים.{' '}
+                  {site.whatsapp || site.phone
+                    ? 'אפשר לפנות אלינו ישירות:'
+                    : 'נסו שוב בעוד כמה דקות.'}{' '}
+                  {site.whatsapp && (
+                    <a href={whatsappHref(site.whatsapp, 'תיאום הדגמה · viper fleet')}>וואטסאפ</a>
+                  )}
+                  {site.whatsapp && site.phone && ' · '}
+                  {site.phone && <a href={`tel:${site.phone}`}>{site.phone}</a>}
+                </p>
+              )}
+              <button
+                type="submit"
+                className="btn btn--primary btn--block"
+                disabled={state === 'sending'}
+              >
+                {state === 'sending' ? 'שולחים…' : 'תיאום הדגמה'}
                 <Icon name="arrow" size={18} />
               </button>
             </>

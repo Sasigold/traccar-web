@@ -18,8 +18,10 @@ Nginx, Vercel, Netlify, S3, or a folder next to the app.
 - **Screenshots**: put the images in `website/public/screens/` and set `src` for each one in
   `src/config.js` (for example `'screens/map.png'`). Each slot shows its recommended size until it has
   an image. Desktop screens are 16:10 (2880 × 1800), phones are 9:19.5 (1179 × 2556).
-- **Contact**: set `contactEmail` (and optionally `phone`) in `src/config.js`. The demo form opens an
-  email to that address.
+- **Contact**: set `leadEndpoint` (an HTTPS URL that takes a JSON POST: a Supabase edge function, a Make /
+  Zapier webhook or a form service) in `src/config.js`. `whatsapp` and `contactEmail` are fallbacks that open
+  the visitor's WhatsApp or mail app. With none set, the form says it can't send instead of pretending it did.
+  `npm run site:build` warns while these or screenshots are missing.
 - **App link**: set `appUrl` in `src/config.js` to the address of the viper fleet app.
 
 ## Structure

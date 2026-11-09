@@ -56,6 +56,23 @@ const brandVars = () => {
     .join(';')}}`;
 };
 
+// Warns during the build about settings that still need a value before going live.
+const goLiveCheck = () => ({
+  name: 'go-live-check',
+  async buildStart() {
+    const { site, screens } = await import('./src/config.js');
+    if (!site.leadEndpoint && !site.whatsapp && !site.contactEmail) {
+      this.warn('site: no leadEndpoint, whatsapp or contactEmail; the demo form cannot send.');
+    }
+    const missing = Object.entries(screens).filter(([, screen]) => !screen.src);
+    if (missing.length) {
+      this.warn(
+        `site: ${missing.length} screenshots missing (${missing.map(([k]) => k).join(', ')}).`,
+      );
+    }
+  },
+});
+
 export default defineConfig({
   root: fileURLToPath(new URL('.', import.meta.url)),
   base: './',
@@ -66,6 +83,7 @@ export default defineConfig({
     emptyOutDir: true,
   },
   plugins: [
+    goLiveCheck(),
     {
       name: 'brand-vars',
       transformIndexHtml: (html) =>
