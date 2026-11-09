@@ -68,16 +68,16 @@ const GeofenceReportPage = () => {
   const onExport = useCatch(async () => {
     const sheets = new Map();
     items.forEach((item) => {
-      const deviceName = devices[item.deviceId].name;
-      if (!sheets.has(deviceName)) {
-        sheets.set(deviceName, []);
+      // One sheet per vehicle, keyed by id: two vehicles with the same name stay apart.
+      if (!sheets.has(item.deviceId)) {
+        sheets.set(item.deviceId, { title: devices[item.deviceId].name, rows: [] });
       }
       const row = {};
       columns.forEach((key) => {
         const header = t(columnsMap.get(key));
         row[header] = formatValue(item, key);
       });
-      sheets.get(deviceName).push(row);
+      sheets.get(item.deviceId).rows.push(row);
     });
     await exportExcel(t('sharedGeofences'), 'geofences.xlsx', sheets, theme);
   });

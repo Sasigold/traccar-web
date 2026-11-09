@@ -226,6 +226,7 @@
   - `statusColor`: צבע סטטוס.
   - `focusRing`: טבעת פוקוס.
 - **לוגו:** רק `BrandLogo`, `BrandSymbol` ו-`BrandAppIcon`. אין לייבא SVG של לוגו ואין לצייר אותו מחדש.
+  - חריג: קובצי Excel שהמערכת מייצאת משבצים את `brand/logos/sync-point-midnight-aqua-primary.png` כמו שהוא, ביחס 2400×460 (`src/common/util/exportExcel.js`).
 - **מחרוזות:** כל מחרוזת נכנסת ל-`src/resources/l10n/he.json` ול-`en.json`.
 
 ---

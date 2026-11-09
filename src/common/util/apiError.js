@@ -1,3 +1,5 @@
+import { translate } from './translator';
+
 // Errors from the Traccar API and the fleet database, in words the user understands.
 //
 // An ApiError carries the HTTP status, the database error code and the endpoint. Its message
@@ -17,11 +19,8 @@ const KEYS = {
   general: 'errorRequest',
 };
 
-// The app's translation function, set by LocalizationProvider (errors are created outside React).
-let translate = (key) => key;
-export const setErrorTranslator = (t) => {
-  translate = t;
-};
+// Errors are created outside React: they read the translation set by LocalizationProvider.
+export { setTranslator as setErrorTranslator } from './translator';
 
 export const errorKind = ({ status, code, kind }) => {
   if (kind) {

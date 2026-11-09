@@ -112,7 +112,9 @@ const SummaryReportPage = () => {
     const titleKey = daily ? 'reportDaily' : 'reportSummary';
     const title = t(titleKey);
     const sheets = new Map([[title, rows]]);
-    await exportExcel(title, 'summary.xlsx', sheets, theme);
+    await exportExcel(title, 'summary.xlsx', sheets, theme, {
+      totals: [t('sharedDistance'), t('reportSpentFuel')],
+    });
   });
 
   const onSchedule = useCatch(async (deviceIds, groupIds, report) => {

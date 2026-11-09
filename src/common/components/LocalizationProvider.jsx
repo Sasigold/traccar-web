@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import usePersistedState from '../util/usePersistedState';
 import Loader from './Loader';
 import { setFormatLanguage } from '../util/formatter';
-import { setErrorTranslator } from '../util/apiError';
+import { setTranslator } from '../util/translator';
 
 import en from '../../resources/l10n/en.json';
 import he from '../../resources/l10n/he.json';
@@ -64,8 +64,8 @@ const ResolvedLocalizationProvider = ({ language, setLocalLanguage, children }) 
   const direction = /^(ar|he|fa)$/.test(language) ? 'rtl' : 'ltr';
   // Before the children render, so their first paint already uses the app language.
   setFormatLanguage(language);
-  // Errors are created outside React (fetch helpers); they read their first line in this language.
-  setErrorTranslator((key) => data[key] ?? en[key]);
+  // For code outside React (errors, exported files).
+  setTranslator((key) => data[key] ?? en[key]);
 
   const value = useMemo(
     () => ({

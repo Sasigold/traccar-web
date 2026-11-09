@@ -2424,5 +2424,10 @@
     "a11yBreadcrumb": "Breadcrumb",
     "mapDrawPolygon": "Draw an area",
     "mapDrawLine": "Draw a line",
-    "mapDrawDelete": "Delete the selected shape"
+    "mapDrawDelete": "Delete the selected shape",
+    "exportPeriod": "Period: {0}",
+    "exportScope": "Vehicles: {0}",
+    "exportVehiclesCount": "{0} vehicles",
+    "exportGenerated": "Produced by {0} · {1}",
+    "exportTotal": "Total"
 }

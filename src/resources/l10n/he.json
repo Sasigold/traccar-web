@@ -2424,5 +2424,10 @@
     "a11yBreadcrumb": "נתיב ניווט",
     "mapDrawPolygon": "ציור שטח",
     "mapDrawLine": "ציור קו",
-    "mapDrawDelete": "מחיקת הצורה שנבחרה"
+    "mapDrawDelete": "מחיקת הצורה שנבחרה",
+    "exportPeriod": "תקופה: {0}",
+    "exportScope": "רכבים: {0}",
+    "exportVehiclesCount": "{0} רכבים",
+    "exportGenerated": "הופק על ידי {0} · {1}",
+    "exportTotal": "סה\"כ"
 }
