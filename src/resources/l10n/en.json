@@ -203,7 +203,7 @@
     "attributeFilterSkipAttributes": "Filter: Skip Attributes",
     "attributeTimeOverride": "Time Override",
     "errorTitle": "Error",
-    "errorGeneral": "Invalid parameters or constraint violation",
+    "errorGeneral": "Something went wrong. Try again.",
     "errorConnection": "Connection error",
     "errorSocket": "WebSocket connection error",
     "errorZero": "Can't be zero",
@@ -2041,7 +2041,7 @@
     "accumulatorsDistanceHelp": "The odometer reading shown now on the vehicle dashboard.",
     "linkFieldPlaceholder": "Select to choose",
     "loginWelcome": "welcome back.",
-    "loginSynced": "SYNCED",
+    "loginSynced": "SYNCED / {0}",
     "loginFeatureLive": "Live location",
     "loginFeatureHistory": "Trip history",
     "loginFeatureReports": "Reports",
@@ -2420,5 +2420,9 @@
     "mapOverSpeedLimit": "Over the speed limit",
     "sharedDayOne": "1 day",
     "sharedDayTwo": "2 days",
-    "notificationRules": "Alert rules"
+    "notificationRules": "Alert rules",
+    "a11yBreadcrumb": "Breadcrumb",
+    "mapDrawPolygon": "Draw an area",
+    "mapDrawLine": "Draw a line",
+    "mapDrawDelete": "Delete the selected shape"
 }

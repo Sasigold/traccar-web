@@ -59,7 +59,9 @@ const useStyles = makeStyles()((theme) => ({
   },
   synced: {
     ...theme.typography.overline,
-    letterSpacing: '0.08em',
+    // Overline capitals and spacing are for the Latin label; Hebrew reads plain.
+    letterSpacing: theme.direction === 'rtl' ? 0 : '0.08em',
+    textTransform: theme.direction === 'rtl' ? 'none' : 'uppercase',
     color: theme.palette.text.secondary,
     whiteSpace: 'nowrap',
     display: 'flex',
@@ -224,7 +226,7 @@ const DashboardFilterBar = ({ filters, refresh, onFilters, onRefresh }) => {
       <span className={classes.synced} dir="ltr" aria-live="off">
         <span className={cx(classes.dot, !socket && classes.dotOff)} />
         {socket
-          ? `${t('loginSynced')} / ${synced ? dayjs(synced).format('HH:mm') : '--:--'}`
+          ? t('loginSynced').replace('{0}', synced ? dayjs(synced).format('HH:mm') : '--:--')
           : t('mapReconnecting')}
       </span>
       <Dialog open={Boolean(custom)} onClose={() => setCustom(null)} maxWidth="xs" fullWidth>

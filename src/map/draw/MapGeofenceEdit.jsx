@@ -71,6 +71,16 @@ const MapGeofenceEdit = ({ selectedGeofenceId }) => {
     refreshGeofences();
 
     map.addControl(draw, theme.direction === 'rtl' ? 'top-right' : 'top-left');
+    // The drawing buttons come with English titles; name them in the app language.
+    [
+      ['.mapbox-gl-draw_polygon', t('mapDrawPolygon')],
+      ['.mapbox-gl-draw_line', t('mapDrawLine')],
+      ['.mapbox-gl-draw_trash', t('mapDrawDelete')],
+    ].forEach(([selector, label]) => {
+      const button = map.getContainer().querySelector(selector);
+      button?.setAttribute('title', label);
+      button?.setAttribute('aria-label', label);
+    });
     setHintAnchor(map.getContainer().querySelector('.mapbox-gl-draw_polygon'));
 
     const dismissHint = () => setHintDismissed(true);
@@ -81,7 +91,7 @@ const MapGeofenceEdit = ({ selectedGeofenceId }) => {
       map.off('draw.selectionchange', dismissHint);
       map.removeControl(draw);
     };
-  }, [refreshGeofences, draw, theme.direction]);
+  }, [refreshGeofences, draw, theme.direction, t]);
 
   useEffect(() => {
     const listener = async (event) => {

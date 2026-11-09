@@ -59,7 +59,7 @@ const useStyles = makeStyles()((theme) => ({
     border: `1px solid ${alpha(theme.palette.geometry.main, 0.4)}`,
     fontSize: '0.75rem',
     fontWeight: 700,
-    letterSpacing: '0.06em',
+    letterSpacing: theme.direction === 'rtl' ? 0 : '0.06em',
     color: theme.palette.text.primary,
   },
   liveDot: {
@@ -122,7 +122,7 @@ const TelemetryPage = () => {
               {device.status === 'online' && (
                 <span className={classes.live} dir="ltr">
                   <span className={classes.liveDot} />
-                  LIVE
+                  {t('mapLive')}
                 </span>
               )}
               {settings.canEdit &&

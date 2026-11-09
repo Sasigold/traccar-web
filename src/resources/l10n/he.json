@@ -203,7 +203,7 @@
     "attributeFilterSkipAttributes": "סינון: תכונות ששינוי בהן עוקף סינון",
     "attributeTimeOverride": "החלפת חותמת זמן",
     "errorTitle": "שגיאה",
-    "errorGeneral": "פרמטרים לא תקינים או הפרת אילוצים",
+    "errorGeneral": "משהו השתבש. נסו שוב.",
     "errorConnection": "שגיאת חיבור",
     "errorSocket": "שגיאת חיבור WebSocket",
     "errorZero": "ערך לא יכול להיות אפס",
@@ -2041,7 +2041,7 @@
     "accumulatorsDistanceHelp": "הקילומטראז' שמוצג עכשיו בלוח המחוונים של הרכב.",
     "linkFieldPlaceholder": "לחצו כדי לבחור",
     "loginWelcome": "ברוכים השבים",
-    "loginSynced": "SYNCED",
+    "loginSynced": "מסונכרן · {0}",
     "loginFeatureLive": "מיקום חי",
     "loginFeatureHistory": "היסטוריית נסיעות",
     "loginFeatureReports": "דוחות",
@@ -2420,5 +2420,9 @@
     "mapOverSpeedLimit": "מעל המהירות המותרת",
     "sharedDayOne": "יום אחד",
     "sharedDayTwo": "יומיים",
-    "notificationRules": "כללי התראה"
+    "notificationRules": "כללי התראה",
+    "a11yBreadcrumb": "נתיב ניווט",
+    "mapDrawPolygon": "ציור שטח",
+    "mapDrawLine": "ציור קו",
+    "mapDrawDelete": "מחיקת הצורה שנבחרה"
 }
