@@ -4,6 +4,7 @@ import useMapLayer from '../core/useMapLayer';
 import { useAttributePreference } from '../../common/util/preferences';
 import { toMapCoordinates } from '../core/mapUtil';
 import { useTranslation } from '../../common/components/LocalizationProvider';
+import { casingLayer } from '../core/lineCasing';
 
 const MapLiveRoutes = ({ deviceIds }) => {
   const theme = useTheme();
@@ -27,6 +28,7 @@ const MapLiveRoutes = ({ deviceIds }) => {
 
   useMapLayer({
     layers: [
+      casingLayer(theme),
       {
         type: 'line',
         metadata: { 'traccar:title': t('mapLiveRoutes') },
@@ -41,7 +43,7 @@ const MapLiveRoutes = ({ deviceIds }) => {
         },
       },
     ],
-    layersDeps: [t],
+    layersDeps: [t, theme.palette.mode],
     data: {
       type: 'FeatureCollection',
       features: visibleIds.map((deviceId) => ({

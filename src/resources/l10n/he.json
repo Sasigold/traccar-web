@@ -2415,5 +2415,6 @@
     "errorPageText": "שאר המערכת ממשיכה לעבוד. אפשר לנסות שוב, או לרענן את הדף.",
     "errorWidgetText": "הרכיב לא הצליח להיטען.",
     "errorRetry": "נסו שוב",
-    "errorReload": "רענון"
+    "errorReload": "רענון",
+    "mapViperFleet": "viper fleet (מפת המותג)"
 }

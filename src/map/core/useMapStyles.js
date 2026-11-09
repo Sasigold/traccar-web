@@ -52,6 +52,15 @@ export default () => {
   return useMemo(
     () => [
       {
+        // The brand basemap: OpenFreeMap tiles recolored in the brand palette, light or dark
+        // with the interface (see brandStyle.js).
+        id: 'viperFleet',
+        title: t('mapViperFleet'),
+        style: 'https://tiles.openfreemap.org/styles/liberty',
+        brand: true,
+        available: true,
+      },
+      {
         id: 'openFreeMap',
         title: t('mapOpenFreeMap'),
         style: 'https://tiles.openfreemap.org/styles/liberty',

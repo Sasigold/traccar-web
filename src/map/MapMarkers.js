@@ -109,11 +109,19 @@ const MapMarkers = ({
     type: 'symbol',
     ...(showTitles
       ? {
-          paint: {
-            'text-color': theme.palette.brand.ink,
-            'text-halo-color': theme.palette.brand.white,
-            'text-halo-width': 1.2,
-          },
+          // Names read on the light and the night basemap alike.
+          paint:
+            theme.palette.mode === 'dark'
+              ? {
+                  'text-color': theme.palette.brand.white,
+                  'text-halo-color': theme.palette.brand.ink,
+                  'text-halo-width': 1.2,
+                }
+              : {
+                  'text-color': theme.palette.brand.ink,
+                  'text-halo-color': theme.palette.brand.white,
+                  'text-halo-width': 1.2,
+                },
         }
       : {}),
     ...(onClick
@@ -201,6 +209,7 @@ const MapMarkers = ({
     source: cluster ? { cluster: true, clusterMaxZoom: 14, clusterRadius: 50 } : undefined,
     layers,
     layersDeps: [
+      theme.palette.mode,
       showTitles,
       cluster,
       direction,

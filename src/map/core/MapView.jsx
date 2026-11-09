@@ -12,6 +12,7 @@ import preloadImages, { mapImages } from './preloadImages';
 import { setCoordinateSystem } from './mapState';
 import useMapStyles from './useMapStyles';
 import { localizeStyle } from './mapLanguage';
+import { brandStyle } from './brandStyle';
 import { useLocalization, useTranslation } from '../../common/components/LocalizationProvider';
 import { googleProtocol } from './googleProtocol';
 import { useAsyncTask } from '../../reactHelper';
@@ -110,16 +111,22 @@ const MapView = ({ children }) => {
   const mapStyles = useMapStyles();
   const activeMapStyles = useAttributePreference(
     'activeMapStyles',
-    'openFreeMap,locationIqStreets,locationIqDark',
+    'viperFleet,openFreeMap,locationIqStreets,locationIqDark',
   );
-  const [selectedStyleId, setSelectedStyleId] = usePersistedState(
-    'selectedMapStyle',
-    usePreference('map', 'openFreeMap'),
-  );
+  // One choice for light mode and one for dark, both starting on the brand map.
+  const dark = theme.palette.mode === 'dark';
+  const defaultStyle = usePreference('map', 'viperFleet');
+  const [lightStyleId, setLightStyleId] = usePersistedState('mapStyleLight', defaultStyle);
+  const [darkStyleId, setDarkStyleId] = usePersistedState('mapStyleDark', defaultStyle);
+  const selectedStyleId = dark ? darkStyleId : lightStyleId;
+  const setSelectedStyleId = dark ? setDarkStyleId : setLightStyleId;
   const maxZoom = useAttributePreference('web.maxZoom');
 
   const styles = useMemo(() => {
-    const filtered = mapStyles.filter((s) => s.available && activeMapStyles.includes(s.id));
+    // The brand map is always offered.
+    const filtered = mapStyles.filter(
+      (s) => s.available && (s.id === 'viperFleet' || activeMapStyles.includes(s.id)),
+    );
     return filtered.length ? filtered : mapStyles.filter((s) => s.id === 'osm');
   }, [mapStyles, activeMapStyles]);
 
@@ -156,7 +163,10 @@ const MapView = ({ children }) => {
     setCoordinateSystem(style.coordinateSystem);
     map.setStyle(style.style, {
       diff: false,
-      transformStyle: (_, nextStyle) => localizeStyle(nextStyle, language),
+      transformStyle: (_, nextStyle) => {
+        const localized = localizeStyle(nextStyle, language);
+        return style.brand ? brandStyle(localized, dark) : localized;
+      },
     });
     map.setTransformRequest(style.transformRequest);
     let timeoutId;
@@ -173,7 +183,7 @@ const MapView = ({ children }) => {
     };
     map.once('styledata', waiting);
     return () => clearTimeout(timeoutId);
-  }, [styles, selectedStyleId, setSelectedStyleId, language]);
+  }, [styles, selectedStyleId, setSelectedStyleId, language, dark]);
 
   useLayoutEffect(() => {
     const currentEl = containerRef.current;

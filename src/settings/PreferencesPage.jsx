@@ -251,6 +251,7 @@ const PreferencesPage = () => {
               label={t('mapActive')}
               value={
                 attributes.activeMapStyles?.split(',') || [
+                  'viperFleet',
                   'locationIqStreets',
                   'locationIqDark',
                   'openFreeMap',

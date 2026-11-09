@@ -2415,5 +2415,6 @@
     "errorPageText": "The rest of the app keeps working. Try again, or reload the page.",
     "errorWidgetText": "This widget could not load.",
     "errorRetry": "Try again",
-    "errorReload": "Reload"
+    "errorReload": "Reload",
+    "mapViperFleet": "viper fleet (brand map)"
 }

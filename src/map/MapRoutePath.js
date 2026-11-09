@@ -1,10 +1,13 @@
 import { useSelector } from 'react-redux';
+import { useTheme } from '@mui/material/styles';
 import useMapLayer from './core/useMapLayer';
 import getSpeedColor from '../common/util/colors';
 import { useAttributePreference } from '../common/util/preferences';
 import { toMapCoordinates } from './core/mapUtil';
+import { casingLayer } from './core/lineCasing';
 
 const MapRoutePath = ({ positions }) => {
+  const theme = useTheme();
   const reportColor = useSelector((state) => {
     const position = positions?.find(() => true);
     if (position) {
@@ -45,6 +48,7 @@ const MapRoutePath = ({ positions }) => {
 
   useMapLayer({
     layers: [
+      casingLayer(theme),
       {
         type: 'line',
         layout: {
@@ -58,7 +62,7 @@ const MapRoutePath = ({ positions }) => {
         },
       },
     ],
-    layersDeps: [],
+    layersDeps: [theme.palette.mode],
     data: {
       type: 'FeatureCollection',
       features,
