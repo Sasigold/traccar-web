@@ -1,32 +1,63 @@
 name: Deploy to VPS
 
-# Every push to main builds the custom UI and syncs build/ into the Traccar
-# container's web directory on the Hostinger VPS (see deploy/deploy.sh), then
-# applies new supabase/migrations to the Viper Fleet database (deploy/migrate.sh).
+# Every push to main: CI (lint, unit, build, e2e) must pass, then the UI is built in a job
+# that holds no secrets, and a separate job without npm uploads build/ to the Traccar
+# container's web directory on the VPS (deploy/deploy.sh) and applies new
+# supabase/migrations (deploy/migrate.sh, which takes a database backup first).
+#
+# The deploy job runs in the "production" GitHub Environment. Add required reviewers to
+# that environment (Settings > Environments > production) to approve each production
+# deploy and migration by hand.
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: deploy-vps
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    needs: ci
     runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+        cache-dependency-path: package-lock.json
+    - run: npm ci
+    - run: npm run build
+    - uses: actions/upload-artifact@v7
+      with:
+        name: web-build
+        path: build
+        retention-days: 7
+
+  deploy:
+    # No npm here: third-party packages never run next to the server key.
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
     env:
       DEPLOY_HOST: root@72.61.153.60
       DEPLOY_DIR: /docker/traccar-ovjj/web
       SITE_URL: https://traccar-ovjj.srv2122641.hstgr.cloud
     steps:
     - uses: actions/checkout@v7
-    - uses: actions/setup-node@v7
+    - uses: actions/download-artifact@v7
       with:
-        cache: npm
-        cache-dependency-path: package-lock.json
-    - run: npm ci
+        name: web-build
+        path: build
 
     - name: Configure SSH
       env:
@@ -38,9 +69,6 @@ jobs:
         chmod 600 ~/.ssh/id_ed25519
         # Pinned host key of the VPS (ssh-keyscan -t ed25519 72.61.153.60)
         echo '72.61.153.60 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID5SogCUGVSqGkOEvyAJz8/h8e5bvMed6JOhA3oE23R9' >> ~/.ssh/known_hosts
-
-    - name: Build
-      run: npm run build
 
     - name: Upload to VPS (retries on connection problems)
       run: |
@@ -60,3 +88,7 @@ jobs:
       run: |
         sleep 3
         curl -fsS --max-time 30 "$SITE_URL/" | grep -q '<div id="root"' && echo "Site responds with the app shell."
+
+    - name: Remove the key
+      if: always()
+      run: rm -f ~/.ssh/id_ed25519

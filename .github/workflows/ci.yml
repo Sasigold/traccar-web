@@ -1,0 +1,73 @@
+name: CI
+
+# Lint, unit tests, production build and the e2e/a11y suite. Runs on every pull request into
+# main and is called by deploy.yml, so nothing reaches production without passing it.
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+        cache-dependency-path: package-lock.json
+    - run: npm ci
+    - run: npm ci --prefix demo
+    - run: npm run lint
+
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+        cache-dependency-path: package-lock.json
+    - run: npm ci
+    - run: npm test
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+        cache-dependency-path: package-lock.json
+    - run: npm ci
+    - run: npm run build
+
+  e2e:
+    # Smoke and WCAG 2.1 AA checks against the built-in demo server, desktop and phone.
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+        cache-dependency-path: package-lock.json
+    - run: npm ci
+    - run: npm ci --prefix demo
+    - run: npx playwright install --with-deps chromium
+    - run: npm run test:e2e -- --trace off
+    - uses: actions/upload-artifact@v7
+      if: failure()
+      with:
+        name: playwright-report
+        path: |
+          playwright-report
+          test-results
+        retention-days: 7

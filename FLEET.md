@@ -146,8 +146,12 @@ database from the lines, and a customer can be billed only once per period (canc
 `20261104130000_super_admin_permissions.sql` registers those keys in the permission catalog that
 `role_permissions.permission` references (found through the foreign key) and then grants them. Both are
 idempotent. The deploy workflow applies every file in `supabase/migrations/` once
-(`deploy/migrate.sh`: finds the `supabase/postgres` container over SSH, records applied files in
-`vf_meta.ui_migrations`, reloads the PostgREST schema). To run it by hand: `sh deploy/migrate.sh`.
+(`deploy/migrate.sh`: finds the `supabase/postgres` container over SSH, takes a full `pg_dump -Fc`
+backup into `/root/vf-backups/` (last 10 kept) before the first pending file, records applied files in
+`vf_meta.ui_migrations`, reloads the PostgREST schema). The deploy job only runs after CI passes and
+uses the `production` GitHub Environment, so required reviewers there approve every production
+migration. To run it by hand: `sh deploy/migrate.sh`. `vf_meta.ui_migrations` is the source of truth
+for what is applied.
 After the first run press "Reconnect" in the admin area (or log in again) so the new permissions reach
 the session.
 
@@ -238,7 +242,7 @@ Each was checked against the database in a rolled-back transaction before commit
 ## Roadmap stage 5: expansions
 
 `supabase/migrations/20261106160000_fleet_stage5.sql` (idempotent; tested on a local Postgres with
-stand-ins for the earlier schema, **not yet applied** to the VPS database). Pure logic with unit tests:
+stand-ins for the earlier schema; applied to the VPS database by the deploy of 2026-11-06). Pure logic with unit tests:
 `src/common/fleet/dispatch.js`, `visits.js`, `sensors.js`, `integrations.js`.
 
 | Screen | What | Permission |

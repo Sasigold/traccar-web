@@ -38,6 +38,8 @@ The rules you will need most often:
 
 - `npm install`, then `npm start` (needs a Traccar server on :8082) or `npm run demo` (built-in mock server).
 - Before you commit, run `npm run lint`. It includes the brand color guard and must pass with zero warnings.
+- CI (`.github/workflows/ci.yml`: lint, unit tests, build, e2e and WCAG checks) runs on every pull request
+  into `main`, and the deploy only runs after it passes. Keep `npm test` and `npm run test:e2e` green.
 - Check visual changes in Hebrew/RTL, in light and dark mode, on desktop and mobile widths.
 - Do not run the `translation.yml` workflow. It force-pulls `he.json` from Transifex and drops the custom
   strings.
