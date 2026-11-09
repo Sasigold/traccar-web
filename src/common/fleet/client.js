@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { fleetConfig } from './config';
-import { getFleetAccessToken } from './session';
+import { getFreshFleetAccessToken } from './session';
 
 let client = null;
 
@@ -10,7 +10,7 @@ export const getFleetClient = () => {
   if (!client) {
     client = createClient(fleetConfig.url, fleetConfig.anonKey, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-      accessToken: async () => getFleetAccessToken(),
+      accessToken: getFreshFleetAccessToken,
     });
   }
   return client;

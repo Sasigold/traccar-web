@@ -8,9 +8,25 @@ const STORAGE_KEY = 'fleetSession';
 const REFRESH_MARGIN_MS = 5 * 60 * 1000;
 const TRACCAR_TOKEN_TTL_MS = 10 * 60 * 1000;
 
+// The fleet JWT lives in sessionStorage (this tab only, gone when the tab closes) and is cleared
+// on logout, so the next person at a shared PC can't reuse it. Older versions kept it in
+// localStorage; that copy is removed on load.
+const storage = () => {
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // storage unavailable
+  }
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+};
+
 const load = () => {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = storage()?.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -20,9 +36,9 @@ const load = () => {
 const save = (session) => {
   try {
     if (session) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+      storage()?.setItem(STORAGE_KEY, JSON.stringify(session));
     } else {
-      window.localStorage.removeItem(STORAGE_KEY);
+      storage()?.removeItem(STORAGE_KEY);
     }
   } catch {
     // storage unavailable (private mode) - keep the session in memory only
@@ -31,6 +47,8 @@ const save = (session) => {
 
 let current = load();
 let pending = null;
+// The Traccar user the fleet session belongs to; set while someone is logged in.
+let activeUserId = current?.traccarUserId ?? null;
 
 const isUsable = (session, traccarUserId) =>
   Boolean(session?.access_token) &&
@@ -39,15 +57,36 @@ const isUsable = (session, traccarUserId) =>
 
 export const getFleetSession = () => current;
 
-export const getFleetAccessToken = () =>
-  current?.access_token && current.expires_at * 1000 > Date.now() ? current.access_token : null;
+const validToken = () =>
+  current?.access_token &&
+  current.traccarUserId === activeUserId &&
+  current.expires_at * 1000 > Date.now()
+    ? current.access_token
+    : null;
+
+export const getFleetAccessToken = () => validToken();
+
+// Used by the Supabase client before every request: renews the JWT when it is about to expire,
+// instead of letting requests go out with the anonymous key (which RLS answers with empty lists).
+export const getFreshFleetAccessToken = async () => {
+  if (activeUserId != null && !isUsable(current, activeUserId)) {
+    try {
+      await ensureFleetSession(activeUserId);
+    } catch {
+      // the caller gets null and the request fails visibly; FleetController shows the error
+    }
+  }
+  return validToken();
+};
 
 export const clearFleetSession = () => {
   current = null;
+  activeUserId = null;
   save(null);
 };
 
 export const ensureFleetSession = async (traccarUserId, { force = false } = {}) => {
+  activeUserId = traccarUserId;
   if (!force && isUsable(current, traccarUserId)) {
     return current;
   }
@@ -82,7 +121,12 @@ export const ensureFleetSession = async (traccarUserId, { force = false } = {}) 
         }
         throw new Error(detail || `HTTP ${response.status}`);
       }
-      current = { ...(await response.json()), traccarUserId };
+      const session = { ...(await response.json()), traccarUserId };
+      // A logout while the request was in flight wins.
+      if (activeUserId !== traccarUserId) {
+        throw new Error('Logged out');
+      }
+      current = session;
       save(current);
       return current;
     } finally {
