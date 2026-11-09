@@ -2429,5 +2429,9 @@
     "exportScope": "רכבים: {0}",
     "exportVehiclesCount": "{0} רכבים",
     "exportGenerated": "הופק על ידי {0} · {1}",
-    "exportTotal": "סה\"כ"
+    "exportTotal": "סה\"כ",
+    "reportEmptyTitle": "אין נתונים לתקופה הזו",
+    "reportEmptyText": "לא נמצאו רשומות לרכבים ולתקופה שנבחרו.",
+    "reportEmptyExtend": "הרחבה ל-30 הימים האחרונים",
+    "reportLimitNote": "מוצגות {0} השורות הראשונות מתוך {1}. הייצוא כולל את כולן."
 }

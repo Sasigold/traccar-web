@@ -85,6 +85,16 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
   );
   const [selectedOption, setSelectedOption] = useState('json');
 
+  // The address can change the period from outside the filter (for example "the last 30 days"
+  // in an empty report); the shown period follows it.
+  const urlPeriod = searchParams.get('period');
+  useEffect(() => {
+    if (from && to) {
+      setRange([from, to]);
+      setPeriod(urlPeriod || 'custom');
+    }
+  }, [from, to, urlPeriod]);
+
   const [description, setDescription] = useState();
   const [calendarId, setCalendarId] = useState();
 

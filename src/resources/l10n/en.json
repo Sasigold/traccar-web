@@ -2429,5 +2429,9 @@
     "exportScope": "Vehicles: {0}",
     "exportVehiclesCount": "{0} vehicles",
     "exportGenerated": "Produced by {0} · {1}",
-    "exportTotal": "Total"
+    "exportTotal": "Total",
+    "reportEmptyTitle": "Nothing for this period",
+    "reportEmptyText": "No records for the chosen vehicles and period.",
+    "reportEmptyExtend": "Show the last 30 days",
+    "reportLimitNote": "Showing the first {0} of {1} rows. The export includes them all."
 }

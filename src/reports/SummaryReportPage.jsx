@@ -34,6 +34,12 @@ import LocalGasStationRoundedIcon from '@mui/icons-material/LocalGasStationRound
 import { useCatch, useCatchCallback } from '../reactHelper';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
+import {
+  ReportEmptyRow,
+  ReportTotalsRow,
+  SortCell,
+  useReportSort,
+} from './components/ReportTableParts';
 import DataTable from '../common/components/table/DataTable';
 import scheduleReport from './common/scheduleReport';
 import fetchOrThrow from '../common/util/fetchOrThrow';
@@ -53,6 +59,16 @@ const columnsArray = [
   ['spentFuel', 'reportSpentFuel'],
 ];
 const columnsMap = new Map(columnsArray);
+
+// The totals row: distances, engine hours and fuel add up; speeds take the top or the
+// mean weighted by engine hours.
+const TOTALS = {
+  distance: 'sum',
+  engineHours: 'sum',
+  spentFuel: 'sum',
+  maxSpeed: 'max',
+  averageSpeed: 'avg:engineHours',
+};
 
 const SummaryReportPage = () => {
   const navigate = useNavigate();
@@ -76,6 +92,7 @@ const SummaryReportPage = () => {
   const daily = searchParams.get('daily') === 'true';
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [queried, setQueried] = useState(false);
 
   const onShow = useCatchCallback(
     async ({ deviceIds, groupIds, from, to }) => {
@@ -90,6 +107,7 @@ const SummaryReportPage = () => {
         setItems(await response.json());
       } finally {
         setLoading(false);
+        setQueried(true);
       }
     },
     [daily],
@@ -160,6 +178,14 @@ const SummaryReportPage = () => {
     ];
   }, [items, distanceUnit, speedUnit, volumeUnit, t]);
 
+  const {
+    sorted: sortedItems,
+    sort,
+    toggle: toggleSort,
+  } = useReportSort('summary', items, (item, sortKey) =>
+    sortKey === 'deviceId' ? devices[item.deviceId]?.name : item[sortKey],
+  );
+
   const formatValue = (item, key) => {
     const value = item[key];
     switch (key) {
@@ -223,15 +249,20 @@ const SummaryReportPage = () => {
       <DataTable variant="flush">
         <TableHead>
           <TableRow>
-            <TableCell>{t('sharedDevice')}</TableCell>
+            <SortCell sortKey="deviceId" sort={sort} onSort={toggleSort}>
+              {t('sharedDevice')}
+            </SortCell>
             {columns.map((key) => (
-              <TableCell key={key}>{t(columnsMap.get(key))}</TableCell>
+              <SortCell key={key} sortKey={key} sort={sort} onSort={toggleSort}>
+                {t(columnsMap.get(key))}
+              </SortCell>
             ))}
           </TableRow>
         </TableHead>
         <TableBody>
+          {!loading && queried && !items.length && <ReportEmptyRow colSpan={columns.length + 1} />}
           {!loading ? (
-            items.map((item) => (
+            sortedItems.map((item) => (
               <TableRow key={`${item.deviceId}_${Date.parse(item.startTime)}`}>
                 <TableCell>{devices[item.deviceId].name}</TableCell>
                 {columns.map((key) => (
@@ -243,6 +274,15 @@ const SummaryReportPage = () => {
             <TableShimmer columns={columns.length + 1} />
           )}
         </TableBody>
+        {!loading && (
+          <ReportTotalsRow
+            leading={1}
+            columns={columns}
+            spec={TOTALS}
+            items={items}
+            format={formatValue}
+          />
+        )}
       </DataTable>
     </PageLayout>
   );

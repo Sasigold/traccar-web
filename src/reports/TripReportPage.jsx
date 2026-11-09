@@ -33,6 +33,12 @@ import MapView from '../map/core/MapView';
 import MapRoutePath from '../map/MapRoutePath';
 import AddressValue from '../common/components/AddressValue';
 import TableShimmer from '../common/components/TableShimmer';
+import {
+  ReportEmptyRow,
+  ReportTotalsRow,
+  SortCell,
+  useReportSort,
+} from './components/ReportTableParts';
 import DataTable from '../common/components/table/DataTable';
 import MapMarkers from '../map/MapMarkers';
 import MapCamera from '../map/MapCamera';
@@ -60,6 +66,15 @@ const columnsArray = [
 ];
 const columnsMap = new Map(columnsArray);
 
+// The totals row: distances, times and fuel add up; speeds take the top or the time-weighted mean.
+const TOTALS = {
+  distance: 'sum',
+  duration: 'sum',
+  spentFuel: 'sum',
+  maxSpeed: 'max',
+  averageSpeed: 'avg:duration',
+};
+
 const TripReportPage = () => {
   const navigate = useNavigate();
   const { classes } = useReportStyles();
@@ -82,6 +97,7 @@ const TripReportPage = () => {
   const [tripType, setTripType] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [queried, setQueried] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [route, setRoute] = useState(null);
 
@@ -134,6 +150,7 @@ const TripReportPage = () => {
       setItems(await response.json());
     } finally {
       setLoading(false);
+      setQueried(true);
     }
   }, []);
 
@@ -227,6 +244,14 @@ const TripReportPage = () => {
     ];
   }, [filteredItems, distanceUnit, speedUnit, t]);
 
+  const {
+    sorted: sortedItems,
+    sort,
+    toggle: toggleSort,
+  } = useReportSort('trips', filteredItems, (item, key) =>
+    key === 'deviceId' ? devices[item.deviceId]?.name : item[key],
+  );
+
   const formatValue = (item, key) => {
     const value = item[key];
     switch (key) {
@@ -319,15 +344,22 @@ const TripReportPage = () => {
             <TableHead>
               <TableRow>
                 <TableCell className={classes.columnAction} />
-                <TableCell>{t('sharedDevice')}</TableCell>
+                <SortCell sortKey="deviceId" sort={sort} onSort={toggleSort}>
+                  {t('sharedDevice')}
+                </SortCell>
                 {columns.map((key) => (
-                  <TableCell key={key}>{t(columnsMap.get(key))}</TableCell>
+                  <SortCell key={key} sortKey={key} sort={sort} onSort={toggleSort}>
+                    {t(columnsMap.get(key))}
+                  </SortCell>
                 ))}
               </TableRow>
             </TableHead>
             <TableBody>
+              {!loading && queried && !filteredItems.length && (
+                <ReportEmptyRow colSpan={columns.length + 2} />
+              )}
               {!loading ? (
-                filteredItems.map((item) => (
+                sortedItems.map((item) => (
                   <TableRow key={item.startPositionId}>
                     <TableCell className={classes.columnAction} padding="none">
                       <div className={classes.columnActionContainer}>
@@ -367,6 +399,15 @@ const TripReportPage = () => {
                 <TableShimmer columns={columns.length + 2} startAction />
               )}
             </TableBody>
+            {!loading && (
+              <ReportTotalsRow
+                leading={2}
+                columns={columns}
+                spec={TOTALS}
+                items={filteredItems}
+                format={formatValue}
+              />
+            )}
           </DataTable>
         </div>
       </div>

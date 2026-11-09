@@ -18,6 +18,7 @@ import MapRoutePoints from '../map/MapRoutePoints';
 import MapPositionMarkers from '../map/MapPositionMarkers';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
+import { ReportEmptyRow, ReportLimitNote } from './components/ReportTableParts';
 import DataTable from '../common/components/table/DataTable';
 import MapCamera from '../map/MapCamera';
 import MapGeofence from '../map/MapGeofence';
@@ -27,6 +28,9 @@ import { useRestriction } from '../common/util/permissions';
 import CollectionActions from '../settings/components/CollectionActions';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import SelectField from '../common/components/SelectField';
+
+// Rows drawn on screen; the export has them all, and the page says when rows are left out.
+const SHOWN_LIMIT = 4000;
 
 const PositionsReportPage = () => {
   const navigate = useNavigate();
@@ -46,6 +50,7 @@ const PositionsReportPage = () => {
     ? parseInt(searchParams.get('geofenceId'))
     : null;
   const [loading, setLoading] = useState(false);
+  const [queried, setQueried] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
   const selectedRef = useRef();
@@ -97,6 +102,7 @@ const PositionsReportPage = () => {
         setItems(data);
       } finally {
         setLoading(false);
+        setQueried(true);
       }
     },
     [geofenceId, positionAttributes],
@@ -184,8 +190,11 @@ const PositionsReportPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
+              {!loading && queried && !items.length && (
+                <ReportEmptyRow colSpan={columns.length + 2} />
+              )}
               {!loading ? (
-                items.slice(0, 4000).map((item) => (
+                items.slice(0, SHOWN_LIMIT).map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className={classes.columnAction} padding="none">
                       {selectedItem === item ? (
@@ -233,6 +242,7 @@ const PositionsReportPage = () => {
               )}
             </TableBody>
           </DataTable>
+          {!loading && <ReportLimitNote shown={SHOWN_LIMIT} total={items.length} />}
         </div>
       </div>
     </PageLayout>
