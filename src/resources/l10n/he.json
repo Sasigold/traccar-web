@@ -2758,5 +2758,11 @@
     "vehicleWizardStepOf": "שלב {0} מתוך {1}",
     "vehicleWizardNoFleet": "מסד נתוני הצי לא מחובר: הפרטים נשמרים ב־Traccar בלבד.",
     "vehicleWizardOpenCard": "לכרטיס הרכב",
-    "vehicleWizardAnother": "רכב נוסף"
+    "vehicleWizardAnother": "רכב נוסף",
+    "reportsGroupActivity": "פעילות ושימוש",
+    "reportsGroupBehavior": "התנהגות ובטיחות",
+    "reportsGroupPlaces": "מיקומים ואזורים",
+    "reportsGroupCosts": "עלויות ותחזוקה",
+    "reportsRecent": "נפתחו לאחרונה",
+    "reportsHubDescription": "כל הדוחות לפי השאלה שהם עונים עליה"
 }

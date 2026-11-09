@@ -8,7 +8,7 @@ import { useTranslation } from '../LocalizationProvider';
 
 const crumbLinks = {
   settingsTitle: '/settings',
-  reportTitle: '/reports/combined',
+  reportTitle: '/reports',
 };
 
 const useStyles = makeStyles()((theme) => ({

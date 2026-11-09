@@ -3,7 +3,8 @@ import { test, expect, axe, formatViolations, gotoReady } from './fixtures';
 const pages = [
   ['map', '/'],
   ['dashboard', '/dashboard'],
-  ['reports', '/reports/combined'],
+  ['reports', '/reports'],
+  ['combined report', '/reports/combined'],
   ['trips report', '/reports/trips'],
   ['preferences', '/settings/preferences'],
   ['devices', '/fleet/vehicles'],

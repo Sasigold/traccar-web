@@ -5,6 +5,7 @@ import MainPage from './main/MainPage';
 import App from './App';
 import Loader from './common/components/Loader';
 import AdminRoute from './admin/AdminRoute';
+import ReportVisits from './reports/components/ReportVisits';
 import { useAsyncTask } from './reactHelper';
 import { devicesActions } from './store';
 import { generateLoginToken } from './common/components/NativeInterface';
@@ -46,6 +47,7 @@ const DispatchPage = lazy(() => import('./fleet/DispatchPage'));
 const EquipmentPage = lazy(() => import('./fleet/EquipmentPage'));
 const SensorsPage = lazy(() => import('./fleet/SensorsPage'));
 const IntegrationsPage = lazy(() => import('./fleet/IntegrationsPage'));
+const ReportsHubPage = lazy(() => import('./reports/ReportsHubPage'));
 const CombinedReportPage = lazy(() => import('./reports/CombinedReportPage'));
 const PositionsReportPage = lazy(() => import('./reports/PositionsReportPage'));
 const ServerPage = lazy(() => import('./settings/ServerPage'));
@@ -184,7 +186,9 @@ const Navigation = () => {
           <Route path="telemetry/:deviceId" element={<TelemetryPage />} />
           <Route path="network/:positionId" element={<NetworkPage />} />
           <Route path="event/:id" element={<EventPage />} />
-          <Route path="replay" element={<ReplayPage />} />
+          <Route element={<ReportVisits />}>
+            <Route path="replay" element={<ReplayPage />} />
+          </Route>
           <Route path="geofences" element={<GeofencesPage />} />
           <Route path="emulator" element={<EmulatorPage />} />
           <Route path="stream" element={<StreamPage />} />
@@ -285,8 +289,8 @@ const Navigation = () => {
             <Route path="messaging" element={<MessagingPage />} />
           </Route>
 
-          <Route path="reports">
-            <Route index element={<Navigate to="combined" replace />} />
+          <Route path="reports" element={<ReportVisits />}>
+            <Route index element={<ReportsHubPage />} />
             <Route path="combined" element={<CombinedReportPage />} />
             <Route path="chart" element={<ChartReportPage />} />
             <Route path="events" element={<EventReportPage />} />

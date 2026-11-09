@@ -30,16 +30,10 @@ export default () => {
   // Fleet role "driver" gets the driver portal (roadmap 4.6) instead of the fleet screens.
   const driverRole = useSelector((state) => state.fleet.profile?.role === 'driver');
   const temporary = useSelector((state) => Boolean(state.session.user?.temporary));
-  const selectedDeviceId = useSelector((state) => state.devices.selectedId);
-  const devices = useSelector((state) => state.devices.items);
 
   return useMemo(() => {
-    const deviceIds = Object.keys(devices);
-    let reportsPath = '/reports/combined';
-    const id = selectedDeviceId ?? (deviceIds.length === 1 ? deviceIds[0] : null);
-    if (id != null) {
-      reportsPath = `/reports/combined?deviceId=${id}`;
-    }
+    // The reports page (REP-02); a report opened from it takes the selected vehicle along.
+    const reportsPath = '/reports';
     return (
       [
         {
@@ -116,5 +110,5 @@ export default () => {
         // A driver's first tab is their area (ADM-09).
         .sort((a, b) => (driverRole ? (b.key === 'driver') - (a.key === 'driver') : 0))
     );
-  }, [readonly, disableReports, admin, driverRole, temporary, selectedDeviceId, devices]);
+  }, [readonly, disableReports, admin, driverRole, temporary]);
 };
