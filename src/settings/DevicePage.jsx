@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 import { TextField, Button, Typography } from '@mui/material';
 import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded';
@@ -24,6 +24,7 @@ import { saveFleetRecord, useFleetAccess, useFleetOverlay } from '../fleet/fleet
 import FleetDocumentsSection from './components/FleetDocumentsSection';
 import HistorySection from '../fleet/components/HistorySection';
 import FleetFieldsSection from '../fleet/components/FleetFieldsSection';
+import { looksLikeBadImei, samePlate } from '../common/util/israeliFields';
 import MaintenanceStatusSection from '../fleet/components/MaintenanceStatusSection';
 import {
   mergeAttributes,
@@ -32,6 +33,7 @@ import {
   vehicleExpiryFields,
   vehicleFieldKeys,
   vehicleFields,
+  fleetFieldsValid,
 } from '../common/fleet/fleetFields';
 import { DateField } from '../common/components/pickers';
 import GovRegistryButton from '../fleet/components/GovRegistryButton';
@@ -85,7 +87,29 @@ const DevicePage = () => {
     }
   };
 
-  const validate = () => item && item.name && item.uniqueId;
+  // ADM-06: another vehicle with the same plate or identifier, by name.
+  const devices = useSelector((state) => state.devices.items);
+  const otherDevice = (test) =>
+    Object.values(devices).find((device) => device.id !== item?.id && test(device))?.name;
+  const plateTakenBy = (key, value) =>
+    key === 'plateNumber'
+      ? otherDevice((device) => samePlate(device.attributes?.plateNumber, value))
+      : null;
+  const identifierTakenBy = item?.uniqueId
+    ? otherDevice((device) => device.uniqueId === item.uniqueId.trim())
+    : null;
+  const identifierMessage = identifierTakenBy
+    ? t('validationDuplicate').replace('{0}', identifierTakenBy)
+    : looksLikeBadImei(item?.uniqueId)
+      ? t('validationImei')
+      : null;
+
+  const validate = () =>
+    item &&
+    item.name &&
+    item.uniqueId &&
+    !identifierTakenBy &&
+    fleetFieldsValid(vehicleFields, item.attributes);
 
   return (
     <EditItemView
@@ -111,7 +135,9 @@ const DevicePage = () => {
               value={item.uniqueId || ''}
               onChange={(event) => setItem({ ...item, uniqueId: event.target.value })}
               label={t('deviceIdentifier')}
-              helperText={t('deviceIdentifierHelp')}
+              helperText={identifierMessage || t('deviceIdentifierHelp')}
+              error={Boolean(identifierMessage)}
+              slotProps={{ htmlInput: { dir: 'ltr', inputMode: 'numeric' } }}
               disabled={Boolean(uniqueId)}
             />
           </FormSection>
@@ -121,6 +147,7 @@ const DevicePage = () => {
             fields={[...vehicleFields, notesField]}
             attributes={item.attributes}
             setAttributes={setAttributes}
+            duplicateOf={plateTakenBy}
             actions={
               <GovRegistryButton attributes={item.attributes} setAttributes={setAttributes} />
             }

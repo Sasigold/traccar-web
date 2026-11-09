@@ -3101,5 +3101,14 @@
     "adminUnlinkUserConfirm": "Unlink {0} from the customer?",
     "adminUnlinkUserConsequence": "The user loses access to all of the customer's vehicles at once. The user itself is not deleted.",
     "adminUnlinkUser": "Unlink",
-    "announcementSendConfirm": "Send the message to {0} users?"
+    "announcementSendConfirm": "Send the message to {0} users?",
+    "validationPlate": "Not a valid plate number: 7 or 8 digits",
+    "validationIsraeliId": "Not a valid ID number",
+    "validationCompanyId": "Not a valid company number: 9 digits with the check digit",
+    "validationPhone": "Not a valid Israeli phone number",
+    "validationEmail": "Not a valid e-mail address",
+    "validationVin": "Not a valid VIN: 17 characters, without I, O and Q",
+    "validationYear": "Not a valid model year",
+    "validationImei": "The IMEI is not valid (the check digit does not match). Check the number on the device.",
+    "validationDuplicate": "Already exists: {0}"
 }

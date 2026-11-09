@@ -28,6 +28,7 @@ import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import FleetNotice from './components/FleetNotice';
 import { useVendors } from './fleetData';
+import ValidatedField from '../common/components/ValidatedField';
 import { keepOnBackdrop } from '../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
@@ -156,7 +157,12 @@ export const VendorDialog = ({ vendor, onClose, onSaved }) => {
             </>
           )}
           {field('contact_name', 'fleetVendorContact')}
-          {field('phone', 'sharedPhone', { slotProps: { htmlInput: { dir: 'ltr' } } })}
+          <ValidatedField
+            kind="phone"
+            label={t('sharedPhone')}
+            value={form.phone}
+            onChange={(value) => setForm((current) => ({ ...current, phone: value }))}
+          />
           {field('email', 'userEmail', { slotProps: { htmlInput: { dir: 'ltr' } } })}
           {field('address', 'positionAddress')}
           {field('notes', 'fleetNotes', { multiline: true, minRows: 2 })}

@@ -72,6 +72,7 @@ const CustomerPage = () => {
             <CustomerDetails
               key={`${customer.id || 'new'}-${customer.updated_at || ''}`}
               customer={customer}
+              customers={directory.customers}
               editable={access.customersManage}
               onSaved={(saved) => {
                 directory.reload();

@@ -3101,5 +3101,14 @@
     "adminUnlinkUserConfirm": "לנתק את {0} מהלקוח?",
     "adminUnlinkUserConsequence": "המשתמש יאבד את הגישה לכל הרכבים של הלקוח מיד. המשתמש עצמו לא נמחק.",
     "adminUnlinkUser": "ניתוק",
-    "announcementSendConfirm": "לשלוח את ההודעה ל-{0} משתמשים?"
+    "announcementSendConfirm": "לשלוח את ההודעה ל-{0} משתמשים?",
+    "validationPlate": "מספר רישוי לא תקין: 7 או 8 ספרות",
+    "validationIsraeliId": "מספר זהות לא תקין",
+    "validationCompanyId": "ח.פ. לא תקין: 9 ספרות עם ספרת ביקורת",
+    "validationPhone": "מספר טלפון ישראלי לא תקין",
+    "validationEmail": "כתובת אימייל לא תקינה",
+    "validationVin": "מספר שלדה (VIN) לא תקין: 17 תווים, בלי I, O ו-Q",
+    "validationYear": "שנת ייצור לא תקינה",
+    "validationImei": "ה-IMEI לא תקין (ספרת הביקורת לא מתאימה). בדקו את המספר שעל המכשיר.",
+    "validationDuplicate": "כבר קיים: {0}"
 }

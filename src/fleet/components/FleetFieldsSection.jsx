@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Autocomplete, Chip, MenuItem, TextField } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import FormSection from '../../settings/components/FormSection';
 import ExpiryBadge from './ExpiryBadge';
 import { DateField } from '../../common/components/pickers';
+import { FIELD_KINDS, fieldError } from '../../common/util/israeliFields';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -33,6 +35,9 @@ const optionLabel = (t, field, option) =>
     : option;
 
 // Renders structured fleet fields (see common/fleet/fleetFields.js) that live in `attributes`.
+// ADM-06: a field with a `kind` gets the right keyboard on phones, is normalized and checked when
+// it loses focus, and `duplicateOf(key, value)` (optional) names an existing item with the same
+// value ("רכב עם מספר רישוי זה כבר קיים: טנדר 12").
 const FleetFieldsSection = ({
   title,
   description,
@@ -42,10 +47,13 @@ const FleetFieldsSection = ({
   setAttributes,
   showExpiry,
   actions,
+  duplicateOf,
 }) => {
   const { classes } = useStyles();
   const t = useTranslation();
   const values = attributes || {};
+  // Messages shown after a field was left: key -> text.
+  const [messages, setMessages] = useState({});
 
   const update = (key, value) => {
     const next = { ...values };
@@ -57,10 +65,45 @@ const FleetFieldsSection = ({
     setAttributes(next);
   };
 
+  const check = async (field, raw) => {
+    if (!field.kind) return;
+    const kind = FIELD_KINDS[field.kind];
+    const value = raw === '' || raw == null ? raw : kind.normalize(raw);
+    if (value !== raw) {
+      update(field.key, value);
+    }
+    const error = fieldError(field.kind, value);
+    let message = error ? t(error) : null;
+    if (!message && value && duplicateOf) {
+      const existing = await duplicateOf(field.key, value);
+      if (existing) {
+        message = t('validationDuplicate').replace('{0}', existing);
+      }
+    }
+    setMessages((current) => ({ ...current, [field.key]: message }));
+  };
+
   const renderField = (field) => {
     const label = t(field.labelKey);
     const value = values[field.key];
-    const ltr = field.ltr ? { htmlInput: { dir: 'ltr' } } : undefined;
+    const kind = field.kind ? FIELD_KINDS[field.kind] : null;
+    const ltr = {
+      htmlInput: {
+        ...(field.ltr ? { dir: 'ltr' } : {}),
+        ...(kind?.inputMode ? { inputMode: kind.inputMode } : {}),
+      },
+    };
+    const message = messages[field.key];
+    // The error shows once the field was left, and goes away as soon as the value is valid.
+    const invalid = Boolean(message) && Boolean(fieldError(field.kind, value) || message);
+    const feedback = field.kind
+      ? {
+          onBlur: (event) => check(field, event.target.value),
+          error: invalid,
+          helperText: invalid ? message : undefined,
+          ...(kind?.type ? { type: kind.type } : {}),
+        }
+      : {};
     switch (field.type) {
       case 'select':
         return (
@@ -119,6 +162,7 @@ const FleetFieldsSection = ({
               update(field.key, event.target.value === '' ? '' : Number(event.target.value))
             }
             slotProps={ltr}
+            {...feedback}
           />
         );
       case 'multiline':
@@ -139,8 +183,14 @@ const FleetFieldsSection = ({
             key={field.key}
             label={label}
             value={value || ''}
-            onChange={(event) => update(field.key, event.target.value)}
+            onChange={(event) => {
+              update(field.key, event.target.value);
+              if (messages[field.key] && !fieldError(field.kind, event.target.value)) {
+                setMessages((current) => ({ ...current, [field.key]: null }));
+              }
+            }}
             slotProps={ltr}
+            {...feedback}
           />
         );
     }

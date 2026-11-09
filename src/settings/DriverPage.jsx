@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { Link as RouterLink } from 'react-router-dom';
@@ -19,10 +19,12 @@ import FleetDocumentsSection from './components/FleetDocumentsSection';
 import DriverAssignmentSection from '../fleet/components/DriverAssignmentSection';
 import HistorySection from '../fleet/components/HistorySection';
 import FleetFieldsSection from '../fleet/components/FleetFieldsSection';
+import { digitsOf } from '../common/util/israeliFields';
 import {
   driverExpiryFields,
   driverFieldKeys,
   driverFields,
+  fleetFieldsValid,
   driverLicenseFields,
   mergeAttributes,
   notesField,
@@ -56,7 +58,21 @@ const DriverPage = () => {
 
   const setAttributes = (attributes) => setItem({ ...item, attributes });
 
-  const validate = () => item && item.name && item.uniqueId;
+  // ADM-06: another driver with the same ID number, by name.
+  const drivers = useSelector((state) => state.drivers.items);
+  const idTakenBy = (key, value) =>
+    key === 'nationalId'
+      ? Object.values(drivers).find(
+          (driver) =>
+            driver.id !== item?.id &&
+            digitsOf(driver.attributes?.nationalId) &&
+            digitsOf(driver.attributes?.nationalId).padStart(9, '0') ===
+              digitsOf(value).padStart(9, '0'),
+        )?.name
+      : null;
+
+  const validate = () =>
+    item && item.name && item.uniqueId && fleetFieldsValid(driverFields, item.attributes);
 
   return (
     <EditItemView
@@ -89,6 +105,7 @@ const DriverPage = () => {
             fields={[...driverFields, notesField]}
             attributes={item.attributes}
             setAttributes={setAttributes}
+            duplicateOf={idTakenBy}
           />
           <FleetFieldsSection
             title={t('fleetDriverLicense')}
