@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import {
   FormControl,
   IconButton,
@@ -8,14 +8,16 @@ import {
   Select,
   MenuItem,
   Button,
-  TextField,
   Typography,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
+import EventRepeatRoundedIcon from '@mui/icons-material/EventRepeatRounded';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import useReportStyles from '../common/useReportStyles';
 import SplitButton from '../../common/components/SplitButton';
+import ScheduleDialog from './ScheduleDialog';
+import { useReportsSectionItems } from './reportsSections';
 import SelectField from '../../common/components/SelectField';
 import { useRestriction } from '../../common/util/permissions';
 import { deviceEquality } from '../../common/util/deviceEquality';
@@ -53,6 +55,10 @@ export const updateReportParams = (searchParams, setSearchParams, key, values) =
 };
 
 const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, loading, formats }) => {
+  const location = useLocation();
+  const reportName = useReportsSectionItems().find((item) =>
+    item.match(location.pathname),
+  )?.titleKey;
   const { classes } = useReportStyles();
   const t = useTranslation();
   const dispatch = useDispatch();
@@ -104,8 +110,7 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
     }
   }, [from, to, urlPeriod]);
 
-  const [description, setDescription] = useState();
-  const [calendarId, setCalendarId] = useState();
+  const [scheduling, setScheduling] = useState(false);
 
   const selectedFrom = dayjs(range[0]);
   const selectedTo = dayjs(range[1]);
@@ -119,10 +124,7 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
     if (deviceType === 'multiple' && !deviceIds.length && !groupIds.length) {
       return true;
     }
-    if (selectedOption === 'schedule' && (!description || !calendarId)) {
-      return true;
-    }
-    return loading || (selectedOption !== 'schedule' && !validRange);
+    return loading || !validRange;
   };
   const disabled = evaluateDisabled();
   const loaded = from && to && !loading;
@@ -136,9 +138,6 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
         result[format] = `${t('reportExport')} (${format.toUpperCase()})`;
       });
       result.print = t('reportPrint');
-    }
-    if (onSchedule && !readonly) {
-      result.schedule = t('reportSchedule');
     }
     return result;
   };
@@ -205,17 +204,6 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
 
   const onClick = (type) => {
     switch (type) {
-      case 'schedule':
-        onSchedule(
-          deviceIds.filter((it) => it !== 'all'),
-          groupIds,
-          {
-            description,
-            calendarId,
-            attributes: {},
-          },
-        );
-        break;
       case 'json':
       default:
         showReport();
@@ -224,9 +212,7 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
   };
 
   let hint = null;
-  if (selectedOption === 'schedule') {
-    hint = t('reportScheduleHint');
-  } else if (deviceType === 'multiple') {
+  if (deviceType === 'multiple') {
     hint = t('reportFilterHint');
   } else if (deviceType === 'single') {
     hint = t('reportFilterHintSingle');
@@ -271,109 +257,85 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
           />
         </div>
       )}
-      {selectedOption !== 'schedule' ? (
-        <>
-          <div className={classes.filterItem} style={{ flexBasis: 220 }}>
-            <FormControl fullWidth>
-              <InputLabel id="report-filter-report-period-label" shrink>
-                {t('reportPeriod')}
-              </InputLabel>
-              <Select
-                labelId="report-filter-report-period-label"
-                label={t('reportPeriod')}
-                value=""
-                displayEmpty
-                renderValue={() => periodLabel}
-                onChange={(e) => {
-                  setPeriod(e.target.value);
-                  if (e.target.value !== 'custom') {
-                    setRange(getPeriodRange(e.target.value));
-                  }
-                }}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <IconButton
-                      edge="start"
-                      size="small"
-                      disabled={loading || !validRange}
-                      onClick={() => shiftPeriod(-1)}
-                      aria-label={t('a11yPreviousPeriod')}
-                    >
-                      <PreviousPeriodIcon />
-                    </IconButton>
-                  </InputAdornment>
+      <>
+        <div className={classes.filterItem} style={{ flexBasis: 220 }}>
+          <FormControl fullWidth>
+            <InputLabel id="report-filter-report-period-label" shrink>
+              {t('reportPeriod')}
+            </InputLabel>
+            <Select
+              labelId="report-filter-report-period-label"
+              label={t('reportPeriod')}
+              value=""
+              displayEmpty
+              renderValue={() => periodLabel}
+              onChange={(e) => {
+                setPeriod(e.target.value);
+                if (e.target.value !== 'custom') {
+                  setRange(getPeriodRange(e.target.value));
                 }
-                endAdornment={
-                  <InputAdornment position="end">
-                    <IconButton
-                      edge="end"
-                      size="small"
-                      disabled={loading || !validRange || nextInFuture}
-                      onClick={() => shiftPeriod(1)}
-                      aria-label={t('a11yNextPeriod')}
-                    >
-                      <NextPeriodIcon />
-                    </IconButton>
-                  </InputAdornment>
-                }
-              >
-                {PERIODS.map((value) => (
-                  <MenuItem key={value} value={value}>
-                    {t(PERIOD_KEYS[value])}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </div>
-          {period === 'custom' && (
-            <div className={classes.filterItem} style={{ flexGrow: 2 }}>
-              <DateRangeField
-                withTime
-                label={t('reportPeriod')}
-                from={
-                  range[0] && selectedFrom.isValid()
-                    ? selectedFrom.locale('en').format('YYYY-MM-DDTHH:mm')
-                    : ''
-                }
-                to={
-                  range[1] && selectedTo.isValid()
-                    ? selectedTo.locale('en').format('YYYY-MM-DDTHH:mm')
-                    : ''
-                }
-                onChange={(_from, _to, { from: start, to: end }) =>
-                  setRange([
-                    start ? start.toISOString() : '',
-                    end ? end.endOf('minute').toISOString() : '',
-                  ])
-                }
-                fullWidth
-              />
-            </div>
-          )}
-        </>
-      ) : (
-        <>
-          <div className={classes.filterItem}>
-            <TextField
-              value={description || ''}
-              onChange={(event) => setDescription(event.target.value)}
-              label={t('sharedDescription')}
-              helperText={t('reportScheduleNameHelp')}
+              }}
+              startAdornment={
+                <InputAdornment position="start">
+                  <IconButton
+                    edge="start"
+                    size="small"
+                    disabled={loading || !validRange}
+                    onClick={() => shiftPeriod(-1)}
+                    aria-label={t('a11yPreviousPeriod')}
+                  >
+                    <PreviousPeriodIcon />
+                  </IconButton>
+                </InputAdornment>
+              }
+              endAdornment={
+                <InputAdornment position="end">
+                  <IconButton
+                    edge="end"
+                    size="small"
+                    disabled={loading || !validRange || nextInFuture}
+                    onClick={() => shiftPeriod(1)}
+                    aria-label={t('a11yNextPeriod')}
+                  >
+                    <NextPeriodIcon />
+                  </IconButton>
+                </InputAdornment>
+              }
+            >
+              {PERIODS.map((value) => (
+                <MenuItem key={value} value={value}>
+                  {t(PERIOD_KEYS[value])}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </div>
+        {period === 'custom' && (
+          <div className={classes.filterItem} style={{ flexGrow: 2 }}>
+            <DateRangeField
+              withTime
+              label={t('reportPeriod')}
+              from={
+                range[0] && selectedFrom.isValid()
+                  ? selectedFrom.locale('en').format('YYYY-MM-DDTHH:mm')
+                  : ''
+              }
+              to={
+                range[1] && selectedTo.isValid()
+                  ? selectedTo.locale('en').format('YYYY-MM-DDTHH:mm')
+                  : ''
+              }
+              onChange={(_from, _to, { from: start, to: end }) =>
+                setRange([
+                  start ? start.toISOString() : '',
+                  end ? end.endOf('minute').toISOString() : '',
+                ])
+              }
               fullWidth
             />
           </div>
-          <div className={classes.filterItem}>
-            <SelectField
-              value={calendarId}
-              onChange={(event) => setCalendarId(Number(event.target.value))}
-              endpoint="api/calendars"
-              label={t('sharedCalendar')}
-              helperText={t('reportScheduleCalendarHelp')}
-              fullWidth
-            />
-          </div>
-        </>
-      )}
+        )}
+      </>
       {children}
       <div className={classes.filterItem}>
         {Object.keys(options).length === 1 ? (
@@ -401,6 +363,34 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
           />
         )}
       </div>
+      {onSchedule && !readonly && (
+        <div className={classes.filterItem}>
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<EventRepeatRoundedIcon />}
+            disabled={!deviceIds.filter((it) => it !== 'all').length && !groupIds.length}
+            onClick={() => setScheduling(true)}
+          >
+            {t('reportScheduleButton')}
+          </Button>
+        </div>
+      )}
+      {scheduling && (
+        <ScheduleDialog
+          title={t('reportScheduleButton')}
+          defaultName={reportName ? t(reportName) : ''}
+          onClose={() => setScheduling(false)}
+          onSave={async (schedule) => {
+            await onSchedule(
+              deviceIds.filter((it) => it !== 'all'),
+              groupIds,
+              schedule,
+            );
+            setScheduling(false);
+          }}
+        />
+      )}
     </div>
   );
 };
