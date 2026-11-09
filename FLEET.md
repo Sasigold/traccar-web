@@ -174,6 +174,20 @@ the customer and billing parts show why they are unavailable.
   `supabase/tests/*.test.sql`. CI runs it on every pull request. Locally:
   `PGHOST=... PGPORT=... PGUSER=postgres sh supabase/tests/run.sh`.
 
+## Backups and the backend in git
+
+- **Nightly backups** run on the VPS with `deploy/backup.sh` (install steps at the top of the file): the fleet
+  database (`pg_dump -Fc` plus roles), the fleet storage files, the Traccar database or data folder and
+  `traccar.xml`, kept 14 days, and copied off the server when `OFFSITE` names an rclone remote.
+  Restore the fleet database:
+  `docker exec -i <db> pg_restore -U postgres -d postgres --clean --if-exists < fleet.dump`.
+  Practise a restore into a scratch container once a quarter.
+- **Before every migration** `deploy/migrate.sh` also dumps the database into `/root/vf-backups/`.
+- **Backend source.** `deploy/snapshot-backend.sh` copies the base schema, the base migrations and the
+  `traccar-auth` edge function from the VPS into `supabase/base/` and `supabase/functions/`; run it from a
+  machine with SSH access, check that no secret was copied, and commit. Until that is done the token bridge
+  and the base tables exist only on the VPS disk.
+
 ## Roadmap stage 0: fleet details in Traccar attributes
 
 Stage 0 of the roadmap works without the fleet database. Structured vehicle and driver details are stored
