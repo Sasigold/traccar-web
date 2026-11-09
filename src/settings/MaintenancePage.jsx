@@ -77,7 +77,7 @@ const MaintenancePage = () => {
       setItem={setItem}
       validate={validate}
       menu={<SettingsMenu />}
-      breadcrumbs={['settingsTitle', 'sharedMaintenance']}
+      breadcrumbs={['fleetTitle', 'sharedMaintenance']}
       description={t('maintenancePageDescription')}
     >
       {item && (

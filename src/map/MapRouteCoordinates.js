@@ -4,6 +4,7 @@ import { map } from './core/MapView';
 import useMapLayer from './core/useMapLayer';
 import { findFonts, toMapCoordinates } from './core/mapUtil';
 import { useAttributePreference } from '../common/util/preferences';
+import { haloColor } from './core/lineCasing';
 
 const MapRouteCoordinates = ({ name, coordinates, deviceId }) => {
   const theme = useTheme();
@@ -46,12 +47,12 @@ const MapRouteCoordinates = ({ name, coordinates, deviceId }) => {
           'text-size': 12,
         },
         paint: {
-          'text-halo-color': 'white',
+          'text-halo-color': haloColor(theme),
           'text-halo-width': 1,
         },
       },
     ],
-    layersDeps: [],
+    layersDeps: [theme.palette.mode],
     data: {
       type: 'Feature',
       geometry: {

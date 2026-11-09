@@ -8,10 +8,12 @@ import { useTheme, alpha } from '@mui/material';
 import MapSwitcher from '../control/MapSwitcher';
 import { useAttributePreference, usePreference } from '../../common/util/preferences';
 import usePersistedState from '../../common/util/usePersistedState';
-import { mapImages } from './preloadImages';
+import preloadImages, { mapImages } from './preloadImages';
+import { setCoordinateSystem } from './mapState';
 import useMapStyles from './useMapStyles';
 import { localizeStyle } from './mapLanguage';
-import { useLocalization } from '../../common/components/LocalizationProvider';
+import { brandStyle } from './brandStyle';
+import { useLocalization, useTranslation } from '../../common/components/LocalizationProvider';
 import { googleProtocol } from './googleProtocol';
 import { useAsyncTask } from '../../reactHelper';
 
@@ -60,6 +62,26 @@ export const useMapReady = () => {
   return mapReady;
 };
 
+// MapLibre reads control labels (tooltips, aria-labels, scale units) from map._locale when a
+// control is added, so the app language is applied before any control is created.
+const mapLocale = (t) => ({
+  'NavigationControl.ZoomIn': t('mapCtrlZoomIn'),
+  'NavigationControl.ZoomOut': t('mapCtrlZoomOut'),
+  'NavigationControl.ResetBearing': t('mapCtrlResetBearing'),
+  'GeolocateControl.FindMyLocation': t('mapCtrlFindMyLocation'),
+  'GeolocateControl.LocationNotAvailable': t('mapCtrlLocationNotAvailable'),
+  'Map.Title': t('mapCtrlMap'),
+  'AttributionControl.ToggleAttribution': t('mapCtrlAttribution'),
+  'Popup.Close': t('mapCtrlClose'),
+  'FullscreenControl.Enter': t('mapCtrlEnterFullscreen'),
+  'FullscreenControl.Exit': t('mapCtrlExitFullscreen'),
+  'ScaleControl.Meters': t('mapCtrlMeters'),
+  'ScaleControl.Kilometers': t('mapCtrlKilometers'),
+  'ScaleControl.Miles': t('mapCtrlMiles'),
+  'ScaleControl.Feet': t('mapCtrlFeet'),
+  'ScaleControl.NauticalMiles': t('mapCtrlNauticalMiles'),
+});
+
 const initMap = async () => {
   if (ready) return;
   if (!map.hasImage('background')) {
@@ -78,20 +100,33 @@ const MapView = ({ children }) => {
 
   const mapReady = useMapReady();
   const { language } = useLocalization();
+  const t = useTranslation();
+
+  // Layout effect: runs before the control effects below (and before child controls mount).
+  useLayoutEffect(() => {
+    map._locale = { ...map._locale, ...mapLocale(t) };
+    map.getCanvas().setAttribute('aria-label', t('mapCtrlMap'));
+  }, [t]);
 
   const mapStyles = useMapStyles();
   const activeMapStyles = useAttributePreference(
     'activeMapStyles',
-    'openFreeMap,locationIqStreets,locationIqDark',
+    'viperFleet,openFreeMap,locationIqStreets,locationIqDark',
   );
-  const [selectedStyleId, setSelectedStyleId] = usePersistedState(
-    'selectedMapStyle',
-    usePreference('map', 'openFreeMap'),
-  );
+  // One choice for light mode and one for dark, both starting on the brand map.
+  const dark = theme.palette.mode === 'dark';
+  const defaultStyle = usePreference('map', 'viperFleet');
+  const [lightStyleId, setLightStyleId] = usePersistedState('mapStyleLight', defaultStyle);
+  const [darkStyleId, setDarkStyleId] = usePersistedState('mapStyleDark', defaultStyle);
+  const selectedStyleId = dark ? darkStyleId : lightStyleId;
+  const setSelectedStyleId = dark ? setDarkStyleId : setLightStyleId;
   const maxZoom = useAttributePreference('web.maxZoom');
 
   const styles = useMemo(() => {
-    const filtered = mapStyles.filter((s) => s.available && activeMapStyles.includes(s.id));
+    // The brand map is always offered.
+    const filtered = mapStyles.filter(
+      (s) => s.available && (s.id === 'viperFleet' || activeMapStyles.includes(s.id)),
+    );
     return filtered.length ? filtered : mapStyles.filter((s) => s.id === 'osm');
   }, [mapStyles, activeMapStyles]);
 
@@ -125,10 +160,13 @@ const MapView = ({ children }) => {
       return;
     }
     updateReadyValue(false);
-    map.coordinateSystem = style.coordinateSystem;
+    setCoordinateSystem(style.coordinateSystem);
     map.setStyle(style.style, {
       diff: false,
-      transformStyle: (_, nextStyle) => localizeStyle(nextStyle, language),
+      transformStyle: (_, nextStyle) => {
+        const localized = localizeStyle(nextStyle, language);
+        return style.brand ? brandStyle(localized, dark) : localized;
+      },
     });
     map.setTransformRequest(style.transformRequest);
     let timeoutId;
@@ -136,13 +174,16 @@ const MapView = ({ children }) => {
       if (!map.loaded()) {
         timeoutId = setTimeout(waiting, 33);
       } else {
-        initMap();
-        updateReadyValue(true);
+        // Marker images are prepared on first use of a map (not on every page).
+        preloadImages().then(() => {
+          initMap();
+          updateReadyValue(true);
+        });
       }
     };
     map.once('styledata', waiting);
     return () => clearTimeout(timeoutId);
-  }, [styles, selectedStyleId, setSelectedStyleId, language]);
+  }, [styles, selectedStyleId, setSelectedStyleId, language, dark]);
 
   useLayoutEffect(() => {
     const currentEl = containerRef.current;
@@ -156,7 +197,7 @@ const MapView = ({ children }) => {
   const controlVariables = useMemo(() => {
     const dark = theme.palette.mode === 'dark';
     return {
-      '--map-ctrl-bg': alpha(theme.palette.background.paper, 0.88),
+      '--map-ctrl-bg': theme.palette.background.paper,
       '--map-ctrl-border': theme.palette.surface.border,
       '--map-ctrl-divider': theme.palette.surface.border,
       '--map-ctrl-hover': alpha(theme.palette.primary.main, 0.1),

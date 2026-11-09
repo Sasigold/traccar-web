@@ -28,38 +28,49 @@ export default (store) => (next) => {
   let counter = 0;
   let currentInterval = minInterval;
 
+  const flush = () => {
+    const start = performance.now();
+
+    const flushed = buffer.splice(0, buffer.length);
+
+    const deviceUpdates = {};
+    const positionUpdates = {};
+
+    flushed.forEach((action) => {
+      if (action.type === devicesActions.update.type) {
+        action.payload.forEach((item) => (deviceUpdates[item.id] = item));
+      } else if (action.type === sessionActions.updatePositions.type) {
+        action.payload.forEach((item) => (positionUpdates[item.deviceId] = item));
+      }
+    });
+
+    const mergedDeviceUpdates = Object.values(deviceUpdates);
+    if (mergedDeviceUpdates.length) {
+      next({ type: devicesActions.update.type, payload: mergedDeviceUpdates });
+    }
+
+    const mergedPositionUpdates = Object.values(positionUpdates);
+    if (mergedPositionUpdates.length) {
+      next({ type: sessionActions.updatePositions.type, payload: mergedPositionUpdates });
+    }
+
+    const totalTime = performance.now() - start;
+    debugLog(
+      `Flushed ${mergedDeviceUpdates.length + mergedPositionUpdates.length} / ${flushed.length} events in ${totalTime.toFixed(2)} ms`,
+    );
+    currentInterval = Math.min(Math.max(totalTime * scaleFactor, minInterval), maxInterval);
+  };
+
   const tick = () => {
-    if (throttled) {
-      const start = performance.now();
-
-      const flushed = buffer.splice(0, buffer.length);
-
-      const deviceUpdates = {};
-      const positionUpdates = {};
-
-      flushed.forEach((action) => {
-        if (action.type === devicesActions.update.type) {
-          action.payload.forEach((item) => (deviceUpdates[item.id] = item));
-        } else if (action.type === sessionActions.updatePositions.type) {
-          action.payload.forEach((item) => (positionUpdates[item.deviceId] = item));
-        }
-      });
-
-      const mergedDeviceUpdates = Object.values(deviceUpdates);
-      if (mergedDeviceUpdates.length) {
-        next({ type: devicesActions.update.type, payload: mergedDeviceUpdates });
+    try {
+      if (throttled) {
+        flush();
       }
-
-      const mergedPositionUpdates = Object.values(positionUpdates);
-      if (mergedPositionUpdates.length) {
-        next({ type: sessionActions.updatePositions.type, payload: mergedPositionUpdates });
-      }
-
-      const totalTime = performance.now() - start;
-      debugLog(
-        `Flushed ${mergedDeviceUpdates.length + mergedPositionUpdates.length} / ${flushed.length} events in ${totalTime.toFixed(2)} ms`,
-      );
-      currentInterval = Math.min(Math.max(totalTime * scaleFactor, minInterval), maxInterval);
+    } catch (error) {
+      // A failing flush (for example a reducer running after logout) must never stop the loop:
+      // without the next tick every buffered update would be held forever.
+      buffer.length = 0;
+      debugLog(`Flush failed: ${error.message}`);
     }
 
     const shouldThrottle = (counter * 1000) / currentInterval > threshold;
@@ -75,6 +86,14 @@ export default (store) => (next) => {
   setTimeout(tick, currentInterval);
 
   return (action) => {
+    // Logging out ends the session: forget what was buffered for it and start unthrottled.
+    if (action.type === sessionActions.updateUser.type && !action.payload) {
+      buffer.length = 0;
+      throttled = false;
+      counter = 0;
+      return next(action);
+    }
+
     if (
       action.type !== devicesActions.update.type &&
       action.type !== sessionActions.updatePositions.type

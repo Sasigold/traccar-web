@@ -17,8 +17,7 @@ import {
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
-import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
-import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+import { NextPeriodIcon, PreviousPeriodIcon } from '../../common/components/PeriodArrowIcons';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import useFeatures from '../../common/util/useFeatures';
@@ -59,7 +58,9 @@ const useStyles = makeStyles()((theme) => ({
   },
   synced: {
     ...theme.typography.overline,
-    letterSpacing: '0.08em',
+    // Overline capitals and spacing are for the Latin label; Hebrew reads plain.
+    letterSpacing: theme.direction === 'rtl' ? 0 : '0.08em',
+    textTransform: theme.direction === 'rtl' ? 'none' : 'uppercase',
     color: theme.palette.text.secondary,
     whiteSpace: 'nowrap',
     display: 'flex',
@@ -139,14 +140,14 @@ const DashboardFilterBar = ({ filters, refresh, onFilters, onRefresh }) => {
         ))}
       </Select>
       {shiftable && (
-        <div className={classes.arrows} dir="ltr">
+        <div className={classes.arrows}>
           <Tooltip title={t('dashboardPreviousPeriod')}>
             <IconButton
               size="small"
               aria-label={t('dashboardPreviousPeriod')}
               onClick={() => shift(-1)}
             >
-              <ChevronLeftRoundedIcon />
+              <PreviousPeriodIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title={t('dashboardNextPeriod')}>
@@ -157,7 +158,7 @@ const DashboardFilterBar = ({ filters, refresh, onFilters, onRefresh }) => {
                 disabled={range.to.isAfter(dayjs())}
                 onClick={() => shift(1)}
               >
-                <ChevronRightRoundedIcon />
+                <NextPeriodIcon />
               </IconButton>
             </span>
           </Tooltip>
@@ -224,7 +225,7 @@ const DashboardFilterBar = ({ filters, refresh, onFilters, onRefresh }) => {
       <span className={classes.synced} dir="ltr" aria-live="off">
         <span className={cx(classes.dot, !socket && classes.dotOff)} />
         {socket
-          ? `${t('loginSynced')} / ${synced ? dayjs(synced).format('HH:mm') : '--:--'}`
+          ? t('loginSynced').replace('{0}', synced ? dayjs(synced).format('HH:mm') : '--:--')
           : t('mapReconnecting')}
       </span>
       <Dialog open={Boolean(custom)} onClose={() => setCustom(null)} maxWidth="xs" fullWidth>

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { TableHead, TableRow, TableCell, TableBody, IconButton } from '@mui/material';
-import GpsFixedIcon from '@mui/icons-material/GpsFixed';
-import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
+import GpsFixedIcon from '@mui/icons-material/GpsFixedRounded';
+import LocationSearchingIcon from '@mui/icons-material/LocationSearchingRounded';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
 import { formatAddress, formatTime } from '../common/util/formatter';
@@ -17,6 +17,7 @@ import ResizeHandle from './components/ResizeHandle';
 import { useCatch, useCatchCallback, useAsyncTask } from '../reactHelper';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
+import { ReportEmptyRow, SortCell, useReportSort } from './components/ReportTableParts';
 import DataTable from '../common/components/table/DataTable';
 import { useAttributePreference, usePreference } from '../common/util/preferences';
 import MapView from '../map/core/MapView';
@@ -26,6 +27,8 @@ import MapCamera from '../map/MapCamera';
 import scheduleReport from './common/scheduleReport';
 import MapScale from '../map/MapScale';
 import SelectField from '../common/components/SelectField';
+import { privateRows } from '../common/fleet/privacyData';
+import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import exportExcel from '../common/util/exportExcel';
 import AddressValue from '../common/components/AddressValue';
@@ -42,6 +45,9 @@ const columnsArray = [
   ['attributes', 'commandData'],
 ];
 const columnsMap = new Map(columnsArray);
+
+// Positions per request when filling in event addresses.
+const POSITIONS_CHUNK = 128;
 
 const EventReportPage = () => {
   const navigate = useNavigate();
@@ -77,8 +83,10 @@ const EventReportPage = () => {
   const eventTypes = useMemo(() => searchParams.getAll('eventType'), [searchParams]);
   const alarmTypes = useMemo(() => searchParams.getAll('alarmType'), [searchParams]);
   const [items, setItems] = useState([]);
+  const [hiddenRows, setHiddenRows] = useState(0);
   const [positions, setPositions] = useState({});
   const [loading, setLoading] = useState(false);
+  const [queried, setQueried] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [position, setPosition] = useState(null);
 
@@ -121,24 +129,44 @@ const EventReportPage = () => {
         const response = await fetchOrThrow(`api/reports/events?${query.toString()}`, {
           headers: { Accept: 'application/json' },
         });
-        const events = await response.json();
+        // Events in hidden time keep their time and type but lose their place.
+        const result = await privateRows(await response.json(), {
+          deviceIds,
+          from,
+          to,
+          times: ['eventTime'],
+        });
+        const events = result.rows.map((event) =>
+          event.privacy ? { ...event, positionId: null } : event,
+        );
         setItems(events);
+        setHiddenRows(result.hidden);
         const positionIds = Array.from(
           new Set(events.map((event) => event.positionId).filter((id) => id)),
         );
+        // Every event's position (address, map), fetched in chunks the server accepts; the
+        // list shows as soon as the events are in, positions fill in after.
+        setPositions({});
+        setLoading(false);
+        setQueried(true);
         const positionsMap = {};
-        if (positionIds.length > 0) {
+        for (let start = 0; start < positionIds.length; start += POSITIONS_CHUNK) {
           const positionsQuery = new URLSearchParams();
-          positionIds.slice(0, 128).forEach((id) => positionsQuery.append('id', id));
+          positionIds
+            .slice(start, start + POSITIONS_CHUNK)
+            .forEach((id) => positionsQuery.append('id', id));
+
           const positionsResponse = await fetchOrThrow(
             `api/positions?${positionsQuery.toString()}`,
           );
+
           const positionsArray = await positionsResponse.json();
           positionsArray.forEach((p) => (positionsMap[p.id] = p));
+          setPositions({ ...positionsMap });
         }
-        setPositions(positionsMap);
       } finally {
         setLoading(false);
+        setQueried(true);
       }
     },
     [eventTypes, alarmTypes],
@@ -147,9 +175,9 @@ const EventReportPage = () => {
   const onExport = useCatch(async () => {
     const sheets = new Map();
     items.forEach((item) => {
-      const deviceName = devices[item.deviceId].name;
-      if (!sheets.has(deviceName)) {
-        sheets.set(deviceName, []);
+      // One sheet per vehicle, keyed by id: two vehicles with the same name stay apart.
+      if (!sheets.has(item.deviceId)) {
+        sheets.set(item.deviceId, { title: devices[item.deviceId].name, rows: [] });
       }
       const row = {};
       columns.forEach((key) => {
@@ -163,7 +191,7 @@ const EventReportPage = () => {
           row[header] = formatValue(item, key);
         }
       });
-      sheets.get(deviceName).push(row);
+      sheets.get(item.deviceId).rows.push(row);
     });
     await exportExcel(t('reportEvents'), 'events.xlsx', sheets, theme);
   });
@@ -175,6 +203,20 @@ const EventReportPage = () => {
     }
     await scheduleReport(deviceIds, groupIds, report);
     navigate('/reports/scheduled');
+  });
+
+  const {
+    sorted: sortedItems,
+    sort,
+    toggle: toggleSort,
+  } = useReportSort('events', items, (item, sortKey) => {
+    if (sortKey === 'deviceId') {
+      return devices[item.deviceId]?.name;
+    }
+    if (sortKey === 'type') {
+      return t(prefixString('event', item.type));
+    }
+    return item[sortKey];
   });
 
   const formatValue = (item, key) => {
@@ -300,15 +342,22 @@ const EventReportPage = () => {
             <TableHead>
               <TableRow>
                 <TableCell className={classes.columnAction} />
-                <TableCell>{t('sharedDevice')}</TableCell>
+                <SortCell sortKey="deviceId" sort={sort} onSort={toggleSort}>
+                  {t('sharedDevice')}
+                </SortCell>
                 {columns.map((key) => (
-                  <TableCell key={key}>{t(columnsMap.get(key))}</TableCell>
+                  <SortCell key={key} sortKey={key} sort={sort} onSort={toggleSort}>
+                    {t(columnsMap.get(key))}
+                  </SortCell>
                 ))}
               </TableRow>
             </TableHead>
             <TableBody>
+              {!loading && queried && !items.length && (
+                <ReportEmptyRow colSpan={columns.length + 2} />
+              )}
               {!loading ? (
-                items.map((item) => (
+                sortedItems.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className={classes.columnAction} padding="none">
                       {(item.positionId &&
@@ -342,6 +391,7 @@ const EventReportPage = () => {
               )}
             </TableBody>
           </DataTable>
+          {!loading && <PrivacyNote hidden={hiddenRows} kind="rows" padded />}
         </div>
       </div>
     </PageLayout>

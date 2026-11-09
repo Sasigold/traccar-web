@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useAsyncTask } from '../reactHelper';
 import { saveFleetRecord } from './fleetRecords';
+import { getFormatLocale } from '../common/util/formatter';
 
 export const FILES_BUCKET = 'fleet-files';
 
@@ -97,7 +98,7 @@ export const useVendors = (enabled, reloadKey = 0) => {
 export const money = (value) =>
   value == null || value === ''
     ? ''
-    : Number(value).toLocaleString(undefined, {
+    : Number(value).toLocaleString(getFormatLocale(), {
         style: 'currency',
         currency: 'ILS',
         maximumFractionDigits: 2,

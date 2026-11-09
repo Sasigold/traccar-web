@@ -1,32 +1,80 @@
-name: Deploy to VPS
+name: Deploy to staging
 
-# Every push to main builds the custom UI and syncs build/ into the Traccar
-# container's web directory on the Hostinger VPS (see deploy/deploy.sh), then
-# applies new supabase/migrations to the Viper Fleet database (deploy/migrate.sh).
+# FND-04: every push to main goes to STAGING, never straight to production. CI (lint, unit,
+# build, e2e, database) must pass; the UI is built in a job that holds no secrets; a separate job
+# without npm uploads it to the staging Traccar on the VPS, applies new migrations to the staging
+# database and deploys the edge functions there. Production is "Promote to production"
+# (promote.yml), run by hand.
+#
+# Until staging exists this workflow stops after CI. To turn it on, set these repository
+# variables (Settings > Secrets and variables > Actions > Variables):
+#   STAGING_WEB_DIR             e.g. /docker/traccar-staging/web (the staging Traccar's web folder)
+#   STAGING_SITE_URL            e.g. https://traccar-staging.example.com
+#   STAGING_FLEET_URL           the staging Supabase, e.g. https://viper-fleet-staging.example.com
+#   STAGING_FLEET_ANON_KEY      its anon key (public by design)
+#   STAGING_FLEET_DIR           e.g. /docker/viper-fleet-staging
+#   STAGING_DB_CONTAINER        the staging database container name
+#   STAGING_RUNTIME_CONTAINER   the staging edge-runtime container name
+# and create a "staging" GitHub Environment. deploy/STAGING.md describes the server side.
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
-  group: deploy-vps
+  group: deploy-staging
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    needs: ci
+    if: vars.STAGING_WEB_DIR != ''
     runs-on: ubuntu-latest
-    env:
-      DEPLOY_HOST: root@72.61.153.60
-      DEPLOY_DIR: /docker/traccar-ovjj/web
-      SITE_URL: https://traccar-ovjj.srv2122641.hstgr.cloud
     steps:
     - uses: actions/checkout@v7
     - uses: actions/setup-node@v7
       with:
+        node-version-file: .nvmrc
         cache: npm
         cache-dependency-path: package-lock.json
     - run: npm ci
+    # Refuses to build if the staging address is missing or is the production database.
+    - run: npm run build -- --mode staging
+      env:
+        VITE_FLEET_URL: ${{ vars.STAGING_FLEET_URL }}
+        VITE_FLEET_ANON_KEY: ${{ vars.STAGING_FLEET_ANON_KEY }}
+    - uses: actions/upload-artifact@v7
+      with:
+        name: web-build-staging
+        path: build
+        retention-days: 7
+
+  deploy:
+    # No npm here: third-party packages never run next to the server key.
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging
+    env:
+      DEPLOY_HOST: root@72.61.153.60
+      DEPLOY_DIR: ${{ vars.STAGING_WEB_DIR }}
+      SITE_URL: ${{ vars.STAGING_SITE_URL }}
+      FLEET_DIR: ${{ vars.STAGING_FLEET_DIR }}
+      FLEET_URL: ${{ vars.STAGING_FLEET_URL }}
+      DB_CONTAINER: ${{ vars.STAGING_DB_CONTAINER }}
+      RUNTIME_CONTAINER: ${{ vars.STAGING_RUNTIME_CONTAINER }}
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/download-artifact@v7
+      with:
+        name: web-build-staging
+        path: build
 
     - name: Configure SSH
       env:
@@ -39,10 +87,7 @@ jobs:
         # Pinned host key of the VPS (ssh-keyscan -t ed25519 72.61.153.60)
         echo '72.61.153.60 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID5SogCUGVSqGkOEvyAJz8/h8e5bvMed6JOhA3oE23R9' >> ~/.ssh/known_hosts
 
-    - name: Build
-      run: npm run build
-
-    - name: Upload to VPS (retries on connection problems)
+    - name: Upload to the staging Traccar (retries on connection problems)
       run: |
         for attempt in 1 2 3 4; do
           if SKIP_BUILD=1 sh deploy/deploy.sh; then exit 0; fi
@@ -51,12 +96,19 @@ jobs:
         done
         echo "Upload failed after 4 attempts"; exit 1
 
-    - name: Apply database migrations
-      # After the upload, so a failed migration never blocks the UI: without
-      # it the admin area shows what is missing instead of breaking.
+    - name: Apply database migrations to staging
       run: sh deploy/migrate.sh
 
-    - name: Verify site
+    - name: Deploy edge functions to staging
+      run: sh deploy/functions.sh
+
+    - name: Verify the release is served and its scripts load
+      # On failure: sh deploy/deploy.sh rollback (the previous release is kept on the server).
       run: |
         sleep 3
-        curl -fsS --max-time 30 "$SITE_URL/" | grep -q '<div id="root"' && echo "Site responds with the app shell."
+        release=$(sed -n 's/.*"release": *"\([^"]*\)".*/\1/p' build/version.json)
+        sh deploy/smoke.sh "$SITE_URL" "$release"
+
+    - name: Remove the key
+      if: always()
+      run: rm -f ~/.ssh/id_ed25519

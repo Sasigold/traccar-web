@@ -34,6 +34,7 @@ import {
   vehicleFields,
 } from '../common/fleet/fleetFields';
 import { DateField } from '../common/components/pickers';
+import GovRegistryButton from '../fleet/components/GovRegistryButton';
 
 const DevicePage = () => {
   const t = useTranslation();
@@ -94,7 +95,7 @@ const DevicePage = () => {
       validate={validate}
       onItemSaved={onItemSaved}
       menu={<SettingsMenu />}
-      breadcrumbs={['settingsTitle', 'sharedDevice']}
+      breadcrumbs={['fleetTitle', 'sharedDevice']}
       description={t('devicePageDescription')}
     >
       {item && (
@@ -120,6 +121,9 @@ const DevicePage = () => {
             fields={[...vehicleFields, notesField]}
             attributes={item.attributes}
             setAttributes={setAttributes}
+            actions={
+              <GovRegistryButton attributes={item.attributes} setAttributes={setAttributes} />
+            }
           />
           <FleetFieldsSection
             title={t('fleetVehicleValidity')}

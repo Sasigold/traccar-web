@@ -27,6 +27,11 @@ const { reducer, actions } = createSlice({
     hideCard(state) {
       state.cardHidden = true;
     },
+    // Stop following the selected vehicle (the map is about to show something else, such as
+    // where an alert happened); "back to vehicle" brings the lock back.
+    releaseFollow(state) {
+      state.followReleaseTime = Date.now();
+    },
     remove(state, action) {
       delete state.items[action.payload];
     },

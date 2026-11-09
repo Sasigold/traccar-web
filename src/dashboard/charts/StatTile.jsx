@@ -129,7 +129,9 @@ const StatTile = ({
             values={points}
             width={Math.max(0, width - (flat ? 0 : 24))}
             height={sparkHeight}
-            color={chart.other}
+            // The axis tone: a trend line is information and needs 3:1 (the "other" tone is
+            // about 1.5:1 on white).
+            color={chart.axis}
             accent={chart.accent}
             surface={chart.surface}
           />

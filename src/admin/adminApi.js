@@ -4,6 +4,8 @@
 // customer's Traccar users always see exactly the customer's devices.
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import { getFleetClient, unwrap } from '../common/fleet/client';
+import { getFreshFleetAccessToken } from '../common/fleet/session';
+import { fleetConfig } from '../common/fleet/config';
 import { planComputedSync } from './sensors';
 
 const db = () => getFleetClient();
@@ -301,3 +303,69 @@ export const setInvoiceStatus = async (id, changes) =>
 
 export const deleteInvoice = async (id) =>
   unwrap(await db().from('billing_invoices').delete().eq('id', id));
+
+// ─── official tax documents (BIZ-01) ────────────────────────────────────────
+
+export const loadBillingProvider = async () =>
+  unwrap(await db().from('billing_provider').select('*').maybeSingle());
+
+export const saveBillingProvider = async (settings) =>
+  unwrap(
+    await db()
+      .from('billing_provider')
+      .upsert({ ...settings, id: true, updated_at: new Date().toISOString() })
+      .select()
+      .single(),
+  );
+
+// Whether the provider's API key id and secret are in Vault (they are never read back).
+export const loadBillingKeysStatus = async () =>
+  (unwrap(await db().rpc('billing_provider_status')) || [])[0] ?? {
+    has_id: false,
+    has_secret: false,
+  };
+
+export const setBillingSecret = async (name, value) =>
+  unwrap(await db().rpc('billing_set_secret', { p_name: name, p_secret: value }));
+
+export class BillingDocumentError extends Error {
+  constructor(code, message) {
+    super(message || code);
+    this.name = 'BillingDocumentError';
+    this.code = code;
+  }
+}
+
+// issue | receipt | payment-link, through the billing-documents edge function.
+export const billingDocument = async (action, invoiceId) => {
+  const token = await getFreshFleetAccessToken();
+  const response = await fetch(`${fleetConfig.url}/functions/v1/billing-documents/${action}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: fleetConfig.anonKey,
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ invoice_id: invoiceId }),
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new BillingDocumentError(
+      body?.error?.code || `http_${response.status}`,
+      body?.error?.message,
+    );
+  }
+  return body;
+};
+
+export const loadInvoice = async (id) =>
+  unwrap(await db().from('billing_invoices_view').select('*').eq('id', id).single());
+
+// After checking the provider: release a claim that stayed "working" (the edge function stopped).
+export const releaseBillingClaim = async (id, kind) =>
+  unwrap(
+    await db()
+      .from('billing_invoices')
+      .update(kind === 'receipt' ? { receipt_state: 'failed' } : { official_state: 'failed' })
+      .eq('id', id),
+  );

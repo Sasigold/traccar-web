@@ -19,7 +19,7 @@ import {
   volumeFromLiters,
   volumeUnitString,
 } from '../../util/converter';
-import { formatAlarm, formatCourse } from '../../util/formatter';
+import { formatAlarm, formatCourse, formatGrouped } from '../../util/formatter';
 import ArcGauge from './ArcGauge';
 import TirePressure from './TirePressure';
 import { adjustValue, fuelReading, isNumber, parseProfile, tireReading } from './vehicleProfile';
@@ -357,7 +357,7 @@ const buildTelemetryModel = (position, profile, skip) => {
   return { chips, grouped };
 };
 
-const formatCustom = (value, unit) => `${Number(value.toFixed(2)).toLocaleString()} ${unit}`;
+const formatCustom = (value, unit) => `${formatGrouped(value, 2)} ${unit}`;
 
 const MetricValue = ({ position, item }) => {
   if (item.unit && isNumber(item.value)) {
@@ -608,7 +608,7 @@ const TelemetryDashboard = ({ position, device, onConfigure, onEditParameter }) 
                 {positionAttributes.rpm?.name}
               </span>
               <RpmGauge rpm={rpm} />
-              <span className={classes.gaugeCaption}>{Math.round(rpm).toLocaleString()} RPM</span>
+              <span className={classes.gaugeCaption}>{formatGrouped(Math.round(rpm), 0)} RPM</span>
             </div>
           )}
         </div>

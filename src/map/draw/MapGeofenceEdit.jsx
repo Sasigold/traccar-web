@@ -14,6 +14,7 @@ import { useCatchCallback } from '../../reactHelper';
 import drawTheme from './theme';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import fetchOrThrow from '../../common/util/fetchOrThrow';
+import { haloColor } from '../core/lineCasing';
 
 MapboxDraw.constants.classes.CONTROL_BASE = 'maplibregl-ctrl';
 MapboxDraw.constants.classes.CONTROL_PREFIX = 'maplibregl-ctrl-';
@@ -21,6 +22,7 @@ MapboxDraw.constants.classes.CONTROL_GROUP = 'maplibregl-ctrl-group';
 
 const MapGeofenceEdit = ({ selectedGeofenceId }) => {
   const theme = useTheme();
+  const halo = haloColor(theme);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const t = useTranslation();
@@ -49,13 +51,13 @@ const MapGeofenceEdit = ({ selectedGeofenceId }) => {
               'text-size': 12,
             },
             paint: {
-              'text-halo-color': 'white',
+              'text-halo-color': halo,
               'text-halo-width': 1,
             },
           },
         ],
       }),
-    [],
+    [halo],
   );
 
   const geofences = useSelector((state) => state.geofences.items);
@@ -69,6 +71,16 @@ const MapGeofenceEdit = ({ selectedGeofenceId }) => {
     refreshGeofences();
 
     map.addControl(draw, theme.direction === 'rtl' ? 'top-right' : 'top-left');
+    // The drawing buttons come with English titles; name them in the app language.
+    [
+      ['.mapbox-gl-draw_polygon', t('mapDrawPolygon')],
+      ['.mapbox-gl-draw_line', t('mapDrawLine')],
+      ['.mapbox-gl-draw_trash', t('mapDrawDelete')],
+    ].forEach(([selector, label]) => {
+      const button = map.getContainer().querySelector(selector);
+      button?.setAttribute('title', label);
+      button?.setAttribute('aria-label', label);
+    });
     setHintAnchor(map.getContainer().querySelector('.mapbox-gl-draw_polygon'));
 
     const dismissHint = () => setHintDismissed(true);
@@ -79,7 +91,7 @@ const MapGeofenceEdit = ({ selectedGeofenceId }) => {
       map.off('draw.selectionchange', dismissHint);
       map.removeControl(draw);
     };
-  }, [refreshGeofences, draw, theme.direction]);
+  }, [refreshGeofences, draw, theme.direction, t]);
 
   useEffect(() => {
     const listener = async (event) => {

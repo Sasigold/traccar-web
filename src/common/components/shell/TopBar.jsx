@@ -10,6 +10,7 @@ import { focusRing } from '../../theme/surfaces';
 import { useTranslation } from '../LocalizationProvider';
 import { useShell } from './ShellContext';
 import SocketStatusPill from './SocketStatusPill';
+import EnvironmentBadge from './EnvironmentBadge';
 import NotificationsButton from './NotificationsButton';
 import ThemeToggle from './ThemeToggle';
 import LanguageMenu from './LanguageMenu';
@@ -80,10 +81,10 @@ const useStyles = makeStyles()((theme) => ({
     gap: 2,
     height: 20,
     padding: '0 6px',
-    borderRadius: 6,
+    borderRadius: theme.tokens.radius.xs,
     fontSize: '0.6875rem',
     fontWeight: 700,
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+    fontFamily: theme.tokens.font.mono,
     color: theme.palette.text.secondary,
     border: `1px solid ${theme.palette.surface.borderStrong}`,
     backgroundColor: theme.palette.background.paper,
@@ -143,6 +144,7 @@ const TopBar = ({ onOpenDrawer }) => {
             </IconButton>
           </Tooltip>
         )}
+        <EnvironmentBadge />
         <SocketStatusPill />
         {!features.disableEvents && <NotificationsButton />}
         <ThemeToggle />

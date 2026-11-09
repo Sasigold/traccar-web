@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { TextField, IconButton, InputAdornment } from '@mui/material';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import VisibilityIcon from '@mui/icons-material/VisibilityRounded';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOffRounded';
 import { useTranslation } from './LocalizationProvider';
 
 const PasswordField = ({ slotProps, ...others }) => {

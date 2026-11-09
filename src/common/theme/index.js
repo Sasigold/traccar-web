@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { createTheme } from '@mui/material/styles';
+import { heIL, enUS } from '@mui/material/locale';
 import palette from './palette';
 import dimensions from './dimensions';
 import components from './components';
@@ -30,41 +31,47 @@ const shadowScale = (mode) => {
   return list;
 };
 
-export default (server, darkMode, direction) =>
+// MUI's own words (pagination, close, "no options"…) follow the app language.
+const muiLocales = { he: heIL, en: enUS };
+
+export default (server, darkMode, direction, language) =>
   useMemo(
     () =>
-      createTheme({
-        typography: {
-          fontFamily,
-          ...typography,
-        },
-        shape: {
-          borderRadius: radius.md,
-        },
-        shadows: shadowScale(darkMode ? 'dark' : 'light'),
-        transitions: {
-          duration: {
-            shortest: motion.duration.fast,
-            shorter: 160,
-            short: 200,
-            standard: 240,
-            complex: 320,
-            enteringScreen: motion.duration.enter,
-            leavingScreen: motion.duration.exit,
+      createTheme(
+        {
+          typography: {
+            fontFamily,
+            ...typography,
           },
-          easing: {
-            easeInOut: motion.easing.standard,
-            easeOut: motion.easing.emphasized,
-            easeIn: motion.easing.exit,
-            sharp: motion.easing.standard,
+          shape: {
+            borderRadius: radius.md,
           },
+          shadows: shadowScale(darkMode ? 'dark' : 'light'),
+          transitions: {
+            duration: {
+              shortest: motion.duration.fast,
+              shorter: 160,
+              short: 200,
+              standard: 240,
+              complex: 320,
+              enteringScreen: motion.duration.enter,
+              leavingScreen: motion.duration.exit,
+            },
+            easing: {
+              easeInOut: motion.easing.standard,
+              easeOut: motion.easing.emphasized,
+              easeIn: motion.easing.exit,
+              sharp: motion.easing.standard,
+            },
+          },
+          palette: palette(server, darkMode),
+          direction,
+          dimensions,
+          layers,
+          tokens: { radius, motion, font: { mono: type.mono } },
+          components,
         },
-        palette: palette(server, darkMode),
-        direction,
-        dimensions,
-        layers,
-        tokens: { radius, motion },
-        components,
-      }),
-    [server, darkMode, direction],
+        muiLocales[language] || enUS,
+      ),
+    [server, darkMode, direction, language],
   );

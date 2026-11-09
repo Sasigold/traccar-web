@@ -1,27 +1,35 @@
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import {
+  Button,
   Chip,
   Drawer,
   IconButton,
   List,
   ListItemButton,
   ListItemText,
+  ListSubheader,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
+import ViewAgendaRoundedIcon from '@mui/icons-material/ViewAgendaRounded';
 import { glass } from '../../theme/surfaces';
 import { formatNotificationTitle } from '../../util/formatter';
 import { useTranslation } from '../LocalizationProvider';
 import FleetAlertsBanner from '../../../fleet/components/FleetAlertsBanner';
-import { eventsActions } from '../../../store';
+import { devicesActions, eventsActions } from '../../../store';
+import { storeLastSeen } from '../../../store/events';
+import { useAttributePreference } from '../../util/preferences';
+import { eventSeverity, eventTime } from '../../util/eventSeverity';
 import { eventIconKey, eventIcons } from '../../../map/core/preloadImages';
 
 dayjs.extend(relativeTime);
@@ -39,6 +47,12 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     flexDirection: 'column',
   },
+  // On desktop the list is a side panel under the top bar, so the bar (and the bell) stay usable.
+  docked: {
+    top: 'var(--shell-top, 0px)',
+    height: `calc(100% - var(--shell-top, 0px) - ${theme.spacing(4)} - env(safe-area-inset-bottom, 0px))`,
+    marginTop: theme.spacing(2),
+  },
   header: {
     display: 'flex',
     alignItems: 'center',
@@ -53,23 +67,73 @@ const useStyles = makeStyles()((theme) => ({
     gap: theme.spacing(1),
     fontWeight: 600,
   },
+  cleared: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing(1),
+    margin: theme.spacing(1, 1.5, 0),
+    padding: theme.spacing(0.5, 0.5, 0.5, 1.5),
+    borderRadius: theme.tokens.radius.md,
+    backgroundColor: theme.palette.surface.sunken,
+    fontSize: '0.875rem',
+  },
+  filters: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.75),
+    padding: theme.spacing(1, 2, 0.5),
+  },
+  grouped: {
+    marginInlineStart: 'auto',
+  },
+  groupedOn: {
+    color: theme.palette.primary.main,
+    backgroundColor: alpha(theme.palette.primary.main, 0.12),
+  },
+  subheader: {
+    lineHeight: '28px',
+    paddingInline: theme.spacing(1),
+    backgroundColor: 'transparent',
+    fontWeight: 600,
+  },
+  severity: {
+    position: 'absolute',
+    insetBlockStart: 8,
+    insetInlineStart: 8,
+    width: 8,
+    height: 8,
+    borderRadius: '50%',
+  },
+  critical: { backgroundColor: theme.palette.error.main },
+  warning: { backgroundColor: theme.palette.warning.main },
+  unread: {
+    backgroundColor: alpha(theme.palette.primary.main, 0.06),
+  },
   list: {
     flex: 1,
     overflowY: 'auto',
     padding: theme.spacing(1),
   },
+  // The remove button sits beside the row's button, not inside it (no nested controls).
+  row: {
+    position: 'relative',
+    listStyle: 'none',
+    '&:hover .delete, &:focus-within .delete': {
+      opacity: 1,
+    },
+  },
   item: {
     alignItems: 'flex-start',
+    paddingInlineEnd: theme.spacing(6),
     gap: theme.spacing(1.5),
     borderRadius: theme.tokens.radius.lg,
     marginInline: 0,
     marginBottom: 2,
     paddingBlock: theme.spacing(1.25),
-    '&:hover .delete': {
-      opacity: 1,
-    },
   },
   icon: {
+    position: 'relative',
     width: 36,
     height: 36,
     flexShrink: 0,
@@ -86,6 +150,9 @@ const useStyles = makeStyles()((theme) => ({
     },
   },
   delete: {
+    position: 'absolute',
+    insetBlockStart: theme.spacing(1),
+    insetInlineEnd: theme.spacing(1),
     opacity: 0,
     transition: 'opacity 140ms ease',
     '@media (hover: none)': {
@@ -106,7 +173,7 @@ const useStyles = makeStyles()((theme) => ({
   emptyIcon: {
     width: 56,
     height: 56,
-    borderRadius: 18,
+    borderRadius: theme.tokens.radius.lg,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -115,14 +182,58 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
+const FILTERS = ['all', 'critical', 'warning'];
+
+// The alerts list. On desktop it is a side panel that leaves the map usable (no backdrop); on
+// phones a drawer. Opening it marks everything as seen. A click on an alert selects the vehicle
+// and shows the alert on its card.
 const EventsDrawer = ({ open, onClose }) => {
-  const { classes, cx } = useStyles();
+  const { classes, cx, theme } = useStyles();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const t = useTranslation();
+  const desktop = useMediaQuery(theme.breakpoints.up('md'));
 
   const devices = useSelector((state) => state.devices.items);
   const events = useSelector((state) => state.events.items);
+  const lastSeen = useSelector((state) => state.events.lastSeen);
+  const soundAlarms = useAttributePreference('soundAlarms', 'sos');
+  const soundEvents = useAttributePreference('soundEvents', '');
+
+  const [filter, setFilter] = useState('all');
+  const [grouped, setGrouped] = useState(false);
+  // What was unread when the list opened stays marked while it is open.
+  const [seenBefore, setSeenBefore] = useState(lastSeen);
+
+  useEffect(() => {
+    if (open) {
+      setSeenBefore(lastSeen);
+    }
+    // eslint-disable-next-line @eslint-react/exhaustive-deps
+  }, [open]);
+
+  // Everything listed while the list is open counts as seen.
+  const newest = events.length ? eventTime(events[0]) : 0;
+  useEffect(() => {
+    if (open && newest > lastSeen) {
+      dispatch(eventsActions.markSeen(newest));
+      storeLastSeen(newest);
+    }
+  }, [open, newest, lastSeen, dispatch]);
+
+  const severityOf = (event) => eventSeverity(event, { soundAlarms, soundEvents });
+  const shown = events.filter((event) => filter === 'all' || severityOf(event) === filter);
+
+  const sections = grouped
+    ? Object.values(
+        shown.reduce((result, event) => {
+          const key = event.deviceId;
+          result[key] = result[key] || { key, title: devices[key]?.name || '', items: [] };
+          result[key].items.push(event);
+          return result;
+        }, {}),
+      )
+    : [{ key: 'all', items: shown }];
 
   const formatType = (event) =>
     formatNotificationTitle(t, {
@@ -132,21 +243,58 @@ const EventsDrawer = ({ open, onClose }) => {
       },
     });
 
+  const openEvent = (event) => {
+    dispatch(eventsActions.focus(event));
+    dispatch(devicesActions.selectId(event.deviceId));
+    navigate('/');
+    if (!desktop) {
+      onClose();
+    }
+  };
+
+  // Clearing can be undone from the list itself while it stays open.
+  const [cleared, setCleared] = useState(null);
+  useEffect(() => {
+    if (!open) {
+      setCleared(null);
+    }
+  }, [open]);
+
+  const clearAll = () => {
+    setCleared(events);
+    dispatch(eventsActions.deleteAll());
+  };
+
   return (
     <Drawer
       anchor="right"
       open={open}
       onClose={onClose}
-      slotProps={{ paper: { className: classes.paper } }}
+      variant={desktop ? 'persistent' : 'temporary'}
+      slotProps={{
+        // Nothing of the list (or its fleet alerts) stays mounted while it is closed.
+        transition: { unmountOnExit: true },
+        paper: {
+          className: cx(classes.paper, desktop && classes.docked),
+          role: 'dialog',
+          'aria-label': t('sharedNotifications'),
+          onKeyDown: (event) => {
+            if (event.key === 'Escape') {
+              event.stopPropagation();
+              onClose();
+            }
+          },
+        },
+      }}
     >
       <div className={classes.header}>
-        <Typography variant="h6" className={classes.title}>
-          {t('reportEvents')}
+        <Typography variant="h6" component="h2" className={classes.title}>
+          {t('sharedNotifications')}
           {events.length > 0 && <Chip size="small" label={events.length} color="primary" />}
         </Typography>
         {events.length > 0 && (
           <Tooltip title={t('shellClearAll')}>
-            <IconButton size="small" onClick={() => dispatch(eventsActions.deleteAll())}>
+            <IconButton size="small" aria-label={t('shellClearAll')} onClick={clearAll}>
               <DeleteOutlineRoundedIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -156,7 +304,57 @@ const EventsDrawer = ({ open, onClose }) => {
         </IconButton>
       </div>
       <FleetAlertsBanner onNavigate={onClose} />
-      {events.length === 0 ? (
+      {cleared && (
+        <div className={classes.cleared} role="status">
+          <span>
+            {cleared.length === 1
+              ? t('eventsClearedOne')
+              : t('eventsCleared').replace('{0}', cleared.length)}
+          </span>
+          <Button
+            size="small"
+            onClick={() => {
+              dispatch(eventsActions.restore(cleared));
+              setCleared(null);
+            }}
+          >
+            {t('sharedUndo')}
+          </Button>
+        </div>
+      )}
+      {events.length > 0 && (
+        <div className={classes.filters} role="group" aria-label={t('sharedFilter')}>
+          {FILTERS.map((value) => (
+            <Chip
+              key={value}
+              size="small"
+              label={t(
+                {
+                  all: 'sharedAll',
+                  critical: 'eventSeverityCritical',
+                  warning: 'eventSeverityWarning',
+                }[value],
+              )}
+              color={filter === value ? 'primary' : 'default'}
+              variant={filter === value ? 'filled' : 'outlined'}
+              aria-pressed={filter === value}
+              onClick={() => setFilter(value)}
+            />
+          ))}
+          <Tooltip title={t('eventGroupByVehicle')}>
+            <IconButton
+              size="small"
+              className={cx(classes.grouped, grouped && classes.groupedOn)}
+              aria-label={t('eventGroupByVehicle')}
+              aria-pressed={grouped}
+              onClick={() => setGrouped(!grouped)}
+            >
+              <ViewAgendaRoundedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </div>
+      )}
+      {shown.length === 0 ? (
         <div className={classes.empty}>
           <span className={classes.emptyIcon}>
             <NotificationsRoundedIcon />
@@ -165,39 +363,66 @@ const EventsDrawer = ({ open, onClose }) => {
         </div>
       ) : (
         <List className={classes.list} disablePadding>
-          {events.map((event) => (
-            <ListItemButton
-              key={event.id}
-              className={classes.item}
-              onClick={() => navigate(`/event/${event.id}`)}
-              disabled={!event.id}
-            >
-              <span className={classes.icon}>
-                <img src={eventIcons[eventIconKey(event.type)]} alt="" />
-              </span>
-              <ListItemText
-                primary={devices[event.deviceId]?.name}
-                secondary={
-                  <>
-                    {formatType(event)}
-                    {' · '}
-                    {dayjs(event.eventTime).fromNow()}
-                  </>
-                }
-                slotProps={{ primary: { noWrap: true, fontWeight: 600 } }}
-              />
-              <IconButton
-                aria-label={t('sharedRemove')}
-                size="small"
-                className={cx(classes.delete, 'delete')}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  dispatch(eventsActions.delete(event));
-                }}
-              >
-                <CloseRoundedIcon fontSize="small" />
-              </IconButton>
-            </ListItemButton>
+          {sections.map((section) => (
+            <li key={section.key}>
+              <ul style={{ padding: 0 }}>
+                {grouped && (
+                  <ListSubheader className={classes.subheader} disableSticky>
+                    {section.title}
+                  </ListSubheader>
+                )}
+                {section.items.map((event) => {
+                  const severity = severityOf(event);
+                  const unread = eventTime(event) > seenBefore;
+                  return (
+                    <li
+                      key={event.id ?? `${event.deviceId}-${event.eventTime}`}
+                      className={classes.row}
+                    >
+                      <ListItemButton
+                        className={cx(classes.item, unread && classes.unread)}
+                        onClick={() => openEvent(event)}
+                      >
+                        <span className={classes.icon}>
+                          <img src={eventIcons[eventIconKey(event.type)]} alt="" />
+                          {severity !== 'info' && (
+                            <span className={cx(classes.severity, classes[severity])} />
+                          )}
+                        </span>
+                        <ListItemText
+                          primary={grouped ? formatType(event) : devices[event.deviceId]?.name}
+                          secondary={
+                            <>
+                              {grouped ? null : (
+                                <>
+                                  {formatType(event)}
+                                  {' · '}
+                                </>
+                              )}
+                              {dayjs(event.eventTime).fromNow()}
+                            </>
+                          }
+                          slotProps={{
+                            primary: { noWrap: true, fontWeight: unread ? 700 : 600 },
+                          }}
+                        />
+                      </ListItemButton>
+                      <IconButton
+                        aria-label={`${t('sharedRemove')} · ${devices[event.deviceId]?.name || ''}`}
+                        size="small"
+                        className={cx(classes.delete, 'delete')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          dispatch(eventsActions.delete(event));
+                        }}
+                      >
+                        <CloseRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </li>
+                  );
+                })}
+              </ul>
+            </li>
           ))}
         </List>
       )}

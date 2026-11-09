@@ -31,6 +31,8 @@ import useAttributeUnits from '../common/util/useAttributeUnits';
 import { formatAttributeNumber } from '../common/util/attributeUnits';
 import { speedToKnots } from '../common/util/converter';
 import useReportStyles from './common/useReportStyles';
+import { privatePositions } from '../common/fleet/privacyData';
+import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 
 const ChartReportPage = () => {
@@ -43,6 +45,7 @@ const ChartReportPage = () => {
   const units = useAttributeUnits();
 
   const [items, setItems] = useState([]);
+  const [hidden, setHidden] = useState(0);
   const [positions, setPositions] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [types, setTypes] = useState(['speed']);
@@ -80,7 +83,13 @@ const ChartReportPage = () => {
       const response = await fetchOrThrow(`api/reports/route?${query.toString()}`, {
         headers: { Accept: 'application/json' },
       });
-      const positions = await response.json();
+      const { positions, hidden: hiddenCount } = await privatePositions(await response.json(), {
+        deviceIds,
+        from,
+        to,
+        view: 'report',
+      });
+      setHidden(hiddenCount);
       const keySet = new Set();
       const keyList = [];
       const formattedPositions = positions.map((position) => {
@@ -181,6 +190,7 @@ const ChartReportPage = () => {
               </FormControl>
             </div>
           </ReportFilter>
+          <PrivacyNote hidden={hidden} padded />
           {items.length > 0 && (
             <div className={classes.chart}>
               <ResponsiveContainer>

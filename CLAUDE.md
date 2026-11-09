@@ -34,11 +34,20 @@ The rules you will need most often:
   `makeStyles`, so anything that must not flip gets an inline `style` or `dir="ltr"`.
 - **Strings**: add every new string to both `src/resources/l10n/he.json` and `en.json`.
 
+## Continuing the review roadmap
+
+The work follows the review report's roadmap, item by item. Before starting, read
+**[docs/roadmap/PROGRESS.md](docs/roadmap/PROGRESS.md)** (what is done, what is next, what waits on the owner, how to
+test) and **[docs/roadmap/ITEMS.md](docs/roadmap/ITEMS.md)** (all 213 items with their status). Update both when an item
+is done.
+
 ## Workflow
 
 - `npm install`, then `npm start` (needs a Traccar server on :8082) or `npm run demo` (built-in mock server).
 - Before you commit, run `npm run lint`. It includes the brand color guard and must pass with zero warnings.
+- CI (`.github/workflows/ci.yml`: lint, unit tests, build, e2e and WCAG checks) runs on every pull request
+  into `main`, and the deploy only runs after it passes. Keep `npm test` and `npm run test:e2e` green.
 - Check visual changes in Hebrew/RTL, in light and dark mode, on desktop and mobile widths.
-- Do not run the `translation.yml` workflow. It force-pulls `he.json` from Transifex and drops the custom
-  strings.
+- Strings are maintained here, not in Transifex: the upstream `translation.yml` workflow (which force-pulled
+  `he.json` and dropped the custom strings) was removed. Don't bring it back.
 - To deploy, run `sh deploy/deploy.sh` (see README).

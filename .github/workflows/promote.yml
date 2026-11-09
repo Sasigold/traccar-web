@@ -1,0 +1,124 @@
+name: Promote to production
+
+# FND-04: production is deployed by hand, from the branch or tag chosen in "Run workflow"
+# (normally main, after checking it on staging). CI runs again on that exact commit; then the UI is
+# built for production, uploaded to the Traccar container, new migrations are applied (with a
+# database backup first) and the edge functions are deployed.
+#
+# The deploy job runs in the "production" GitHub Environment: add required reviewers there
+# (Settings > Environments > production) so every promotion is approved.
+#
+# The production fleet database below is public by design (the anon key is RLS-restricted);
+# repository variables PRODUCTION_FLEET_URL / PRODUCTION_FLEET_ANON_KEY override it. Once a
+# staging stack runs on the same server, set PRODUCTION_DB_CONTAINER and
+# PRODUCTION_RUNTIME_CONTAINER: the scripts refuse to guess between two containers.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "production" to deploy this commit to production'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Confirmation
+      # Through the environment, never pasted into the script.
+      env:
+        CONFIRM: ${{ inputs.confirm }}
+      run: |
+        if [ "$CONFIRM" != "production" ]; then
+          echo 'Type "production" to confirm.'; exit 1
+        fi
+
+  ci:
+    needs: check
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+        cache-dependency-path: package-lock.json
+    - run: npm ci
+    - run: npm run build
+      env:
+        VITE_FLEET_URL: ${{ vars.PRODUCTION_FLEET_URL || 'https://viper-fleet-api.srv2122641.hstgr.cloud' }}
+        VITE_FLEET_ANON_KEY: ${{ vars.PRODUCTION_FLEET_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzkzODAyMjQ4LCJleHAiOjE5NTE0ODIyNDh9.2VsAyl2IFUy3QarPwReLOwcKhSthi62FZIyxs5YyrxU' }}
+    - uses: actions/upload-artifact@v7
+      with:
+        name: web-build-production
+        path: build
+        retention-days: 30
+
+  deploy:
+    # No npm here: third-party packages never run next to the server key.
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      DEPLOY_HOST: root@72.61.153.60
+      DEPLOY_DIR: /docker/traccar-ovjj/web
+      SITE_URL: https://traccar-ovjj.srv2122641.hstgr.cloud
+      FLEET_URL: ${{ vars.PRODUCTION_FLEET_URL || 'https://viper-fleet-api.srv2122641.hstgr.cloud' }}
+      DB_CONTAINER: ${{ vars.PRODUCTION_DB_CONTAINER }}
+      RUNTIME_CONTAINER: ${{ vars.PRODUCTION_RUNTIME_CONTAINER }}
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/download-artifact@v7
+      with:
+        name: web-build-production
+        path: build
+
+    - name: Configure SSH
+      env:
+        SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      run: |
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        # Pinned host key of the VPS (ssh-keyscan -t ed25519 72.61.153.60)
+        echo '72.61.153.60 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID5SogCUGVSqGkOEvyAJz8/h8e5bvMed6JOhA3oE23R9' >> ~/.ssh/known_hosts
+
+    - name: Upload to VPS (retries on connection problems)
+      run: |
+        for attempt in 1 2 3 4; do
+          if SKIP_BUILD=1 sh deploy/deploy.sh; then exit 0; fi
+          echo "Upload attempt $attempt failed, retrying in 30s..."
+          sleep 30
+        done
+        echo "Upload failed after 4 attempts"; exit 1
+
+    - name: Apply database migrations
+      # After the upload, so a failed migration never blocks the UI: without
+      # it the admin area shows what is missing instead of breaking.
+      run: sh deploy/migrate.sh
+
+    - name: Deploy edge functions
+      run: sh deploy/functions.sh
+
+    - name: Verify the release is served and its scripts load
+      # On failure: sh deploy/deploy.sh rollback (the previous release is kept on the server).
+      run: |
+        sleep 3
+        release=$(sed -n 's/.*"release": *"\([^"]*\)".*/\1/p' build/version.json)
+        sh deploy/smoke.sh "$SITE_URL" "$release"
+
+    - name: Remove the key
+      if: always()
+      run: rm -f ~/.ssh/id_ed25519

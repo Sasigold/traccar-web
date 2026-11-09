@@ -179,7 +179,7 @@ export const createFleet = (now = Date.now()) => {
       out1: false,
       tripOdometer: 18_400 + step * 12,
       drivingTime: 4_200_000 + step * 5000,
-      driverUniqueId: 'D-1024',
+      driverUniqueId: '1B2C3D4E',
       iccid: '8997201234567890123',
       versionFw: '3.7.12',
       vin: '4V4NC9EH5GN123456',
@@ -221,11 +221,14 @@ export const createFleet = (now = Date.now()) => {
         attributes: {
           batteryLevel: 95 - index * 15,
           fuel: 45 - index * 7,
-          ignition: moving,
+          // The third vehicle keeps its engine running at stops, so the demo shows idling.
+          ignition: moving || index === 2,
           motion: moving,
           power: moving ? 14.2 : 12.6,
           totalDistance: (12000 + index * 8000) * 1000,
           ...(index === 1 && { dtcs: 'P0171,P0420' }),
+          // A driver identified by tag, so the card can show and call them.
+          ...(index === 0 && { driverUniqueId: '0A1B2C3D' }),
           ...(device.id === testDeviceId && testAttributes(step, speed, moving)),
         },
       };
@@ -238,6 +241,14 @@ export const createFleet = (now = Date.now()) => {
     for (let timestamp = from; timestamp <= tick; timestamp += interval) {
       positions = sample(timestamp);
       history.push(...positions);
+      // Traccar keeps motionState / motionTime on the device: when the current state began.
+      positions.forEach((position, index) => {
+        const device = devices[index];
+        if (device.motionState !== position.attributes.motion) {
+          device.motionState = position.attributes.motion;
+          device.motionTime = position.fixTime;
+        }
+      });
     }
     lastTick = tick;
     history = history.filter((position) => Date.parse(position.fixTime) >= tick - retention);

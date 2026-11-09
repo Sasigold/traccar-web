@@ -1,4 +1,8 @@
 import { useMemo } from 'react';
+import ViewTimelineRoundedIcon from '@mui/icons-material/ViewTimelineRounded';
+import DonutLargeRoundedIcon from '@mui/icons-material/DonutLargeRounded';
+import PaidRoundedIcon from '@mui/icons-material/PaidRounded';
+import MonitorHeartRoundedIcon from '@mui/icons-material/MonitorHeartRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
@@ -12,7 +16,13 @@ import ArticleRoundedIcon from '@mui/icons-material/ArticleRounded';
 import EventRepeatRoundedIcon from '@mui/icons-material/EventRepeatRounded';
 import BarChartRoundedIcon from '@mui/icons-material/BarChartRounded';
 import VerifiedUserRoundedIcon from '@mui/icons-material/VerifiedUserRounded';
+import HealthAndSafetyRoundedIcon from '@mui/icons-material/HealthAndSafetyRounded';
+import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
+import LocalGasStationRoundedIcon from '@mui/icons-material/LocalGasStationRounded';
+import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
+import BuildRoundedIcon from '@mui/icons-material/BuildRounded';
 import { useAdministrator, useRestriction } from '../../common/util/permissions';
+import { useFleetPermission } from '../../common/fleet/useFleet';
 
 const singleDevicePaths = ['/reports/chart', '/reports/route', '/replay'];
 
@@ -40,42 +50,47 @@ export const buildReportLink = (path, search) => {
 
 const exact = (path) => (pathname) => pathname === path;
 
+// Reports by the question they answer (REP-02), with the fleet database's own reports (safety,
+// costs, visits, validity) next to Traccar's.
 export const useReportsSections = () => {
   const admin = useAdministrator();
   const readonly = useRestriction('readonly');
+  const fleetSafety = useFleetPermission('safety.read');
+  const fleetCosts = useFleetPermission('costs.read');
+  const fleetPoi = useFleetPermission('poi.read');
 
   return useMemo(
     () =>
       [
         {
-          id: 'reports',
-          titleKey: 'reportTitle',
+          id: 'activity',
+          titleKey: 'reportsGroupActivity',
           items: [
             {
-              id: 'combined',
-              descriptionKey: 'reportCombinedDescription',
-              titleKey: 'reportCombined',
-              icon: StarRoundedIcon,
-              path: '/reports/combined',
-              match: exact('/reports/combined'),
+              id: 'timeline',
+              descriptionKey: 'reportTimelineDescription',
+              titleKey: 'reportTimeline',
+              icon: ViewTimelineRoundedIcon,
+              path: '/reports/timeline',
+              match: exact('/reports/timeline'),
               carry: true,
             },
             {
-              id: 'events',
-              descriptionKey: 'reportEventsDescription',
-              titleKey: 'reportEvents',
-              icon: NotificationsActiveRoundedIcon,
-              path: '/reports/events',
-              match: exact('/reports/events'),
+              id: 'usage',
+              descriptionKey: 'reportUsageDescription',
+              titleKey: 'reportUsage',
+              icon: DonutLargeRoundedIcon,
+              path: '/reports/usage',
+              match: exact('/reports/usage'),
               carry: true,
             },
             {
-              id: 'geofences',
-              descriptionKey: 'reportGeofencesDescription',
-              titleKey: 'sharedGeofences',
-              icon: PlaceRoundedIcon,
-              path: '/reports/geofences',
-              match: exact('/reports/geofences'),
+              id: 'summary',
+              descriptionKey: 'reportSummaryDescription',
+              titleKey: 'reportSummary',
+              icon: ListAltRoundedIcon,
+              path: '/reports/summary',
+              match: exact('/reports/summary'),
               carry: true,
             },
             {
@@ -97,12 +112,12 @@ export const useReportsSections = () => {
               carry: true,
             },
             {
-              id: 'summary',
-              descriptionKey: 'reportSummaryDescription',
-              titleKey: 'reportSummary',
-              icon: ListAltRoundedIcon,
-              path: '/reports/summary',
-              match: exact('/reports/summary'),
+              id: 'combined',
+              descriptionKey: 'reportCombinedDescription',
+              titleKey: 'reportCombined',
+              icon: StarRoundedIcon,
+              path: '/reports/combined',
+              match: exact('/reports/combined'),
               carry: true,
             },
             {
@@ -112,6 +127,45 @@ export const useReportsSections = () => {
               icon: ShowChartRoundedIcon,
               path: '/reports/chart',
               match: exact('/reports/chart'),
+              carry: true,
+            },
+          ],
+        },
+        {
+          id: 'behavior',
+          titleKey: 'reportsGroupBehavior',
+          items: [
+            {
+              id: 'events',
+              descriptionKey: 'reportEventsDescription',
+              titleKey: 'reportEvents',
+              icon: NotificationsActiveRoundedIcon,
+              path: '/reports/events',
+              match: exact('/reports/events'),
+              carry: true,
+            },
+            {
+              id: 'safety',
+              descriptionKey: 'fleetSafetyPageDescription',
+              titleKey: 'fleetSafetyPage',
+              icon: HealthAndSafetyRoundedIcon,
+              path: '/fleet/safety',
+              match: (pathname) => pathname === '/fleet/safety',
+              visible: fleetSafety,
+            },
+          ],
+        },
+        {
+          id: 'places',
+          titleKey: 'reportsGroupPlaces',
+          items: [
+            {
+              id: 'geofences',
+              descriptionKey: 'reportGeofencesDescription',
+              titleKey: 'sharedGeofences',
+              icon: PlaceRoundedIcon,
+              path: '/reports/geofences',
+              match: exact('/reports/geofences'),
               carry: true,
             },
             {
@@ -132,6 +186,58 @@ export const useReportsSections = () => {
               match: exact('/reports/route'),
               carry: true,
             },
+            {
+              id: 'visits',
+              descriptionKey: 'fleetPoiPageDescription',
+              titleKey: 'fleetPoiPage',
+              icon: StorefrontRoundedIcon,
+              path: '/fleet/poi',
+              match: (pathname) => pathname.startsWith('/fleet/poi'),
+              visible: fleetPoi,
+            },
+          ],
+        },
+        {
+          id: 'costs',
+          titleKey: 'reportsGroupCosts',
+          items: [
+            {
+              id: 'costPerKm',
+              descriptionKey: 'reportCostPerKmDescription',
+              titleKey: 'reportCostPerKm',
+              icon: PaidRoundedIcon,
+              path: '/reports/cost-per-km',
+              match: exact('/reports/cost-per-km'),
+              carry: true,
+              visible: fleetCosts,
+            },
+            {
+              id: 'costs',
+              descriptionKey: 'fleetCostsPageDescription',
+              titleKey: 'fleetCostsPage',
+              icon: LocalGasStationRoundedIcon,
+              path: '/fleet/costs',
+              match: (pathname) => pathname.startsWith('/fleet/costs'),
+              visible: fleetCosts,
+            },
+            {
+              id: 'expiries',
+              descriptionKey: 'fleetExpiriesPageDescription',
+              titleKey: 'fleetExpiriesPage',
+              icon: EventAvailableRoundedIcon,
+              path: '/fleet/expiries',
+              match: (pathname) => pathname.startsWith('/fleet/expiries'),
+              visible: true,
+            },
+            {
+              id: 'maintenance',
+              descriptionKey: 'settingsMaintenanceDescription',
+              titleKey: 'sharedMaintenance',
+              icon: BuildRoundedIcon,
+              path: '/settings/maintenances',
+              match: (pathname) => pathname.startsWith('/settings/maintenances'),
+              visible: !readonly,
+            },
           ],
         },
         {
@@ -139,12 +245,13 @@ export const useReportsSections = () => {
           titleKey: 'reportsGroupTools',
           items: [
             {
-              id: 'logs',
-              descriptionKey: 'reportLogsDescription',
-              titleKey: 'sharedLogs',
-              icon: ArticleRoundedIcon,
-              path: '/reports/logs',
-              match: exact('/reports/logs'),
+              id: 'deviceHealth',
+              descriptionKey: 'reportDeviceHealthDescription',
+              titleKey: 'reportDeviceHealth',
+              icon: MonitorHeartRoundedIcon,
+              path: '/reports/device-health',
+              match: exact('/reports/device-health'),
+              carry: true,
             },
             {
               id: 'scheduled',
@@ -154,6 +261,14 @@ export const useReportsSections = () => {
               path: '/reports/scheduled',
               match: exact('/reports/scheduled'),
               visible: !readonly,
+            },
+            {
+              id: 'logs',
+              descriptionKey: 'reportLogsDescription',
+              titleKey: 'sharedLogs',
+              icon: ArticleRoundedIcon,
+              path: '/reports/logs',
+              match: exact('/reports/logs'),
             },
             {
               id: 'statistics',
@@ -179,7 +294,7 @@ export const useReportsSections = () => {
       ]
         .map((group) => ({ ...group, items: group.items.filter((item) => item.visible !== false) }))
         .filter((group) => group.items.length > 0),
-    [admin, readonly],
+    [admin, readonly, fleetSafety, fleetCosts, fleetPoi],
   );
 };
 

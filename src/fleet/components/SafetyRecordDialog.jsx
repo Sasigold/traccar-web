@@ -19,6 +19,7 @@ import { getFleetClient, unwrap } from '../../common/fleet/client';
 import { useFleetProfile } from '../../common/fleet/useFleet';
 import { ensureDriver, uploadFleetFile } from '../fleetData';
 import { DateField } from '../../common/components/pickers';
+import { DEFAULT_OFFICER_RULES, addMonths } from '../../common/fleet/safetyOfficer';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -30,15 +31,22 @@ const useStyles = makeStyles()((theme) => ({
 }));
 
 const today = () => new Date().toISOString().slice(0, 10);
-const addMonths = (date, months) => {
-  const value = new Date(`${date}T00:00:00`);
-  value.setMonth(value.getMonth() + months);
-  return value.toISOString().slice(0, 10);
-};
 
-// Training, license check or safety review for one driver (roadmap 4.1 / 4.7).
-// kind: training | check | review
-const SafetyRecordDialog = ({ kind, driver: initialDriver, onClose, onSaved }) => {
+// Training, license check or safety review for one driver (roadmap 4.1 / 4.7, ISR-04).
+// kind: training | check | review. `reviewKind` and `incidentId` preset a review (the officer's
+// work plan opens a quarterly meeting or an accident investigation); `incidents` lists the
+// accidents an investigation can belong to; `checkMonths` is the interval to the next licence
+// check for this driver.
+const SafetyRecordDialog = ({
+  kind,
+  driver: initialDriver,
+  reviewKind = 'conversation',
+  incidentId = '',
+  incidents = [],
+  checkMonths = DEFAULT_OFFICER_RULES.licenseCheckMonthsProfessional,
+  onClose,
+  onSaved,
+}) => {
   const { classes } = useStyles();
   const t = useTranslation();
   const profile = useFleetProfile();
@@ -53,8 +61,9 @@ const SafetyRecordDialog = ({ kind, driver: initialDriver, onClose, onSaved }) =
     license_valid: true,
     findings: '',
     recommendation: '',
-    review_kind: 'conversation',
-    summary: '',
+    review_kind: reviewKind,
+    incident_id: incidentId,
+    summary: reviewKind === 'investigation' ? t('safetyInvestigationTemplate') : '',
     decisions: '',
     follow_up_at: '',
   }));
@@ -62,6 +71,19 @@ const SafetyRecordDialog = ({ kind, driver: initialDriver, onClose, onSaved }) =
   const [saving, setSaving] = useState(false);
 
   const set = (key) => (event) => setForm({ ...form, [key]: event.target.value });
+
+  // An investigation starts from the template questions.
+  const setReviewKind = (event) => {
+    const value = event.target.value;
+    setForm((current) => ({
+      ...current,
+      review_kind: value,
+      summary:
+        value === 'investigation' && !current.summary.trim()
+          ? t('safetyInvestigationTemplate')
+          : current.summary,
+    }));
+  };
   const nullable = (value) => (value === '' ? null : value);
 
   const save = useCatch(async () => {
@@ -92,7 +114,8 @@ const SafetyRecordDialog = ({ kind, driver: initialDriver, onClose, onSaved }) =
             license_valid: form.license_valid,
             findings: nullable(form.findings.trim()),
             recommendation: nullable(form.recommendation.trim()),
-            next_check_at: addMonths(form.date, 6),
+            next_check_at: addMonths(form.date, checkMonths),
+            document_path: file ? await uploadFleetFile(profile.org_id, 'safety', file) : null,
             checked_by: profile.id,
           }),
         );
@@ -101,6 +124,7 @@ const SafetyRecordDialog = ({ kind, driver: initialDriver, onClose, onSaved }) =
           await client.from('safety_reviews').insert({
             ...base,
             kind: form.review_kind,
+            incident_id: form.review_kind === 'investigation' ? form.incident_id || null : null,
             held_at: form.date,
             summary: nullable(form.summary.trim()),
             decisions: nullable(form.decisions.trim()),
@@ -196,6 +220,12 @@ const SafetyRecordDialog = ({ kind, driver: initialDriver, onClose, onSaved }) =
                 multiline
                 minRows={2}
               />
+              <FileInput
+                placeholder={t('safetyCheckDocument')}
+                value={file}
+                onChange={setFile}
+                slotProps={{ htmlInput: { accept: 'application/pdf,image/*' } }}
+              />
             </>
           )}
           {kind === 'review' && (
@@ -204,7 +234,7 @@ const SafetyRecordDialog = ({ kind, driver: initialDriver, onClose, onSaved }) =
                 select
                 label={t('sharedType')}
                 value={form.review_kind}
-                onChange={set('review_kind')}
+                onChange={setReviewKind}
               >
                 {['conversation', 'investigation', 'periodic'].map((value) => (
                   <MenuItem key={value} value={value}>
@@ -212,12 +242,27 @@ const SafetyRecordDialog = ({ kind, driver: initialDriver, onClose, onSaved }) =
                   </MenuItem>
                 ))}
               </TextField>
+              {form.review_kind === 'investigation' && incidents.length > 0 && (
+                <TextField
+                  select
+                  label={t('safetyInvestigationIncident')}
+                  value={form.incident_id}
+                  onChange={set('incident_id')}
+                >
+                  <MenuItem value="">&nbsp;</MenuItem>
+                  {incidents.map((incident) => (
+                    <MenuItem key={incident.id} value={incident.id}>
+                      {incident.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
               <TextField
                 label={t('fleetReviewSummary')}
                 value={form.summary}
                 onChange={set('summary')}
                 multiline
-                minRows={3}
+                minRows={form.review_kind === 'investigation' ? 8 : 3}
               />
               <TextField
                 label={t('fleetReviewDecisions')}

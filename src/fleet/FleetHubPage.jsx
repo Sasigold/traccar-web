@@ -1,13 +1,14 @@
-import { useMemo } from 'react';
+import { Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import SettingsMenu from '../settings/components/SettingsMenu';
 import SettingsCard from '../settings/components/SettingsCard';
-import { useSettingsSections } from '../settings/components/settingsSections';
+import { useFleetSections } from '../settings/components/settingsSections';
 import ExpiryTiles from './components/ExpiryTiles';
 import FleetSyncCard from './components/FleetSyncCard';
 import FleetKpis from './components/FleetKpis';
+import FleetSetupCard from './components/FleetSetupCard';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -22,6 +23,9 @@ const useStyles = makeStyles()((theme) => ({
       padding: theme.spacing(2, 2, 4),
     },
   },
+  heading: {
+    marginBottom: theme.spacing(1),
+  },
   grid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
@@ -29,29 +33,11 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const fleetItems = [
-  'expiries',
-  'fleetAlerts',
-  'devices',
-  'drivers',
-  'maintenance',
-  'fleetDocuments',
-  'dispatch',
-  'poi',
-  'equipment',
-  'sensors',
-];
-
-// Top-level "Fleet" destination: vehicles, drivers, maintenance and validity in one place.
+// Top-level "Fleet" destination: the fleet menu's groups as cards (ADM-02).
 const FleetHubPage = () => {
   const { classes } = useStyles();
   const t = useTranslation();
-  const sections = useSettingsSections();
-
-  const items = useMemo(() => {
-    const fleet = sections.find((section) => section.id === 'fleet');
-    return fleetItems.map((id) => fleet?.items.find((item) => item.id === id)).filter(Boolean);
-  }, [sections]);
+  const sections = useFleetSections();
 
   return (
     <PageLayout
@@ -60,19 +46,33 @@ const FleetHubPage = () => {
       description={t('fleetHubDescription')}
     >
       <div className={classes.root}>
+        <FleetSetupCard />
         <ExpiryTiles />
         <FleetKpis />
-        <div className={classes.grid}>
-          {items.map((item) => (
-            <SettingsCard
-              key={item.id}
-              icon={item.icon}
-              title={t(item.titleKey)}
-              description={t(item.descriptionKey)}
-              to={item.path}
-            />
-          ))}
-        </div>
+        {sections.map((section) => (
+          <section key={section.id} aria-labelledby={`fleet-hub-${section.id}`}>
+            <Typography
+              variant="subtitle2"
+              color="textSecondary"
+              component="h2"
+              id={`fleet-hub-${section.id}`}
+              className={classes.heading}
+            >
+              {t(section.titleKey)}
+            </Typography>
+            <div className={classes.grid}>
+              {section.items.map((item) => (
+                <SettingsCard
+                  key={item.id}
+                  icon={item.icon}
+                  title={t(item.titleKey)}
+                  description={t(item.descriptionKey)}
+                  to={item.path}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
         <FleetSyncCard />
       </div>
     </PageLayout>

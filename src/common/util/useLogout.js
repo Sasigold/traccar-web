@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { sessionActions } from '../../store';
 import { nativePostMessage } from '../components/NativeInterface';
+import { clearFleetSession } from '../fleet/session';
 
 export default () => {
   const navigate = useNavigate();
@@ -33,9 +34,16 @@ export default () => {
       }
     }
 
+    clearFleetSession();
     await fetch('api/session', { method: 'DELETE' });
     nativePostMessage('logout');
-    navigate('/login');
     dispatch(sessionActions.updateUser(null));
+    // A full reload drops everything the previous user loaded (devices, positions, events, the
+    // dashboard cache), so the next person on a shared PC starts clean.
+    if (typeof window !== 'undefined' && window.location?.replace) {
+      window.location.replace(new URL('login', document.baseURI).href);
+    } else {
+      navigate('/login');
+    }
   }, [user, navigate, dispatch]);
 };

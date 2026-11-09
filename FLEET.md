@@ -15,8 +15,11 @@ login (Traccar administrators become fleet `admin`, the very first user becomes 
 
 ## Code map
 
-- `src/common/fleet/config.js` - URL, anon key (public, RLS-restricted), bucket name. Override with
-  `VITE_FLEET_URL` / `VITE_FLEET_ANON_KEY`; an empty `VITE_FLEET_URL` disables the integration.
+- `src/common/fleet/config.js` - URL, anon key (public, RLS-restricted), bucket name, from
+  `VITE_FLEET_URL` / `VITE_FLEET_ANON_KEY` at build time. There is no default (FND-04): without them the
+  fleet features are off, production and staging builds refuse to start, and staging refuses the
+  production database. An empty `VITE_FLEET_URL` disables the integration on purpose. Environments,
+  staging and promotion: `deploy/STAGING.md`.
 - `src/common/fleet/session.js` - token bridge + localStorage cache (`fleetSession`).
 - `src/common/fleet/client.js` - the shared `supabase-js` client (`getFleetClient()`), `unwrap()` helper.
 - `src/common/fleet/useFleet.js` - hooks: `useFleetReady`, `useFleetPermission(key)`, `useFleetProfile`,
@@ -25,6 +28,65 @@ login (Traccar administrators become fleet `admin`, the very first user becomes 
 - `src/settings/components/FleetDocumentsSection.jsx` - documents card on the device and driver pages.
 - `src/settings/FleetDocumentsPage.jsx` - `/settings/fleet-documents`, all documents by expiry.
 - `src/settings/components/FleetRoleSection.jsx` - fleet role + permissions card on the user page.
+
+## Vehicle card
+
+`/fleet/vehicle/:id` (Traccar device id; from the vehicle list, the map card's menu and the palette) shows one
+vehicle at a glance (`src/fleet/VehiclePage.jsx`): the plate, live state and the assigned driver; tiles for
+this month's distance (Traccar summary report), this month's cost (`vehicle_monthly_costs`), open work orders,
+the next maintenance (Traccar maintenance plan) and the nearest validity date; and tabs for overview,
+maintenance (plan and work orders), damage, checks, costs by month, documents and change history. The live
+location follows the privacy rules. Editing stays in the vehicle form (`/settings/device/:id`). The tile rules
+are in `src/common/fleet/vehicle360.js` (unit-tested).
+
+"New vehicle" (`/fleet/vehicle/new`, from the vehicle list, the map toolbar, the palette, the empty map and
+the setup card) is a wizard that saves as it goes (`src/fleet/VehicleWizardPage.jsx`): the device (then a live
+"waiting for the first report…" that turns into the time of the first report), vehicle details with the
+government registry, validity dates and scans, the regular driver (linked in Traccar and assigned in the fleet
+database), and a maintenance plan from templates counted from today's odometer. Each vehicle gets its own
+Traccar maintenance records, named with the vehicle, because the start of a maintenance belongs to the record.
+The summary shows what was done or skipped and opens the vehicle card. The operator's device setup in
+`/admin` stays separate (SIM, customer, sensors).
+
+## Driver area
+
+A driver (fleet role `driver`) starts in the driver area, once per session, and it is their first tab. The
+area fills in the driver and the vehicle assigned to them now (`src/fleet/useDriverContext.js`) and never asks
+for them:
+
+- `/driver/check` is the morning check (`InspectionPage` in driver mode): large buttons, no vehicle or driver
+  pickers, and a confirmation card with the time when it is sent. Drivers read the check templates with
+  `inspections.write` (`supabase/migrations/20261110170000_driver_area.sql`; before it they could not).
+- `/driver/damage` is a damage report in three steps that starts with the camera: photos, what happened (large
+  type cards, "is anyone hurt?" with the emergency numbers, time and place filled in) and the other party
+  (photos of their licence and insurance certificate). None of the manager's fields (fault, cost, claim). The
+  report is created once; sending again after a failed upload only adds the photos.
+- One main action per screen: the next thing the driver should do.
+
+## Where things are (fleet area and settings)
+
+The fleet area has its own menu, grouped by the work people do (`useFleetSections` in
+`src/settings/components/settingsSections.js`): operations (dispatch, work orders, checks, damage,
+maintenance plan), vehicles and drivers (`/fleet/vehicles`, `/fleet/drivers`, equipment, sensors, points of
+interest), validity and alerts (one subject with shared tabs: validity dates, validity alerts, documents),
+costs, and safety (driver safety, the safety officer's plan). Any fleet page, and the vehicle and driver
+forms under `/settings/device` and `/settings/driver`, show this menu and "Fleet" in the breadcrumbs.
+
+Settings keep configuration: account, fleet configuration (groups, geofences, calendars), administration
+(users, fleet users, API and webhooks, employee privacy, server, announcement, protocols for administrators
+only) and an "Advanced (for technicians)" group, folded by default (saved commands, computed attributes). The
+old `/settings/devices` and `/settings/drivers` addresses redirect, keeping their query.
+
+## Setting up a new account
+
+Owners, admins and managers see a "Set up your fleet" card on `/fleet` and `/dashboard`
+(`src/fleet/components/FleetSetupCard.jsx`) until every step is done or they close it (per organization, in
+the browser). The steps, in order, are computed from the data (`src/common/fleet/fleetSetup.js`): vehicle
+and device, drivers, assignment, users (more than the owner), alert recipients, a morning check template and
+a maintenance plan; steps the user may not do are left out. Only the next step has the main action
+(outlined on the dashboard, which has its own). With no vehicles yet, the map's empty list says what the
+person can do: a viewer waits for the installation, the operator opens the vehicle setup wizard, a manager
+adds the first vehicle.
 
 ## Data model (server side)
 
@@ -117,6 +179,8 @@ registry and billing.
 | `/admin/users` | Every user with its customer and role; assign to a customer, log in as, disable / enable |
 | `/admin/billing` | Bills with filters and Excel export; monthly generation for all active subscriptions; draft → issued → paid / cancelled |
 | `/admin/plans` | Price lists (per device per month, base fee, setup fee, cycle) |
+| `/admin/invoicing` | The provider of official tax documents (Morning), production or sandbox, its API key (to Vault) and the card payment page |
+| `/admin/api` | Public API limits per organization (INT-01) |
 
 **Ownership.** Assigning a device to a customer writes `device_registry.customer_id` and links the device
 (`api/permissions`) to every Traccar user of that customer, removing the links of the previous customer's
@@ -138,6 +202,42 @@ devices) × (1 − discount). Quarterly and yearly cycles bill calendar quarters
 requests for internal tracking, not tax invoices. Totals and VAT (default 18%) are recomputed by the
 database from the lines, and a customer can be billed only once per period (cancelled bills excepted).
 
+**Official tax documents (BIZ-01).** Since 2026 an invoice over the threshold (10,000 ₪ from January,
+5,000 ₪ from June, before VAT) needs an allocation number from the Tax Authority, or the customer cannot
+deduct its VAT. The bills stay payment requests; the official documents come from an authorized provider,
+today Morning (Green Invoice). No direct connection to the Tax Authority is built.
+- *What a bill gets.* In the bill dialog: a tax invoice (305) for an open bill, or an invoice-receipt (320)
+  for a paid one; a receipt (400) linked to the tax invoice once it is paid; or a card payment page
+  (Cardcom through Morning) for an open bill, after which Morning issues the invoice-receipt and the bill
+  is marked paid. The bill links to the provider's copy, which carries the allocation number when the
+  Morning account is connected to the Tax Authority. Cheques are recorded at the provider by hand (the
+  provider needs bank details the bill does not keep).
+- *How.* The `billing-documents` edge function (`supabase/functions/billing-documents/`: `core.js` routes,
+  `documents.js` builds the provider's requests, `morning.js` is the API client, checked against Morning's
+  public Postman collection and JSON schema). Only platform administrators may call it (their fleet JWT is
+  checked with `is_platform_admin()`). Before calling the provider it claims the bill in the database
+  (`billing_document_claim`), so a double click or two administrators never make two tax documents; a claim
+  left "working" is released by hand after checking the provider. A definite refusal (a 4xx answer, or a failure before
+  the document was sent) frees the bill; an unknown outcome (no answer, a 5xx, no document id) keeps it locked with
+  `unknown_outcome` in `official_error`, so a retry can never issue a second tax document. After issuing it reads the document back
+  and flags a total that differs from the bill's by even one agora.
+- *The payment notification* (`/notify`) is not signed by the provider, so it must carry the bill's random
+  token, and the document it names is read back from Morning and must be an invoice-receipt for the bill's
+  total and customer.
+- *Locks* (migration `20261112100000_billing_documents.sql`, tests in `billing_documents.test.sql`): only
+  the service role writes the official fields; once a tax invoice exists the bill's customer, dates, VAT and
+  lines cannot change and it cannot be deleted. Corrections are a credit invoice at the provider. Notes,
+  payment and status still change.
+- *Keys.* The Morning API key id and secret go to Vault (`billing_set_secret`, platform administrators
+  only) and are never read back; `billing_provider_status()` says whether they are set.
+- *Deploy.* `sh deploy/migrate.sh`, then `sh deploy/functions.sh`. For card payments set
+  `BILLING_DOCUMENTS_URL` (the function's public https address) on the functions container. Try the sandbox
+  first. Morning is moving its API sign-in to OAuth; the function uses the API-key token (`/account/token`)
+  that its published collection documents, so check it against the current Morning documentation before
+  going live.
+- *Not yet.* iCount and Rivhit (the provider is one row, ready for another adapter), credit invoices from
+  here, and a clearing company other than Morning's.
+
 **Database.** `supabase/migrations/20261104120000_super_admin.sql` adds `customers`, `customer_users`,
 `device_registry`, `device_assignment_history`, `billing_plans`, `billing_subscriptions`,
 `billing_invoices`, `billing_invoice_lines`, the views `billing_invoices_view` and
@@ -146,13 +246,47 @@ database from the lines, and a customer can be billed only once per period (canc
 `20261104130000_super_admin_permissions.sql` registers those keys in the permission catalog that
 `role_permissions.permission` references (found through the foreign key) and then grants them. Both are
 idempotent. The deploy workflow applies every file in `supabase/migrations/` once
-(`deploy/migrate.sh`: finds the `supabase/postgres` container over SSH, records applied files in
-`vf_meta.ui_migrations`, reloads the PostgREST schema). To run it by hand: `sh deploy/migrate.sh`.
+(`deploy/migrate.sh`: finds the `supabase/postgres` container over SSH, takes a full `pg_dump -Fc`
+backup into `/root/vf-backups/` (last 10 kept) before the first pending file, records applied files in
+`vf_meta.ui_migrations`, reloads the PostgREST schema). The deploy job only runs after CI passes and
+uses the `production` GitHub Environment, so required reviewers there approve every production
+migration. To run it by hand: `sh deploy/migrate.sh`. `vf_meta.ui_migrations` is the source of truth
+for what is applied.
 After the first run press "Reconnect" in the admin area (or log in again) so the new permissions reach
 the session.
 
 Without the migration, or with the fleet database disabled, the device, sensor and user pages still work;
 the customer and billing parts show why they are unavailable.
+
+## Security model and database tests
+
+- **Platform administrators.** Customers, the device registry and billing have no `org_id`; only users in
+  `public.platform_admins` hold `customers.*` / `billing.*`, whatever their organization role or overrides
+  say (`has_permission()` answers those keys with `is_platform_admin()`,
+  `20261109120000_security_hardening.sql`). The migration seeds the active owners and admins that are not
+  users of a customer. To add someone (as an existing platform admin, or as `postgres`):
+  `insert into public.platform_admins (user_id) select id from public.profiles where traccar_user_id = <id>;`
+  Nobody can remove themselves.
+- **Drivers** reach incident parties, claims, photos and checklist answers only through incidents and
+  inspections they may see. They upload files but never replace or delete them.
+- **Tests.** `supabase/tests/run.sh` applies every migration to a fresh Postgres on top of
+  `supabase/tests/base_standin.sql` (a stand-in for the VPS-only base schema) and runs
+  `supabase/tests/*.test.sql`. CI runs it on every pull request. Locally:
+  `PGHOST=... PGPORT=... PGUSER=postgres sh supabase/tests/run.sh`.
+
+## Backups and the backend in git
+
+- **Nightly backups** run on the VPS with `deploy/backup.sh` (install steps at the top of the file): the fleet
+  database (`pg_dump -Fc` plus roles), the fleet storage files, the Traccar database or data folder and
+  `traccar.xml`, kept 14 days, and copied off the server when `OFFSITE` names an rclone remote.
+  Restore the fleet database:
+  `docker exec -i <db> pg_restore -U postgres -d postgres --clean --if-exists < fleet.dump`.
+  Practise a restore into a scratch container once a quarter.
+- **Before every migration** `deploy/migrate.sh` also dumps the database into `/root/vf-backups/`.
+- **Backend source.** `deploy/snapshot-backend.sh` copies the base schema, the base migrations and the
+  `traccar-auth` edge function from the VPS into `supabase/base/` and `supabase/functions/`; run it from a
+  machine with SSH access, check that no secret was copied, and commit. Until that is done the token bridge
+  and the base tables exist only on the VPS disk.
 
 ## Roadmap stage 0: fleet details in Traccar attributes
 
@@ -194,6 +328,132 @@ recipients; nothing is sent until a sender with provider keys exists.
   vehicle / driver and type, so a renewed document doesn't leave an expired one behind.
 - **Copy to the database** (card on `/fleet`, needs `vehicles.write` or `drivers.write`) copies every card
   with stage 0 details; it only fills values, never clears what the database already has.
+
+## Sending alerts (WhatsApp, SMS, email)
+
+`supabase/migrations/20261110130000_messaging.sql`. Expiry alerts (and later other kinds) are queued in
+`notification_deliveries` for every active recipient; every minute `messaging_dispatch()` sends what is due
+through pg_net and `messaging_collect()` reads the answers.
+
+- **Set up** in Service management → Sending channels (`/admin/messaging`, platform admins): the provider,
+  the sender and the key of each channel, then a test message. Keys go to Supabase Vault
+  (`messaging_<channel>`) through `messaging_set_secret` and are never readable through the API.
+  - WhatsApp: Meta WhatsApp Business Platform. Sender = the phone number id; key = a permanent access
+    token; template = an approved Hebrew **utility** template whose body has one parameter (`{{1}}`) that
+    receives the message text, e.g. "תזכורת מ-viper fleet: {{1}}".
+  - SMS: Vonage (key `api_key:api_secret`, sender = name or number).
+  - Email: Resend (key = API key, sender = `viper fleet <alerts@your-domain>`; the domain must be verified).
+  - Any channel can instead post JSON (`channel`, `to`, `subject`, `text`, `kind`, `id`) to a webhook with a
+    bearer token, for another SMS gateway or an automation (Make, Zapier).
+- **Rules**: numbers are sent as international digits (0501234567 → 972501234567); opted-out addresses
+  (`messaging_optouts`) are skipped; a failure retries after 1, 2, 4 and 8 minutes and is marked failed after
+  5 attempts; each message keeps its status, the provider's message id and the last error (shown in the
+  delivery log on the expiry alerts page). Alerts are not marketing; `alert_recipients.marketing_consent`
+  is there for marketing messages, which need prior consent (Communications Law, section 30A).
+- **Not yet**: delivery and read receipts (provider webhooks), replies and two-way conversations with
+  drivers.
+
+## Government vehicle registry (data.gov.il)
+
+The Ministry of Transport's open registry (`private-and-commercial-vehicles`, no key, CORS open) is read
+straight from the browser (`src/common/fleet/govRegistry.js`; resource ids from `package_show`, the known
+ids as a fallback).
+
+- **Vehicle card**: "מילוי מהמאגר הממשלתי" next to the details looks the plate up and shows what would
+  change (make, model, year, VIN, fuel, ownership, test expiry) before filling the card. Nothing is saved
+  until the card is.
+- **Validity page**: "עדכון תוקף טסט מהמאגר" checks every vehicle with a plate and moves its test expiry
+  to the registry's `tokef_dt`, saved like a card save (Traccar, then the database).
+- **Every night** (`supabase/migrations/20261110120000_gov_registry_sync.sql`): at 01:30 UTC
+  `gov_registry_request()` asks the registry about every vehicle with a plate (pg_net, one request per
+  resource); at 02:00 UTC `gov_registry_apply()` applies the answers before the 04:00 document alerts. The
+  latest `vehicle_test` document takes the registry date: a document without a file has its date moved, a
+  scanned one is kept and a new one is added. `gov_registry_requests` records each lookup's outcome
+  (`updated`, `unchanged`, `not_found`, `error`) for 14 days. Without pg_net nothing is scheduled (the
+  migration says so) and the validity page button does the same job.
+
+## Traffic and parking tickets (transfer to the driver)
+
+A ticket on a company vehicle has to be transferred to the driver (or paid) by a deadline, usually 90 days
+from the notice; after it the company is charged an increased fine, usually four times the amount.
+`src/common/fleet/violations.js` holds the rules (`transferDeadline`, `violationUrgency`,
+`companyPenalty`, `violationsByDriver`, `transferLetter`), unit-tested.
+
+- **Ticket form** (`/fleet/safety` → "עבירות ודוחות", new or the pencil on a row): the receipt date fills
+  the deadline (+90 days, editable); a warning shows the date and the company fine while the ticket is open
+  or assigned; "who drove?" finds the driver from the track; "charge the driver" records a payroll
+  deduction or collection and its date.
+- **Countdown**: each open ticket shows the days left (warning from 14 days, red when overdue).
+- **Transfer letter**: "מכתב הסבה" opens a printable notice to the issuer with the driver's name, ID and
+  licence number from the driver's file, the plate and the company name, and a line for the driver to sign.
+  Missing details print as blank lines to fill in.
+- **Tickets by driver**: count, still open, fines, points and fines still to charge, per driver.
+
+Columns `received_at`, `charge_driver`, `charged_at` on `driver_violations`
+(`supabase/migrations/20261110140000_violation_transfer.sql`).
+
+## Employee location privacy
+
+Following the Privacy Protection Authority's guidance on employee location (no tracking outside working
+hours, notice in advance, explicit consent), Amendment 13 and the data security regulations (access log).
+The rules are pure functions in `src/common/fleet/privacy.js` (unit-tested); the tables are in
+`supabase/migrations/20261110150000_privacy.sql` (DB test `supabase/tests/privacy.test.sql`).
+
+- **Policy** (`/fleet/privacy`, permission `privacy.manage`, owners and admins by default): working days and
+  hours in the organization's time zone (a shift past midnight belongs to the day it starts), "hide
+  locations outside working hours", whether drivers may use the private switch, how long positions are kept
+  (recorded for the notice) and how long the view log is kept (two years by default, cleaned nightly by
+  `vf_privacy_cleanup`).
+- **Private mode**: the driver turns it on and off in the driver area (`privacy_private_set`, recorded with the
+  assigned vehicle and time); a manager can end a forgotten one (`privacy_private_end`). Periods change only
+  through these functions.
+- **What is hidden**: the live map, the vehicle card and list (the row says why), the dashboard map, dispatch
+  and POI maps, the command palette and the devices list drop the location of a vehicle that is private or
+  outside working hours now (`useLivePositions`, `useLivePosition`). Replay and the positions and chart
+  reports leave hidden positions out and say how many, with their distance; trips, stops and events keep
+  their times and distance but lose addresses and coordinates; geofence visits in hidden time are left out;
+  the combined report drops the route line of a vehicle whose period touches hidden time. Replay's KML
+  download (served by Traccar) is disabled when anything was hidden.
+- **Notice and consent**: notices are versions that are never edited (`privacy_notices`); drivers agree in the
+  driver area, and a manager records written consent (`privacy_consents`). The page counts who agreed to
+  the current version. The starting text is a template to fill in and review with a lawyer.
+- **View log**: selecting a vehicle on the live map, replay, every report with locations and exports call
+  `privacy_log_view` (vehicles, kind, period). The page shows the latest 200 views.
+
+What it does **not** do, and needs the server (SEC-12):
+
+- Traccar still stores every position, and its API returns them to any user with access. Deleting old
+  positions is `database.historyDays` in the Traccar configuration.
+- Scheduled reports emailed by Traccar and share links that already exist are not filtered.
+- When the fleet database is not reachable, nothing is hidden (Traccar alone has no privacy rules). Pages wait
+  up to 15 seconds for the fleet session before loading.
+
+## Safety officer (Transport Regulations 585)
+
+`/fleet/safety-officer` (from the safety page; `safety.read`, changes with `safety.write`) turns the duties
+into a work plan, computed in `src/common/fleet/safetyOfficer.js` (unit-tested) from the records already
+kept:
+
+- **Periodic review** with each professional driver (every 3 months by default). The officer marks
+  professional drivers on the page (`safety_set_professional`); the driver confirms the summary in the
+  driver area by typing their name (`safety_review_sign`, once). Unsigned reviews are flagged.
+- **Licence and traffic record check** (585א): every 6 months for professional drivers, 36 for the others
+  by default. The check can carry the PDF from the government driver-check service.
+- **Accident investigation** for every accident without one (14 days by default), opened with a template of
+  questions and linked to the incident.
+- **Tachograph downloads** (vehicle unit or driver card) with the file; each one is due again after 28 days
+  by default. Files are kept by the storage policy; decoding .DDD files is not part of this stage.
+- **Quarterly report to the owner**: a printable page (save as PDF) with what was done in the quarter, the
+  open tasks and signature lines.
+- **Procedures library** (`safety_procedures`, files under `<org>/procedures/`, readable by everyone in the
+  organization) shown to drivers in the driver area.
+- **Licensed garages**: vendors of type garage record their Ministry of Transport licence; a work order warns
+  when the garage is not licensed, not recorded or expired.
+
+The frequencies are `org_safety_settings.officer_rules` (the "Frequencies" dialog); they are defaults to check
+against the regulations' text. Migration `supabase/migrations/20261110160000_safety_officer.sql`, DB test
+`supabase/tests/safety_officer.test.sql`. Not yet: one external safety officer serving several organizations
+from a single login (needs a profile per organization and an organization switch).
 
 ## Roadmap stages 2-4
 
@@ -238,7 +498,7 @@ Each was checked against the database in a rolled-back transaction before commit
 ## Roadmap stage 5: expansions
 
 `supabase/migrations/20261106160000_fleet_stage5.sql` (idempotent; tested on a local Postgres with
-stand-ins for the earlier schema, **not yet applied** to the VPS database). Pure logic with unit tests:
+stand-ins for the earlier schema; applied to the VPS database by the deploy of 2026-11-06). Pure logic with unit tests:
 `src/common/fleet/dispatch.js`, `visits.js`, `sensors.js`, `integrations.js`.
 
 | Screen | What | Permission |
@@ -262,9 +522,28 @@ The `vf_send_webhooks` pg_cron job (every minute) posts them with `pg_net`, sign
 `X-ViperFleet-Signature: sha256=<HMAC-SHA256(body, secret)>`, and retries with exponential back-off up to
 5 attempts. Without the `pg_net` extension deliveries stay `queued`.
 
-**API keys.** `api_key_lookup(key)` (service role only) returns the organization and scopes of a valid
-key. The public API gateway that calls it (an edge function on the VPS, next to `traccar-auth`) is not in
-this repository yet; until it exists keys can be created and revoked but not used. The screen says so.
+**Public API (INT-01).** Read-only REST, version 1, for Power BI, Excel and other systems:
+`GET <fleet url>/functions/v1/public-api/v1/<resource>` with the key in `X-API-Key` (or
+`Authorization: Bearer`). Resources: vehicles, drivers, assignments, documents, work_orders, issues,
+inspections, incidents, fuel, expenses, monthly_costs, violations, dispatch_jobs. Pages of up to 1,000
+rows (`limit`, `cursor`, and `next` in the answer); `updated_since` for incremental refresh; every row has
+`changed_at`. `GET .../v1/openapi.json?lang=he|en` is the OpenAPI document, and `/fleet/integrations/api`
+explains it in the app, with a Power BI query that pages through a resource.
+- *Where the rules live.* The edge function (`supabase/functions/public-api/`: `core.js` routes and checks,
+  `index.ts` connects it to the database, `resources.js` is the one list of resources) decides nothing about
+  access. `api_authorize(key, scope)` checks the key and counts the request; `api_v1_rows(org, resource, …)`
+  returns one page filtered to the key's organization, without national ID numbers, storage paths or customer
+  tracking links. Both are callable only by the service role (migration `20261111100000_public_api.sql`,
+  tests in `supabase/tests/public_api.test.sql`).
+- *Rate limit.* Per organization, all keys together: `api_limits` (the package; platform administrators
+  set it on `/admin/api`, which reads `api_limits_overview()`; default 60 a minute and 20,000 a day); `api_usage` counts per key and minute, kept two days. Over
+  the limit is 429 with `Retry-After`; the `X-RateLimit-*` headers show what is left.
+- *Deploy.* `sh deploy/migrate.sh`, then `sh deploy/functions.sh` (copies the function next to
+  `traccar-auth`, restarts the edge runtime, checks `/v1`; `sh deploy/functions.sh rollback` puts the previous
+  copy back). Optional `PUBLIC_API_URL` on the functions container sets the address used in `next` links;
+  otherwise the `X-Forwarded-*` headers are used.
+- *Not yet.* Writes (the `write` scope is stored but no endpoint writes), Traccar data (positions and trips
+  need a Traccar service account kept in Vault), an OData feed, and the MCP server (AI-07) on the same tools.
 
 **Left out on purpose.**
 - *Per-customer branding (white label).* BRAND.md forbids changing, recoloring or replacing the viper fleet

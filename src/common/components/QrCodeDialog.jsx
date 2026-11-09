@@ -24,7 +24,12 @@ const QrCodeDialog = ({ open, onClose, value, children }) => {
             value={value}
             size={theme.dimensions.qrCodeSize}
             title={t('sharedQrCode')}
-            style={{ backgroundColor: 'white', padding: 16, maxWidth: '100%', height: 'auto' }}
+            style={{
+              backgroundColor: theme.palette.brand.white,
+              padding: 16,
+              maxWidth: '100%',
+              height: 'auto',
+            }}
           />
         </div>
 

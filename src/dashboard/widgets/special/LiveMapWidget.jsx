@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { useLivePositions } from '../../../common/fleet/usePrivacy';
 import MapView from '../../../map/core/MapView';
 import MapPositionMarkers from '../../../map/MapPositionMarkers';
 import MapDefaultCamera from '../../../map/main/MapDefaultCamera';
@@ -13,7 +14,7 @@ const LiveMapWidget = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { deviceIds } = useDashboardData();
-  const positions = useSelector((state) => state.session.positions);
+  const positions = useLivePositions();
   const scoped = useMemo(
     () => deviceIds.map((id) => positions[id]).filter(Boolean),
     [deviceIds, positions],

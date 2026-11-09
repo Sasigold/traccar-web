@@ -6,7 +6,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@mui/material';
 import DnsRoundedIcon from '@mui/icons-material/DnsRounded';
 import { useNavigate } from 'react-router-dom';
+import useVisiblePositions from '../common/fleet/usePrivacy';
+import { logPrivacyView } from '../common/fleet/privacyData';
 import DeviceList from './DeviceList';
+import { rememberDevice } from '../common/util/recentDevices';
 import StatusCard from '../common/components/StatusCard';
 import EmptyState from '../common/components/table/EmptyState';
 import { devicesActions } from '../store';
@@ -14,7 +17,7 @@ import usePersistedState from '../common/util/usePersistedState';
 import useFilter from './useFilter';
 import MainToolbar from './MainToolbar';
 import { useAttributePreference } from '../common/util/preferences';
-import { useDeviceReadonly, useRestriction } from '../common/util/permissions';
+import { useAdministrator, useDeviceReadonly, useRestriction } from '../common/util/permissions';
 import useFeatures from '../common/util/useFeatures';
 import { glass } from '../common/theme/surfaces';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -118,6 +121,7 @@ const MainPage = () => {
 
   const features = useFeatures();
   const deviceReadonly = useDeviceReadonly();
+  const administrator = useAdministrator();
 
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
   const readonly = useRestriction('readonly');
@@ -126,7 +130,9 @@ const MainPage = () => {
 
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
   const cardHidden = useSelector((state) => state.devices.cardHidden);
-  const positions = useSelector((state) => state.session.positions);
+  const livePositions = useSelector((state) => state.session.positions);
+  // Locations hidden by the privacy policy never reach the map or the card (ISR-03).
+  const { positions, hidden: hiddenPositions } = useVisiblePositions(livePositions);
   const devicesLoaded = useSelector((state) => state.devices.loaded);
   const deviceCount = useSelector((state) => Object.keys(state.devices.items).length);
   const [filteredPositions, setFilteredPositions] = useState([]);
@@ -138,6 +144,7 @@ const MainPage = () => {
 
   const [keyword, setKeyword] = useState('');
   const [filter, setFilter] = usePersistedState('deviceFilter', {
+    activities: [],
     statuses: [],
     groups: [],
     geofences: [],
@@ -152,6 +159,23 @@ const MainPage = () => {
       setDevicesOpen(false);
     }
   }, [desktop, mapOnSelect, selectedDeviceId]);
+
+  // A driver starts in the driver area (ADM-09), once per session; the map stays one tab away.
+  const driverRole = useSelector((state) => state.fleet.profile?.role === 'driver');
+  useEffect(() => {
+    if (driverRole && !sessionStorage.getItem('driverLanded')) {
+      sessionStorage.setItem('driverLanded', '1');
+      navigate('/driver', { replace: true });
+    }
+  }, [driverRole, navigate]);
+
+  useEffect(() => {
+    if (selectedDeviceId) {
+      rememberDevice(selectedDeviceId);
+      // Opening a vehicle shows where it is now: recorded in the view log (ISR-03).
+      logPrivacyView([selectedDeviceId], 'live');
+    }
+  }, [selectedDeviceId]);
 
   useFilter(
     keyword,
@@ -216,21 +240,31 @@ const MainPage = () => {
                   style={devicesOpen ? {} : { visibility: 'hidden' }}
                 >
                   {showEmpty ? (
+                    // Who is looking decides what an empty fleet says (ADM-01): a viewer waits
+                    // for the installation, the operator opens the setup wizard, a manager adds
+                    // the first vehicle.
                     <EmptyState
                       className={classes.empty}
                       icon={<DnsRoundedIcon />}
-                      title={t('deviceRegisterFirst')}
-                      description={t('settingsDevicesDescription')}
+                      title={t(deviceReadonly ? 'deviceEmptyReadonly' : 'deviceRegisterFirst')}
+                      description={t(
+                        deviceReadonly ? 'deviceEmptyReadonlyHelp' : 'deviceRegisterFirstHelp',
+                      )}
                       action={
                         !deviceReadonly && (
-                          <Button variant="contained" onClick={() => navigate('/settings/device')}>
-                            {t('shellAddDevice')}
+                          <Button
+                            variant="contained"
+                            onClick={() =>
+                              navigate(administrator ? '/admin/device' : '/fleet/vehicle/new')
+                            }
+                          >
+                            {t(administrator ? 'deviceSetupWizard' : 'shellAddDevice')}
                           </Button>
                         )
                       }
                     />
                   ) : (
-                    <DeviceList devices={filteredDevices} />
+                    <DeviceList devices={filteredDevices} keyword={keyword} />
                   )}
                 </div>
               )}
@@ -242,6 +276,7 @@ const MainPage = () => {
         <StatusCard
           deviceId={selectedDeviceId}
           position={selectedPosition}
+          privacy={hiddenPositions[selectedDeviceId]}
           onClose={() => dispatch(devicesActions.hideCard())}
           desktopPadding={panelOffset}
         />

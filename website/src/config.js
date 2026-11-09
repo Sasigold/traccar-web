@@ -2,9 +2,16 @@
 
 export const site = {
   // Where "כניסה למערכת" points: the viper fleet web app.
-  appUrl: '/',
-  // Demo requests from the contact form open an email to this address.
-  // TODO: set the real sales address.
+  appUrl: 'https://traccar-ovjj.srv2122641.hstgr.cloud/',
+  // Demo requests. The form tries, in this order:
+  //   leadEndpoint: an HTTPS URL that accepts a JSON POST and answers 2xx (a Supabase edge
+  //     function, Make / Zapier webhook or form service). This is the only channel that delivers
+  //     the lead without the visitor doing anything more.
+  //   whatsapp: a sales number (05X-XXXXXXX); the visitor's WhatsApp opens with the details.
+  //   contactEmail: opens the visitor's mail app (does nothing for webmail users).
+  // With none set the form says it can't send, instead of pretending it did.
+  leadEndpoint: '',
+  whatsapp: '',
   contactEmail: '',
   // Optional phone number shown in the contact section, e.g. '03-0000000'.
   phone: '',

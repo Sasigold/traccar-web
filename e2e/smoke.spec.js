@@ -76,3 +76,17 @@ test.describe('fleet', () => {
     await expect(page.getByRole('row', { name: /Oil service/ }).first()).toBeVisible();
   });
 });
+
+test.describe('Hebrew throughout', () => {
+  test('no English status words on the dashboard and telemetry', async ({ page, isMobile }) => {
+    await gotoReady(page, '/dashboard');
+    if (!isMobile) {
+      // Phones leave the sync time out of the dashboard bar.
+      await expect(page.getByText(/מסונכרן · \d\d:\d\d/).first()).toBeVisible();
+    }
+    await expect(page.getByText('SYNCED')).toHaveCount(0);
+    await gotoReady(page, '/telemetry/1');
+    await expect(page.getByText('בזמן אמת').first()).toBeVisible();
+    await expect(page.getByText('LIVE', { exact: true })).toHaveCount(0);
+  });
+});

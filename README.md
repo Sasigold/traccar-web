@@ -46,27 +46,34 @@ default language and full RTL.
 
 **Brand rules are binding:** read [BRAND.md](BRAND.md) before changing anything visual. The brand book
 and every source asset live in [`brand/`](brand/). `npm run lint` blocks raw colors outside the design
-tokens in `src/common/theme/tokens.js`. Deploy with `sh deploy/deploy.sh`,
-which builds and uploads `build/` into the Traccar container's web directory on the VPS
-(see `deploy/docker-compose.override.example.yml`).
+tokens in `src/common/theme/tokens.js`. Every push to `main` deploys to staging once it is set up;
+production is the "Promote to production" workflow, run by hand (`deploy/STAGING.md`). By hand,
+`sh deploy/deploy.sh` builds and uploads `build/` into the Traccar container's web directory on the VPS
+(see `deploy/docker-compose.override.example.yml`); the build needs `VITE_FLEET_URL` and
+`VITE_FLEET_ANON_KEY`, and `npm start` reads them from `.env.development.local` (see `.env.example`). Database changes go out with `sh deploy/migrate.sh`
+and the edge functions kept here (the public API) with `sh deploy/functions.sh`.
 
 A customizable **dashboard** (`/dashboard`, second item in the rail) lets every user build their own
 boards from live fleet state, period activity and fleet-database widgets, in any form (KPI, donut,
 pie, bars, columns, line, area, table), with a gapless drag-and-resize layout. See the "Dashboard"
 section in [FLEET.md](FLEET.md).
 
-Custom UI strings live in `src/resources/l10n/en.json` and `he.json`. Do not run the
-`translation.yml` workflow: it force-pulls `he.json` from Transifex and would drop them.
+Custom UI strings live in `src/resources/l10n/en.json` and `he.json` and are maintained in this repository.
+The upstream Transifex workflow was removed because it force-pulled `he.json` and dropped them.
 
-### נתוני דמו לשרת האמיתי
+### נתוני דמו לשרת הבדיקות
 
 `deploy/demo-data.mjs` יוצר בשרת Traccar צי דמו ישראלי: 12 רכבים (משאיות, ואנים, טנדר, אופנוע,
 אוטובוס ורכבי הנהלה), 4 קבוצות, 8 נהגים ו־6 אזורים גאוגרפיים. הוא ממלא כמה שעות של היסטוריה
 (לדוחות ולהפעלה חוזרת של מסלולים) ואז מזיז את הרכבים בזמן אמת על כבישים אמיתיים (מסלולים מ־OSRM).
 הסטטוסים מגוונים: רוב הרכבים בנסיעה, אחד חונה, אחד מנותק ואחד שמעולם לא דיווח.
 
+נתוני הדמו הולכים לשרת הבדיקות (staging), לא לייצור: רכבים מזויפים בייצור מעוותים את המדדים בניהול
+השירות, את "מכשירים בלי לקוח" ואת ספירת החיוב. הסקריפט מסרב לשרת הייצור אלא אם מוסיפים
+`--allow-production` (למשל כדי להריץ `clean` ולמחוק משם נתוני דמו ישנים). ראו `deploy/STAGING.md`.
+
 ```shell
-export TRACCAR_URL=http://72.61.153.60:8082   # כתובת הממשק
+export TRACCAR_URL=https://traccar-staging.example.com   # כתובת הממשק של שרת הבדיקות
 export TRACCAR_EMAIL=admin@example.com        # משתמש מנהל
 export TRACCAR_PASSWORD='...'
 

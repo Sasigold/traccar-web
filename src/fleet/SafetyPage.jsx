@@ -1,6 +1,6 @@
 import { useMemo, useReducer, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import {
   Alert,
   Button,
@@ -9,6 +9,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   Link,
   MenuItem,
   TableBody,
@@ -23,6 +24,8 @@ import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import HealthAndSafetyRoundedIcon from '@mui/icons-material/HealthAndSafetyRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
+import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedInRounded';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import DataTable from '../common/components/table/DataTable';
@@ -30,7 +33,7 @@ import TableToolbar from '../common/components/table/TableToolbar';
 import TableShimmer from '../common/components/TableShimmer';
 import SettingsMenu from '../settings/components/SettingsMenu';
 import { useAsyncTask, useCatch } from '../reactHelper';
-import { formatTime } from '../common/util/formatter';
+import { formatGrouped, formatTime } from '../common/util/formatter';
 import exportExcel from '../common/util/exportExcel';
 import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
@@ -40,13 +43,14 @@ import {
   drivingHours,
   scoreDrivers,
 } from '../common/fleet/safety';
-import { daysUntilDate, expiryStatus } from '../common/fleet/fleetFields';
 import FleetNotice from './components/FleetNotice';
 import ExpiryBadge from './components/ExpiryBadge';
 import ViolationDialog, { violationKey } from './components/ViolationDialog';
 import SafetyRecordDialog from './components/SafetyRecordDialog';
 import { money } from './fleetData';
 import { assignmentResolver, loadAssignments, loadDriving, loadSafetySettings } from './safetyData';
+import { formatDays } from '../common/util/plural';
+import { violationUrgency, violationsByDriver } from '../common/fleet/violations';
 
 const useStyles = makeStyles()((theme) => ({
   number: {
@@ -68,7 +72,8 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const views = ['scores', 'hours', 'compliance', 'violations'];
+const views = ['scores', 'hours', 'compliance', 'violations', 'byDriver'];
+const recordViews = ['compliance', 'violations', 'byDriver'];
 const periods = [7, 30, 90];
 const capital = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
 const scoreColor = (score) =>
@@ -154,13 +159,17 @@ const SafetyPage = () => {
   const devices = useSelector((state) => state.devices.items);
   const drivers = useSelector((state) => state.drivers.items);
 
-  const [view, setView] = useState('scores');
+  const [searchParams] = useSearchParams();
+  const [view, setView] = useState(() =>
+    views.includes(searchParams.get('view')) ? searchParams.get('view') : 'scores',
+  );
   const [days, setDays] = useState(30);
   const [reloadKey, reload] = useReducer((k) => k + 1, 0);
   const [settings, setSettings] = useState(null);
   const [driving, setDriving] = useState(null);
   const [records, setRecords] = useState(null);
   const [dialog, setDialog] = useState(null);
+  const [editing, setEditing] = useState(null);
 
   const driversById = useMemo(
     () => Object.fromEntries(Object.values(drivers).map((driver) => [driver.id, driver])),
@@ -197,7 +206,7 @@ const SafetyPage = () => {
   // Database records for compliance and violations.
   useAsyncTask(async () => {
     void reloadKey;
-    if (!canRead || (view !== 'compliance' && view !== 'violations')) {
+    if (!canRead || !recordViews.includes(view)) {
       return;
     }
     setRecords(null);
@@ -205,7 +214,9 @@ const SafetyPage = () => {
     const [violations, checks, trainings, driverRows] = await Promise.all([
       client
         .from('driver_violations')
-        .select('*, drivers(full_name, traccar_driver_id), vehicles(plate_number)')
+        .select(
+          '*, drivers(full_name, traccar_driver_id), vehicles(plate_number, traccar_device_id)',
+        )
         .order('occurred_at', { ascending: false })
         .limit(500),
       client
@@ -267,6 +278,33 @@ const SafetyPage = () => {
       );
   }, [records]);
 
+  const byDriver = useMemo(() => records && violationsByDriver(records.violations), [records]);
+
+  // Countdown to the day the driver must be named (or the ticket paid).
+  const deadlineChip = (row) => {
+    const { level, days } = violationUrgency(row);
+    if (level === 'done' || level === 'none') {
+      return null;
+    }
+    const label =
+      level === 'overdue'
+        ? `${t('fleetViolationOverdue')} ${formatDays(days, t)}`
+        : days === 0
+          ? t('fleetViolationDueToday')
+          : t('fleetViolationDaysLeft').replace('{0}', formatDays(days, t));
+    return (
+      <Tooltip title={`${t('fleetViolationDue')} ${formatTime(row.due_at, 'date')}`}>
+        <Chip
+          size="small"
+          color={level === 'overdue' ? 'error' : level === 'soon' ? 'warning' : 'default'}
+          variant={level === 'ok' ? 'outlined' : 'filled'}
+          sx={{ mx: 0.5 }}
+          label={label}
+        />
+      </Tooltip>
+    );
+  };
+
   const driverName = (uniqueId) => drivers[uniqueId]?.name || uniqueId;
   const driverLink = (uniqueId) =>
     drivers[uniqueId] && `/fleet/driver-file/${drivers[uniqueId].id}`;
@@ -295,6 +333,18 @@ const SafetyPage = () => {
         [t('fleetViolationFine')]: row.fine_amount == null ? '' : Number(row.fine_amount),
         [t('fleetViolationPoints')]: row.points ?? '',
         [t('deviceStatus')]: t(violationKey('Status', row.status)),
+        [t('fleetViolationReceived')]: row.received_at ? formatTime(row.received_at, 'date') : '',
+        [t('fleetViolationDue')]: row.due_at ? formatTime(row.due_at, 'date') : '',
+        [t('fleetViolationChargeDriver')]: row.charge_driver ? t('sharedYes') : t('sharedNo'),
+      }));
+    } else if (view === 'byDriver') {
+      data = byDriver.map((row) => ({
+        [t('sharedDriver')]: row.name || t('fleetViolationNoDriver'),
+        [t('fleetViolationCount')]: row.count,
+        [t('fleetViolationOpen')]: row.open,
+        [t('fleetViolationFine')]: row.fines,
+        [t('fleetViolationPoints')]: row.points,
+        [t('fleetViolationToCharge')]: row.toCharge,
       }));
     }
     const sheets = new Map();
@@ -326,11 +376,19 @@ const SafetyPage = () => {
         >
           {periods.map((value) => (
             <MenuItem key={value} value={value}>
-              {t('fleetSafetyDays').replace('{0}', String(value))}
+              {formatDays(value, t)}
             </MenuItem>
           ))}
         </TextField>
       )}
+      <Button
+        size="small"
+        startIcon={<AssignmentTurnedInRoundedIcon />}
+        component={RouterLink}
+        to="/fleet/safety-officer"
+      >
+        {t('safetyOfficerPage')}
+      </Button>
       {canWrite && settings && (
         <Button size="small" startIcon={<TuneRoundedIcon />} onClick={() => setDialog('settings')}>
           {t('fleetSafetySettings')}
@@ -354,7 +412,7 @@ const SafetyPage = () => {
     </>
   );
 
-  const rows = { scores, hours, compliance, violations: records?.violations }[view];
+  const rows = { scores, hours, compliance, violations: records?.violations, byDriver }[view];
 
   return (
     <PageLayout
@@ -408,7 +466,7 @@ const SafetyPage = () => {
                       label={row.score ?? t('fleetSafetyTooLittle')}
                     />
                   </TableCell>
-                  <TableCell className={classes.number}>{row.km.toLocaleString()}</TableCell>
+                  <TableCell className={classes.number}>{formatGrouped(row.km, 0)}</TableCell>
                   <TableCell>
                     {Object.entries(row.counts)
                       .map(
@@ -522,12 +580,18 @@ const SafetyPage = () => {
                 <TableCell>{t('fleetViolationFine')}</TableCell>
                 <TableCell>{t('fleetViolationPoints')}</TableCell>
                 <TableCell>{t('deviceStatus')}</TableCell>
+                {canWrite && <TableCell padding="checkbox" />}
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows == null && canRead && <TableShimmer columns={7} />}
+              {rows == null && canRead && <TableShimmer columns={canWrite ? 8 : 7} />}
               {records?.violations.map((row) => (
-                <TableRow key={row.id} hover>
+                <TableRow
+                  key={row.id}
+                  hover
+                  onClick={canWrite ? () => setEditing(row) : undefined}
+                  sx={canWrite ? { cursor: 'pointer' } : undefined}
+                >
                   <TableCell className={classes.number}>
                     {formatTime(row.occurred_at, 'minutes')}
                   </TableCell>
@@ -540,21 +604,66 @@ const SafetyPage = () => {
                   <TableCell className={classes.number}>{row.points ?? ''}</TableCell>
                   <TableCell>
                     {t(violationKey('Status', row.status))}
-                    {row.due_at &&
-                      expiryStatus(row.due_at) !== 'valid' &&
-                      !['paid', 'closed'].includes(row.status) && (
-                        <Chip
-                          size="small"
-                          color="error"
-                          variant="outlined"
-                          sx={{ mx: 0.5 }}
-                          label={
-                            daysUntilDate(row.due_at) < 0
-                              ? t('fleetViolationOverdue')
-                              : formatTime(row.due_at, 'date')
-                          }
-                        />
-                      )}
+                    {deadlineChip(row)}
+                    {row.charge_driver && !row.charged_at && (
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        sx={{ mx: 0.5 }}
+                        label={t('fleetViolationToCharge')}
+                      />
+                    )}
+                  </TableCell>
+                  {canWrite && (
+                    <TableCell padding="checkbox">
+                      <IconButton
+                        size="small"
+                        aria-label={t('fleetViolationEdit')}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setEditing(row);
+                        }}
+                      >
+                        <EditRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </>
+        )}
+        {view === 'byDriver' && (
+          <>
+            <TableHead>
+              <TableRow>
+                <TableCell>{t('sharedDriver')}</TableCell>
+                <TableCell>{t('fleetViolationCount')}</TableCell>
+                <TableCell>{t('fleetViolationOpen')}</TableCell>
+                <TableCell>{t('fleetViolationFine')}</TableCell>
+                <TableCell>{t('fleetViolationPoints')}</TableCell>
+                <TableCell>{t('fleetViolationToCharge')}</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {rows == null && canRead && <TableShimmer columns={6} />}
+              {byDriver?.map((row) => (
+                <TableRow key={row.driverId || 'unknown'} hover>
+                  <TableCell>
+                    {row.traccarDriverId != null ? (
+                      <Link component={RouterLink} to={`/fleet/driver-file/${row.traccarDriverId}`}>
+                        {row.name}
+                      </Link>
+                    ) : (
+                      row.name || t('fleetViolationNoDriver')
+                    )}
+                  </TableCell>
+                  <TableCell className={classes.number}>{row.count}</TableCell>
+                  <TableCell className={classes.number}>{row.open}</TableCell>
+                  <TableCell className={classes.number}>{money(row.fines)}</TableCell>
+                  <TableCell className={classes.number}>{row.points}</TableCell>
+                  <TableCell className={classes.number}>
+                    {row.toCharge ? money(row.toCharge) : '—'}
                   </TableCell>
                 </TableRow>
               ))}
@@ -572,11 +681,17 @@ const SafetyPage = () => {
           }}
         />
       )}
-      {dialog === 'violation' && (
+      {(dialog === 'violation' || editing) && (
         <ViolationDialog
-          onClose={() => setDialog(null)}
+          key={editing?.id || 'new'}
+          violation={editing}
+          onClose={() => {
+            setDialog(null);
+            setEditing(null);
+          }}
           onSaved={() => {
             setDialog(null);
+            setEditing(null);
             reload();
           }}
         />

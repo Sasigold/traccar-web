@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { fleetConfig } from './config';
-import { getFleetAccessToken } from './session';
+import { getFreshFleetAccessToken } from './session';
+import { ApiError } from '../util/apiError';
 
 let client = null;
 
@@ -10,16 +11,24 @@ export const getFleetClient = () => {
   if (!client) {
     client = createClient(fleetConfig.url, fleetConfig.anonKey, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-      accessToken: async () => getFleetAccessToken(),
+      accessToken: getFreshFleetAccessToken,
     });
   }
   return client;
 };
 
-// Supabase errors carry the useful text in `message`; make them throwable.
-export const unwrap = ({ data, error }) => {
+// Supabase errors carry the code (42501 row security, 23505 duplicate) and the text; throw them
+// as ApiError so the user reads what happened in their language.
+export const unwrap = ({ data, error, status }) => {
   if (error) {
-    throw new Error(error.message || String(error));
+    const message = error.message || String(error);
+    throw new ApiError({
+      status: status || undefined,
+      kind: !status && /failed to fetch|network/i.test(message) ? 'network' : undefined,
+      code: error.code ? String(error.code) : undefined,
+      endpoint: 'fleet',
+      detail: [message, error.details, error.hint].filter(Boolean).join('\n'),
+    });
   }
   return data;
 };

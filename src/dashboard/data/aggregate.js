@@ -9,9 +9,9 @@ import { bucketStart } from './periods';
 export const OTHER = '__other';
 const MAX_SERIES = 4;
 
-const numbers = (rows, value) =>
+const numbers = (rows, value, ctx) =>
   rows
-    .map(value)
+    .map((row) => value(row, ctx))
     .filter((item) => item != null && !Number.isNaN(Number(item)))
     .map(Number);
 
@@ -21,17 +21,17 @@ export const reduceMeasure = (rows, measure, ctx = {}) => {
     case 'count':
       return list.length;
     case 'sum':
-      return numbers(list, measure.value).reduce((total, value) => total + value, 0);
+      return numbers(list, measure.value, ctx).reduce((total, value) => total + value, 0);
     case 'max': {
-      const values = numbers(list, measure.value);
+      const values = numbers(list, measure.value, ctx);
       return values.length ? Math.max(...values) : null;
     }
     case 'min': {
-      const values = numbers(list, measure.value);
+      const values = numbers(list, measure.value, ctx);
       return values.length ? Math.min(...values) : null;
     }
     case 'avg': {
-      const values = numbers(list, measure.value);
+      const values = numbers(list, measure.value, ctx);
       return values.length
         ? values.reduce((total, value) => total + value, 0) / values.length
         : null;
@@ -51,6 +51,28 @@ export const reduceMeasure = (rows, measure, ctx = {}) => {
     }
     case 'distinct':
       return new Set(list.map(measure.value)).size;
+    // Σ numerator / Σ denominator × scale, over rows that have both (REP-06): fuel per 100 km,
+    // idle share. Dividing the sums keeps long trips from counting like short ones.
+    case 'quotient': {
+      let numerator = 0;
+      let denominator = 0;
+      list.forEach((row) => {
+        const top = measure.numerator(row, ctx);
+        const bottom = measure.denominator(row, ctx);
+        if (top == null || bottom == null) {
+          return;
+        }
+        const n = Number(top);
+        const d = Number(bottom);
+        if (Number.isFinite(n) && Number.isFinite(d) && d > 0) {
+          numerator += n;
+          denominator += d;
+        }
+      });
+      return denominator ? (numerator / denominator) * (measure.scale ?? 1) : null;
+    }
+    case 'custom':
+      return measure.reduce(list, ctx);
     case 'ratio':
       return rows.length ? (100 * list.length) / rows.length : null;
     default:

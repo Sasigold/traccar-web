@@ -2,10 +2,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, IconButton, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import { keyframes } from 'tss-react';
 import { alpha } from '@mui/material/styles';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
+import { useLivePosition } from '../common/fleet/usePrivacy';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageHeader from '../common/components/shell/PageHeader';
 import BrandLoader from '../common/components/brand/BrandLoader';
@@ -14,11 +14,6 @@ import { useVehicleSettings } from '../common/components/telemetry/VehicleSettin
 import { formatStatus, formatTime } from '../common/util/formatter';
 import { statusColor } from '../common/theme/surfaces';
 import { devicesActions } from '../store';
-
-const pulse = keyframes`
-  0% { transform: scale(1); opacity: 0.6; }
-  70%, 100% { transform: scale(2.6); opacity: 0; }
-`;
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -65,7 +60,7 @@ const useStyles = makeStyles()((theme) => ({
     border: `1px solid ${alpha(theme.palette.geometry.main, 0.4)}`,
     fontSize: '0.75rem',
     fontWeight: 700,
-    letterSpacing: '0.06em',
+    letterSpacing: theme.direction === 'rtl' ? 0 : '0.06em',
     color: theme.palette.text.primary,
   },
   liveDot: {
@@ -74,14 +69,6 @@ const useStyles = makeStyles()((theme) => ({
     height: 8,
     borderRadius: '50%',
     backgroundColor: theme.palette.success.main,
-    '&::after': {
-      content: '""',
-      position: 'absolute',
-      inset: 0,
-      borderRadius: '50%',
-      backgroundColor: 'inherit',
-      animation: `${pulse} 1.6s ${theme.tokens.motion.easing.standard} infinite`,
-    },
   },
   empty: {
     padding: theme.spacing(6, 2),
@@ -97,7 +84,7 @@ const TelemetryPage = () => {
   const { deviceId } = useParams();
 
   const device = useSelector((state) => state.devices.items[deviceId]);
-  const position = useSelector((state) => state.session.positions[deviceId]);
+  const position = useLivePosition(deviceId);
   const devicesLoaded = useSelector((state) => Object.keys(state.devices.items).length > 0);
   const settings = useVehicleSettings(device, position);
   const phone = useMediaQuery(theme.breakpoints.down('sm'));
@@ -136,7 +123,7 @@ const TelemetryPage = () => {
               {device.status === 'online' && (
                 <span className={classes.live} dir="ltr">
                   <span className={classes.liveDot} />
-                  LIVE
+                  {t('mapLive')}
                 </span>
               )}
               {settings.canEdit &&

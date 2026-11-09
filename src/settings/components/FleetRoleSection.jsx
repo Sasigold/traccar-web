@@ -42,7 +42,9 @@ const rolePermissions = async (role) => {
 };
 
 // Shows (and lets managers change) the Viper Fleet role of a Traccar user.
-const FleetRoleSection = ({ traccarUserId }) => {
+// onRoleApplied(role) lets the surrounding user form take over the Traccar flags the role sets,
+// so its own Save doesn't write the old flags back.
+const FleetRoleSection = ({ traccarUserId, onRoleApplied }) => {
   const { classes } = useStyles();
   const t = useTranslation();
 
@@ -82,6 +84,7 @@ const FleetRoleSection = ({ traccarUserId }) => {
     const role = event.target.value;
     const updated = await applyRole({ ...profile, traccar_user_id: traccarUserId }, role);
     setProfile({ ...profile, role: updated.role });
+    onRoleApplied?.(updated.role);
     setPermissions(await rolePermissions(updated.role));
   });
 

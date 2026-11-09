@@ -6,6 +6,9 @@ const { reducer, actions } = createSlice({
     server: null,
     user: null,
     socket: null,
+    // Time of the last socket message (ms), and of the next reconnect attempt while disconnected.
+    lastMessageAt: null,
+    reconnectAt: null,
     includeLogs: false,
     logs: [],
     positions: {},
@@ -20,6 +23,15 @@ const { reducer, actions } = createSlice({
     },
     updateSocket(state, action) {
       state.socket = action.payload;
+      if (action.payload) {
+        state.reconnectAt = null;
+      }
+    },
+    updateLastMessage(state, action) {
+      state.lastMessageAt = action.payload;
+    },
+    updateReconnectAt(state, action) {
+      state.reconnectAt = action.payload;
     },
     enableLogs(state, action) {
       state.includeLogs = action.payload;
@@ -31,12 +43,15 @@ const { reducer, actions } = createSlice({
       state.logs.push(...action.payload);
     },
     updatePositions(state, action) {
-      const liveRoutes =
-        state.user.attributes.mapLiveRoutes || state.server.attributes.mapLiveRoutes || 'none';
+      // Positions can still arrive (socket, throttle flush) right after logout.
+      if (!state.user) {
+        return;
+      }
+      const userAttributes = state.user.attributes || {};
+      const serverAttributes = state.server?.attributes || {};
+      const liveRoutes = userAttributes.mapLiveRoutes || serverAttributes.mapLiveRoutes || 'none';
       const liveRoutesLimit =
-        state.user.attributes['web.liveRouteLength'] ||
-        state.server.attributes['web.liveRouteLength'] ||
-        10;
+        userAttributes['web.liveRouteLength'] || serverAttributes['web.liveRouteLength'] || 10;
       action.payload.forEach((position) => {
         state.positions[position.deviceId] = position;
         if (liveRoutes !== 'none') {

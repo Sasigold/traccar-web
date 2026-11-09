@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import VpnLockIcon from '@mui/icons-material/VpnLock';
+import VpnLockIcon from '@mui/icons-material/VpnLockRounded';
 import { makeStyles } from 'tss-react/mui';
 import { alpha } from '@mui/material/styles';
 import { glass } from '../common/theme/surfaces';

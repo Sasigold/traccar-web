@@ -53,10 +53,12 @@ export default (server, darkMode) => {
       hover: aqua[600],
       contrastText: brandColors.ink,
     },
-    success: { main: colors.success },
-    warning: { main: colors.warning },
-    error: { main: colors.error },
-    info: { main: colors.info },
+    // Text on status fills must pass 4.5:1 (WCAG 1.4.3). Amber only reaches ~3.5:1 with
+    // white, so warning always takes ink; in dark mode every (light) status fill takes ink.
+    success: { main: colors.success, contrastText: darkMode ? brandColors.ink : brandColors.white },
+    warning: { main: colors.warning, contrastText: brandColors.ink },
+    error: { main: colors.error, contrastText: darkMode ? brandColors.ink : brandColors.white },
+    info: { main: colors.info, contrastText: darkMode ? brandColors.ink : brandColors.white },
     text: {
       primary: surface.textPrimary,
       secondary: surface.textSecondary,
@@ -66,6 +68,8 @@ export default (server, darkMode) => {
     neutral: {
       main: colors.neutral,
     },
+    // Keyboard focus: a darker aqua that reaches 4.8:1 on white in light mode, full aqua on dark.
+    focus: darkMode ? brandColors.aqua : aqua[800],
     geometry: {
       main: darkMode ? mapColors.geometryDark : mapColors.geometryLight,
     },

@@ -3,12 +3,13 @@ import { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useTheme, alpha } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import StraightenIcon from '@mui/icons-material/Straighten';
+import StraightenIcon from '@mui/icons-material/StraightenRounded';
 import { map } from '../core/MapView';
 import { findFonts, toMapCoordinates } from '../core/mapUtil';
 import { useAttributePreference } from '../../common/util/preferences';
 import { formatDistance } from '../../common/util/formatter';
 import { useTranslation } from '../../common/components/LocalizationProvider';
+import { haloColor } from '../core/lineCasing';
 
 const useStyles = makeStyles()((theme) => ({
   button: {
@@ -75,7 +76,7 @@ const MapRuler = ({ positions, onActiveChange }) => {
         'text-anchor': 'bottom',
         'text-offset': [0, -0.8],
       },
-      paint: { 'text-halo-color': 'white', 'text-halo-width': 1 },
+      paint: { 'text-halo-color': haloColor(theme), 'text-halo-width': 1 },
     });
 
     const snap = (lngLat, pixel) => {

@@ -19,7 +19,7 @@ const fleetSettingsPaths = [
   '/settings/accumulators',
 ];
 
-const isFleetPath = (pathname) =>
+export const isFleetPath = (pathname) =>
   pathname.startsWith('/fleet') || fleetSettingsPaths.some((path) => pathname.startsWith(path));
 
 // Primary destinations shown in the navigation rail and the mobile tabs.
@@ -29,86 +29,86 @@ export default () => {
   const admin = useAdministrator();
   // Fleet role "driver" gets the driver portal (roadmap 4.6) instead of the fleet screens.
   const driverRole = useSelector((state) => state.fleet.profile?.role === 'driver');
-  const selectedDeviceId = useSelector((state) => state.devices.selectedId);
-  const devices = useSelector((state) => state.devices.items);
+  const temporary = useSelector((state) => Boolean(state.session.user?.temporary));
 
   return useMemo(() => {
-    const deviceIds = Object.keys(devices);
-    let reportsPath = '/reports/combined';
-    const id = selectedDeviceId ?? (deviceIds.length === 1 ? deviceIds[0] : null);
-    if (id != null) {
-      reportsPath = `/reports/combined?deviceId=${id}`;
-    }
-    return [
-      {
-        key: 'map',
-        titleKey: 'mapTitle',
-        icon: MapRoundedIcon,
-        path: '/',
-        match: (pathname) => pathname === '/',
-      },
-      {
-        key: 'dashboard',
-        titleKey: 'dashboardTitle',
-        icon: SpaceDashboardRoundedIcon,
-        path: '/dashboard',
-        match: (pathname) => pathname.startsWith('/dashboard'),
-        hidden: driverRole,
-        // The phone tab bar is full; on phones the dashboard opens from the menu.
-        mobileHidden: true,
-      },
-      {
-        key: 'reports',
-        titleKey: 'reportTitle',
-        icon: InsightsRoundedIcon,
-        path: reportsPath,
-        match: (pathname) => pathname.startsWith('/reports') || pathname.startsWith('/replay'),
-        hidden: disableReports,
-      },
-      {
-        key: 'geofences',
-        titleKey: 'sharedGeofences',
-        icon: HexagonRoundedIcon,
-        path: '/geofences',
-        match: (pathname) =>
-          pathname.startsWith('/geofences') || pathname.startsWith('/settings/geofence'),
-        hidden: readonly,
-        mobileHidden: true,
-      },
-      {
-        key: 'fleet',
-        titleKey: 'fleetTitle',
-        icon: LocalShippingRoundedIcon,
-        path: '/fleet',
-        match: isFleetPath,
-        hidden: readonly || driverRole,
-      },
-      {
-        key: 'driver',
-        titleKey: 'fleetDriverPortal',
-        icon: BadgeRoundedIcon,
-        path: '/driver',
-        match: (pathname) => pathname.startsWith('/driver'),
-        hidden: !driverRole,
-      },
-      {
-        key: 'settings',
-        titleKey: 'settingsTitle',
-        icon: SettingsRoundedIcon,
-        path: '/settings',
-        match: (pathname) =>
-          pathname.startsWith('/settings') &&
-          !pathname.startsWith('/settings/geofence') &&
-          !isFleetPath(pathname),
-      },
-      {
-        key: 'admin',
-        titleKey: 'adminTitle',
-        icon: AdminPanelSettingsRoundedIcon,
-        path: '/admin',
-        match: (pathname) => pathname.startsWith('/admin'),
-        hidden: !admin,
-      },
-    ].filter((item) => !item.hidden);
-  }, [readonly, disableReports, admin, driverRole, selectedDeviceId, devices]);
+    // The reports page (REP-02); a report opened from it takes the selected vehicle along.
+    const reportsPath = '/reports';
+    return (
+      [
+        {
+          key: 'map',
+          titleKey: 'mapTitle',
+          icon: MapRoundedIcon,
+          path: '/',
+          match: (pathname) => pathname === '/',
+        },
+        {
+          key: 'dashboard',
+          titleKey: 'dashboardTitle',
+          icon: SpaceDashboardRoundedIcon,
+          path: '/dashboard',
+          match: (pathname) => pathname.startsWith('/dashboard'),
+          hidden: driverRole,
+          // The phone tab bar is full; on phones the dashboard opens from the menu.
+          mobileHidden: true,
+        },
+        {
+          key: 'reports',
+          titleKey: 'reportTitle',
+          icon: InsightsRoundedIcon,
+          path: reportsPath,
+          match: (pathname) => pathname.startsWith('/reports') || pathname.startsWith('/replay'),
+          hidden: disableReports,
+        },
+        {
+          key: 'geofences',
+          titleKey: 'sharedGeofences',
+          icon: HexagonRoundedIcon,
+          path: '/geofences',
+          match: (pathname) =>
+            pathname.startsWith('/geofences') || pathname.startsWith('/settings/geofence'),
+          hidden: readonly,
+          mobileHidden: true,
+        },
+        {
+          key: 'fleet',
+          titleKey: 'fleetTitle',
+          icon: LocalShippingRoundedIcon,
+          path: '/fleet',
+          match: isFleetPath,
+          hidden: readonly || driverRole,
+        },
+        {
+          key: 'driver',
+          titleKey: 'fleetDriverPortal',
+          icon: BadgeRoundedIcon,
+          path: '/driver',
+          match: (pathname) => pathname.startsWith('/driver'),
+          hidden: !driverRole,
+        },
+        {
+          key: 'settings',
+          titleKey: 'settingsTitle',
+          icon: SettingsRoundedIcon,
+          path: '/settings',
+          match: (pathname) =>
+            pathname.startsWith('/settings') &&
+            !pathname.startsWith('/settings/geofence') &&
+            !isFleetPath(pathname),
+        },
+        {
+          key: 'admin',
+          titleKey: 'adminTitle',
+          icon: AdminPanelSettingsRoundedIcon,
+          path: '/admin',
+          match: (pathname) => pathname.startsWith('/admin'),
+          hidden: !admin,
+        },
+      ]
+        .filter((item) => !item.hidden && (!temporary || item.key === 'map'))
+        // A driver's first tab is their area (ADM-09).
+        .sort((a, b) => (driverRole ? (b.key === 'driver') - (a.key === 'driver') : 0))
+    );
+  }, [readonly, disableReports, admin, driverRole, temporary]);
 };

@@ -35,6 +35,7 @@ import {
   toIsoDate,
 } from '../billing';
 import { deleteInvoice, loadInvoiceLines, saveInvoice, setInvoiceStatus } from '../adminApi';
+import OfficialDocumentPanel from './OfficialDocumentPanel';
 import { DateField } from '../../common/components/pickers';
 
 const useStyles = makeStyles()((theme) => ({
@@ -129,6 +130,12 @@ const InvoiceDialog = ({ initial, customers, readonly, onClose, onSaved }) => {
     payment_reference: '',
   }));
   const [busy, setBusy] = useState(false);
+  // An official document was made from this dialog: the list reloads when it closes.
+  const [changed, setChanged] = useState(false);
+  const close = () => (changed ? onSaved(null) : onClose());
+  // A bill with an official tax document is corrected at the provider (credit invoice), not here.
+  const official = Boolean(invoice.official_id || invoice.official_state === 'working');
+  const receipted = Boolean(invoice.receipt_id || invoice.official_type === 320);
 
   useAsyncTask(async () => {
     if (initial.invoice.id) {
@@ -171,7 +178,7 @@ const InvoiceDialog = ({ initial, customers, readonly, onClose, onSaved }) => {
     setLines(lines.map((line, i) => (i === index ? { ...line, ...changes } : line)));
 
   return (
-    <Dialog open onClose={onClose} maxWidth="md" fullWidth fullScreen={fullScreen}>
+    <Dialog open onClose={close} maxWidth="md" fullWidth fullScreen={fullScreen}>
       <DialogTitle>
         <span className={classes.titleRow}>
           <span>
@@ -385,9 +392,19 @@ const InvoiceDialog = ({ initial, customers, readonly, onClose, onSaved }) => {
             />
           </div>
         )}
-        <Typography variant="caption" color="textSecondary">
-          {t('adminInvoiceDisclaimer')}
-        </Typography>
+        <OfficialDocumentPanel
+          invoice={invoice}
+          readonly={readonly}
+          onChanged={(fresh) => {
+            setInvoice(fresh);
+            setChanged(true);
+          }}
+        />
+        {!invoice.official_id && (
+          <Typography variant="caption" color="textSecondary">
+            {t('adminInvoiceDisclaimer')}
+          </Typography>
+        )}
       </DialogContent>
       <DialogActions>
         {!readonly && invoice.id && invoice.status === 'draft' && (
@@ -395,7 +412,7 @@ const InvoiceDialog = ({ initial, customers, readonly, onClose, onSaved }) => {
             {t('sharedRemove')}
           </Button>
         )}
-        {!readonly && invoice.status === 'issued' && !paying && (
+        {!readonly && invoice.status === 'issued' && !paying && !official && (
           <Button
             color="error"
             onClick={() => changeStatus({ status: 'cancelled' })}
@@ -405,7 +422,7 @@ const InvoiceDialog = ({ initial, customers, readonly, onClose, onSaved }) => {
           </Button>
         )}
         <span className={classes.spacer} />
-        <Button variant="outlined" color="inherit" onClick={onClose}>
+        <Button variant="outlined" color="inherit" onClick={close}>
           {t('adminClose')}
         </Button>
         {editable && (
@@ -426,7 +443,12 @@ const InvoiceDialog = ({ initial, customers, readonly, onClose, onSaved }) => {
           <>
             <Button
               variant="outlined"
-              onClick={() => run(async () => saveInvoice(invoice))}
+              onClick={() =>
+                // With an official document only the notes can change; the lines stay as issued.
+                official
+                  ? changeStatus({ notes: invoice.notes || null })
+                  : run(async () => saveInvoice(invoice))
+              }
               disabled={busy}
             >
               {t('sharedSave')}
@@ -445,7 +467,7 @@ const InvoiceDialog = ({ initial, customers, readonly, onClose, onSaved }) => {
             {t('adminConfirmPayment')}
           </Button>
         )}
-        {!readonly && invoice.status === 'paid' && (
+        {!readonly && invoice.status === 'paid' && !receipted && (
           <Button onClick={() => changeStatus({ status: 'issued' })} disabled={busy}>
             {t('adminUndoPayment')}
           </Button>

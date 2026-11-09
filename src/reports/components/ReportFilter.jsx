@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import {
   FormControl,
   IconButton,
@@ -8,29 +8,41 @@ import {
   Select,
   MenuItem,
   Button,
-  TextField,
   Typography,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import EventRepeatRoundedIcon from '@mui/icons-material/EventRepeatRounded';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import useReportStyles from '../common/useReportStyles';
 import SplitButton from '../../common/components/SplitButton';
+import ScheduleDialog from './ScheduleDialog';
+import { useReportsSectionItems } from './reportsSections';
 import SelectField from '../../common/components/SelectField';
 import { useRestriction } from '../../common/util/permissions';
 import { deviceEquality } from '../../common/util/deviceEquality';
 import { reportsActions } from '../../store';
 import ReportIntro from './ReportIntro';
+import { getFormatLocale } from '../../common/util/formatter';
 import { DateRangeField } from '../../common/components/pickers';
+import { PERIODS, periodRange, shiftRange } from '../../dashboard/data/periods';
+import { PERIOD_KEYS } from '../../dashboard/components/periodLabel';
+import { NextPeriodIcon, PreviousPeriodIcon } from '../../common/components/PeriodArrowIcons';
 
+// The same presets as the dashboard. Older saved choices ("day", "week", "month") still work.
+const LEGACY_PERIODS = { day: 'today', week: 'thisWeek', month: 'thisMonth' };
+const normalizePeriod = (period) => {
+  const value = LEGACY_PERIODS[period] || period;
+  return PERIODS.includes(value) ? value : 'today';
+};
+
+// A new custom period starts with today, from midnight until now.
 const getPeriodRange = (period) => {
-  const now = dayjs();
   if (period === 'custom') {
-    return [now.subtract(1, 'hour').toISOString(), now.toISOString()];
+    return [dayjs().startOf('day').toISOString(), dayjs().toISOString()];
   }
-  return [now.startOf(period).toISOString(), now.endOf(period).toISOString()];
+  const { from, to } = periodRange(period);
+  return [from.toISOString(), to.toISOString()];
 };
 
 export const updateReportParams = (searchParams, setSearchParams, key, values) => {
@@ -43,6 +55,10 @@ export const updateReportParams = (searchParams, setSearchParams, key, values) =
 };
 
 const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, loading, formats }) => {
+  const location = useLocation();
+  const reportName = useReportsSectionItems().find((item) =>
+    item.match(location.pathname),
+  )?.titleKey;
   const { classes } = useReportStyles();
   const t = useTranslation();
   const dispatch = useDispatch();
@@ -74,8 +90,8 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
   const groupIds = useMemo(() => searchParams.getAll('groupId').map(Number), [searchParams]);
   const from = searchParams.get('from');
   const to = searchParams.get('to');
-  const [period, setPeriod] = useState(
-    searchParams.get('period') || (from && to ? 'custom' : savedPeriod),
+  const [period, setPeriod] = useState(() =>
+    normalizePeriod(searchParams.get('period') || (from && to ? 'custom' : savedPeriod)),
   );
   const [range, setRange] = useState(() =>
     from && to
@@ -84,8 +100,17 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
   );
   const [selectedOption, setSelectedOption] = useState('json');
 
-  const [description, setDescription] = useState();
-  const [calendarId, setCalendarId] = useState();
+  // The address can change the period from outside the filter (for example "the last 30 days"
+  // in an empty report); the shown period follows it.
+  const urlPeriod = searchParams.get('period');
+  useEffect(() => {
+    if (from && to) {
+      setRange([from, to]);
+      setPeriod(normalizePeriod(urlPeriod || 'custom'));
+    }
+  }, [from, to, urlPeriod]);
+
+  const [scheduling, setScheduling] = useState(false);
 
   const selectedFrom = dayjs(range[0]);
   const selectedTo = dayjs(range[1]);
@@ -99,10 +124,7 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
     if (deviceType === 'multiple' && !deviceIds.length && !groupIds.length) {
       return true;
     }
-    if (selectedOption === 'schedule' && (!description || !calendarId)) {
-      return true;
-    }
-    return loading || (selectedOption !== 'schedule' && !validRange);
+    return loading || !validRange;
   };
   const disabled = evaluateDisabled();
   const loaded = from && to && !loading;
@@ -117,9 +139,6 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
       });
       result.print = t('reportPrint');
     }
-    if (onSchedule && !readonly) {
-      result.schedule = t('reportSchedule');
-    }
     return result;
   };
   const options = evaluateOptions();
@@ -130,10 +149,10 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
     }
   }, [deviceIds, groupIds, from, to, onShow]);
 
-  const dateFormat = new Intl.DateTimeFormat(undefined, {
+  const dateFormat = new Intl.DateTimeFormat(getFormatLocale(), {
     year: 'numeric',
-    month: period === 'month' ? 'long' : 'short',
-    day: period === 'month' ? undefined : 'numeric',
+    month: period.endsWith('Month') ? 'long' : 'short',
+    day: period.endsWith('Month') ? undefined : 'numeric',
   });
   const periodLabel =
     period === 'custom' || !validRange
@@ -149,15 +168,15 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
     setSearchParams(newParams, { replace: true });
   };
 
+  // The arrows move by whole periods (a month stays a whole month); a custom period moves by its
+  // own length. Nothing after now.
+  const shifted = (direction) =>
+    shiftRange(period, { from: selectedFrom, to: selectedTo }, direction);
   const shiftPeriod = (direction) => {
-    const offset = selectedTo.diff(selectedFrom) * direction;
-    const start =
-      period === 'custom'
-        ? selectedFrom.add(offset, 'millisecond')
-        : selectedFrom.add(direction, period).startOf(period);
-    const end = period === 'custom' ? selectedTo.add(offset, 'millisecond') : start.endOf(period);
+    const { from: start, to: end } = shifted(direction);
     setRange([start.toISOString(), end.toISOString()]);
   };
+  const nextInFuture = validRange && shifted(1).from.isAfter(dayjs());
 
   const onSelected = (type) => {
     switch (type) {
@@ -185,17 +204,6 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
 
   const onClick = (type) => {
     switch (type) {
-      case 'schedule':
-        onSchedule(
-          deviceIds.filter((it) => it !== 'all'),
-          groupIds,
-          {
-            description,
-            calendarId,
-            attributes: {},
-          },
-        );
-        break;
       case 'json':
       default:
         showReport();
@@ -204,9 +212,7 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
   };
 
   let hint = null;
-  if (selectedOption === 'schedule') {
-    hint = t('reportScheduleHint');
-  } else if (deviceType === 'multiple') {
+  if (deviceType === 'multiple') {
     hint = t('reportFilterHint');
   } else if (deviceType === 'single') {
     hint = t('reportFilterHintSingle');
@@ -251,108 +257,85 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
           />
         </div>
       )}
-      {selectedOption !== 'schedule' ? (
-        <>
-          <div className={classes.filterItem} style={{ flexBasis: 220 }}>
-            <FormControl fullWidth>
-              <InputLabel id="report-filter-report-period-label" shrink>
-                {t('reportPeriod')}
-              </InputLabel>
-              <Select
-                labelId="report-filter-report-period-label"
-                label={t('reportPeriod')}
-                value=""
-                displayEmpty
-                renderValue={() => periodLabel}
-                onChange={(e) => {
-                  setPeriod(e.target.value);
-                  if (e.target.value !== 'custom') {
-                    setRange(getPeriodRange(e.target.value));
-                  }
-                }}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <IconButton
-                      edge="start"
-                      size="small"
-                      disabled={loading || !validRange}
-                      onClick={() => shiftPeriod(-1)}
-                      aria-label={t('a11yPreviousPeriod')}
-                    >
-                      <ChevronLeftIcon />
-                    </IconButton>
-                  </InputAdornment>
+      <>
+        <div className={classes.filterItem} style={{ flexBasis: 220 }}>
+          <FormControl fullWidth>
+            <InputLabel id="report-filter-report-period-label" shrink>
+              {t('reportPeriod')}
+            </InputLabel>
+            <Select
+              labelId="report-filter-report-period-label"
+              label={t('reportPeriod')}
+              value=""
+              displayEmpty
+              renderValue={() => periodLabel}
+              onChange={(e) => {
+                setPeriod(e.target.value);
+                if (e.target.value !== 'custom') {
+                  setRange(getPeriodRange(e.target.value));
                 }
-                endAdornment={
-                  <InputAdornment position="end">
-                    <IconButton
-                      edge="end"
-                      size="small"
-                      disabled={loading || !validRange}
-                      onClick={() => shiftPeriod(1)}
-                      aria-label={t('a11yNextPeriod')}
-                    >
-                      <ChevronRightIcon />
-                    </IconButton>
-                  </InputAdornment>
-                }
-              >
-                <MenuItem value="day">{t('reportToday')}</MenuItem>
-                <MenuItem value="week">{t('reportThisWeek')}</MenuItem>
-                <MenuItem value="month">{t('reportThisMonth')}</MenuItem>
-                <MenuItem value="custom">{t('reportCustom')}</MenuItem>
-              </Select>
-            </FormControl>
-          </div>
-          {period === 'custom' && (
-            <div className={classes.filterItem} style={{ flexGrow: 2 }}>
-              <DateRangeField
-                withTime
-                label={t('reportPeriod')}
-                from={
-                  range[0] && selectedFrom.isValid()
-                    ? selectedFrom.locale('en').format('YYYY-MM-DDTHH:mm')
-                    : ''
-                }
-                to={
-                  range[1] && selectedTo.isValid()
-                    ? selectedTo.locale('en').format('YYYY-MM-DDTHH:mm')
-                    : ''
-                }
-                onChange={(_from, _to, { from: start, to: end }) =>
-                  setRange([
-                    start ? start.toISOString() : '',
-                    end ? end.endOf('minute').toISOString() : '',
-                  ])
-                }
-                fullWidth
-              />
-            </div>
-          )}
-        </>
-      ) : (
-        <>
-          <div className={classes.filterItem}>
-            <TextField
-              value={description || ''}
-              onChange={(event) => setDescription(event.target.value)}
-              label={t('sharedDescription')}
-              helperText={t('reportScheduleNameHelp')}
+              }}
+              startAdornment={
+                <InputAdornment position="start">
+                  <IconButton
+                    edge="start"
+                    size="small"
+                    disabled={loading || !validRange}
+                    onClick={() => shiftPeriod(-1)}
+                    aria-label={t('a11yPreviousPeriod')}
+                  >
+                    <PreviousPeriodIcon />
+                  </IconButton>
+                </InputAdornment>
+              }
+              endAdornment={
+                <InputAdornment position="end">
+                  <IconButton
+                    edge="end"
+                    size="small"
+                    disabled={loading || !validRange || nextInFuture}
+                    onClick={() => shiftPeriod(1)}
+                    aria-label={t('a11yNextPeriod')}
+                  >
+                    <NextPeriodIcon />
+                  </IconButton>
+                </InputAdornment>
+              }
+            >
+              {PERIODS.map((value) => (
+                <MenuItem key={value} value={value}>
+                  {t(PERIOD_KEYS[value])}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </div>
+        {period === 'custom' && (
+          <div className={classes.filterItem} style={{ flexGrow: 2 }}>
+            <DateRangeField
+              withTime
+              label={t('reportPeriod')}
+              from={
+                range[0] && selectedFrom.isValid()
+                  ? selectedFrom.locale('en').format('YYYY-MM-DDTHH:mm')
+                  : ''
+              }
+              to={
+                range[1] && selectedTo.isValid()
+                  ? selectedTo.locale('en').format('YYYY-MM-DDTHH:mm')
+                  : ''
+              }
+              onChange={(_from, _to, { from: start, to: end }) =>
+                setRange([
+                  start ? start.toISOString() : '',
+                  end ? end.endOf('minute').toISOString() : '',
+                ])
+              }
               fullWidth
             />
           </div>
-          <div className={classes.filterItem}>
-            <SelectField
-              value={calendarId}
-              onChange={(event) => setCalendarId(Number(event.target.value))}
-              endpoint="api/calendars"
-              label={t('sharedCalendar')}
-              helperText={t('reportScheduleCalendarHelp')}
-              fullWidth
-            />
-          </div>
-        </>
-      )}
+        )}
+      </>
       {children}
       <div className={classes.filterItem}>
         {Object.keys(options).length === 1 ? (
@@ -380,6 +363,34 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
           />
         )}
       </div>
+      {onSchedule && !readonly && (
+        <div className={classes.filterItem}>
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<EventRepeatRoundedIcon />}
+            disabled={!deviceIds.filter((it) => it !== 'all').length && !groupIds.length}
+            onClick={() => setScheduling(true)}
+          >
+            {t('reportScheduleButton')}
+          </Button>
+        </div>
+      )}
+      {scheduling && (
+        <ScheduleDialog
+          title={t('reportScheduleButton')}
+          defaultName={reportName ? t(reportName) : ''}
+          onClose={() => setScheduling(false)}
+          onSave={async (schedule) => {
+            await onSchedule(
+              deviceIds.filter((it) => it !== 'all'),
+              groupIds,
+              schedule,
+            );
+            setScheduling(false);
+          }}
+        />
+      )}
     </div>
   );
 };

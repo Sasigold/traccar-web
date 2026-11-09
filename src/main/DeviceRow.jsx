@@ -10,23 +10,22 @@ import {
   ListItemButton,
   Typography,
 } from '@mui/material';
-import BatteryFullIcon from '@mui/icons-material/BatteryFull';
-import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
-import Battery60Icon from '@mui/icons-material/Battery60';
-import BatteryCharging60Icon from '@mui/icons-material/BatteryCharging60';
-import Battery20Icon from '@mui/icons-material/Battery20';
-import BatteryCharging20Icon from '@mui/icons-material/BatteryCharging20';
+import BatteryFullIcon from '@mui/icons-material/BatteryFullRounded';
+import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFullRounded';
+import Battery60Icon from '@mui/icons-material/Battery60Rounded';
+import BatteryCharging60Icon from '@mui/icons-material/BatteryCharging60Rounded';
+import Battery20Icon from '@mui/icons-material/Battery20Rounded';
+import BatteryCharging20Icon from '@mui/icons-material/BatteryCharging20Rounded';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { useLivePosition } from '../common/fleet/usePrivacy';
 import { devicesActions } from '../store';
 import {
   formatAlarm,
   formatBoolean,
   formatPercentage,
   formatSpeed,
-  formatStatus,
-  getStatusColor,
 } from '../common/util/formatter';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import { isDeviceMoving, mapIconKey, mapIcons, movingCategories } from '../map/core/preloadImages';
@@ -39,14 +38,12 @@ import { useAttributePreference } from '../common/util/preferences';
 import GeofencesValue from '../common/components/GeofencesValue';
 import DriverValue from '../common/components/DriverValue';
 import MotionBar from './components/MotionBar';
+import useActivityText, { toneColor } from '../common/components/useActivityText';
 import { brandTile, statusColor } from '../common/theme/surfaces';
+import Highlight from '../common/components/Highlight';
+import { deviceSearchFields, matchDevice } from '../common/util/deviceSearch';
 
 dayjs.extend(relativeTime);
-
-const ping = keyframes`
-  0% { transform: scale(1); opacity: 0.7; }
-  80%, 100% { transform: scale(2.6); opacity: 0; }
-`;
 
 const useStyles = makeStyles()((theme) => ({
   row: {
@@ -93,13 +90,6 @@ const useStyles = makeStyles()((theme) => ({
     borderRadius: '50%',
     border: `2px solid ${theme.palette.background.paper}`,
   },
-  statusPing: {
-    position: 'absolute',
-    inset: 0,
-    borderRadius: '50%',
-    backgroundColor: 'inherit',
-    animation: `${ping} 2.2s cubic-bezier(0, 0, 0.2, 1) infinite`,
-  },
   primaryText: {
     fontWeight: 600,
     fontSize: '0.9375rem',
@@ -122,7 +112,7 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: 'center',
     height: 18,
     paddingInline: 6,
-    borderRadius: 6,
+    borderRadius: theme.tokens.radius.xs,
     fontSize: '0.6875rem',
     fontWeight: 700,
     fontVariantNumeric: 'tabular-nums',
@@ -142,7 +132,7 @@ const useStyles = makeStyles()((theme) => ({
     justifyContent: 'center',
     width: 30,
     height: 30,
-    borderRadius: 9,
+    borderRadius: theme.tokens.radius.sm,
     border: `1px solid ${theme.palette.surface.border}`,
     backgroundColor: theme.palette.surface.sunken,
   },
@@ -174,24 +164,70 @@ const useStyles = makeStyles()((theme) => ({
   neutral: {
     color: theme.palette.neutral.main,
   },
+  neutralText: {
+    color: theme.palette.text.secondary,
+  },
   selected: {
     '&&': {
-      // Direction A: the selected vehicle is a plain ice tile.
-      backgroundColor: theme.palette.surface.tint,
+      // Direction A: the selected vehicle is a plain ice-aqua tile, light enough that the slate
+      // secondary text keeps 4.5:1 on it.
+      backgroundColor:
+        theme.palette.mode === 'dark'
+          ? theme.palette.surface.tint
+          : alpha(theme.palette.brand.aqua, 0.1),
+    },
+  },
+  // What the vehicle is doing: the status color is on the dot, the words stay in text color
+  // (amber or aqua text would fall under 4.5:1).
+  activity: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 5,
+    fontWeight: 600,
+    color: theme.palette.text.primary,
+  },
+  activityQuiet: {
+    fontWeight: 500,
+    color: theme.palette.text.secondary,
+  },
+  toneDot: {
+    width: 7,
+    height: 7,
+    borderRadius: '50%',
+    flexShrink: 0,
+  },
+  // One short flash when a vehicle is selected elsewhere (map, quick search), so the eye finds
+  // the row the list scrolled to.
+  flash: {
+    position: 'absolute',
+    inset: 0,
+    borderRadius: 'inherit',
+    pointerEvents: 'none',
+    backgroundColor: alpha(theme.palette.brand.aqua, 0.3),
+    opacity: 0,
+    animation: `${keyframes`
+      from { opacity: 1; }
+      to { opacity: 0; }
+    `} 600ms ease-out`,
+    '@media (prefers-reduced-motion: reduce)': {
+      animation: 'none',
     },
   },
 }));
 
-const DeviceRow = ({ devices, index, style }) => {
+const DeviceRow = ({ devices, tokens = [], index, style }) => {
   const { classes, cx, theme } = useStyles();
   const dispatch = useDispatch();
   const t = useTranslation();
 
   const admin = useAdministrator();
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
+  const selectTime = useSelector((state) => state.devices.selectTime);
 
   const item = devices[index];
-  const position = useSelector((state) => state.session.positions[item.id]);
+  const position = useLivePosition(item.id);
+  const groups = useSelector((state) => state.groups.items);
+  const drivers = useSelector((state) => state.drivers.items);
 
   const devicePrimary = useAttributePreference('devicePrimary', 'name');
   const deviceSecondary = useAttributePreference('deviceSecondary', '');
@@ -212,22 +248,55 @@ const DeviceRow = ({ devices, index, style }) => {
     return item[field];
   };
 
-  const primaryValue = resolveFieldValue(devicePrimary);
-  const secondaryValue = resolveFieldValue(deviceSecondary);
+  const digitFields = ['uniqueId', 'phone'];
+  const highlight = (field, value) =>
+    tokens.length && typeof value === 'string' ? (
+      <Highlight text={value} tokens={tokens} digits={digitFields.includes(field)} />
+    ) : (
+      value
+    );
+
+  // While searching, the field that matched (plate, driver, group…) is shown and marked when the
+  // row does not show it already.
+  const shownKeys = [devicePrimary, deviceSecondary];
+  const extraMatch = tokens.length
+    ? matchDevice(tokens, deviceSearchFields(item, { groups, drivers, position }))?.fields.find(
+        (field) =>
+          !shownKeys.includes(field.key) &&
+          !(field.key === 'driver' && shownKeys.includes('driverUniqueId')),
+      )
+    : null;
+
+  const primaryValue = highlight(devicePrimary, resolveFieldValue(devicePrimary));
+  const extraDigits = extraMatch?.key === 'plate' || digitFields.includes(extraMatch?.key);
+  const secondaryValue = extraMatch ? (
+    <bdi dir={extraDigits ? 'ltr' : 'auto'}>
+      <Highlight text={extraMatch.value} tokens={tokens} digits={extraDigits} />
+    </bdi>
+  ) : (
+    highlight(deviceSecondary, resolveFieldValue(deviceSecondary))
+  );
 
   const moving = Boolean(position && (position.attributes?.motion || position.speed > 1));
 
+  const { activity, label: activityLabel, tone: activityTone } = useActivityText(item, position);
+
   const secondaryText = () => {
-    let status;
-    if (item.status === 'online' || !item.lastUpdate) {
-      status = formatStatus(item.status, t);
-    } else {
-      status = dayjs(item.lastUpdate).fromNow();
-    }
     return (
       <>
-        <span className={cx(classes.secondaryValue, classes[getStatusColor(item.status)])}>
-          {status}
+        <span
+          className={cx(
+            classes.secondaryValue,
+            classes.activity,
+            activityTone === 'neutralText' && classes.activityQuiet,
+          )}
+        >
+          <span
+            className={classes.toneDot}
+            style={{ backgroundColor: toneColor(theme, activityTone) }}
+            aria-hidden
+          />
+          {activityLabel}
         </span>
         {secondaryValue && (
           <>
@@ -235,7 +304,7 @@ const DeviceRow = ({ devices, index, style }) => {
             <span className={classes.secondaryValue}>{secondaryValue}</span>
           </>
         )}
-        {moving && (
+        {moving && activity === 'moving' && (
           <span className={classes.speed}>{formatSpeed(position.speed, speedUnit, t)}</span>
         )}
       </>
@@ -258,6 +327,9 @@ const DeviceRow = ({ devices, index, style }) => {
         aria-pressed={selectedDeviceId === item.id}
         className={cx(classes.row, selectedDeviceId === item.id && classes.selected)}
       >
+        {selectedDeviceId === item.id && (
+          <span key={selectTime} className={classes.flash} aria-hidden />
+        )}
         <ListItemAvatar className={classes.avatarWrapper}>
           <span className={classes.avatarBox}>
             <Avatar className={avatarClass}>
@@ -299,16 +371,8 @@ const DeviceRow = ({ devices, index, style }) => {
             </Avatar>
             <span
               className={classes.statusDot}
-              style={{
-                backgroundColor: statusColor(theme, item.status),
-                boxShadow:
-                  item.status === 'online'
-                    ? `0 0 8px ${alpha(statusColor(theme, item.status), 0.8)}`
-                    : undefined,
-              }}
-            >
-              {item.status === 'online' && <span className={classes.statusPing} />}
-            </span>
+              style={{ backgroundColor: statusColor(theme, item.status) }}
+            />
           </span>
         </ListItemAvatar>
         <ListItemText

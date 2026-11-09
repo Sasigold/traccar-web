@@ -73,7 +73,7 @@ export const liveTransitionDuration = (from, to) => {
 export const replaySegmentDuration = (from, to) =>
   clamp(fixTimeGap(from, to) / REPLAY_TIME_SCALE, REPLAY_MIN_SEGMENT, REPLAY_MAX_SEGMENT);
 
-// One device's glide between fixes. The live markers (useSmoothPositions) and the follow camera
+// One device's glide between fixes. The live markers (MapMarkers) and the follow camera
 // (MapSelectedDevice) each keep a track fed with the same fixes, so the camera moves in step with
 // the marker and a followed vehicle stays put on screen.
 export const createTrack = (position) => ({ target: position, start: null });

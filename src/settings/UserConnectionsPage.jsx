@@ -54,7 +54,7 @@ const UserConnectionsPage = () => {
           keyBase="userId"
           keyLink="notificationId"
           titleGetter={(it) => formatNotificationTitle(t, it, true)}
-          label={t('sharedNotifications')}
+          label={t('notificationRules')}
           helperText={t('userConnectionsOtherHelp')}
         />
         <LinkField

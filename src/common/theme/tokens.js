@@ -242,5 +242,6 @@ export const layers = {
   rail: 1100,
   topBar: 1100,
   mobileTabs: 1100,
+  alert: 1200,
   palette: 1300,
 };

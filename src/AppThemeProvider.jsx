@@ -21,10 +21,10 @@ const cache = {
 
 const AppThemeProvider = ({ children }) => {
   const server = useSelector((state) => state.session.server);
-  const { direction } = useLocalization();
+  const { direction, language } = useLocalization();
   const { dark } = useThemeMode();
 
-  const themeInstance = theme(server, dark, direction);
+  const themeInstance = theme(server, dark, direction, language);
 
   return (
     <CacheProvider value={cache[direction]}>

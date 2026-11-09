@@ -107,6 +107,10 @@ export const useLabels = () => {
           return '%';
         case 'money':
           return '₪';
+        case 'fuelRate':
+          return t('dashboardUnitFuelRate');
+        case 'mass':
+          return t('dashboardUnitKg');
         default:
           return '';
       }

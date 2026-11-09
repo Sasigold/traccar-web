@@ -1,6 +1,7 @@
 import { Chip, Tooltip } from '@mui/material';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import { daysUntilDate, expiryStatus } from '../../common/fleet/fleetFields';
+import { formatDays } from '../../common/util/plural';
 
 const chipColor = { expired: 'error', expiring: 'warning', valid: 'success', none: 'default' };
 
@@ -18,9 +19,9 @@ export const useDaysText = () => {
       return '';
     }
     if (days < 0) {
-      return t('fleetDaysOverdue').replace('{0}', String(-days));
+      return t('fleetDaysOverdue').replace('{0}', formatDays(-days, t));
     }
-    return t('fleetDaysLeft').replace('{0}', String(days));
+    return t('fleetDaysLeft').replace('{0}', formatDays(days, t));
   };
 };
 

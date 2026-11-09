@@ -23,6 +23,7 @@ import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
+import { useLivePositions } from '../common/fleet/usePrivacy';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import DataTable from '../common/components/table/DataTable';
@@ -217,7 +218,7 @@ const PoiPage = () => {
   const canRead = useFleetPermission('poi.read');
   const canWrite = useFleetPermission('poi.write');
   const devices = useSelector((state) => state.devices.items);
-  const positions = useSelector((state) => state.session.positions);
+  const positions = useLivePositions();
 
   const [view, setView] = useState('points');
   const [search, setSearch] = useState('');

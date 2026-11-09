@@ -4,6 +4,7 @@ import { map } from './core/MapView';
 import useMapLayer from './core/useMapLayer';
 import { findFonts, geofenceToFeature } from './core/mapUtil';
 import { useTranslation } from '../common/components/LocalizationProvider';
+import { casingLayer, haloColor } from './core/lineCasing';
 
 const MapGeofence = () => {
   const theme = useTheme();
@@ -24,6 +25,7 @@ const MapGeofence = () => {
           'fill-opacity': 0.1,
         },
       },
+      casingLayer(theme),
       {
         key: 'line',
         type: 'line',
@@ -44,12 +46,12 @@ const MapGeofence = () => {
           'text-size': 12,
         },
         paint: {
-          'text-halo-color': 'white',
+          'text-halo-color': haloColor(theme),
           'text-halo-width': 1,
         },
       },
     ],
-    layersDeps: [t],
+    layersDeps: [t, theme.palette.mode],
     data: {
       type: 'FeatureCollection',
       features: Object.values(geofences)

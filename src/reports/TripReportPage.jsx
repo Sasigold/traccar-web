@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
 import { IconButton, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
-import GpsFixedIcon from '@mui/icons-material/GpsFixed';
-import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
-import RouteIcon from '@mui/icons-material/Route';
+import GpsFixedIcon from '@mui/icons-material/GpsFixedRounded';
+import LocationSearchingIcon from '@mui/icons-material/LocationSearchingRounded';
+import RouteIcon from '@mui/icons-material/RouteRounded';
 import {
   formatAddress,
   formatDistance,
@@ -22,7 +22,6 @@ import SelectField from '../common/components/SelectField';
 import ReportsMenu from './components/ReportsMenu';
 import ColumnSelect from './components/ColumnSelect';
 import ReportKpis from './components/ReportKpis';
-import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
 import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded';
 import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
 import PlayCircleRoundedIcon from '@mui/icons-material/PlayCircleRounded';
@@ -34,12 +33,21 @@ import MapView from '../map/core/MapView';
 import MapRoutePath from '../map/MapRoutePath';
 import AddressValue from '../common/components/AddressValue';
 import TableShimmer from '../common/components/TableShimmer';
+import {
+  ReportEmptyRow,
+  ReportTotalsRow,
+  SortCell,
+  useReportSort,
+} from './components/ReportTableParts';
 import DataTable from '../common/components/table/DataTable';
 import MapMarkers from '../map/MapMarkers';
 import MapCamera from '../map/MapCamera';
 import MapGeofence from '../map/MapGeofence';
 import scheduleReport from './common/scheduleReport';
 import MapScale from '../map/MapScale';
+import { privateRows } from '../common/fleet/privacyData';
+import { isPlaceField } from '../common/fleet/privacy';
+import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import exportExcel from '../common/util/exportExcel';
 import { deviceEquality } from '../common/util/deviceEquality';
@@ -60,6 +68,15 @@ const columnsArray = [
   ['business', 'sharedType'],
 ];
 const columnsMap = new Map(columnsArray);
+
+// The totals row: distances, times and fuel add up; speeds take the top or the time-weighted mean.
+const TOTALS = {
+  distance: 'sum',
+  duration: 'sum',
+  spentFuel: 'sum',
+  maxSpeed: 'max',
+  averageSpeed: 'avg:duration',
+};
 
 const TripReportPage = () => {
   const navigate = useNavigate();
@@ -83,7 +100,9 @@ const TripReportPage = () => {
   const [tripType, setTripType] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [queried, setQueried] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [hiddenRows, setHiddenRows] = useState(0);
   const [route, setRoute] = useState(null);
 
   const filteredItems = items.filter(
@@ -132,23 +151,34 @@ const TripReportPage = () => {
       const response = await fetchOrThrow(`api/reports/trips?${query.toString()}`, {
         headers: { Accept: 'application/json' },
       });
-      setItems(await response.json());
+      // Places in hidden time (outside working hours, private periods) are taken out.
+      const rows = await response.json();
+      const result = await privateRows(rows, {
+        deviceIds: [...deviceIds, ...rows.map((row) => row.deviceId)],
+        from,
+        to,
+      });
+      setItems(result.rows);
+      setHiddenRows(result.hidden);
     } finally {
       setLoading(false);
+      setQueried(true);
     }
   }, []);
 
   const onExport = useCatch(async () => {
     const sheets = new Map();
     filteredItems.forEach((item) => {
-      const deviceName = devices[item.deviceId].name;
-      if (!sheets.has(deviceName)) {
-        sheets.set(deviceName, []);
+      // One sheet per vehicle, keyed by id: two vehicles with the same name stay apart.
+      if (!sheets.has(item.deviceId)) {
+        sheets.set(item.deviceId, { title: devices[item.deviceId].name, rows: [] });
       }
       const row = {};
       columns.forEach((key) => {
         const header = t(columnsMap.get(key));
-        if (key === 'startAddress') {
+        if (item.privacy && isPlaceField(key)) {
+          row[header] = t('privacyHiddenShort');
+        } else if (key === 'startAddress') {
           row[header] = formatAddress(
             {
               address: item.startAddress,
@@ -170,9 +200,11 @@ const TripReportPage = () => {
           row[header] = formatValue(item, key);
         }
       });
-      sheets.get(deviceName).push(row);
+      sheets.get(item.deviceId).rows.push(row);
     });
-    await exportExcel(t('reportTrips'), 'trips.xlsx', sheets, theme);
+    await exportExcel(t('reportTrips'), 'trips.xlsx', sheets, theme, {
+      totals: [t('sharedDistance'), t('reportSpentFuel')],
+    });
   });
 
   const onSchedule = useCatch(async (deviceIds, groupIds, report) => {
@@ -209,7 +241,7 @@ const TripReportPage = () => {
         key: 'distance',
         label: `${t('sharedTotal')} · ${t('sharedDistance')}`,
         value: formatDistance(sum('distance'), distanceUnit, t),
-        icon: <RouteRoundedIcon />,
+        icon: <RouteIcon />,
       },
       {
         key: 'duration',
@@ -226,7 +258,18 @@ const TripReportPage = () => {
     ];
   }, [filteredItems, distanceUnit, speedUnit, t]);
 
+  const {
+    sorted: sortedItems,
+    sort,
+    toggle: toggleSort,
+  } = useReportSort('trips', filteredItems, (item, key) =>
+    key === 'deviceId' ? devices[item.deviceId]?.name : item[key],
+  );
+
   const formatValue = (item, key) => {
+    if (item.privacy && isPlaceField(key)) {
+      return t('privacyHiddenShort');
+    }
     const value = item[key];
     switch (key) {
       case 'deviceId':
@@ -318,15 +361,22 @@ const TripReportPage = () => {
             <TableHead>
               <TableRow>
                 <TableCell className={classes.columnAction} />
-                <TableCell>{t('sharedDevice')}</TableCell>
+                <SortCell sortKey="deviceId" sort={sort} onSort={toggleSort}>
+                  {t('sharedDevice')}
+                </SortCell>
                 {columns.map((key) => (
-                  <TableCell key={key}>{t(columnsMap.get(key))}</TableCell>
+                  <SortCell key={key} sortKey={key} sort={sort} onSort={toggleSort}>
+                    {t(columnsMap.get(key))}
+                  </SortCell>
                 ))}
               </TableRow>
             </TableHead>
             <TableBody>
+              {!loading && queried && !filteredItems.length && (
+                <ReportEmptyRow colSpan={columns.length + 2} />
+              )}
               {!loading ? (
-                filteredItems.map((item) => (
+                sortedItems.map((item) => (
                   <TableRow key={item.startPositionId}>
                     <TableCell className={classes.columnAction} padding="none">
                       <div className={classes.columnActionContainer}>
@@ -342,6 +392,7 @@ const TripReportPage = () => {
                           <IconButton
                             aria-label={t('a11yShowOnMap')}
                             size="small"
+                            disabled={Boolean(item.privacy)}
                             onClick={() => setSelectedItem(item)}
                           >
                             <LocationSearchingIcon fontSize="small" />
@@ -366,7 +417,17 @@ const TripReportPage = () => {
                 <TableShimmer columns={columns.length + 2} startAction />
               )}
             </TableBody>
+            {!loading && (
+              <ReportTotalsRow
+                leading={2}
+                columns={columns}
+                spec={TOTALS}
+                items={filteredItems}
+                format={formatValue}
+              />
+            )}
           </DataTable>
+          {!loading && <PrivacyNote hidden={hiddenRows} kind="rows" padded />}
         </div>
       </div>
     </PageLayout>

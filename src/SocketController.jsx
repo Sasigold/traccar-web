@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { devicesActions, messagesActions, sessionActions } from './store';
+import { commandsActions, devicesActions, messagesActions, sessionActions } from './store';
 import { useCatchCallback, useAsyncTask } from './reactHelper';
 import { snackBarDurationLongMs } from './common/util/duration';
-import alarm from './resources/alarm.mp3';
+import { playAlarm } from './common/util/alarmSound';
+import { eventSeverity } from './common/util/eventSeverity';
+import { formatNotificationTitle } from './common/util/formatter';
+import { useTranslation } from './common/components/LocalizationProvider';
 import { eventsActions } from './store/events';
 import useFeatures from './common/util/useFeatures';
 import { useAttributePreference } from './common/util/preferences';
@@ -13,20 +16,17 @@ import {
   nativePostMessage,
 } from './common/components/NativeInterface';
 import fetchOrThrow from './common/util/fetchOrThrow';
+import { backfillRange, reconnectDelay } from './common/util/reconnect';
+import { chunk } from './dashboard/data/reportFetch';
+import { RECONNECT_NOW_EVENT } from './common/components/shell/SocketStatusPill';
 
 const logoutCode = 4000;
-
-let alarmAudio;
-const playAlarm = () => {
-  if (!alarmAudio) {
-    alarmAudio = new Audio(alarm);
-  }
-  alarmAudio.currentTime = 0;
-  alarmAudio.play();
-};
+// The last-message time is stored at most this often (the pill shows minutes).
+const ACTIVITY_STEP_MS = 5000;
 
 const SocketController = () => {
   const dispatch = useDispatch();
+  const store = useStore();
   const navigate = useNavigate();
 
   const authenticated = useSelector((state) => Boolean(state.session.user));
@@ -34,6 +34,9 @@ const SocketController = () => {
 
   const socketRef = useRef();
   const reconnectTimeoutRef = useRef();
+  const attemptRef = useRef(0);
+  const lastMessageRef = useRef(null);
+  const lastStoredRef = useRef(0);
 
   const clearReconnectTimeout = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -47,19 +50,40 @@ const SocketController = () => {
 
   const features = useFeatures();
 
+  const t = useTranslation();
+
+  // Critical events sound (their banner is AlertBanner); warnings show a notice for a few
+  // seconds; the rest only raise the bell count. Events missed while offline (back-filled) still
+  // sound when critical, but bring no notices.
   const handleEvents = useCallback(
-    (events) => {
+    (events, { backfill = false } = {}) => {
       if (!features.disableEvents) {
         dispatch(eventsActions.add(events));
       }
-      if (
-        events.some(
-          (e) =>
-            soundEvents.includes(e.type) ||
-            (e.type === 'alarm' && soundAlarms.includes(e.attributes.alarm)),
-        )
-      ) {
+      const preferences = { soundAlarms, soundEvents };
+      if (events.some((event) => eventSeverity(event, preferences) === 'critical')) {
         playAlarm();
+      }
+      const warnings = backfill
+        ? []
+        : events.filter((event) => eventSeverity(event, preferences) === 'warning');
+      if (warnings.length && !features.disableEvents) {
+        const [latest] = warnings;
+        const devices = store.getState().devices.items;
+        const title = formatNotificationTitle(t, {
+          type: latest.type,
+          attributes: { alarms: latest.attributes?.alarm },
+        });
+        const name = devices[latest.deviceId]?.name;
+        dispatch(
+          messagesActions.push({
+            message: [title, name, warnings.length > 1 ? `+${warnings.length - 1}` : null]
+              .filter(Boolean)
+              .join(' · '),
+            severity: 'warning',
+            duration: 6000,
+          }),
+        );
       }
       events.forEach((event) => {
         if (event.attributes.message) {
@@ -73,7 +97,7 @@ const SocketController = () => {
         }
       });
     },
-    [features, dispatch, soundEvents, soundAlarms],
+    [features, dispatch, soundEvents, soundAlarms, store, t],
   );
 
   const handleEventsRef = useRef(handleEvents);
@@ -83,6 +107,48 @@ const SocketController = () => {
   includeLogsRef.current = includeLogs;
 
   const connectSocketRef = useRef();
+
+  const markActivity = useCallback(() => {
+    const now = Date.now();
+    lastMessageRef.current = now;
+    if (now - lastStoredRef.current >= ACTIVITY_STEP_MS) {
+      lastStoredRef.current = now;
+      dispatch(sessionActions.updateLastMessage(now));
+    }
+  }, [dispatch]);
+
+  // Events (alarms included) raised while the socket was down are not replayed by Traccar; fetch
+  // them from the events report once the connection is back.
+  const backfillEvents = useCallback(
+    async (since) => {
+      const range = backfillRange(since);
+      const deviceIds = Object.keys(store.getState().devices.items);
+      if (!range || !deviceIds.length) {
+        return;
+      }
+      try {
+        const events = [];
+        for (const ids of chunk(deviceIds.slice(0, 1000))) {
+          const query = new URLSearchParams({ ...range });
+          ids.forEach((id) => query.append('deviceId', id));
+          query.append('type', 'allEvents');
+          const response = await fetch(`api/reports/events?${query.toString()}`, {
+            headers: { Accept: 'application/json' },
+          });
+          if (response.ok) {
+            events.push(...(await response.json()));
+          }
+        }
+        if (events.length) {
+          events.sort((a, b) => Date.parse(b.eventTime) - Date.parse(a.eventTime));
+          handleEventsRef.current(events.slice(0, 50), { backfill: true });
+        }
+      } catch {
+        // best effort: the live feed continues either way
+      }
+    },
+    [store],
+  );
 
   const connectSocket = useCallback(() => {
     clearReconnectTimeout();
@@ -95,8 +161,14 @@ const SocketController = () => {
     socketRef.current = socket;
 
     socket.onopen = () => {
+      const missedSince = attemptRef.current > 0 ? lastMessageRef.current : null;
+      attemptRef.current = 0;
       dispatch(sessionActions.updateSocket(true));
       socket.send(JSON.stringify({ logs: includeLogsRef.current }));
+      markActivity();
+      if (missedSince) {
+        backfillEvents(missedSince);
+      }
     };
 
     socket.onclose = async (event) => {
@@ -121,18 +193,27 @@ const SocketController = () => {
       }
       if (socketRef.current !== socket) return;
       clearReconnectTimeout();
+      const delay = reconnectDelay(attemptRef.current);
+      attemptRef.current += 1;
+      dispatch(sessionActions.updateReconnectAt(Date.now() + delay));
       reconnectTimeoutRef.current = setTimeout(() => {
         reconnectTimeoutRef.current = null;
         connectSocketRef.current?.();
-      }, 60000);
+      }, delay);
     };
 
     socket.onmessage = (event) => {
+      markActivity();
       const data = JSON.parse(event.data);
       if (data.devices) {
         dispatch(devicesActions.update(data.devices));
       }
       if (data.positions) {
+        // Command replies are read here, before the throttle can merge them away.
+        const replies = data.positions.filter((position) => position.attributes?.result != null);
+        if (replies.length) {
+          dispatch(commandsActions.results(replies));
+        }
         dispatch(sessionActions.updatePositions(data.positions));
       }
       if (data.events) {
@@ -142,7 +223,7 @@ const SocketController = () => {
         dispatch(sessionActions.updateLogs(data.logs));
       }
     };
-  }, [clearReconnectTimeout, dispatch, navigate]);
+  }, [clearReconnectTimeout, dispatch, navigate, markActivity, backfillEvents]);
 
   connectSocketRef.current = connectSocket;
 
@@ -211,9 +292,15 @@ const SocketController = () => {
         reconnectIfNeeded();
       }
     };
+    const reconnectNow = () => {
+      attemptRef.current = 0;
+      connectSocket();
+    };
     window.addEventListener('online', reconnectIfNeeded);
+    window.addEventListener(RECONNECT_NOW_EVENT, reconnectNow);
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
+      window.removeEventListener(RECONNECT_NOW_EVENT, reconnectNow);
       window.removeEventListener('online', reconnectIfNeeded);
       document.removeEventListener('visibilitychange', onVisibility);
     };

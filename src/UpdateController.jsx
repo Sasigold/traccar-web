@@ -1,5 +1,5 @@
 import { Alert, Snackbar, IconButton } from '@mui/material';
-import RefreshIcon from '@mui/icons-material/Refresh';
+import RefreshIcon from '@mui/icons-material/RefreshRounded';
 import { useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { Workbox } from 'workbox-window';

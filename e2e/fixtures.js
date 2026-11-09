@@ -2,6 +2,9 @@ import { test as base, expect } from '@playwright/test';
 import { AxeBuilder } from '@axe-core/playwright';
 
 // Every page must reach "ready" without uncaught errors; collect them per test.
+// The demo's fleet database (demo/vite.config.js): never a real one, so tests mock it here.
+export const FLEET = 'https://fleet.demo.invalid';
+
 export const test = base.extend({
   pageErrors: [
     async ({ page }, use) => {
@@ -39,4 +42,17 @@ export const gotoReady = async (page, path) => {
   await page.goto(path);
   await expect(page.locator('#root')).not.toBeEmpty();
   await page.waitForLoadState('networkidle');
+  await settleAnimations(page);
 };
+
+// Entrance animations (login reveal, card slides) fade text in; contrast is only meaningful at
+// rest. Waits for every finite animation, ignoring looping ones such as the brand loader.
+export const settleAnimations = (page) =>
+  page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity)
+        .map((animation) => animation.finished.catch(() => null)),
+    ),
+  );

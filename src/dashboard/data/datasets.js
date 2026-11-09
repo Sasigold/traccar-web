@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import { speedFromKnots } from '../../common/util/converter';
+import { activeDaysPct, afterHours, co2Kg, privateTrip } from './fleetMetrics';
 
 // What a widget can show: datasets, their dimensions ("by …") and measures ("how much").
 // Pure definitions; labels are l10n keys resolved by the UI.
@@ -328,6 +329,23 @@ const SUMMARY_MEASURES = {
     filter: (row) => row.distance > 0,
     labelKey: 'dashboardMActiveVehicles',
   },
+  // REP-06: liters per 100 km over the rows that report fuel (Σ liters / Σ meters × 100,000).
+  fuelPer100: {
+    agg: 'quotient',
+    unit: 'fuelRate',
+    numerator: (row) => (Number(row.spentFuel) > 0 ? row.spentFuel : null),
+    denominator: (row) => row.distance,
+    scale: 100000,
+    labelKey: 'dashboardMFuelPer100',
+    good: 'down',
+  },
+  co2: {
+    agg: 'sum',
+    unit: 'mass',
+    value: (row, ctx) => co2Kg(row.spentFuel, ctx?.fuelTypeOf?.(row.deviceId)),
+    labelKey: 'dashboardMCo2',
+    good: 'down',
+  },
 };
 
 const TRIP_MEASURES = {
@@ -341,6 +359,30 @@ const TRIP_MEASURES = {
   },
   maxSpeed: SUMMARY_MEASURES.maxSpeed,
   fuel: SUMMARY_MEASURES.fuel,
+  // REP-06: driving outside the organization's working hours, private mode, and how many
+  // vehicle-days had any driving.
+  afterHoursDistance: {
+    agg: 'sum',
+    unit: 'distance',
+    value: (row, ctx) => (afterHours(ctx?.workPolicy, row.startTime) ? row.distance : 0),
+    labelKey: 'dashboardMAfterHours',
+    good: 'down',
+  },
+  privateShare: {
+    agg: 'quotient',
+    unit: 'percent',
+    numerator: (row, ctx) => (privateTrip(ctx?.privatePeriods, row) ? row.distance : 0),
+    denominator: (row) => row.distance,
+    scale: 100,
+    needsPrivacy: true,
+    labelKey: 'dashboardMPrivateShare',
+  },
+  activeDaysPct: {
+    agg: 'custom',
+    unit: 'percent',
+    reduce: (rows, ctx) => activeDaysPct(rows, ctx?.vehicleCount, ctx?.rangeDays),
+    labelKey: 'dashboardMActiveDays',
+  },
 };
 
 const STOP_MEASURES = {
@@ -356,6 +398,16 @@ const STOP_MEASURES = {
     unit: 'duration',
     value: (row) => row.engineHours,
     labelKey: 'dashboardMIdleTime',
+    good: 'down',
+  },
+  // REP-06: the share of standing time with the engine running.
+  idlePct: {
+    agg: 'quotient',
+    unit: 'percent',
+    numerator: (row) => row.engineHours,
+    denominator: (row) => row.duration,
+    scale: 100,
+    labelKey: 'dashboardMIdlePct',
     good: 'down',
   },
 };

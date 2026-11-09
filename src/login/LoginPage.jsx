@@ -16,8 +16,8 @@ import {
 import CountryFlag from 'react-country-flag';
 import { makeStyles } from 'tss-react/mui';
 import { keyframes } from 'tss-react';
-import VpnLockIcon from '@mui/icons-material/VpnLock';
-import QrCode2Icon from '@mui/icons-material/QrCode2';
+import VpnLockIcon from '@mui/icons-material/VpnLockRounded';
+import QrCode2Icon from '@mui/icons-material/QrCode2Rounded';
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';

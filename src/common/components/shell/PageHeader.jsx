@@ -8,7 +8,7 @@ import { useTranslation } from '../LocalizationProvider';
 
 const crumbLinks = {
   settingsTitle: '/settings',
-  reportTitle: '/reports/combined',
+  reportTitle: '/reports',
 };
 
 const useStyles = makeStyles()((theme) => ({
@@ -85,7 +85,7 @@ const PageHeader = ({ breadcrumbs, title, description, actions, onOpenMenu, back
       )}
       <div className={classes.titles}>
         {desktop && parents.length > 0 && (
-          <Breadcrumbs className={classes.crumbs} aria-label="breadcrumb">
+          <Breadcrumbs className={classes.crumbs} aria-label={t('a11yBreadcrumb')}>
             {parents.map((crumb) =>
               crumbLinks[crumb] ? (
                 <Link

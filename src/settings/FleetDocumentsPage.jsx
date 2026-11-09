@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Chip, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
+import ValidityTabs from '../fleet/components/ValidityTabs';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import DataTable from '../common/components/table/DataTable';
@@ -12,6 +13,7 @@ import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetError, useFleetLabel, useFleetStatus } from '../common/fleet/useFleet';
 import SettingsMenu from './components/SettingsMenu';
 import { ExpiryChip } from './components/FleetDocumentsSection';
+import { formatTime } from '../common/util/formatter';
 
 const useStyles = makeStyles()(() => ({
   row: {
@@ -81,9 +83,10 @@ const FleetDocumentsPage = () => {
   return (
     <PageLayout
       menu={<SettingsMenu />}
-      breadcrumbs={['settingsTitle', 'fleetDocumentsPage']}
+      breadcrumbs={['fleetTitle', 'fleetDocumentsPage']}
       description={t('fleetDocumentsPageDescription')}
     >
+      <ValidityTabs />
       {status === 'error' && (
         <Alert severity="warning" sx={{ mx: 3, mb: 2 }}>
           {t('fleetConnectionError').replace('{0}', error || '')}
@@ -131,7 +134,7 @@ const FleetDocumentsPage = () => {
               </TableCell>
               <TableCell>{label(item)}</TableCell>
               <TableCell>{item.title || item.file_name}</TableCell>
-              <TableCell>{new Date(item.expires_at).toLocaleDateString()}</TableCell>
+              <TableCell>{formatTime(item.expires_at, 'date')}</TableCell>
               <TableCell>
                 <ExpiryChip expiresAt={item.expires_at} reminderDays={item.reminder_days} />
               </TableCell>

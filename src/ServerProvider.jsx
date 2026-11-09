@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Alert, IconButton } from '@mui/material';
-import ReplayIcon from '@mui/icons-material/Replay';
+import ReplayIcon from '@mui/icons-material/ReplayRounded';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAsyncTask } from './reactHelper';
 import { sessionActions } from './store';

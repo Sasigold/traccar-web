@@ -12,7 +12,10 @@ const useStyles = makeStyles()((theme) => ({
       display: 'none',
     },
   },
+  // Above a table (a flex column), the intro keeps its own height: the 100% basis is for the
+  // filter's wrapping row, where it means a full line.
   padded: {
+    flex: '0 0 auto',
     padding: theme.spacing(1.5, 3),
     [theme.breakpoints.down('md')]: {
       padding: theme.spacing(1.5, 2),

@@ -1,6 +1,6 @@
 import { useCallback, useReducer, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   TableRow,
   TableCell,
@@ -9,11 +9,13 @@ import {
   FormControlLabel,
   Switch,
   Typography,
+  Link,
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
 import DnsRoundedIcon from '@mui/icons-material/DnsRounded';
 import { useTheme } from '@mui/material/styles';
+import { useLivePositions } from '../common/fleet/usePrivacy';
 import { useAsyncTask, useScrollToLoad, pageSize } from '../reactHelper';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
@@ -58,9 +60,11 @@ const useStyles = makeStyles()((theme) => ({
   muted: {
     color: theme.palette.text.secondary,
   },
+  // Plates and identifiers never wrap in the middle ("12-345-" / "67").
   mono: {
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+    fontFamily: theme.tokens.font.mono,
     fontSize: '0.8125rem',
+    whiteSpace: 'nowrap',
   },
 }));
 
@@ -77,7 +81,7 @@ const DevicesPage = () => {
   const deviceReadonly = useDeviceReadonly();
   const coordinateFormat = usePreference('coordinateFormat');
 
-  const positions = useSelector((state) => state.session.positions);
+  const positions = useLivePositions();
 
   const [reloadKey, reload] = useReducer((k) => k + 1, 0);
   const [items, setItems] = useState([]);
@@ -110,8 +114,15 @@ const DevicesPage = () => {
     [reloadKey, loadItems],
   );
 
+  // The list loads 50 at a time while scrolling; the export always takes every matching device.
   const handleExport = async () => {
-    const data = items.map((item) => ({
+    const query = new URLSearchParams({ all: showAll });
+    if (searchKeyword) {
+      query.append('keyword', searchKeyword);
+    }
+    const response = await fetchOrThrow(`api/devices?${query.toString()}`);
+    const allItems = await response.json();
+    const data = allItems.map((item) => ({
       [t('sharedName')]: item.name,
       [t('fleetPlateNumber')]: item.attributes?.plateNumber,
       [t('deviceIdentifier')]: item.uniqueId,
@@ -143,7 +154,7 @@ const DevicesPage = () => {
   return (
     <PageLayout
       menu={<SettingsMenu />}
-      breadcrumbs={['settingsTitle', 'deviceTitle']}
+      breadcrumbs={['fleetTitle', 'deviceTitle']}
       description={t('settingsDevicesDescription')}
     >
       <DataTable
@@ -151,7 +162,7 @@ const DevicesPage = () => {
           <TableToolbar
             search={{ value: searchKeyword, onChange: setSearchKeyword }}
             count={items.length}
-            addPath="/settings/device"
+            addPath="/fleet/vehicle/new"
             addDisabled={deviceReadonly}
             exportHandler={handleExport}
             actions={
@@ -203,7 +214,9 @@ const DevicesPage = () => {
                 <TableCell>
                   <span className={classes.name}>
                     <DeviceTile category={item.category} status={item.status} size={32} />
-                    {item.name}
+                    <Link component={RouterLink} to={`/fleet/vehicle/${item.id}`}>
+                      {item.name}
+                    </Link>
                   </span>
                 </TableCell>
                 <TableCell>
@@ -221,7 +234,9 @@ const DevicesPage = () => {
                   <span dir="ltr">{item.attributes?.plateNumber}</span>
                 </TableCell>
                 <TableCell>{validity !== 'none' && <ExpiryBadge status={validity} />}</TableCell>
-                <TableCell className={classes.mono}>{item.uniqueId}</TableCell>
+                <TableCell className={classes.mono}>
+                  <bdi dir="ltr">{item.uniqueId}</bdi>
+                </TableCell>
                 <TableCell>{item.groupId ? groups[item.groupId]?.name : null}</TableCell>
                 <TableCell>{item.phone}</TableCell>
                 <TableCell>{item.model}</TableCell>
@@ -263,7 +278,7 @@ const DevicesPage = () => {
           )}
         </TableBody>
       </DataTable>
-      <AddFab editPath="/settings/device" disabled={deviceReadonly} />
+      <AddFab editPath="/fleet/vehicle/new" disabled={deviceReadonly} />
     </PageLayout>
   );
 };

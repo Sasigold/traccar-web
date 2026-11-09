@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { createRoot } from 'react-dom/client';
-import TravelExploreIcon from '@mui/icons-material/TravelExplore';
+import TravelExploreIcon from '@mui/icons-material/TravelExploreRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import { glass } from '../../common/theme/surfaces';
 import { map } from '../core/MapView';

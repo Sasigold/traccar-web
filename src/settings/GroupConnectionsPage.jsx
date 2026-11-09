@@ -38,7 +38,7 @@ const GroupConnectionsPage = () => {
           keyBase="groupId"
           keyLink="notificationId"
           titleGetter={(it) => formatNotificationTitle(t, it)}
-          label={t('sharedNotifications')}
+          label={t('notificationRules')}
           helperText={t('connectionsNotificationsHelp')}
         />
         {!features.disableDrivers && (

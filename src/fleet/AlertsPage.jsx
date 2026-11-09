@@ -27,6 +27,7 @@ import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsAct
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import ValidityTabs from './components/ValidityTabs';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import DataTable from '../common/components/table/DataTable';
@@ -49,6 +50,7 @@ import {
   acknowledgeAlerts,
   alertChannels,
   alertKinds,
+  isPhoneChannel,
   loadOpenAlerts,
   validRecipientAddress,
 } from './alerts';
@@ -149,8 +151,9 @@ const AlertsPage = () => {
   const saveRecipient = useCatch(async () => {
     const client = getFleetClient();
     const { id, ...values } = editing;
-    const address =
-      values.channel === 'whatsapp' ? values.address.replace(/[\s-]/g, '') : values.address.trim();
+    const address = isPhoneChannel(values.channel)
+      ? values.address.replace(/[\s-]/g, '')
+      : values.address.trim();
     const payload = { ...values, address, name: values.name.trim() };
     if (id) {
       unwrap(await client.from('alert_recipients').update(payload).eq('id', id));
@@ -216,6 +219,7 @@ const AlertsPage = () => {
       breadcrumbs={['fleetTitle', 'fleetAlertsPage']}
       description={t('fleetAlertsPageDescription')}
     >
+      <ValidityTabs />
       {status === 'error' && (
         <Alert severity="warning" sx={{ mx: 3, mb: 2 }}>
           {t('fleetConnectionError').replace('{0}', error || '')}
@@ -418,7 +422,7 @@ const AlertsPage = () => {
               <TextField
                 label={t(editing.channel === 'email' ? 'userEmail' : 'fleetRecipientPhone')}
                 helperText={
-                  editing.channel === 'whatsapp' ? t('fleetRecipientPhoneHint') : undefined
+                  isPhoneChannel(editing.channel) ? t('fleetRecipientPhoneHint') : undefined
                 }
                 value={editing.address}
                 onChange={(event) => setEditing({ ...editing, address: event.target.value })}

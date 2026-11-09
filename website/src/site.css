@@ -2759,6 +2759,28 @@ button {
   margin-top: 6px;
 }
 
+.form__trap {
+  position: absolute;
+  inset-inline-start: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.form__error {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--ice);
+  color: var(--ink);
+  border-inline-start: 4px solid var(--error);
+}
+
+.form__error a {
+  color: var(--navy);
+  font-weight: 600;
+}
+
 .form__done {
   display: grid;
   justify-items: center;

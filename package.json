@@ -1,6 +1,6 @@
 {
-  "name": "traccar",
-  "version": "6.17.0",
+  "name": "viper-fleet-web",
+  "version": "1.0.0",
   "type": "module",
   "private": true,
   "dependencies": {
@@ -51,7 +51,7 @@
     "site:preview": "vite preview --config website/vite.config.js",
     "build": "vite build",
     "generate-pwa-assets": "pwa-assets-generator --preset minimal public/logo.svg",
-    "lint": "eslint --max-warnings 0 .",
+    "lint": "eslint --max-warnings 0 . && node tools/brand-css-guard.mjs",
     "lint:fix": "eslint --fix --max-warnings 0 .",
     "test": "vitest run",
     "test:watch": "vitest",

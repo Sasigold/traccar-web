@@ -5,11 +5,19 @@ import MainPage from './main/MainPage';
 import App from './App';
 import Loader from './common/components/Loader';
 import AdminRoute from './admin/AdminRoute';
+import ReportVisits from './reports/components/ReportVisits';
 import { useAsyncTask } from './reactHelper';
 import { devicesActions } from './store';
 import { generateLoginToken } from './common/components/NativeInterface';
 import { useLocalization } from './common/components/LocalizationProvider';
 import fetchOrThrow from './common/util/fetchOrThrow';
+
+// The vehicle and driver lists moved to the fleet area (ADM-02); old links keep their filters.
+const KeepQuery = ({ to }) => {
+  const [searchParams] = useSearchParams();
+  const query = searchParams.toString();
+  return <Navigate to={query ? `${to}?${query}` : to} replace />;
+};
 
 const NotFoundPage = lazy(() => import('./other/NotFoundPage'));
 const DashboardPage = lazy(() => import('./dashboard/DashboardPage'));
@@ -27,13 +35,24 @@ const InspectionPage = lazy(() => import('./fleet/InspectionPage'));
 const RolesPage = lazy(() => import('./fleet/RolesPage'));
 const FleetUsersPage = lazy(() => import('./fleet/FleetUsersPage'));
 const DriverPortalPage = lazy(() => import('./fleet/DriverPortalPage'));
+const DriverDamagePage = lazy(() => import('./fleet/DriverDamagePage'));
 const SafetyPage = lazy(() => import('./fleet/SafetyPage'));
+const VehiclePage = lazy(() => import('./fleet/VehiclePage'));
+const VehicleWizardPage = lazy(() => import('./fleet/VehicleWizardPage'));
+const SafetyOfficerPage = lazy(() => import('./fleet/SafetyOfficerPage'));
+const PrivacyPage = lazy(() => import('./fleet/PrivacyPage'));
 const DriverFilePage = lazy(() => import('./fleet/DriverFilePage'));
 const PoiPage = lazy(() => import('./fleet/PoiPage'));
 const DispatchPage = lazy(() => import('./fleet/DispatchPage'));
 const EquipmentPage = lazy(() => import('./fleet/EquipmentPage'));
 const SensorsPage = lazy(() => import('./fleet/SensorsPage'));
 const IntegrationsPage = lazy(() => import('./fleet/IntegrationsPage'));
+const ApiDocsPage = lazy(() => import('./fleet/ApiDocsPage'));
+const ReportsHubPage = lazy(() => import('./reports/ReportsHubPage'));
+const TimelineReportPage = lazy(() => import('./reports/TimelineReportPage'));
+const UsageReportPage = lazy(() => import('./reports/UsageReportPage'));
+const CostPerKmReportPage = lazy(() => import('./reports/CostPerKmReportPage'));
+const DeviceHealthReportPage = lazy(() => import('./reports/DeviceHealthReportPage'));
 const CombinedReportPage = lazy(() => import('./reports/CombinedReportPage'));
 const PositionsReportPage = lazy(() => import('./reports/PositionsReportPage'));
 const ServerPage = lazy(() => import('./settings/ServerPage'));
@@ -99,6 +118,9 @@ const DeviceSetupPage = lazy(() => import('./admin/DeviceSetupPage'));
 const AdminUsersPage = lazy(() => import('./admin/AdminUsersPage'));
 const BillingPage = lazy(() => import('./admin/BillingPage'));
 const PlansPage = lazy(() => import('./admin/PlansPage'));
+const MessagingPage = lazy(() => import('./admin/MessagingPage'));
+const ApiLimitsPage = lazy(() => import('./admin/ApiLimitsPage'));
+const InvoicingPage = lazy(() => import('./admin/InvoicingPage'));
 
 const Navigation = () => {
   const dispatch = useDispatch();
@@ -171,12 +193,18 @@ const Navigation = () => {
           <Route path="telemetry/:deviceId" element={<TelemetryPage />} />
           <Route path="network/:positionId" element={<NetworkPage />} />
           <Route path="event/:id" element={<EventPage />} />
-          <Route path="replay" element={<ReplayPage />} />
+          <Route element={<ReportVisits />}>
+            <Route path="replay" element={<ReplayPage />} />
+          </Route>
           <Route path="geofences" element={<GeofencesPage />} />
           <Route path="emulator" element={<EmulatorPage />} />
           <Route path="stream" element={<StreamPage />} />
 
-          <Route path="driver" element={<DriverPortalPage />} />
+          <Route path="driver">
+            <Route index element={<DriverPortalPage />} />
+            <Route path="check" element={<InspectionPage driverMode />} />
+            <Route path="damage" element={<DriverDamagePage />} />
+          </Route>
           <Route path="fleet">
             <Route index element={<FleetHubPage />} />
             <Route path="expiries" element={<ExpiriesPage />} />
@@ -195,12 +223,19 @@ const Navigation = () => {
             <Route path="roles" element={<RolesPage />} />
             <Route path="users" element={<FleetUsersPage />} />
             <Route path="safety" element={<SafetyPage />} />
+            <Route path="safety-officer" element={<SafetyOfficerPage />} />
             <Route path="driver-file/:id" element={<DriverFilePage />} />
             <Route path="poi" element={<PoiPage />} />
             <Route path="dispatch" element={<DispatchPage />} />
             <Route path="equipment" element={<EquipmentPage />} />
             <Route path="sensors" element={<SensorsPage />} />
             <Route path="integrations" element={<IntegrationsPage />} />
+            <Route path="integrations/api" element={<ApiDocsPage />} />
+            <Route path="privacy" element={<PrivacyPage />} />
+            <Route path="vehicles" element={<DevicesPage />} />
+            <Route path="vehicle/new" element={<VehicleWizardPage />} />
+            <Route path="vehicle/:id" element={<VehiclePage />} />
+            <Route path="drivers" element={<DriversPage />} />
           </Route>
 
           <Route path="settings">
@@ -218,12 +253,12 @@ const Navigation = () => {
             <Route path="attributes" element={<ComputedAttributesPage />} />
             <Route path="attribute/:id" element={<ComputedAttributePage />} />
             <Route path="attribute" element={<ComputedAttributePage />} />
-            <Route path="devices" element={<DevicesPage />} />
+            <Route path="devices" element={<KeepQuery to="/fleet/vehicles" />} />
             <Route path="device/:id/connections" element={<DeviceConnectionsPage />} />
             <Route path="device/:id/command" element={<CommandDevicePage />} />
             <Route path="device/:id" element={<DevicePage />} />
             <Route path="device" element={<DevicePage />} />
-            <Route path="drivers" element={<DriversPage />} />
+            <Route path="drivers" element={<KeepQuery to="/fleet/drivers" />} />
             <Route path="driver/:id" element={<DriverPage />} />
             <Route path="driver" element={<DriverPage />} />
             <Route path="fleet-documents" element={<FleetDocumentsPage />} />
@@ -259,11 +294,18 @@ const Navigation = () => {
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="billing" element={<BillingPage />} />
             <Route path="plans" element={<PlansPage />} />
+            <Route path="messaging" element={<MessagingPage />} />
+            <Route path="api" element={<ApiLimitsPage />} />
+            <Route path="invoicing" element={<InvoicingPage />} />
           </Route>
 
-          <Route path="reports">
-            <Route index element={<Navigate to="combined" replace />} />
+          <Route path="reports" element={<ReportVisits />}>
+            <Route index element={<ReportsHubPage />} />
             <Route path="combined" element={<CombinedReportPage />} />
+            <Route path="timeline" element={<TimelineReportPage />} />
+            <Route path="usage" element={<UsageReportPage />} />
+            <Route path="cost-per-km" element={<CostPerKmReportPage />} />
+            <Route path="device-health" element={<DeviceHealthReportPage />} />
             <Route path="chart" element={<ChartReportPage />} />
             <Route path="events" element={<EventReportPage />} />
             <Route path="geofences" element={<GeofenceReportPage />} />

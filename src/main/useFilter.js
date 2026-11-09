@@ -1,6 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import dayjs from 'dayjs';
+import { activityGroup, activityOf } from '../common/util/activity';
+import { deviceSearchFields, matchDevice, tokenizeSearch } from '../common/util/deviceSearch';
+import { sameItems } from '../common/util/stableArray';
 
 export default (
   keyword,
@@ -13,6 +16,11 @@ export default (
 ) => {
   const groups = useSelector((state) => state.groups.items);
   const devices = useSelector((state) => state.devices.items);
+  const drivers = useSelector((state) => state.drivers.items);
+  // The last results: unchanged lists are not set again, so the list and the map skip a render
+  // when, for example, only the selected vehicle reported.
+  const lastDevicesRef = useRef(null);
+  const lastPositionsRef = useRef(null);
 
   useEffect(() => {
     const deviceGroups = (device) => {
@@ -25,8 +33,17 @@ export default (
       return groupIds;
     };
 
+    const tokens = tokenizeSearch(keyword);
+    const scores = new Map();
+    const now = Date.now();
+    const activities = filter.activities || [];
     const filtered = Object.values(devices)
       .filter((device) => !filter.statuses.length || filter.statuses.includes(device.status))
+      .filter(
+        (device) =>
+          !activities.length ||
+          activities.includes(activityGroup(activityOf(device, positions[device.id], now))),
+      )
       .filter(
         (device) =>
           !filter.groups.length || deviceGroups(device).some((id) => filter.groups.includes(id)),
@@ -37,10 +54,17 @@ export default (
           (positions[device.id]?.geofenceIds || []).some((id) => filter.geofences.includes(id)),
       )
       .filter((device) => {
-        const lowerCaseKeyword = keyword.toLowerCase();
-        return [device.name, device.uniqueId, device.phone, device.model, device.contact].some(
-          (s) => s && s.toLowerCase().includes(lowerCaseKeyword),
+        if (!tokens.length) {
+          return true;
+        }
+        const match = matchDevice(
+          tokens,
+          deviceSearchFields(device, { groups, drivers, position: positions[device.id] }),
         );
+        if (match) {
+          scores.set(device.id, match.score);
+        }
+        return Boolean(match);
       });
     switch (filterSort) {
       case 'name':
@@ -54,14 +78,27 @@ export default (
         });
         break;
       default:
+        // Without a chosen order, the best match comes first.
+        if (tokens.length) {
+          filtered.sort(
+            (device1, device2) =>
+              scores.get(device2.id) - scores.get(device1.id) ||
+              device1.name.localeCompare(device2.name),
+          );
+        }
         break;
     }
-    setFilteredDevices(filtered);
-    setFilteredPositions(
-      filterMap
-        ? filtered.map((device) => positions[device.id]).filter(Boolean)
-        : Object.values(positions),
-    );
+    if (!sameItems(lastDevicesRef.current, filtered)) {
+      lastDevicesRef.current = filtered;
+      setFilteredDevices(filtered);
+    }
+    const shownPositions = filterMap
+      ? filtered.map((device) => positions[device.id]).filter(Boolean)
+      : Object.values(positions);
+    if (!sameItems(lastPositionsRef.current, shownPositions)) {
+      lastPositionsRef.current = shownPositions;
+      setFilteredPositions(shownPositions);
+    }
   }, [
     keyword,
     filter,
@@ -69,6 +106,7 @@ export default (
     filterMap,
     groups,
     devices,
+    drivers,
     positions,
     setFilteredDevices,
     setFilteredPositions,

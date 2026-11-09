@@ -51,6 +51,13 @@ describe('dispatch', () => {
     expect(trackingExpiry({}, now).toISOString()).toBe('2026-11-06T12:00:00.000Z');
   });
 
+  it('never makes a tracking link last more than 12 hours', () => {
+    const now = new Date('2026-11-06T08:00:00Z');
+    expect(trackingExpiry({ window_end: '2026-11-13T12:00:00Z' }, now).toISOString()).toBe(
+      '2026-11-06T20:00:00.000Z',
+    );
+  });
+
   it('builds WhatsApp links for Israeli numbers', () => {
     expect(whatsappNumber('050-123-4567')).toBe('972501234567');
     expect(whatsappNumber('+972 50 1234567')).toBe('972501234567');

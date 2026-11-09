@@ -115,7 +115,8 @@ const useStyles = makeStyles()((theme) => ({
     color: theme.palette.brand.paper,
     fontSize: '0.75rem',
     fontWeight: 500,
-    letterSpacing: '0.06em',
+    // Spaced capitals suit "SYNCED"; Hebrew is not letter-spaced.
+    letterSpacing: theme.direction === 'rtl' ? 0 : '0.06em',
     fontVariantNumeric: 'tabular-nums',
     whiteSpace: 'nowrap',
   },
@@ -341,9 +342,9 @@ const SyncChip = ({ classes }) => {
   const t = useTranslation();
   const time = useSyncClock();
   return (
-    <span className={classes.syncChip} dir="ltr">
+    <span className={classes.syncChip} dir="auto">
       <span className={classes.syncDot} />
-      {`${t('loginSynced')} / ${time}`}
+      {t('loginSynced').replace('{0}', time)}
     </span>
   );
 };

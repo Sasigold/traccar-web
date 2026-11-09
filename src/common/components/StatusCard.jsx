@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { Rnd } from 'react-rnd';
 import {
+  Alert,
   Button,
   Card,
   Divider,
   Typography,
+  ButtonBase,
   IconButton,
   Menu,
   MenuItem,
@@ -17,34 +19,41 @@ import {
   ListItemText,
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
+import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
+import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded';
 import { alpha } from '@mui/material/styles';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
 import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
 import HexagonRoundedIcon from '@mui/icons-material/HexagonRounded';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
 import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded';
-import { glass, statusColor } from '../theme/surfaces';
+import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
+import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
+import ChatRoundedIcon from '@mui/icons-material/ChatRounded';
+import { glass } from '../theme/surfaces';
 import DeviceTile from './brand/DeviceTile';
 import TelemetryStrip from './telemetry/TelemetryStrip';
 import { setStatusCardElement, statusCardMoved } from './statusCardArea';
 import { useTranslation } from './LocalizationProvider';
-import RemoveDialog from './RemoveDialog';
 import PositionValue from './PositionValue';
 import FaultCodes from '../../fleet/components/FaultCodes';
 import { faultCodes } from '../fleet/fleetFields';
 import { useDeviceReadonly, useRestriction } from '../util/permissions';
 import usePositionAttributes from '../attributes/usePositionAttributes';
-import { devicesActions } from '../../store';
-import { useCatch, useCatchCallback } from '../../reactHelper';
+import { useCatchCallback } from '../../reactHelper';
 import { useAttributePreference } from '../util/preferences';
 import fetchOrThrow from '../util/fetchOrThrow';
-import { formatStatus } from '../util/formatter';
+import { formatSpeed } from '../util/formatter';
+import useActivityText, { toneColor } from './useActivityText';
+import { whatsappLink } from '../fleet/dispatch';
+import CommandDialog from './commands/CommandDialog';
+import CommandStatus from './commands/CommandStatus';
+import FocusedEventBanner from './FocusedEventBanner';
 
 const useStyles = makeStyles()((theme, { desktopPadding }) => ({
   card: {
@@ -64,9 +73,10 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     color: theme.palette.text.primary,
     cursor: 'grab',
   },
+  // Over a vehicle photo the header is a flat ink bar at the bottom (brand: no gradients).
   headerMedia: {
     color: theme.palette.common.white,
-    background: `linear-gradient(180deg, ${alpha(theme.palette.brand.ink, 0.1)} 0%, ${alpha(theme.palette.brand.ink, 0.65)} 100%)`,
+    backgroundColor: alpha(theme.palette.brand.ink, 0.72),
     alignItems: 'flex-end',
   },
   titles: {
@@ -116,6 +126,9 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     flexDirection: 'column',
     justifyContent: 'flex-end',
   },
+  privacy: {
+    margin: theme.spacing(1, 2, 0),
+  },
   content: {
     padding: theme.spacing(0.5, 2, 1.5),
     maxHeight: theme.dimensions.cardContentMaxHeight,
@@ -151,28 +164,52 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
     marginTop: theme.spacing(0.5),
   },
   actions: {
-    display: 'flex',
-    alignItems: 'center',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
     gap: theme.spacing(0.75),
-    padding: theme.spacing(0.5, 2, 2),
+    padding: theme.spacing(0.5, 2, 1),
   },
   action: {
-    width: 40,
-    height: 40,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    minHeight: 52,
+    paddingBlock: theme.spacing(0.75),
     borderRadius: theme.tokens.radius.md,
     border: `1px solid ${theme.palette.surface.borderStrong}`,
     color: theme.palette.primary.main,
+    fontSize: '0.6875rem',
+    fontWeight: 600,
+    lineHeight: 1.2,
     '&:hover': {
       backgroundColor: alpha(theme.palette.primary.main, 0.08),
     },
     '&.Mui-disabled': {
       borderColor: theme.palette.surface.border,
+      color: theme.palette.text.disabled,
     },
   },
   primaryAction: {
-    marginInlineStart: 'auto',
-    height: 40,
+    display: 'flex',
+    margin: theme.spacing(0, 2, 2),
+    width: `calc(100% - ${theme.spacing(4)})`,
+    height: 44,
     whiteSpace: 'nowrap',
+  },
+  driverLine: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+    padding: theme.spacing(0, 2, 0.5),
+    fontSize: '0.8125rem',
+    color: theme.palette.text.secondary,
+  },
+  speedChip: {
+    fontVariantNumeric: 'tabular-nums',
+    fontWeight: 700,
+    color: theme.palette.text.primary,
   },
   root: {
     pointerEvents: 'none',
@@ -191,10 +228,16 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
   },
 }));
 
-const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPadding = '0px' }) => {
+const StatusCard = ({
+  deviceId,
+  position,
+  privacy,
+  onClose,
+  disableActions,
+  desktopPadding = '0px',
+}) => {
   const { classes, cx, theme } = useStyles({ desktopPadding });
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const t = useTranslation();
 
   const readonly = useRestriction('readonly');
@@ -216,16 +259,17 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
   const navigationAppTitle = useAttributePreference('navigationAppTitle');
 
   const [anchorEl, setAnchorEl] = useState(null);
+  const [driverAnchor, setDriverAnchor] = useState(null);
+  const [commandOpen, setCommandOpen] = useState(false);
 
-  const [removing, setRemoving] = useState(false);
-
-  const handleRemove = useCatch(async (removed) => {
-    if (removed) {
-      const response = await fetchOrThrow('api/devices');
-      dispatch(devicesActions.refresh(await response.json()));
-    }
-    setRemoving(false);
-  });
+  const speedUnit = useAttributePreference('speedUnit');
+  const { activity, label: activityLabel, tone } = useActivityText(device, position);
+  const driverUniqueId = position?.attributes?.driverUniqueId;
+  const driver = useSelector((state) =>
+    driverUniqueId ? state.drivers.items[driverUniqueId] : null,
+  );
+  const driverName = driver?.name || driverUniqueId;
+  const driverPhone = driver?.attributes?.phone;
 
   const handleGeofence = useCatchCallback(async () => {
     const newItem = {
@@ -246,7 +290,7 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
     navigate(`/settings/geofence/${item.id}`);
   }, [navigate, position, t]);
 
-  const color = device ? statusColor(theme, device.status) : theme.palette.neutral.main;
+  const moving = activity === 'moving';
   const plateNumber = device?.attributes?.plateNumber;
 
   const header = device && (
@@ -267,18 +311,18 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
             color={deviceImage ? 'inherit' : 'textSecondary'}
             className={classes.status}
           >
-            <span className={classes.dot} style={{ backgroundColor: color }} />
-            {formatStatus(device.status, t)}
+            <span className={classes.dot} style={{ backgroundColor: toneColor(theme, tone) }} />
+            {activityLabel}
+            {moving && position && (
+              <span className={classes.speedChip}>
+                {' · '}
+                {formatSpeed(position.speed, speedUnit, t)}
+              </span>
+            )}
           </Typography>
         </div>
       </div>
-      <IconButton
-        aria-label={t('a11yClose')}
-        size="small"
-        color="inherit"
-        onClick={onClose}
-        onTouchStart={onClose}
-      >
+      <IconButton aria-label={t('a11yClose')} color="inherit" onClick={onClose}>
         <CloseRoundedIcon fontSize="small" />
       </IconButton>
     </div>
@@ -305,6 +349,15 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                 </CardMedia>
               ) : (
                 <div className="draggable-header">{header}</div>
+              )}
+              {privacy && (
+                <Alert
+                  severity="info"
+                  icon={<VisibilityOffRoundedIcon />}
+                  className={classes.privacy}
+                >
+                  {t(privacy === 'private' ? 'privacyHiddenPrivate' : 'privacyHiddenHours')}
+                </Alert>
               )}
               {position && <TelemetryStrip position={position} device={device} />}
               {position && (
@@ -348,57 +401,100 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
                   </Link>
                 </div>
               )}
+              {driverName && (
+                <div className={classes.driverLine}>
+                  <PersonRoundedIcon fontSize="inherit" />
+                  {t('cardDriverName').replace('{0}', driverName)}
+                </div>
+              )}
+              <FocusedEventBanner deviceId={deviceId} />
+              <CommandStatus deviceId={deviceId} />
               <div className={classes.actions}>
-                <Tooltip title={t('reportReplay')} describeChild>
-                  <span>
-                    <IconButton
-                      aria-label={t('reportReplay')}
-                      className={classes.action}
-                      onClick={() => navigate(`/replay?deviceId=${deviceId}`)}
-                      disabled={disableActions || !position}
-                    >
-                      <RouteRoundedIcon fontSize="small" />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-                <Tooltip title={t('commandTitle')} describeChild>
-                  <span>
-                    <IconButton
-                      aria-label={t('commandTitle')}
-                      className={classes.action}
-                      onClick={() => navigate(`/settings/device/${deviceId}/command`)}
-                      disabled={disableActions}
-                    >
-                      <SendRoundedIcon fontSize="small" />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-                <Tooltip title={t('sharedExtra')} describeChild>
-                  <span>
-                    <IconButton
-                      aria-label={t('sharedExtra')}
-                      className={classes.action}
-                      onClick={(e) => setAnchorEl(e.currentTarget)}
-                    >
-                      <MoreHorizRoundedIcon fontSize="small" />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-                <Button
-                  variant="contained"
-                  className={classes.primaryAction}
-                  startIcon={<SpeedRoundedIcon />}
-                  onClick={() => navigate(`/telemetry/${deviceId}`)}
-                  disabled={disableActions || !position}
+                {moving ? (
+                  <ButtonBase
+                    className={classes.action}
+                    onClick={() => navigate(`/replay?deviceId=${deviceId}`)}
+                    disabled={disableActions || !position}
+                  >
+                    <RouteRoundedIcon fontSize="small" />
+                    {t('cardReplay')}
+                  </ButtonBase>
+                ) : (
+                  <ButtonBase
+                    className={classes.action}
+                    onClick={() => navigate(`/telemetry/${deviceId}`)}
+                    disabled={disableActions || !position}
+                  >
+                    <SpeedRoundedIcon fontSize="small" />
+                    {t('cardDials')}
+                  </ButtonBase>
+                )}
+                <ButtonBase
+                  className={classes.action}
+                  onClick={() => setCommandOpen(true)}
+                  disabled={disableActions}
+                  aria-haspopup="dialog"
                 >
-                  {t('telemetryTitle')}
-                </Button>
+                  <SendRoundedIcon fontSize="small" />
+                  {t('cardCommand')}
+                </ButtonBase>
+                <Tooltip
+                  title={
+                    !driverName ? t('cardNoDriver') : !driverPhone ? t('cardNoDriverPhone') : ''
+                  }
+                  describeChild
+                >
+                  <span style={{ display: 'grid' }}>
+                    <ButtonBase
+                      className={classes.action}
+                      onClick={(e) => setDriverAnchor(e.currentTarget)}
+                      disabled={!driverPhone}
+                      aria-haspopup="menu"
+                    >
+                      <PhoneRoundedIcon fontSize="small" />
+                      {t('cardDriver')}
+                    </ButtonBase>
+                  </span>
+                </Tooltip>
+                <ButtonBase
+                  className={classes.action}
+                  onClick={(e) => setAnchorEl(e.currentTarget)}
+                  aria-haspopup="menu"
+                  aria-label={t('sharedExtra')}
+                >
+                  <MoreHorizRoundedIcon fontSize="small" />
+                  {t('cardMore')}
+                </ButtonBase>
               </div>
+              <Button
+                variant="contained"
+                className={classes.primaryAction}
+                startIcon={moving ? <SpeedRoundedIcon /> : <RouteRoundedIcon />}
+                onClick={() =>
+                  navigate(moving ? `/telemetry/${deviceId}` : `/replay?deviceId=${deviceId}`)
+                }
+                disabled={disableActions || !position}
+              >
+                {moving ? t('cardLiveDials') : t('cardReplayToday')}
+              </Button>
             </Card>
           </Rnd>
         )}
       </div>
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+        {!user.temporary && (
+          <MenuItem
+            onClick={() => {
+              setAnchorEl(null);
+              navigate(`/fleet/vehicle/${deviceId}`);
+            }}
+          >
+            <ListItemIcon>
+              <BadgeRoundedIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{t('vehicleCard')}</ListItemText>
+          </MenuItem>
+        )}
         <MenuItem
           onClick={() => {
             setAnchorEl(null);
@@ -489,27 +585,35 @@ const StatusCard = ({ deviceId, position, onClose, disableActions, desktopPaddin
             <ListItemText>{navigationAppTitle}</ListItemText>
           </MenuItem>
         )}
-        <Divider />
-        <MenuItem
-          onClick={() => {
-            setAnchorEl(null);
-            setRemoving(true);
-          }}
-          disabled={disableActions || deviceReadonly}
-          sx={{ color: 'error.main' }}
-        >
-          <ListItemIcon sx={{ color: 'inherit' }}>
-            <DeleteOutlineRoundedIcon fontSize="small" />
+      </Menu>
+      {commandOpen && <CommandDialog deviceId={deviceId} onClose={() => setCommandOpen(false)} />}
+      <Menu
+        anchorEl={driverAnchor}
+        open={Boolean(driverAnchor)}
+        onClose={() => setDriverAnchor(null)}
+      >
+        <MenuItem component="a" href={`tel:${driverPhone}`} onClick={() => setDriverAnchor(null)}>
+          <ListItemIcon>
+            <PhoneRoundedIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>{t('sharedRemove')}</ListItemText>
+          <ListItemText primary={t('cardCall')} secondary={<bdi dir="ltr">{driverPhone}</bdi>} />
+        </MenuItem>
+        <MenuItem
+          component="a"
+          target="_blank"
+          rel="noopener"
+          href={whatsappLink(
+            driverPhone,
+            t('cardWhatsappGreeting').replace('{0}', driverName || ''),
+          )}
+          onClick={() => setDriverAnchor(null)}
+        >
+          <ListItemIcon>
+            <ChatRoundedIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>{t('cardWhatsapp')}</ListItemText>
         </MenuItem>
       </Menu>
-      <RemoveDialog
-        open={removing}
-        endpoint="devices"
-        itemId={deviceId}
-        onResult={(removed) => handleRemove(removed)}
-      />
     </>
   );
 };

@@ -63,12 +63,18 @@ export const estimateEta = (position, target) => {
   return { km: Math.round(km * 10) / 10, minutes: Math.max(1, Math.round((km / speed) * 60)) };
 };
 
-// Expiry of a customer tracking link: the end of the delivery window, or a few hours from now.
+// Expiry of a customer tracking link: an hour after the delivery window, or a few hours from now,
+// and never more than MAX_TRACKING_HOURS ahead. A Traccar share link is a full (temporary)
+// session, so a job planned for next week must not hand out a week of live tracking.
+export const MAX_TRACKING_HOURS = 12;
+
 export const trackingExpiry = (job, now = new Date(), hours = 4) => {
+  const cap = new Date(now.getTime() + MAX_TRACKING_HOURS * 3600 * 1000);
   const fallback = new Date(now.getTime() + hours * 3600 * 1000);
   const windowEnd = job.window_end ? new Date(job.window_end) : null;
   if (windowEnd && windowEnd > now) {
-    return new Date(windowEnd.getTime() + 3600 * 1000);
+    const afterWindow = new Date(windowEnd.getTime() + 3600 * 1000);
+    return afterWindow < cap ? afterWindow : cap;
   }
   return fallback;
 };

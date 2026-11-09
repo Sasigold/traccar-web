@@ -167,7 +167,10 @@ const markerColors = {
   neutral: slate[300],
 };
 
-export default async () => {
+// Runs once; later calls get the same promise.
+let preloaded = null;
+
+const preload = async () => {
   const background = await loadImage(backgroundSvg);
   mapImages.background = await prepareIcon(background);
   mapImages.direction = await prepareIcon(await loadImage(directionSvg));
@@ -209,4 +212,11 @@ export default async () => {
       }),
     ),
   );
+};
+
+export default () => {
+  if (!preloaded) {
+    preloaded = preload();
+  }
+  return preloaded;
 };

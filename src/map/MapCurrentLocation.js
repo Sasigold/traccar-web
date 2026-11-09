@@ -15,6 +15,13 @@ const MapCurrentLocation = () => {
       trackUserLocation: false,
     });
     map.addControl(control, theme.direction === 'rtl' ? 'top-left' : 'top-right');
+    // MapLibre names the button only after its async geolocation check; name it right away.
+    const button = control._container?.querySelector('button');
+    if (button && !button.getAttribute('aria-label')) {
+      const label = map._getUIString('GeolocateControl.FindMyLocation');
+      button.setAttribute('aria-label', label);
+      button.title = label;
+    }
     return () => map.removeControl(control);
   }, [theme.direction]);
 

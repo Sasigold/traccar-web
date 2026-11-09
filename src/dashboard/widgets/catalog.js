@@ -20,6 +20,17 @@ const chart = (id, category, query, viz, size = { w: 4, h: 6 }, extra = {}) => (
 
 export const PRESETS = [
   // ─── live ────────────────────────────────────────────────────────────────
+  // REP-24: the one list a dispatcher acts on first.
+  {
+    id: 'attention',
+    category: 'live',
+    kind: 'attention',
+    titleKey: 'dashboardWAttention',
+    size: { w: 12, h: 5 },
+    min: { w: 4, h: 4 },
+    mobileH: 8,
+    singleton: true,
+  },
   {
     id: 'fleetKpis',
     category: 'live',
@@ -97,6 +108,41 @@ export const PRESETS = [
     mobileH: 5,
     gate: { reports: true },
   },
+  // REP-06: the measures fleet managers ask about.
+  {
+    id: 'efficiencyKpis',
+    category: 'activity',
+    kind: 'kpis',
+    titleKey: 'dashboardWEfficiencyKpis',
+    metrics: [
+      'summary.fuelPer100',
+      'summary.co2',
+      'stops.idlePct',
+      'trips.afterHoursDistance',
+      'trips.activeDaysPct',
+    ],
+    compare: true,
+    size: { w: 12, h: 3 },
+    min: { w: 4, h: 2 },
+    mobileH: 5,
+    gate: { reports: true },
+  },
+  chart(
+    'fuelPer100ByVehicle',
+    'activity',
+    { ds: 'summary', m: 'fuelPer100', d: 'vehicle', n: 8 },
+    'bars',
+    undefined,
+    { gate: { reports: true } },
+  ),
+  chart(
+    'afterHoursByDriver',
+    'activity',
+    { ds: 'trips', m: 'afterHoursDistance', d: 'driver', n: 8 },
+    'bars',
+    undefined,
+    { gate: { reports: true } },
+  ),
   chart(
     'distanceTrend',
     'activity',

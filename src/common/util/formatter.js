@@ -35,25 +35,75 @@ export const formatEnergy = (value, t) =>
 export const formatConsumption = (value, t) =>
   `${value.toFixed(2)} ${t('sharedLiterPerHourAbbreviation')}`;
 
+// Dates, times and numbers follow the app language, not the browser: many Israeli users run an
+// English OS, which used to turn the Hebrew UI into 11/08/2026, 10:28 PM. The locale is set by
+// LocalizationProvider; Intl formatters are cached because markers format on every frame.
+let formatLocale = 'he-IL-u-nu-latn';
+const formatterCache = new Map();
+
+export const setFormatLanguage = (language) => {
+  const candidate = `${language || 'he'}-IL-u-nu-latn`;
+  const next = Intl.DateTimeFormat.supportedLocalesOf([candidate]).length
+    ? candidate
+    : 'he-IL-u-nu-latn';
+  if (next !== formatLocale) {
+    formatLocale = next;
+    formatterCache.clear();
+  }
+};
+
+export const getFormatLocale = () => formatLocale;
+
+const cached = (kind, options) => {
+  const key = `${kind}|${JSON.stringify(options)}`;
+  let formatter = formatterCache.get(key);
+  if (!formatter) {
+    formatter =
+      kind === 'date'
+        ? new Intl.DateTimeFormat(formatLocale, options)
+        : new Intl.NumberFormat(formatLocale, options);
+    formatterCache.set(key, formatter);
+  }
+  return formatter;
+};
+
+const dateConfig = { year: 'numeric', month: '2-digit', day: '2-digit' };
+const minuteConfig = { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' };
+const secondConfig = { ...minuteConfig, second: '2-digit' };
+
+// Grouped number with up to `digits` decimals (12,000 / 142.8).
+export const formatGrouped = (value, digits = 1) =>
+  cached('number', { maximumFractionDigits: digits }).format(value);
+
+// Date and time are joined by a space only: a comma between two number runs is what scrambled
+// the order in right-to-left text.
 export const formatTime = (value, format) => {
   if (value) {
     const d = dayjs(value).toDate();
-    const dateConfig = { year: 'numeric', month: '2-digit', day: '2-digit' };
-    const minuteConfig = { hour: '2-digit', minute: '2-digit' };
-    const secondConfig = { ...minuteConfig, second: '2-digit' };
+    if (Number.isNaN(d.getTime())) {
+      return '';
+    }
     switch (format) {
       case 'date':
-        return d.toLocaleDateString(undefined, dateConfig);
+        return cached('date', dateConfig).format(d);
       case 'time':
-        return d.toLocaleTimeString(undefined, secondConfig);
+        return cached('date', secondConfig).format(d);
+      case 'clock':
+        return cached('date', minuteConfig).format(d);
       case 'minutes':
-        return d.toLocaleString(undefined, { ...dateConfig, ...minuteConfig });
+        return `${cached('date', dateConfig).format(d)} ${cached('date', minuteConfig).format(d)}`;
       default:
-        return d.toLocaleString(undefined, { ...dateConfig, ...secondConfig });
+        return `${cached('date', dateConfig).format(d)} ${cached('date', secondConfig).format(d)}`;
     }
   }
   return '';
 };
+
+// "8 בנוב׳ 2026" style label for periods and headings.
+export const formatLongDate = (value) =>
+  value
+    ? cached('date', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value))
+    : '';
 
 export const formatStatus = (value, t) => t(prefixString('deviceStatus', value));
 
@@ -86,16 +136,16 @@ export const formatCourse = (value) => {
 };
 
 export const formatDistance = (value, unit, t) =>
-  `${distanceFromMeters(value, unit).toFixed(1)} ${distanceUnitString(unit, t)}`;
+  `${formatGrouped(distanceFromMeters(value, unit), 1)} ${distanceUnitString(unit, t)}`;
 
 export const formatAltitude = (value, unit, t) =>
-  `${altitudeFromMeters(value, unit).toFixed(0)} ${altitudeUnitString(unit, t)}`;
+  `${formatGrouped(altitudeFromMeters(value, unit), 0)} ${altitudeUnitString(unit, t)}`;
 
 export const formatSpeed = (value, unit, t) =>
-  `${speedFromKnots(value, unit).toFixed(0)} ${speedUnitString(unit, t)}`;
+  `${formatGrouped(speedFromKnots(value, unit), 0)} ${speedUnitString(unit, t)}`;
 
 export const formatVolume = (value, unit, t) =>
-  `${volumeFromLiters(value, unit).toFixed(1)} ${volumeUnitString(unit, t)}`;
+  `${formatGrouped(volumeFromLiters(value, unit), 1)} ${volumeUnitString(unit, t)}`;
 
 export const formatNumericHours = (value, t) => {
   const hours = Math.floor(value / 3600000);

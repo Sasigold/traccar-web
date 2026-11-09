@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { IconButton, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
-import GpsFixedIcon from '@mui/icons-material/GpsFixed';
-import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
+import GpsFixedIcon from '@mui/icons-material/GpsFixedRounded';
+import LocationSearchingIcon from '@mui/icons-material/LocationSearchingRounded';
 import ReportFilter from './components/ReportFilter';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
@@ -26,6 +26,8 @@ import MapScale from '../map/MapScale';
 import AddressValue from '../common/components/AddressValue';
 import formatEventData from './common/formatEventData';
 import { eventIconKey } from '../map/core/preloadImages';
+import { privateCombined } from '../common/fleet/privacyData';
+import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import { deviceEquality } from '../common/util/deviceEquality';
 
@@ -55,6 +57,7 @@ const CombinedReportPage = () => {
     'attributes',
   ]);
   const [items, setItems] = useState([]);
+  const [hidden, setHidden] = useState(0);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState(null);
 
@@ -81,7 +84,10 @@ const CombinedReportPage = () => {
     setLoading(true);
     try {
       const response = await fetchOrThrow(`api/reports/combined?${query.toString()}`);
-      setItems(await response.json());
+      // A vehicle whose period touches hidden time shows no route; its hidden events no place.
+      const result = await privateCombined(await response.json(), { deviceIds, from, to });
+      setItems(result.items);
+      setHidden(result.hidden);
     } finally {
       setLoading(false);
     }
@@ -203,6 +209,7 @@ const CombinedReportPage = () => {
               )}
             </TableBody>
           </DataTable>
+          {!loading && <PrivacyNote hidden={hidden} kind="routes" padded />}
         </div>
       </div>
     </PageLayout>

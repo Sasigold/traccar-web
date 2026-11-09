@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
+  Alert,
   Button,
   Checkbox,
   FormControlLabel,
@@ -41,6 +42,7 @@ import {
   statusChange,
 } from '../common/fleet/workOrders';
 import { maintenanceStatus } from '../common/fleet/maintenanceStatus';
+import { garageLicenseIssue } from '../common/fleet/safetyOfficer';
 import FleetNotice from './components/FleetNotice';
 import { VendorDialog } from './VendorsPage';
 import { workOrderStatusKey, workOrderTypeKey } from './WorkOrdersPage';
@@ -107,6 +109,8 @@ const WorkOrderPage = () => {
   const [addingVendor, setAddingVendor] = useState(false);
 
   const [order, setOrder] = useState(null);
+  // Only licensed garages (regulation 585): warn when the chosen one is not known to be.
+  const garageIssue = garageLicenseIssue(vendors.find((vendor) => vendor.id === order?.vendor_id));
   const [items, setItems] = useState([]);
   const [deviceId, setDeviceId] = useState(searchParams.get('deviceId') || '');
   const [invoice, setInvoice] = useState(null);
@@ -336,6 +340,11 @@ const WorkOrderPage = () => {
                   </Tooltip>
                 )}
               </div>
+              {garageIssue && (
+                <Alert severity="warning" className={classes.full}>
+                  {t(`safetyGarage${garageIssue.replace(/^\w/, (c) => c.toUpperCase())}Warning`)}
+                </Alert>
+              )}
               <DateField
                 label={t('fleetWorkOrderScheduled')}
                 value={order.scheduled_at || ''}
