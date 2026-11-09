@@ -6,13 +6,10 @@ import store from './store';
 import { LocalizationProvider } from './common/components/LocalizationProvider';
 import MessageHandler from './common/components/MessageHandler';
 import Navigation from './Navigation';
-import preloadImages from './map/core/preloadImages';
 import NativeInterface from './common/components/NativeInterface';
 import ServerProvider from './ServerProvider';
 import ErrorBoundary from './ErrorBoundary';
 import AppThemeProvider from './AppThemeProvider';
-
-preloadImages();
 
 const root = createRoot(document.getElementById('root'));
 root.render(

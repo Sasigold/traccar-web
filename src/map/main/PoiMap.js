@@ -3,6 +3,7 @@ import { kml } from '@tmcw/togeojson';
 import gcoord from 'gcoord';
 import { useTheme } from '@mui/material/styles';
 import { map } from '../core/MapView';
+import { getCoordinateSystem } from '../core/mapState';
 import useMapLayer from '../core/useMapLayer';
 import { useAsyncTask } from '../../reactHelper';
 import { usePreference } from '../../common/util/preferences';
@@ -59,7 +60,7 @@ const PoiMap = () => {
       const dom = new DOMParser().parseFromString(await file.text(), 'text/xml');
       const parsed = kml(dom);
       const collection =
-        map.coordinateSystem === 'gcj02'
+        getCoordinateSystem() === 'gcj02'
           ? gcoord.transform(parsed, gcoord.WGS84, gcoord.GCJ02)
           : parsed;
       setData(collection);

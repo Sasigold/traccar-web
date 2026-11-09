@@ -8,7 +8,8 @@ import { useTheme, alpha } from '@mui/material';
 import MapSwitcher from '../control/MapSwitcher';
 import { useAttributePreference, usePreference } from '../../common/util/preferences';
 import usePersistedState from '../../common/util/usePersistedState';
-import { mapImages } from './preloadImages';
+import preloadImages, { mapImages } from './preloadImages';
+import { setCoordinateSystem } from './mapState';
 import useMapStyles from './useMapStyles';
 import { localizeStyle } from './mapLanguage';
 import { useLocalization, useTranslation } from '../../common/components/LocalizationProvider';
@@ -152,7 +153,7 @@ const MapView = ({ children }) => {
       return;
     }
     updateReadyValue(false);
-    map.coordinateSystem = style.coordinateSystem;
+    setCoordinateSystem(style.coordinateSystem);
     map.setStyle(style.style, {
       diff: false,
       transformStyle: (_, nextStyle) => localizeStyle(nextStyle, language),
@@ -163,8 +164,11 @@ const MapView = ({ children }) => {
       if (!map.loaded()) {
         timeoutId = setTimeout(waiting, 33);
       } else {
-        initMap();
-        updateReadyValue(true);
+        // Marker images are prepared on first use of a map (not on every page).
+        preloadImages().then(() => {
+          initMap();
+          updateReadyValue(true);
+        });
       }
     };
     map.once('styledata', waiting);

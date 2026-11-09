@@ -1,7 +1,7 @@
 import { parse, stringify } from 'wellknown';
 import turfCircle from '@turf/circle';
 import gcoord from 'gcoord';
-import { map } from './MapView';
+import { getCoordinateSystem } from './mapState';
 
 const coordinateSystem = (id) => {
   switch (id) {
@@ -13,13 +13,13 @@ const coordinateSystem = (id) => {
 };
 
 export const toMapCoordinates = (longitude, latitude) =>
-  map.coordinateSystem
-    ? gcoord.transform([longitude, latitude], gcoord.WGS84, coordinateSystem(map.coordinateSystem))
+  getCoordinateSystem()
+    ? gcoord.transform([longitude, latitude], gcoord.WGS84, coordinateSystem(getCoordinateSystem()))
     : [longitude, latitude];
 
 export const fromMapCoordinates = (longitude, latitude) =>
-  map.coordinateSystem
-    ? gcoord.transform([longitude, latitude], coordinateSystem(map.coordinateSystem), gcoord.WGS84)
+  getCoordinateSystem()
+    ? gcoord.transform([longitude, latitude], coordinateSystem(getCoordinateSystem()), gcoord.WGS84)
     : [longitude, latitude];
 
 const transformGeometry = (geometry, from, to) =>
@@ -111,8 +111,8 @@ export const geofenceToFeature = (theme, item) => {
     geometry = polygon.geometry;
   } else {
     geometry = reverseCoordinates(parse(item.area));
-    if (map.coordinateSystem) {
-      geometry = transformGeometry(geometry, gcoord.WGS84, coordinateSystem(map.coordinateSystem));
+    if (getCoordinateSystem()) {
+      geometry = transformGeometry(geometry, gcoord.WGS84, coordinateSystem(getCoordinateSystem()));
     }
   }
   return {
@@ -129,8 +129,8 @@ export const geofenceToFeature = (theme, item) => {
 };
 
 export const geometryToArea = (geometry) => {
-  const normalized = map.coordinateSystem
-    ? transformGeometry(geometry, coordinateSystem(map.coordinateSystem), gcoord.WGS84)
+  const normalized = getCoordinateSystem()
+    ? transformGeometry(geometry, coordinateSystem(getCoordinateSystem()), gcoord.WGS84)
     : geometry;
   return stringify(reverseCoordinates(normalized));
 };
