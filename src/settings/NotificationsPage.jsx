@@ -60,7 +60,7 @@ const NotificationsPage = () => {
   };
 
   return (
-    <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'sharedNotifications']}>
+    <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'notificationRules']}>
       <DataTable
         toolbar={
           <TableToolbar

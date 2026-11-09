@@ -1,3 +1,5 @@
+import { formatDays } from './plural';
+
 // What a vehicle is doing, for the live list, the KPI tiles and the card. Connection status alone
 // ("online") doesn't answer the dispatcher's question: is it driving, standing, idling, or are we
 // looking at old data?
@@ -60,5 +62,5 @@ export const formatShortDuration = (ms, t) => {
   if (hours < 24) {
     return `${hours}:${String(minutes % 60).padStart(2, '0')} ${t('sharedHourAbbreviation')}`;
   }
-  return t('sharedDaysCount').replace('{0}', Math.floor(hours / 24));
+  return formatDays(Math.floor(hours / 24), t);
 };

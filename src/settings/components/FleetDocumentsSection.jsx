@@ -39,6 +39,7 @@ import {
 import FormSection from './FormSection';
 import { DateField } from '../../common/components/pickers';
 import { formatTime } from '../../common/util/formatter';
+import { formatDays } from '../../common/util/plural';
 
 const useStyles = makeStyles()((theme) => ({
   table: {
@@ -84,8 +85,8 @@ export const ExpiryChip = ({ expiresAt, reminderDays }) => {
     days == null
       ? null
       : days < 0
-        ? t('fleetDaysOverdue').replace('{0}', String(-days))
-        : t('fleetDaysLeft').replace('{0}', String(days));
+        ? t('fleetDaysOverdue').replace('{0}', formatDays(-days, t))
+        : t('fleetDaysLeft').replace('{0}', formatDays(days, t));
   return (
     <Tooltip title={detail || ''}>
       <Chip

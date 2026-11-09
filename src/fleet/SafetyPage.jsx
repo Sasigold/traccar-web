@@ -47,6 +47,7 @@ import ViolationDialog, { violationKey } from './components/ViolationDialog';
 import SafetyRecordDialog from './components/SafetyRecordDialog';
 import { money } from './fleetData';
 import { assignmentResolver, loadAssignments, loadDriving, loadSafetySettings } from './safetyData';
+import { formatDays } from '../common/util/plural';
 
 const useStyles = makeStyles()((theme) => ({
   number: {
@@ -326,7 +327,7 @@ const SafetyPage = () => {
         >
           {periods.map((value) => (
             <MenuItem key={value} value={value}>
-              {t('fleetSafetyDays').replace('{0}', String(value))}
+              {formatDays(value, t)}
             </MenuItem>
           ))}
         </TextField>

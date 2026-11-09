@@ -21,6 +21,7 @@ import { useLabels } from '../useLabels';
 import { useSourceRows } from '../useWidgetModel';
 import { WidgetState } from '../WidgetFrame';
 import { MAINTENANCE_DEVICE_LIMIT } from '../../data/fleetSources';
+import { formatDays } from '../../../common/util/plural';
 
 const ROW = 44;
 
@@ -215,8 +216,8 @@ export const ExpiriesWidget = ({ width, height, size, table }) => {
     secondary: t(row.labelKey),
     side:
       row.days < 0
-        ? t('dashboardDaysAgo').replace('{0}', -row.days)
-        : t('dashboardDaysLeft').replace('{0}', row.days),
+        ? t('dashboardDaysAgo').replace('{0}', formatDays(-row.days, t))
+        : t('dashboardDaysLeft').replace('{0}', formatDays(row.days, t)),
     color: chart.tone(expiryTone[row.status]),
     row,
   }));

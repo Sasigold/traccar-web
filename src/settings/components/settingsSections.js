@@ -84,7 +84,7 @@ export const useSettingsSections = () => {
           },
           {
             id: 'notifications',
-            titleKey: 'sharedNotifications',
+            titleKey: 'notificationRules',
             descriptionKey: 'settingsNotificationsDescription',
             icon: NotificationsRoundedIcon,
             path: '/settings/notifications',
