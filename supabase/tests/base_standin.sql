@@ -40,6 +40,17 @@ $$;
 grant usage on schema storage to authenticated;
 grant select, insert, update, delete on storage.objects to authenticated;
 
+-- pg_net stand-in: requests are recorded, the tests insert the answers.
+create schema if not exists net;
+create table if not exists net.http_request_queue (id bigserial primary key, url text, params jsonb);
+create table if not exists net._http_response (
+  id bigint primary key, status_code integer, content text, created timestamptz default now()
+);
+create or replace function net.http_get(
+  url text, params jsonb default '{}', headers jsonb default '{}', timeout_milliseconds integer default 5000
+) returns bigint
+language sql as $$ insert into net.http_request_queue (url, params) values ($1, $2) returning id $$;
+
 -- pg_cron stand-in (the extension itself is not installed locally).
 create schema if not exists cron;
 create table if not exists cron.job (jobid bigserial primary key, jobname text, schedule text, command text);

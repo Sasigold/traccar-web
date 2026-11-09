@@ -240,6 +240,13 @@ ids as a fallback).
   until the card is.
 - **Validity page**: "עדכון תוקף טסט מהמאגר" checks every vehicle with a plate and moves its test expiry
   to the registry's `tokef_dt`, saved like a card save (Traccar, then the database).
+- **Every night** (`supabase/migrations/20261110120000_gov_registry_sync.sql`): at 01:30 UTC
+  `gov_registry_request()` asks the registry about every vehicle with a plate (pg_net, one request per
+  resource); at 02:00 UTC `gov_registry_apply()` applies the answers before the 04:00 document alerts. The
+  latest `vehicle_test` document takes the registry date: a document without a file has its date moved, a
+  scanned one is kept and a new one is added. `gov_registry_requests` records each lookup's outcome
+  (`updated`, `unchanged`, `not_found`, `error`) for 14 days. Without pg_net nothing is scheduled (the
+  migration says so) and the validity page button does the same job.
 
 ## Roadmap stages 2-4
 
