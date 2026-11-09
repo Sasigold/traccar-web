@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { activityGroup, activityOf } from '../common/util/activity';
 import { deviceSearchFields, matchDevice, tokenizeSearch } from '../common/util/deviceSearch';
 import { sameItems } from '../common/util/stableArray';
+import { byImportance } from './importance';
 
 export default (
   keyword,
@@ -78,13 +79,16 @@ export default (
         });
         break;
       default:
-        // Without a chosen order, the best match comes first.
+        // Without a chosen order: the best match first when searching, otherwise what needs
+        // attention first (LIV-11).
         if (tokens.length) {
           filtered.sort(
             (device1, device2) =>
               scores.get(device2.id) - scores.get(device1.id) ||
               device1.name.localeCompare(device2.name),
           );
+        } else {
+          filtered.sort(byImportance(positions, now));
         }
         break;
     }

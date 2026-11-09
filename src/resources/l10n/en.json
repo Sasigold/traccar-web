@@ -3359,5 +3359,10 @@
     "impersonateGo": "Log in",
     "impersonateBanner": "You are logged in as {0} (from {1}'s account). Everything you do here is recorded.",
     "impersonateBack": "Back to my account",
-    "sharedShow": "Show"
+    "sharedShow": "Show",
+    "deviceSortImportant": "Important first",
+    "deviceFiltersActive": "Active filters",
+    "deviceFilterCount": "{0} of {1}",
+    "deviceFilterClear": "Clear filters",
+    "deviceFilterNoMatch": "No vehicles match the filter"
 }

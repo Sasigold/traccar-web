@@ -3359,5 +3359,10 @@
     "impersonateGo": "כניסה",
     "impersonateBanner": "אתם מחוברים בתור {0} (נכנסתם מהחשבון של {1}). כל פעולה כאן נרשמת.",
     "impersonateBack": "חזרה לחשבון שלי",
-    "sharedShow": "הצגה"
+    "sharedShow": "הצגה",
+    "deviceSortImportant": "חשוב קודם",
+    "deviceFiltersActive": "מסננים פעילים",
+    "deviceFilterCount": "{0} מתוך {1}",
+    "deviceFilterClear": "ניקוי סינון",
+    "deviceFilterNoMatch": "אין רכבים שתואמים לסינון"
 }

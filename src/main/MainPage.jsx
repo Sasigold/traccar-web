@@ -10,6 +10,9 @@ import useVisiblePositions from '../common/fleet/usePrivacy';
 import { logPrivacyView } from '../common/fleet/privacyData';
 import DeviceList from './DeviceList';
 import MorningInsights from './MorningInsights';
+import ActiveFilters from './components/ActiveFilters';
+import DeviceListShimmer from './components/DeviceListShimmer';
+import FilterAltOffRoundedIcon from '@mui/icons-material/FilterAltOffRounded';
 import { rememberDevice } from '../common/util/recentDevices';
 import StatusCard from '../common/components/StatusCard';
 import EmptyState from '../common/components/table/EmptyState';
@@ -166,7 +169,8 @@ const MainPage = () => {
     geofences: [],
   });
   const [filterSort, setFilterSort] = usePersistedState('filterSort', '');
-  const [filterMap, setFilterMap] = usePersistedState('filterMap', false);
+  // LIV-11: the map shows what the list shows, unless switched off.
+  const [filterMap, setFilterMap] = usePersistedState('filterMap', true);
 
   const [devicesOpen, setDevicesOpen] = useState(desktop);
 
@@ -236,6 +240,16 @@ const MainPage = () => {
                   setFilterMap={setFilterMap}
                 />
                 {devicesOpen && !showEmpty && <FleetStats filter={filter} setFilter={setFilter} />}
+                {devicesOpen && !showEmpty && (
+                  <ActiveFilters
+                    filter={filter}
+                    setFilter={setFilter}
+                    keyword={keyword}
+                    setKeyword={setKeyword}
+                    shown={filteredDevices.length}
+                    total={deviceCount}
+                  />
+                )}
                 {devicesOpen && !showEmpty && !readonly && <ExpiryTiles compact />}
                 {devicesOpen && desktop && <div className={classes.divider} />}
               </div>
@@ -279,6 +293,25 @@ const MainPage = () => {
                             {t(administrator ? 'deviceSetupWizard' : 'shellAddDevice')}
                           </Button>
                         )
+                      }
+                    />
+                  ) : !devicesLoaded ? (
+                    // LIV-11: rows of shimmer while the fleet loads, not an empty list.
+                    <DeviceListShimmer />
+                  ) : filteredDevices.length === 0 && deviceCount > 0 ? (
+                    <EmptyState
+                      className={classes.empty}
+                      icon={<FilterAltOffRoundedIcon />}
+                      title={t('deviceFilterNoMatch')}
+                      action={
+                        <Button
+                          onClick={() => {
+                            setFilter({ activities: [], statuses: [], groups: [], geofences: [] });
+                            setKeyword('');
+                          }}
+                        >
+                          {t('deviceFilterClear')}
+                        </Button>
                       }
                     />
                   ) : (

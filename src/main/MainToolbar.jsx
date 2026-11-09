@@ -302,11 +302,14 @@ const MainToolbar = ({
             </Select>
           </FormControl>
           <FormControl>
-            <InputLabel id="main-toolbar-shared-sort-by-label">{t('sharedSortBy')}</InputLabel>
+            <InputLabel id="main-toolbar-shared-sort-by-label" shrink>
+              {t('sharedSortBy')}
+            </InputLabel>
             <Select
               labelId="main-toolbar-shared-sort-by-label"
               label={t('sharedSortBy')}
               value={filterSort}
+              displayEmpty
               onChange={(e) => setFilterSort(e.target.value)}
             >
               <MenuItem value="">{' '}</MenuItem>
