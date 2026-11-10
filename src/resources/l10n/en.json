@@ -1730,6 +1730,7 @@
     "fleetAssignmentDescription": "The vehicle the driver drives now, and the user who signs in to the driver portal",
     "fleetAssignedVehicle": "Assigned vehicle",
     "fleetAssignedSince": "Assigned since {0}",
+    "fleetAssignPending": "Saved when you save the driver",
     "fleetAssignTransferTitle": "The vehicle is already assigned",
     "fleetAssignTransfer": "{0} is assigned to {1} now. Move the vehicle? The current assignment ends now.",
     "fleetAssignTransferConfirm": "Move",

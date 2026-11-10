@@ -1,4 +1,4 @@
-import { useMemo, useReducer, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Alert, MenuItem, TextField, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
@@ -7,10 +7,10 @@ import { useTranslation } from '../../common/components/LocalizationProvider';
 import { useAsyncTask, useCatch } from '../../reactHelper';
 import { formatTime } from '../../common/util/formatter';
 import { getFleetClient, unwrap } from '../../common/fleet/client';
-import { useFleetPermission, useFleetProfile } from '../../common/fleet/useFleet';
+import { useFleetPermission } from '../../common/fleet/useFleet';
 import FormSection from '../../settings/components/FormSection';
 import { ensureDriver, ensureVehicle } from '../fleetData';
-import { assignDriver, grantMapAccess, vehicleHolder } from '../api/assignments';
+import { assignDriver, grantMapAccess, linkedTraccarUser, vehicleHolder } from '../api/assignments';
 import { useConfirm } from '../../common/components/confirm/ConfirmProvider';
 import { newDriverConflict } from '../../common/fleet/newDriver';
 
@@ -25,30 +25,78 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
+// ADM-14: what the section changed is saved with the driver's form, not on the spot. `pending`
+// is { deviceId?, profileId? }; a key that is there was changed ('' clears it).
+export const commitDriverAssignment = async (driver, pending, profile, devices) => {
+  if (!pending || !Object.keys(pending).length) return;
+  const client = getFleetClient();
+  const driverId = await ensureDriver(driver, profile);
+  if ('profileId' in pending) {
+    unwrap(
+      await client
+        .from('drivers')
+        .update({ profile_id: pending.profileId || null })
+        .eq('id', driverId),
+    );
+  }
+  if ('deviceId' in pending) {
+    const vehicleId = pending.deviceId
+      ? await ensureVehicle(devices[pending.deviceId], profile)
+      : null;
+    await assignDriver({ client, profile, driverId, vehicleId });
+  }
+  // The driver's own user sees the vehicle they have now on the map.
+  const row = unwrap(
+    await client.from('drivers').select('profile_id').eq('id', driverId).maybeSingle(),
+  );
+  const deviceId =
+    'deviceId' in pending
+      ? Number(pending.deviceId) || null
+      : unwrap(
+          await client
+            .from('current_assignments')
+            .select('traccar_device_id')
+            .eq('driver_id', driverId),
+        )?.[0]?.traccar_device_id;
+  if (row?.profile_id && deviceId) {
+    await grantMapAccess(await linkedTraccarUser(client, row.profile_id), deviceId);
+  }
+};
+
 // Roadmap 4.1: the driver's assigned vehicle and the system user who is this driver
 // (needed for the driver portal). Assigning ends the previous assignment.
-const DriverAssignmentSection = ({ driver }) => {
+const DriverAssignmentSection = ({ driver, pending = {}, onPending }) => {
   const { classes } = useStyles();
   const t = useTranslation();
   const confirm = useConfirm();
-  const profile = useFleetProfile();
   const canRead = useFleetPermission('vehicles.read');
   const canAssign = useFleetPermission('assignments.write');
   const canWriteDrivers = useFleetPermission('drivers.write');
   const canReadUsers = useFleetPermission('users.read');
   const canLink = canWriteDrivers && canReadUsers;
   const devices = useSelector((state) => state.devices.items);
-  const [reloadKey, reload] = useReducer((k) => k + 1, 0);
   const [current, setCurrent] = useState(null);
   const [row, setRow] = useState(null);
   const [users, setUsers] = useState([]);
 
   useAsyncTask(async () => {
-    void reloadKey;
-    if (!canRead || !driver?.id) {
+    if (!canRead) {
       return;
     }
     const client = getFleetClient();
+    if (canLink) {
+      setUsers(
+        unwrap(
+          await client
+            .from('profiles')
+            .select('id, full_name, email, traccar_user_id')
+            .order('full_name'),
+        ) || [],
+      );
+    }
+    if (!driver?.id) {
+      return;
+    }
     const [assignment, driverRow] = await Promise.all([
       client
         .from('current_assignments')
@@ -64,36 +112,22 @@ const DriverAssignmentSection = ({ driver }) => {
     ]);
     setCurrent((unwrap(assignment) || [])[0] || null);
     setRow(unwrap(driverRow));
-    if (canLink) {
-      setUsers(
-        unwrap(
-          await client
-            .from('profiles')
-            .select('id, full_name, email, traccar_user_id')
-            .order('full_name'),
-        ) || [],
-      );
-    }
-  }, [canRead, canLink, driver?.id, reloadKey]);
+  }, [canRead, canLink, driver?.id]);
 
   const options = useMemo(
     () => Object.values(devices).sort((a, b) => a.name.localeCompare(b.name)),
     [devices],
   );
 
-  const traccarUserOf = (profileId) => users.find((user) => user.id === profileId)?.traccar_user_id;
-
-  // ADM-17: a vehicle another driver has is passed on only when that is confirmed; the
-  // driver's own user then sees it on the map.
+  // ADM-17: a vehicle another driver has is passed on only when that is confirmed (here, when
+  // it is picked); the change itself waits for the form's save (ADM-14).
   const assign = useCatch(async (deviceId) => {
-    const client = getFleetClient();
-    const driverId = await ensureDriver(driver, profile);
-    let vehicleId = null;
     if (deviceId) {
-      const holder = await vehicleHolder(client, Number(deviceId));
+      const holder = await vehicleHolder(getFleetClient(), Number(deviceId));
+      const own = holder && row && holder.driver_id === row.id;
       if (
         holder &&
-        holder.driver_id !== driverId &&
+        !own &&
         !(await confirm({
           title: t('fleetAssignTransferTitle'),
           message: t('fleetAssignTransfer')
@@ -105,28 +139,22 @@ const DriverAssignmentSection = ({ driver }) => {
       ) {
         return;
       }
-      vehicleId = await ensureVehicle(devices[deviceId], profile);
     }
-    await assignDriver({ client, profile, driverId, vehicleId });
-    if (deviceId) await grantMapAccess(traccarUserOf(row?.profile_id), deviceId);
-    reload();
+    onPending({ ...pending, deviceId });
   });
 
-  const link = useCatch(async (profileId) => {
-    const driverId = row?.id || (await ensureDriver(driver, profile));
-    unwrap(
-      await getFleetClient()
-        .from('drivers')
-        .update({ profile_id: profileId || null })
-        .eq('id', driverId),
-    );
-    if (current?.traccar_device_id) {
-      await grantMapAccess(traccarUserOf(profileId), current.traccar_device_id);
-    }
-    reload();
-  });
+  const link = (profileId) => onPending({ ...pending, profileId });
 
-  if (!canRead || !driver?.id) {
+  const shownDevice =
+    'deviceId' in pending
+      ? pending.deviceId
+      : current?.traccar_device_id
+        ? String(current.traccar_device_id)
+        : '';
+  const shownProfile = 'profileId' in pending ? pending.profileId : row?.profile_id || '';
+  const waiting = Object.keys(pending).length > 0;
+
+  if (!canRead || !driver) {
     return null;
   }
 
@@ -140,13 +168,15 @@ const DriverAssignmentSection = ({ driver }) => {
         <TextField
           select
           label={t('fleetAssignedVehicle')}
-          value={current?.traccar_device_id ? String(current.traccar_device_id) : ''}
+          value={shownDevice}
           onChange={(event) => assign(event.target.value)}
           disabled={!canAssign}
           helperText={
-            current
-              ? t('fleetAssignedSince').replace('{0}', formatTime(current.starts_at, 'date'))
-              : undefined
+            'deviceId' in pending
+              ? t('fleetAssignPending')
+              : current
+                ? t('fleetAssignedSince').replace('{0}', formatTime(current.starts_at, 'date'))
+                : undefined
           }
         >
           <MenuItem value="">{t('fleetNoVehicle')}</MenuItem>
@@ -160,9 +190,9 @@ const DriverAssignmentSection = ({ driver }) => {
           <TextField
             select
             label={t('fleetLinkedUser')}
-            value={row?.profile_id || ''}
+            value={shownProfile}
             onChange={(event) => link(event.target.value)}
-            helperText={t('fleetLinkedUserHint')}
+            helperText={'profileId' in pending ? t('fleetAssignPending') : t('fleetLinkedUserHint')}
           >
             <MenuItem value="">&nbsp;</MenuItem>
             {users.map((user) => (
@@ -182,7 +212,7 @@ const DriverAssignmentSection = ({ driver }) => {
             )}
           </Alert>
         )}
-      {current?.traccar_device_id && row?.profile_id && (
+      {!waiting && current?.traccar_device_id && row?.profile_id && (
         <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
           {t('fleetAssignSeesOnMap')}
         </Typography>

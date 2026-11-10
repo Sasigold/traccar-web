@@ -16,7 +16,9 @@ import { saveFleetRecord, useFleetAccess, useFleetOverlay } from '../fleet/fleet
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import FormSection from './components/FormSection';
 import FleetDocumentsSection from './components/FleetDocumentsSection';
-import DriverAssignmentSection from '../fleet/components/DriverAssignmentSection';
+import DriverAssignmentSection, {
+  commitDriverAssignment,
+} from '../fleet/components/DriverAssignmentSection';
 import HistorySection from '../fleet/components/HistorySection';
 import FleetFieldsSection from '../fleet/components/FleetFieldsSection';
 import ScanDocumentButton from '../fleet/components/ScanDocumentButton';
@@ -45,6 +47,7 @@ const DriverPage = () => {
   const dispatch = useDispatch();
 
   const [item, setItem] = useState();
+  const devices = useSelector((state) => state.devices.items);
 
   const fleet = useFleetAccess('driver');
   const safety = useFleetPermission('safety.read');
@@ -57,6 +60,8 @@ const DriverPage = () => {
       if (fleet.write) {
         await saveFleetRecord('driver', saved, fleet.profile, { withDocuments: fleet.documents });
       }
+      // ADM-14: the vehicle and the user picked in the form are saved with it.
+      await commitDriverAssignment(saved, item.pendingAssignment, fleet.profile, devices);
       const response = await fetchOrThrow('api/drivers');
       dispatch(driversActions.refresh(await response.json()));
     } catch (error) {
@@ -82,8 +87,12 @@ const DriverPage = () => {
   // ADM-17: the identifier is the driver's tag or card number, and not every driver has one;
   // Traccar needs a unique value, so one is made up when it is left empty.
   const validate = () => item && item.name && fleetFieldsValid(driverFields, item.attributes);
-  const prepare = (value) =>
-    value.uniqueId?.trim() ? value : { ...value, uniqueId: generatedDriverId() };
+  const prepare = (input) => {
+    // The vehicle and user picked in the form are not Traccar fields.
+    const value = { ...input };
+    delete value.pendingAssignment;
+    return value.uniqueId?.trim() ? value : { ...value, uniqueId: generatedDriverId() };
+  };
 
   return (
     <EditItemView
@@ -154,7 +163,11 @@ const DriverPage = () => {
               {t('fleetDriverFile')}
             </Button>
           )}
-          <DriverAssignmentSection driver={item} />
+          <DriverAssignmentSection
+            driver={item}
+            pending={item.pendingAssignment}
+            onPending={(pendingAssignment) => setItem({ ...item, pendingAssignment })}
+          />
           <FleetDocumentsSection
             entity="driver"
             traccarId={item.id}

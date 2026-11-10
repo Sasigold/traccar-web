@@ -1730,6 +1730,7 @@
     "fleetAssignmentDescription": "הרכב שהנהג נוהג בו כרגע, והמשתמש שנכנס לפורטל הנהג",
     "fleetAssignedVehicle": "רכב משויך",
     "fleetAssignedSince": "משויך מ-{0}",
+    "fleetAssignPending": "יישמר כששומרים את הנהג",
     "fleetAssignTransferTitle": "הרכב כבר משויך",
     "fleetAssignTransfer": "{0} משויך כרגע ל{1}. להעביר את הרכב? השיוך הקודם יסתיים עכשיו.",
     "fleetAssignTransferConfirm": "העברה",
