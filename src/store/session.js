@@ -1,5 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+export const MAX_LOGS = 1000;
+
 const { reducer, actions } = createSlice({
   name: 'session',
   initialState: {
@@ -39,8 +41,12 @@ const { reducer, actions } = createSlice({
         state.logs = [];
       }
     },
+    // ARC-14: the logs page shows the latest; the store keeps at most MAX_LOGS.
     updateLogs(state, action) {
       state.logs.push(...action.payload);
+      if (state.logs.length > MAX_LOGS) {
+        state.logs.splice(0, state.logs.length - MAX_LOGS);
+      }
     },
     updatePositions(state, action) {
       // Positions can still arrive (socket, throttle flush) right after logout.

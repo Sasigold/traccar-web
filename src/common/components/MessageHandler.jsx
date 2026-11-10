@@ -19,6 +19,8 @@ import { messagesActions } from '../../store';
 import { useTranslation } from './LocalizationProvider';
 import { snackBarDurationShortMs } from '../util/duration';
 
+const ERROR_MS = 12000;
+
 const MessageHandler = () => {
   const dispatch = useDispatch();
   const t = useTranslation();
@@ -33,7 +35,15 @@ const MessageHandler = () => {
     (typeof activeMessage === 'string' ? activeMessage : activeMessage?.message) ||
     t('errorGeneral');
   const severity = activeMessage?.severity || 'error';
-  const { duration = severity === 'error' ? null : snackBarDurationShortMs } = activeMessage || {};
+  // ARC-14: an error stays long enough to read (and to open its details), then goes; one that
+  // must be acted on is pushed with `sticky: true`.
+  const {
+    duration = activeMessage?.sticky
+      ? null
+      : severity === 'error'
+        ? ERROR_MS
+        : snackBarDurationShortMs,
+  } = activeMessage || {};
   const multiline = message.includes('\n');
   const displayMessage = multiline
     ? message.split('\n')[0].replace(/^(?:(?:[\w$]+\.)*[\w$]+(?:Exception|Error)?:\s*)+/i, '')
