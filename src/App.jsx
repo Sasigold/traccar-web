@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import SocketController from './SocketController';
 import CachingController from './CachingController';
 import FleetController from './FleetController';
+import AutomationRunner from './fleet/AutomationRunner';
 import FleetAlertsController from './fleet/FleetAlertsController';
 import PrivacyController from './fleet/PrivacyController';
 import { useCatch, useAsyncTask } from './reactHelper';
@@ -92,6 +93,7 @@ const App = () => {
       <CachingController />
       <FleetController />
       <FleetAlertsController />
+      <AutomationRunner />
       <PrivacyController />
       <UpdateController />
       <MotionController />

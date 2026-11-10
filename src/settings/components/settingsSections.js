@@ -24,6 +24,7 @@ import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
+import AutoModeRoundedIcon from '@mui/icons-material/AutoModeRounded';
 import EventSeatRoundedIcon from '@mui/icons-material/EventSeatRounded';
 import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
 import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
@@ -426,6 +427,15 @@ const useSectionCatalog = () => {
               pathname.startsWith('/fleet/alerts') &&
               !pathname.startsWith('/fleet/alerts/response'),
             visible: fleetAlerts && has('alerts'),
+          },
+          {
+            id: 'automations',
+            titleKey: 'autoTitle',
+            descriptionKey: 'autoMenuDescription',
+            icon: AutoModeRoundedIcon,
+            path: '/fleet/automations',
+            match: (pathname) => pathname.startsWith('/fleet/automations'),
+            visible: fleetAlerts && has('automations'),
           },
           {
             id: 'alertResponse',
