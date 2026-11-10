@@ -114,3 +114,21 @@ export const nearbyVehicles = (positions, devices, point, limit = 8) =>
     }))
     .sort((a, b) => a.km - b.km)
     .slice(0, limit);
+
+// ADM-20: why a job failed, from a list (the database checks the same list).
+export const FAILURE_REASONS = [
+  'customer_absent',
+  'wrong_address',
+  'refused',
+  'no_access',
+  'damaged',
+  'other',
+];
+
+// A job still open after its arrival window (or its planned time, without a window) is late.
+// Being on the way is normal and not a warning; being late is.
+export const isLateJob = (job, now = new Date()) => {
+  if (!isOpenJob(job.status)) return false;
+  const due = job.window_end || job.scheduled_at;
+  return Boolean(due) && new Date(due) < now && job.status !== 'arrived';
+};

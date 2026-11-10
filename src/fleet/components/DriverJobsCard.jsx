@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useState } from 'react';
 import {
   Button,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -22,7 +23,7 @@ import { useAsyncTask, useCatch } from '../../reactHelper';
 import { formatTime } from '../../common/util/formatter';
 import { getFleetClient, unwrap } from '../../common/fleet/client';
 import { useFleetPermission, useFleetProfile } from '../../common/fleet/useFleet';
-import { driverNextStatuses } from '../../common/fleet/dispatch';
+import { FAILURE_REASONS, driverNextStatuses } from '../../common/fleet/dispatch';
 import { uploadFleetFile } from '../fleetData';
 import { JobStatusChip, jobKey } from '../DispatchPage';
 import { wazeUrl } from '../../common/util/waze';
@@ -85,9 +86,14 @@ const ProofDialog = ({ job, status, onClose, onSaved }) => {
   const [name, setName] = useState('');
   const [photo, setPhoto] = useState(null);
   const [notes, setNotes] = useState(job.notes || '');
+  // ADM-20: a failed job says why, with one tap.
+  const [reason, setReason] = useState(null);
 
   const save = useCatch(async () => {
     const values = { status, proof_name: name.trim() || null, notes: notes.trim() || null };
+    if (status === 'failed') {
+      values.failure_reason = reason;
+    }
     if (photo) {
       values.proof_photo_path = await uploadFleetFile(profile.org_id, 'dispatch', photo);
     }
@@ -100,6 +106,19 @@ const ProofDialog = ({ job, status, onClose, onSaved }) => {
       <DialogTitle>{t(jobKey('Status', status))}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>
+          {status === 'failed' && (
+            <div className={classes.buttons} role="group" aria-label={t('fleetJobFailureReason')}>
+              {FAILURE_REASONS.map((value) => (
+                <Chip
+                  key={value}
+                  label={t(jobKey('Failure', value))}
+                  color={reason === value ? 'primary' : 'default'}
+                  variant={reason === value ? 'filled' : 'outlined'}
+                  onClick={() => setReason(value)}
+                />
+              ))}
+            </div>
+          )}
           {status === 'done' && (
             <TextField
               label={t('fleetJobProofName')}
@@ -131,7 +150,9 @@ const ProofDialog = ({ job, status, onClose, onSaved }) => {
         <Button
           variant="contained"
           onClick={save}
-          disabled={status === 'done' && !name.trim() && !photo}
+          disabled={
+            (status === 'done' && !name.trim() && !photo) || (status === 'failed' && !reason)
+          }
         >
           {t('sharedSave')}
         </Button>

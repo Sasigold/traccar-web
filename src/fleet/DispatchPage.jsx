@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  Menu,
   MenuItem,
   TableBody,
   TableCell,
@@ -17,10 +18,12 @@ import {
   TableRow,
   TextField,
   Tooltip,
+  Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
 import ShareLocationRoundedIcon from '@mui/icons-material/ShareLocationRounded';
 import { useLivePositions } from '../common/fleet/usePrivacy';
@@ -40,7 +43,9 @@ import {
   JOB_PRIORITIES,
   JOB_STATUSES,
   JOB_TYPES,
+  FAILURE_REASONS,
   estimateEta,
+  isLateJob,
   isOpenJob,
   trackingExpiry,
   whatsappLink,
@@ -57,6 +62,7 @@ import {
 import { DateTimeField } from '../common/components/pickers';
 import { keepOnBackdrop } from '../common/util/formDialog';
 import CopyButton from '../common/components/CopyButton';
+import { useConfirm } from '../common/components/confirm/ConfirmProvider';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -67,6 +73,11 @@ const useStyles = makeStyles()((theme) => ({
     [theme.breakpoints.down('sm')]: {
       gridTemplateColumns: '1fr',
     },
+  },
+  chips: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
   },
   wide: {
     gridColumn: '1 / -1',
@@ -89,19 +100,28 @@ const useStyles = makeStyles()((theme) => ({
 
 export const jobKey = (group, value) => `fleetJob${group}${camel(value)}`;
 
+// ADM-20: being on the way is normal (info); only a late job is a warning.
 const statusColor = {
   planned: 'default',
   assigned: 'info',
-  en_route: 'warning',
-  arrived: 'warning',
+  en_route: 'info',
+  arrived: 'info',
   done: 'success',
   failed: 'error',
   cancelled: 'default',
 };
 
-export const JobStatusChip = ({ status }) => {
+export const JobStatusChip = ({ status, late = false }) => {
   const t = useTranslation();
-  return <Chip size="small" color={statusColor[status]} label={t(jobKey('Status', status))} />;
+  return (
+    <Chip
+      size="small"
+      color={late ? 'warning' : statusColor[status]}
+      label={
+        late ? `${t(jobKey('Status', status))} · ${t('fleetJobLate')}` : t(jobKey('Status', status))
+      }
+    />
+  );
 };
 
 const localInput = (value) => (value ? dayjs(value).format('YYYY-MM-DDTHH:mm') : '');
@@ -139,7 +159,29 @@ const jobKeys = [
   'scheduled_at',
   'window_end',
   'notes',
+  'failure_reason',
 ];
+
+// A copy of a job to plan again: the same place and people, a new time, no progress or link.
+const duplicateJob = (job) => ({
+  ...emptyJob(),
+  ...Object.fromEntries(
+    [
+      'title',
+      'type',
+      'priority',
+      'customer_name',
+      'customer_phone',
+      'address',
+      'latitude',
+      'longitude',
+      'notes',
+    ].map((key) => [key, job[key] ?? '']),
+  ),
+  poi_id: job.poi_id || '',
+  vehicle_id: job.vehicle_id || '',
+  driver_id: job.driver_id || '',
+});
 
 const JobDialog = ({ job, pois, vehicles, drivers, onClose, onSaved }) => {
   const { classes } = useStyles();
@@ -277,6 +319,24 @@ const JobDialog = ({ job, pois, vehicles, drivers, onClose, onSaved }) => {
               ({ value }) => t(jobKey('Status', value)),
               { className: classes.wide },
             )}
+          {form.status === 'failed' && (
+            <div className={classes.wide}>
+              <Typography variant="subtitle2" gutterBottom>
+                {t('fleetJobFailureReason')}
+              </Typography>
+              <div className={classes.chips}>
+                {FAILURE_REASONS.map((reason) => (
+                  <Chip
+                    key={reason}
+                    label={t(jobKey('Failure', reason))}
+                    color={form.failure_reason === reason ? 'primary' : 'default'}
+                    variant={form.failure_reason === reason ? 'filled' : 'outlined'}
+                    onClick={() => setForm({ ...form, failure_reason: reason })}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
           {field('notes', 'fleetNotes', { multiline: true, minRows: 2, className: classes.wide })}
         </div>
       </DialogContent>
@@ -320,7 +380,9 @@ const TrackingDialog = ({ job, deviceId, eta, onClose, onSaved }) => {
 
   const message = link
     ? [
-        t('fleetJobTrackingGreeting').replace('{0}', job.customer_name || ''),
+        job.customer_name
+          ? t('fleetJobTrackingGreeting').replace('{0}', job.customer_name)
+          : t('fleetJobTrackingGreetingNoName'),
         eta ? t('fleetJobTrackingEta').replace('{0}', eta.minutes) : null,
         t('fleetJobTrackingLink').replace('{0}', link),
       ]
@@ -385,6 +447,23 @@ const DispatchPage = () => {
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState(null);
   const [tracking, setTracking] = useState(null);
+  // ADM-20: a row's menu (duplicate, cancel).
+  const [rowMenu, setRowMenu] = useState(null);
+  const confirm = useConfirm();
+  const cancelJob = useCatch(async (job) => {
+    if (
+      !(await confirm({
+        title: t('fleetJobCancelConfirm').replace('{0}', job.title),
+        confirmLabel: t('fleetJobCancel'),
+      }))
+    ) {
+      return;
+    }
+    unwrap(
+      await getFleetClient().from('dispatch_jobs').update({ status: 'cancelled' }).eq('id', job.id),
+    );
+    reload();
+  });
   const [reloadKey, reload] = useReducer((k) => k + 1, 0);
 
   const jobs = useFleetRows('dispatch_jobs', {
@@ -538,7 +617,12 @@ const DispatchPage = () => {
                   </TableCell>
                   <TableCell>{job.drivers?.full_name}</TableCell>
                   <TableCell>
-                    <JobStatusChip status={job.status} />
+                    <JobStatusChip status={job.status} late={isLateJob(job)} />
+                    {job.status === 'failed' && job.failure_reason && (
+                      <Typography variant="caption" display="block" color="textSecondary">
+                        {t(jobKey('Failure', job.failure_reason))}
+                      </Typography>
+                    )}
                   </TableCell>
                   <TableCell className={classes.number}>
                     {eta
@@ -572,6 +656,13 @@ const DispatchPage = () => {
                           <EditRoundedIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
+                      <IconButton
+                        size="small"
+                        aria-label={t('shellActions')}
+                        onClick={(event) => setRowMenu({ anchor: event.currentTarget, job })}
+                      >
+                        <MoreVertRoundedIcon fontSize="small" />
+                      </IconButton>
                     </TableCell>
                   )}
                 </TableRow>
@@ -580,6 +671,28 @@ const DispatchPage = () => {
           )}
         </TableBody>
       </DataTable>
+      <Menu anchorEl={rowMenu?.anchor} open={Boolean(rowMenu)} onClose={() => setRowMenu(null)}>
+        <MenuItem
+          onClick={() => {
+            const { job } = rowMenu;
+            setRowMenu(null);
+            setEditing(duplicateJob(job));
+          }}
+        >
+          {t('fleetJobDuplicate')}
+        </MenuItem>
+        {rowMenu && isOpenJob(rowMenu.job.status) && (
+          <MenuItem
+            onClick={() => {
+              const { job } = rowMenu;
+              setRowMenu(null);
+              cancelJob(job);
+            }}
+          >
+            {t('fleetJobCancel')}
+          </MenuItem>
+        )}
+      </Menu>
       {editing && (
         <JobDialog
           job={editing}

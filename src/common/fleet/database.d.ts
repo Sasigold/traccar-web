@@ -907,6 +907,7 @@ export type Database = {
           created_by: string | null;
           created_at: string;
           updated_at: string;
+          failure_reason: string | null;
         };
         Insert: {
           id?: string;
@@ -938,6 +939,7 @@ export type Database = {
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
+          failure_reason?: string | null;
         };
         Update: {
           id?: string;
@@ -969,6 +971,7 @@ export type Database = {
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
+          failure_reason?: string | null;
         };
         Relationships: [];
       };
