@@ -23,6 +23,8 @@ import deviceCategories from '../common/util/deviceCategories';
 import SelectField from '../common/components/SelectField';
 import FormPage from '../settings/components/FormPage';
 import FormSection from '../settings/components/FormSection';
+import SetupStepIndex from './components/SetupStepIndex';
+import GovRegistryButton from '../fleet/components/GovRegistryButton';
 import SaveBar from '../settings/components/SaveBar';
 import {
   PROFILE_KEY,
@@ -257,6 +259,36 @@ const DeviceSetupPage = () => {
       }
     >
       {checking && deviceId && <InstallCheck deviceId={deviceId} />}
+      {device && (
+        <SetupStepIndex
+          steps={[
+            {
+              id: 'setup-device',
+              label: t('adminStepDevice'),
+              state: device.name?.trim() && device.uniqueId?.trim() ? 'done' : 'missing',
+            },
+            { id: 'setup-sim', label: t('adminStepSim'), state: device.phone ? 'done' : undefined },
+            {
+              id: 'setup-customer',
+              label: t('adminStepCustomer'),
+              state: customerId ? 'done' : undefined,
+            },
+            {
+              id: 'setup-vehicle',
+              label: t('adminStepVehicle'),
+              state:
+                device.attributes?.plateNumber || speedLimit !== '' || odometerKm !== ''
+                  ? 'done'
+                  : undefined,
+            },
+            {
+              id: 'setup-sensors',
+              label: t('adminStepSensors'),
+              state: sensors.length ? 'done' : undefined,
+            },
+          ]}
+        />
+      )}
       {!device ? (
         <FormSection title={<Skeleton width="10em" />}>
           {[...Array(3)].map((_, i) => (
@@ -266,6 +298,7 @@ const DeviceSetupPage = () => {
       ) : (
         <>
           <FormSection
+            id="setup-device"
             icon={<RouterRoundedIcon />}
             title={`1. ${t('adminStepDevice')}`}
             description={t('adminStepDeviceHelp')}
@@ -322,7 +355,11 @@ const DeviceSetupPage = () => {
             </div>
           </FormSection>
 
-          <FormSection icon={<SimCardRoundedIcon />} title={`2. ${t('adminStepSim')}`}>
+          <FormSection
+            id="setup-sim"
+            icon={<SimCardRoundedIcon />}
+            title={`2. ${t('adminStepSim')}`}
+          >
             <div className={classes.grid}>
               <TextField
                 label={t('adminSimNumber')}
@@ -351,6 +388,7 @@ const DeviceSetupPage = () => {
           </FormSection>
 
           <FormSection
+            id="setup-customer"
             icon={<StoreRoundedIcon />}
             title={`3. ${t('adminStepCustomer')}`}
             description={t('adminStepCustomerHelp')}
@@ -401,8 +439,30 @@ const DeviceSetupPage = () => {
             </div>
           </FormSection>
 
-          <FormSection icon={<DirectionsCarRoundedIcon />} title={`4. ${t('adminStepVehicle')}`}>
+          <FormSection
+            id="setup-vehicle"
+            icon={<DirectionsCarRoundedIcon />}
+            title={`4. ${t('adminStepVehicle')}`}
+          >
             <div className={classes.grid}>
+              {/* ADM-26: the plate fills make, model, year and the test date from the registry. */}
+              <TextField
+                label={t('fleetPlateNumber')}
+                value={device.attributes?.plateNumber || ''}
+                onChange={(event) =>
+                  setDevice({
+                    ...device,
+                    attributes: { ...device.attributes, plateNumber: event.target.value },
+                  })
+                }
+                slotProps={{ htmlInput: { dir: 'ltr', inputMode: 'numeric' } }}
+              />
+              <div>
+                <GovRegistryButton
+                  attributes={device.attributes || {}}
+                  setAttributes={(attributes) => setDevice({ ...device, attributes })}
+                />
+              </div>
               <TextField
                 type="number"
                 label={t('adminSpeedLimitKmh')}
@@ -425,6 +485,7 @@ const DeviceSetupPage = () => {
           </FormSection>
 
           <FormSection
+            id="setup-sensors"
             icon={<SensorsRoundedIcon />}
             title={`5. ${t('adminStepSensors')}`}
             description={t('adminStepSensorsHelp')}
