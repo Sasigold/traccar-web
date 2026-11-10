@@ -3547,5 +3547,8 @@
     "fleetSafetyNoneLeaders": "עוד אין מספיק נסיעות השבוע לטבלה.",
     "fleetSafetyHoursWeeklyRest": "בלי 25 שעות מנוחה ב-8 ימים",
     "fleetSafetyDrivingLeft": "נותרו {0} נהיגה",
-    "fleetSafetyNoDrivingLeft": "הגיע למגבלת הנהיגה"
+    "fleetSafetyNoDrivingLeft": "הגיע למגבלת הנהיגה",
+    "fleetListPrice": "מחיר מחירון (₪)",
+    "fleetMonthlyBenefit": "שווי שימוש לחודש",
+    "fleetMonthlyBenefitHint": "הערכה לפי ערכי 2026, לאימות מול רו\"ח"
 }

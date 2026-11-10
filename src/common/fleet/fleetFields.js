@@ -50,6 +50,8 @@ export const vehicleFields = [
     options: OWNERSHIP_TYPES,
     optionPrefix: 'fleetOwnership',
   },
+  // ISR-05: the list price ("מחיר מחירון"), for the taxable benefit of a company car.
+  { key: 'listPrice', labelKey: 'fleetListPrice', type: 'number', ltr: true },
 ];
 
 export const vehicleExpiryFields = [

@@ -47,6 +47,7 @@ import {
 import { devicesActions } from '../store';
 import useExpiries from './useExpiries';
 import { money } from './fleetData';
+import { monthlyBenefit, propulsionOf } from '../common/fleet/benefit';
 import { workOrderStatusKey } from './WorkOrdersPage';
 import { incidentKey } from './IncidentsPage';
 
@@ -292,6 +293,10 @@ const VehiclePage = () => {
   const tab = TABS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'overview';
 
   const device = useSelector((state) => state.devices.items[deviceId]);
+  const benefit = monthlyBenefit(
+    device?.attributes?.listPrice,
+    propulsionOf(device?.attributes?.fuelType),
+  );
   const position = useLivePosition(deviceId);
   const distanceUnit = useAttributePreference('distanceUnit');
   const canDocuments = useFleetPermission('documents.read');
@@ -466,6 +471,14 @@ const VehiclePage = () => {
                     <Typography key={key}>{device.attributes[key]}</Typography>,
                   ],
               )}
+              {benefit != null && [
+                <Typography key="benefit-label" color="textSecondary">
+                  {t('fleetMonthlyBenefit')}
+                </Typography>,
+                <Typography key="benefit">
+                  {`${money(benefit)} · ${t('fleetMonthlyBenefitHint')}`}
+                </Typography>,
+              ]}
             </div>
           </Paper>
         )}

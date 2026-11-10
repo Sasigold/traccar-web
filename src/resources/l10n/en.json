@@ -3547,5 +3547,8 @@
     "fleetSafetyNoneLeaders": "Not enough driving this week for the table yet.",
     "fleetSafetyHoursWeeklyRest": "No 25-hour rest in 8 days",
     "fleetSafetyDrivingLeft": "{0} of driving left",
-    "fleetSafetyNoDrivingLeft": "Driving limit reached"
+    "fleetSafetyNoDrivingLeft": "Driving limit reached",
+    "fleetListPrice": "List price (₪)",
+    "fleetMonthlyBenefit": "Monthly taxable benefit",
+    "fleetMonthlyBenefitHint": "estimate by 2026 values, to confirm with an accountant"
 }
