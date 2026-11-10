@@ -3462,5 +3462,13 @@
     "reportSavedViews": "תצוגות שמורות",
     "reportComparePrevious": "השוואה לתקופה הקודמת",
     "reportChangeFromPrevious": "שינוי מהתקופה הקודמת: {0}",
-    "reportShowAllAddresses": "הצגת כל הכתובות"
+    "reportShowAllAddresses": "הצגת כל הכתובות",
+    "reportStopMinimum": "עצירות של לפחות",
+    "reportStopAtLeast": "{0} דקות",
+    "reportIdleOnly": "רק סרק (מנוע פועל)",
+    "reportEventTime": "זמן האירוע",
+    "reportSpeedLimitOf": "מותר {0}",
+    "reportStillInside": "עדיין בפנים",
+    "reportSoFar": "עד עכשיו",
+    "reportLitersPer100": "ליטר ל-100 ק\"מ"
 }

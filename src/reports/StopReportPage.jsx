@@ -2,7 +2,15 @@ import { useMemo, useState } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
-import { IconButton, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import {
+  FormControlLabel,
+  IconButton,
+  Switch,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from '@mui/material';
 import GpsFixedIcon from '@mui/icons-material/GpsFixedRounded';
 import LocationSearchingIcon from '@mui/icons-material/LocationSearchingRounded';
 import {
@@ -52,6 +60,8 @@ import { deviceEquality } from '../common/util/deviceEquality';
 import VehicleCell from './components/VehicleCell';
 import { vehicleName, vehicleTitle } from './common/vehicle';
 import useSelectedRow from './common/useSelectedRow';
+import { STOP_MINIMUMS, filterStops } from './common/reportRules';
+import SelectField from '../common/components/SelectField';
 
 const columnsArray = [
   ['startTime', 'reportStartTime'],
@@ -85,7 +95,14 @@ const StopReportPage = () => {
     'startOdometer',
     'address',
   ]);
-  const [items, setItems] = useState([]);
+  const [allItems, setAllItems] = useState([]);
+  // REP-14: short stops at lights drown the idling; a minimum and "idling only" filter them.
+  const [minMinutes, setMinMinutes] = usePersistedState('stopMinMinutes', 0);
+  const [idleOnly, setIdleOnly] = usePersistedState('stopIdleOnly', false);
+  const items = useMemo(
+    () => filterStops(allItems, { minMinutes, idleOnly }),
+    [allItems, minMinutes, idleOnly],
+  );
   const [loading, setLoading] = useState(false);
   const [queried, setQueried] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -108,7 +125,7 @@ const StopReportPage = () => {
         from,
         to,
       });
-      setItems(result.rows);
+      setAllItems(result.rows);
       setHiddenRows(result.hidden);
     } finally {
       setLoading(false);
@@ -239,6 +256,26 @@ const StopReportPage = () => {
               loading={loading}
               formats={['xlsx']}
             >
+              <div className={classes.filterItem}>
+                <SelectField
+                  fullWidth
+                  label={t('reportStopMinimum')}
+                  value={minMinutes}
+                  data={STOP_MINIMUMS.map((value) => ({
+                    id: value,
+                    name: value ? t('reportStopAtLeast').replace('{0}', value) : t('sharedAll'),
+                  }))}
+                  onChange={(event) => setMinMinutes(Number(event.target.value))}
+                />
+              </div>
+              <div className={classes.filterItem}>
+                <FormControlLabel
+                  control={
+                    <Switch checked={idleOnly} onChange={(e) => setIdleOnly(e.target.checked)} />
+                  }
+                  label={t('reportIdleOnly')}
+                />
+              </div>
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
               <AllAddressesButton
                 className={classes.filterItem}

@@ -3462,5 +3462,13 @@
     "reportSavedViews": "Saved views",
     "reportComparePrevious": "Compare with the previous period",
     "reportChangeFromPrevious": "Change from the previous period: {0}",
-    "reportShowAllAddresses": "Show all addresses"
+    "reportShowAllAddresses": "Show all addresses",
+    "reportStopMinimum": "Stops of at least",
+    "reportStopAtLeast": "{0} minutes",
+    "reportIdleOnly": "Idling only (engine on)",
+    "reportEventTime": "Event time",
+    "reportSpeedLimitOf": "limit {0}",
+    "reportStillInside": "Still inside",
+    "reportSoFar": "so far",
+    "reportLitersPer100": "Liters per 100 km"
 }

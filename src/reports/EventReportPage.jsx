@@ -40,7 +40,8 @@ import { vehicleName, vehicleTitle } from './common/vehicle';
 import useSelectedRow from './common/useSelectedRow';
 
 const columnsArray = [
-  ['eventTime', 'positionFixTime'],
+  // REP-14: when it happened, not when the position was fixed.
+  ['eventTime', 'reportEventTime'],
   ['type', 'sharedType'],
   ['geofenceId', 'sharedGeofence'],
   ['maintenanceId', 'sharedMaintenance'],

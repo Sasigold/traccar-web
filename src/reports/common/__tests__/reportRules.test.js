@@ -1,0 +1,49 @@
+import { describe, expect, it } from 'vitest';
+import { filterStops, litersPer100, overspeedText, visitDuration } from '../reportRules';
+
+// REP-14: rules for single reports.
+describe('stops', () => {
+  const rows = [
+    { duration: 2 * 60000, engineHours: 0 },
+    { duration: 20 * 60000, engineHours: 0 },
+    { duration: 40 * 60000, engineHours: 10 * 60000 },
+  ];
+
+  it('of at least a duration, and only idling ones', () => {
+    expect(filterStops(rows, { minMinutes: 15 })).toHaveLength(2);
+    expect(filterStops(rows, { idleOnly: true })).toEqual([rows[2]]);
+    expect(filterStops(rows)).toHaveLength(3);
+  });
+});
+
+describe('trips', () => {
+  it('liters per 100 km', () => {
+    expect(litersPer100(12, 100000)).toBe(12);
+    expect(litersPer100(0, 100000)).toBeNull();
+    expect(litersPer100(5, 0)).toBeNull();
+  });
+});
+
+describe('events', () => {
+  const kmh = (knots) => `${Math.round(knots * 1.852)} קמ"ש`;
+  it('the speed with its limit', () => {
+    expect(overspeedText({ speed: 60.48, speedLimit: 48.6 }, kmh, 'מותר {0}')).toBe(
+      '112 קמ"ש (מותר 90 קמ"ש)',
+    );
+    expect(overspeedText({ speed: 60.48 }, kmh, 'מותר {0}')).toBe('112 קמ"ש');
+    expect(overspeedText({}, kmh, 'מותר {0}')).toBeNull();
+  });
+});
+
+describe('geofence visits', () => {
+  const now = Date.parse('2026-11-09T12:00:00Z');
+  it('a visit without an exit is still inside, counted until now', () => {
+    expect(visitDuration({ startTime: '2026-11-09T11:00:00Z' }, now)).toEqual({
+      open: true,
+      duration: 3600000,
+    });
+    expect(
+      visitDuration({ startTime: '2026-11-09T10:00:00Z', endTime: '2026-11-09T10:30:00Z' }, now),
+    ).toEqual({ open: false, duration: 1800000 });
+  });
+});

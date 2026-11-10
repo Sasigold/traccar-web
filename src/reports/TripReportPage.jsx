@@ -57,6 +57,7 @@ import { deviceEquality } from '../common/util/deviceEquality';
 import VehicleCell from './components/VehicleCell';
 import { vehicleName, vehicleTitle } from './common/vehicle';
 import useSelectedRow from './common/useSelectedRow';
+import { litersPer100 } from './common/reportRules';
 
 const columnsArray = [
   ['startTime', 'reportStartTime'],
@@ -70,6 +71,7 @@ const columnsArray = [
   ['maxSpeed', 'reportMaximumSpeed'],
   ['duration', 'reportDuration'],
   ['spentFuel', 'reportSpentFuel'],
+  ['litersPer100', 'reportLitersPer100'],
   ['driverName', 'sharedDriver'],
   ['business', 'sharedType'],
 ];
@@ -335,6 +337,11 @@ const TripReportPage = () => {
         return formatNumericHours(value, t);
       case 'spentFuel':
         return value > 0 ? formatVolume(value, volumeUnit, t) : null;
+      case 'litersPer100': {
+        // REP-14: consumption, when the device reports fuel.
+        const rate = litersPer100(item.spentFuel, item.distance);
+        return rate == null ? null : rate.toFixed(1);
+      }
       case 'startAddress':
         return (
           <AddressValue

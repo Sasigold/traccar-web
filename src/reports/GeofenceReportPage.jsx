@@ -22,6 +22,7 @@ import exportExcel from '../common/util/exportExcel';
 import { deviceEquality } from '../common/util/deviceEquality';
 import VehicleCell from './components/VehicleCell';
 import { vehicleTitle } from './common/vehicle';
+import { visitDuration } from './common/reportRules';
 
 const columnsArray = [
   ['geofenceId', 'sharedGeofence'],
@@ -42,10 +43,12 @@ const GeofenceReportPage = () => {
   const devices = useSelector((state) => state.devices.items, deviceEquality(['id', 'name']));
   const geofences = useSelector((state) => state.geofences.items);
 
+  // REP-14: how long, by default.
   const [columns, setColumns] = usePersistedState('geofenceColumns', [
     'geofenceId',
     'startTime',
     'endTime',
+    'duration',
   ]);
   const [items, setItems] = useState([]);
   const [hiddenRows, setHiddenRows] = useState(0);
@@ -100,10 +103,16 @@ const GeofenceReportPage = () => {
       case 'geofenceId':
         return geofences[item.geofenceId]?.name || item.geofenceId;
       case 'startTime':
-      case 'endTime':
         return formatTime(item[key], 'minutes');
-      case 'duration':
-        return formatNumericHours(Date.parse(item.endTime) - Date.parse(item.startTime), t);
+      case 'endTime':
+        // REP-14: a visit without an exit yet is still inside, not "NaN".
+        return item.endTime ? formatTime(item.endTime, 'minutes') : t('reportStillInside');
+      case 'duration': {
+        const { open, duration } = visitDuration(item);
+        if (duration == null) return null;
+        const text = formatNumericHours(duration, t);
+        return open ? `${text} (${t('reportSoFar')})` : text;
+      }
       default:
         return item[key];
     }
