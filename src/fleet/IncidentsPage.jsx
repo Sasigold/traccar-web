@@ -1,5 +1,4 @@
-import { Link as RouterLink } from 'react-router-dom';
-import { Button, Chip } from '@mui/material';
+import { Chip } from '@mui/material';
 import CarCrashRoundedIcon from '@mui/icons-material/CarCrashRounded';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import { formatTime } from '../common/util/formatter';
@@ -100,13 +99,7 @@ const IncidentsPage = () => {
         },
       ]}
       rowLink={(row) => `/fleet/incident/${row.id}`}
-      actions={
-        canWrite && (
-          <Button variant="contained" size="small" component={RouterLink} to="/fleet/incident">
-            {t('fleetIncidentAdd')}
-          </Button>
-        )
-      }
+      add={canWrite ? { label: t('fleetIncidentAdd'), to: '/fleet/incident' } : undefined}
       emptyState={{ icon: <CarCrashRoundedIcon />, title: t('fleetIncidentsNone') }}
       exportFile="incidents.xlsx"
     />

@@ -212,18 +212,14 @@ const FuelCardsPage = () => {
           },
         ]}
         rowLink={null}
-        actions={
-          canWrite && (
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() =>
-                setEditing({ provider: '', card_number: '', deviceId: '', valid_until: '' })
+        add={
+          canWrite
+            ? {
+                label: t('fuelCardAdd'),
+                onClick: () =>
+                  setEditing({ provider: '', card_number: '', deviceId: '', valid_until: '' }),
               }
-            >
-              {t('fuelCardAdd')}
-            </Button>
-          )
+            : undefined
         }
         emptyState={{
           icon: <CreditCardRoundedIcon />,

@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
 import {
+  Button,
   Chip,
   IconButton,
   MenuItem,
@@ -13,6 +14,8 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import SwapVertRoundedIcon from '@mui/icons-material/SwapVertRounded';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import BaseFab from '../../common/components/BaseFab';
 import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import { useTranslation } from '../../common/components/LocalizationProvider';
@@ -62,6 +65,9 @@ const FleetListPage = ({
   rowLink,
   onRowClick,
   actions,
+  // ADM-29: the page's "add": a button in the toolbar on desktop, a floating button on phones.
+  // { label, to } or { label, onClick }.
+  add,
   emptyState,
   exportFile,
   children,
@@ -71,6 +77,7 @@ const FleetListPage = ({
   const t = useTranslation();
   const navigate = useNavigate();
   const canRead = useFleetPermission(permission);
+  const desktop = useMediaQuery(theme.breakpoints.up('md'));
 
   const [params, setParams] = useSearchParams();
   const setParam = (changes) =>
@@ -205,7 +212,24 @@ const FleetListPage = ({
               )),
               phoneSort && <span key="sort">{phoneSort}</span>,
             ].filter(Boolean)}
-            actions={actions}
+            actions={
+              (actions || (add && desktop)) && (
+                <>
+                  {actions}
+                  {add && desktop && (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      {...(add.to
+                        ? { component: RouterLink, to: add.to }
+                        : { onClick: add.onClick })}
+                    >
+                      {add.label}
+                    </Button>
+                  )}
+                </>
+              )
+            }
           />
         }
         empty={rows != null && filtered.length === 0}
@@ -262,6 +286,11 @@ const FleetListPage = ({
           ))}
         </TableBody>
       </DataTable>
+      {add && !desktop && (
+        <BaseFab label={add.label} to={add.to} onClick={add.to ? undefined : add.onClick}>
+          <AddRoundedIcon />
+        </BaseFab>
+      )}
     </PageLayout>
   );
 };

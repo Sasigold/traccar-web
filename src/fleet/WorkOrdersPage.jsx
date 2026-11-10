@@ -123,13 +123,9 @@ const WorkOrdersPage = () => {
           <Button size="small" component={RouterLink} to="/fleet/vendors">
             {t('fleetVendorsPage')}
           </Button>
-          {canWrite && (
-            <Button variant="contained" size="small" component={RouterLink} to="/fleet/work-order">
-              {t('fleetWorkOrderAdd')}
-            </Button>
-          )}
         </>
       }
+      add={canWrite ? { label: t('fleetWorkOrderAdd'), to: '/fleet/work-order' } : undefined}
       emptyState={{
         icon: <HandymanRoundedIcon />,
         title: t('fleetWorkOrdersNone'),
