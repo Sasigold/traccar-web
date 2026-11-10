@@ -32,7 +32,8 @@ import SaveBar from '../settings/components/SaveBar';
 import SettingsMenu from '../settings/components/SettingsMenu';
 import FileInput from '../common/components/FileInput';
 import { useAsyncTask, useCatch } from '../reactHelper';
-import { getFleetClient, unwrap } from '../common/fleet/client';
+import { getFleetClient } from '../common/fleet/client';
+import { loadWorkOrder } from './api/workOrders';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import {
   ITEM_KINDS,
@@ -153,20 +154,10 @@ const WorkOrderPage = () => {
       setItems([emptyItem()]);
       return;
     }
-    const client = getFleetClient();
-    const row = unwrap(
-      await client
-        .from('work_orders')
-        .select('*, vehicles(traccar_device_id)')
-        .eq('id', id)
-        .single(),
-    );
-    const lines = unwrap(
-      await client.from('work_order_items').select('*').eq('work_order_id', id).order('sort_order'),
-    );
+    const { order: row, items: lines } = await loadWorkOrder(getFleetClient(), id);
     setOrder(row);
     setDeviceId(String(row.vehicles?.traccar_device_id || ''));
-    setItems((lines || []).map((line) => ({ ...line, key: line.id })));
+    setItems(lines.map((line) => ({ ...line, key: line.id })));
     // eslint-disable-next-line @eslint-react/exhaustive-deps -- the address fills a new order once
   }, [id, canRead]);
 

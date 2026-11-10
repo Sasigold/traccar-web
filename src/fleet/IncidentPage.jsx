@@ -28,6 +28,7 @@ import { useAsyncTask, useCatch } from '../reactHelper';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import { messagesActions } from '../store';
 import { getFleetClient, unwrap } from '../common/fleet/client';
+import { loadIncident } from './api/incidents';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import {
   CLAIM_STATUSES,
@@ -167,28 +168,20 @@ const IncidentPage = () => {
       });
       return;
     }
-    const client = getFleetClient();
-    const row = unwrap(
-      await client
-        .from('incidents')
-        .select('*, vehicles(traccar_device_id), drivers(traccar_driver_id)')
-        .eq('id', id)
-        .single(),
-    );
-    const [partyRows, claimRow, photoRows] = await Promise.all([
-      client.from('incident_parties').select('*').eq('incident_id', id),
-      client.from('insurance_claims').select('*').eq('incident_id', id).maybeSingle(),
-      client.from('incident_photos').select('*').eq('incident_id', id).order('created_at'),
-    ]);
+    const {
+      incident: row,
+      parties: partyRows,
+      claim: claimRow,
+      photos: stored,
+    } = await loadIncident(getFleetClient(), id);
     setIncident({ ...row, occurred_at: toLocalInput(row.occurred_at) });
     setDeviceId(String(row.vehicles?.traccar_device_id || ''));
     setDriverId(String(row.drivers?.traccar_driver_id || ''));
-    setParties((unwrap(partyRows) || []).map((party) => ({ ...party, key: party.id })));
+    setParties(partyRows.map((party) => ({ ...party, key: party.id })));
     setClaim({
       ...emptyClaim,
-      ...Object.fromEntries(Object.entries(unwrap(claimRow) || {}).filter(([, v]) => v != null)),
+      ...Object.fromEntries(Object.entries(claimRow || {}).filter(([, v]) => v != null)),
     });
-    const stored = unwrap(photoRows) || [];
     setPhotos(
       await Promise.all(
         stored.map(async (photo) => ({ ...photo, url: await fleetFileUrl(photo.storage_path) })),

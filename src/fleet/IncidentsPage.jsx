@@ -1,34 +1,12 @@
-import { useMemo, useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { Button, Chip, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import { makeStyles } from 'tss-react/mui';
+import { Link as RouterLink } from 'react-router-dom';
+import { Button, Chip } from '@mui/material';
 import CarCrashRoundedIcon from '@mui/icons-material/CarCrashRounded';
 import { useTranslation } from '../common/components/LocalizationProvider';
-import PageLayout from '../common/components/PageLayout';
-import DataTable from '../common/components/table/DataTable';
-import TableToolbar from '../common/components/table/TableToolbar';
-import TableShimmer from '../common/components/TableShimmer';
-import SettingsMenu from '../settings/components/SettingsMenu';
-import { useAsyncTask } from '../reactHelper';
 import { formatTime } from '../common/util/formatter';
-import exportExcel from '../common/util/exportExcel';
-import { getFleetClient } from '../common/fleet/client';
 import { useFleetPermission } from '../common/fleet/useFleet';
-import FleetNotice from './components/FleetNotice';
+import FleetListPage from './components/FleetListPage';
 import { money } from './fleetData';
-import { readAllRows } from '../common/data/fleetQuery';
 import { pascalCase } from '../common/util/stringUtils';
-
-const useStyles = makeStyles()(() => ({
-  row: {
-    cursor: 'pointer',
-  },
-  nowrap: {
-    whiteSpace: 'nowrap',
-    fontVariantNumeric: 'tabular-nums',
-  },
-}));
 
 // An empty value (an incident whose fault is not set yet) has no key, instead of breaking the list.
 export const incidentKey = (group, value) => `fleetIncident${group}${pascalCase(value)}`;
@@ -46,163 +24,92 @@ export const IncidentStatusChip = ({ status }) => {
   return <Chip size="small" color={statusColor[status]} label={t(incidentKey('Status', status))} />;
 };
 
-const filters = ['open', 'closed', 'all'];
-
 // Roadmap stage 2: damage and accident reports, newest first.
 const IncidentsPage = () => {
-  const { classes } = useStyles();
-  const theme = useTheme();
   const t = useTranslation();
-  const navigate = useNavigate();
-  const canRead = useFleetPermission('incidents.read');
   const canWrite = useFleetPermission('incidents.write');
 
-  const [filter, setFilter] = useState('open');
-  const [search, setSearch] = useState('');
-  const [rows, setRows] = useState(null);
-
-  useAsyncTask(async () => {
-    if (!canRead) {
-      return;
-    }
-    // ARC-08: every page, not the first 500.
-    setRows(
-      await readAllRows('incidents', () =>
-        getFleetClient()
+  return (
+    <FleetListPage
+      title="fleetIncidentsPage"
+      description="fleetIncidentsPageDescription"
+      permission="incidents.read"
+      table="incidents"
+      query={(client) =>
+        client
           .from('incidents')
           .select('*, vehicles(plate_number), drivers(full_name)')
-          .order('occurred_at', { ascending: false }),
-      ),
-    );
-  }, [canRead]);
-
-  const filtered = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
-    return (rows || []).filter((row) => {
-      if (filter === 'open' && row.status === 'closed') {
-        return false;
+          .order('occurred_at', { ascending: false })
       }
-      if (filter === 'closed' && row.status !== 'closed') {
-        return false;
+      filters={[
+        { key: 'open', test: (row) => row.status !== 'closed' },
+        { key: 'closed', test: (row) => row.status === 'closed' },
+        { key: 'all' },
+      ].map((item) => ({ ...item, label: t(`fleetIncidentFilter${pascalCase(item.key)}`) }))}
+      searchOf={(row) => [
+        row.vehicles?.plate_number,
+        row.drivers?.full_name,
+        row.address,
+        row.description,
+        row.number,
+      ]}
+      columns={[
+        { key: 'number', label: t('fleetWorkOrderNumber'), nowrap: true },
+        {
+          key: 'occurred_at',
+          label: t('fleetIncidentOccurred'),
+          nowrap: true,
+          value: (row) => formatTime(row.occurred_at, 'minutes'),
+        },
+        {
+          key: 'vehicle',
+          label: t('fleetEntityVehicle'),
+          ltr: true,
+          value: (row) => row.vehicles?.plate_number,
+        },
+        { key: 'driver', label: t('sharedDriver'), value: (row) => row.drivers?.full_name },
+        {
+          key: 'type',
+          label: t('sharedType'),
+          value: (row) => t(incidentKey('Type', row.type)),
+          render: (row) => (
+            <>
+              {t(incidentKey('Type', row.type))}
+              {row.injuries && ` · ${t('fleetIncidentInjuries')}`}
+            </>
+          ),
+        },
+        {
+          key: 'fault',
+          label: t('fleetIncidentFault'),
+          value: (row) => (row.fault ? t(incidentKey('Fault', row.fault)) : ''),
+          render: (row) => (row.fault ? t(incidentKey('Fault', row.fault)) : '—'),
+        },
+        {
+          key: 'status',
+          label: t('deviceStatus'),
+          value: (row) => t(incidentKey('Status', row.status)),
+          render: (row) => <IncidentStatusChip status={row.status} />,
+        },
+        {
+          key: 'repair_cost',
+          label: t('fleetIncidentRepairCost'),
+          nowrap: true,
+          value: (row) => (row.repair_cost == null ? '' : Number(row.repair_cost)),
+          render: (row) => money(row.repair_cost),
+        },
+      ]}
+      rowLink={(row) => `/fleet/incident/${row.id}`}
+      actions={
+        canWrite && (
+          <Button variant="contained" size="small" component={RouterLink} to="/fleet/incident">
+            {t('fleetIncidentAdd')}
+          </Button>
+        )
       }
-      return (
-        !keyword ||
-        [
-          row.vehicles?.plate_number,
-          row.drivers?.full_name,
-          row.address,
-          row.description,
-          String(row.number),
-        ].some((value) => value?.toLowerCase().includes(keyword))
-      );
-    });
-  }, [rows, filter, search]);
-
-  const handleExport = async () => {
-    const data = filtered.map((row) => ({
-      [t('fleetWorkOrderNumber')]: row.number,
-      [t('fleetIncidentOccurred')]: formatTime(row.occurred_at, 'minutes'),
-      [t('fleetEntityVehicle')]: row.vehicles?.plate_number,
-      [t('sharedDriver')]: row.drivers?.full_name,
-      [t('sharedType')]: t(incidentKey('Type', row.type)),
-      [t('fleetIncidentFault')]: row.fault ? t(incidentKey('Fault', row.fault)) : '',
-      [t('positionAddress')]: row.address,
-      [t('deviceStatus')]: t(incidentKey('Status', row.status)),
-      [t('fleetIncidentRepairCost')]: row.repair_cost == null ? '' : Number(row.repair_cost),
-    }));
-    const sheets = new Map();
-    sheets.set(t('fleetIncidentsPage'), data);
-    await exportExcel(t('fleetIncidentsPage'), 'incidents.xlsx', sheets, theme);
-  };
-
-  return (
-    <PageLayout
-      menu={<SettingsMenu />}
-      breadcrumbs={['fleetTitle', 'fleetIncidentsPage']}
-      description={t('fleetIncidentsPageDescription')}
-    >
-      <FleetNotice permission="incidents.read" />
-      <DataTable
-        toolbar={
-          <TableToolbar
-            search={{ value: search, onChange: setSearch }}
-            count={rows ? filtered.length : undefined}
-            exportHandler={handleExport}
-            filters={filters.map((key) => (
-              <Chip
-                key={key}
-                size="small"
-                label={t(`fleetIncidentFilter${pascalCase(key)}`)}
-                color={filter === key ? 'primary' : 'default'}
-                variant={filter === key ? 'filled' : 'outlined'}
-                onClick={() => setFilter(key)}
-              />
-            ))}
-            actions={
-              canWrite && (
-                <Button
-                  variant="contained"
-                  size="small"
-                  component={RouterLink}
-                  to="/fleet/incident"
-                >
-                  {t('fleetIncidentAdd')}
-                </Button>
-              )
-            }
-          />
-        }
-        empty={rows != null && filtered.length === 0}
-        emptyState={{
-          icon: <CarCrashRoundedIcon />,
-          title: t(search ? 'tableNoMatches' : 'fleetIncidentsNone'),
-        }}
-      >
-        <TableHead>
-          <TableRow>
-            <TableCell>{t('fleetWorkOrderNumber')}</TableCell>
-            <TableCell>{t('fleetIncidentOccurred')}</TableCell>
-            <TableCell>{t('fleetEntityVehicle')}</TableCell>
-            <TableCell>{t('sharedDriver')}</TableCell>
-            <TableCell>{t('sharedType')}</TableCell>
-            <TableCell>{t('fleetIncidentFault')}</TableCell>
-            <TableCell>{t('deviceStatus')}</TableCell>
-            <TableCell>{t('fleetIncidentRepairCost')}</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows == null && canRead && <TableShimmer columns={8} />}
-          {filtered.map((row) => (
-            <TableRow
-              key={row.id}
-              hover
-              tabIndex={0}
-              className={classes.row}
-              onClick={() => navigate(`/fleet/incident/${row.id}`)}
-              onKeyDown={(event) => event.key === 'Enter' && navigate(`/fleet/incident/${row.id}`)}
-            >
-              <TableCell className={classes.nowrap}>{row.number}</TableCell>
-              <TableCell className={classes.nowrap}>
-                {formatTime(row.occurred_at, 'minutes')}
-              </TableCell>
-              <TableCell>
-                <span dir="ltr">{row.vehicles?.plate_number}</span>
-              </TableCell>
-              <TableCell>{row.drivers?.full_name}</TableCell>
-              <TableCell>
-                {t(incidentKey('Type', row.type))}
-                {row.injuries && ` · ${t('fleetIncidentInjuries')}`}
-              </TableCell>
-              <TableCell>{row.fault ? t(incidentKey('Fault', row.fault)) : '—'}</TableCell>
-              <TableCell>
-                <IncidentStatusChip status={row.status} />
-              </TableCell>
-              <TableCell className={classes.nowrap}>{money(row.repair_cost)}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </DataTable>
-    </PageLayout>
+      emptyState={{ icon: <CarCrashRoundedIcon />, title: t('fleetIncidentsNone') }}
+      exportFile="incidents.xlsx"
+    />
   );
 };
 
