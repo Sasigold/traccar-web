@@ -1,5 +1,15 @@
 import { useMemo } from 'react';
-import { Bar, BarChart, CartesianGrid, Cell, LabelList, Tooltip, XAxis, YAxis } from 'recharts';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  LabelList,
+  ReferenceLine,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { alpha } from '@mui/material/styles';
 import TooltipCard from './ChartTooltip';
 import ChartLegend from './ChartLegend';
@@ -10,7 +20,17 @@ const LEGEND_HEIGHT = 26;
 // Vertical columns for categories or time buckets, optionally stacked by a breakdown.
 // The SVG is laid out left to right; categories start at the inline start in RTL,
 // time always runs left to right.
-const ColumnChart = ({ view, width, height, size, stacked = false, onSelect, partialNote }) => {
+const ColumnChart = ({
+  view,
+  width,
+  height,
+  size,
+  stacked = false,
+  onSelect,
+  partialNote,
+  target,
+  targetLabel,
+}) => {
   const chart = useChartTheme();
   const timeline = view.kind === 'timeseries';
   const series = stacked && view.series?.length ? view.series : null;
@@ -89,6 +109,22 @@ const ColumnChart = ({ view, width, height, size, stacked = false, onSelect, par
             tickFormatter={(value) => view.format(value)}
             allowDecimals={false}
           />
+          {target != null && (
+            // REP-18: a target, as a dashed line on the value axis.
+            <ReferenceLine
+              y={target}
+              stroke={chart.text}
+              strokeDasharray="5 4"
+              strokeWidth={1.5}
+              ifOverflow="extendDomain"
+              label={{
+                value: targetLabel,
+                position: 'insideTopRight',
+                fill: chart.textSecondary,
+                fontSize: 11,
+              }}
+            />
+          )}
           <Tooltip
             content={tooltip}
             isAnimationActive={false}

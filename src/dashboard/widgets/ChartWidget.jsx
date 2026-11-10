@@ -18,13 +18,20 @@ import { allowedViz, effectiveTopN, pickViz } from './vizRules';
 import { useWidgetData } from './useWidgetModel';
 import { useView } from './present';
 import { useLabels } from './useLabels';
+import { againstTarget } from '../charts/chartContext';
 
-const useStyles = makeStyles()({
+const useStyles = makeStyles()((theme) => ({
   fill: {
     position: 'absolute',
     inset: 0,
   },
-});
+  unit: {
+    height: 18,
+    ...theme.typography.caption,
+    lineHeight: '18px',
+    color: theme.palette.text.secondary,
+  },
+}));
 
 export const resolveChart = (config, preset) => {
   const query = resolveQuery({ ...preset.query, ...config.query });
@@ -145,6 +152,19 @@ const ChartWidget = ({
   }
 
   const stale = data.stale ? { opacity: 0.55 } : undefined;
+  // REP-18: the unit is said with the chart ("ק״מ"), and a target is drawn where one is set.
+  const unitText =
+    measure.unit && !['count', 'money'].includes(measure.unit)
+      ? measure.unit === 'percent'
+        ? '%'
+        : unitLabel(measure.unit)
+      : null;
+  const target = typeof config.target === 'number' ? config.target : undefined;
+  const targetLabel =
+    target != null ? t('dashboardTargetOf').replace('{0}', view.format(target)) : undefined;
+  const captioned =
+    unitText && !table && size !== 'xs' && ['line', 'area', 'columns', 'stacked'].includes(viz);
+  const chartHeight = captioned ? Math.max(0, height - 18) : height;
   const select = onSelect ? (item) => onSelect(item, query) : undefined;
   const partialNote = t('dashboardPartial');
 
@@ -168,6 +188,8 @@ const ChartWidget = ({
           label={measureLabel}
           width={width}
           height={height}
+          target={target}
+          targetLabel={targetLabel}
         />
       ) : (
         <StatTile
@@ -178,6 +200,13 @@ const ChartWidget = ({
           unit={measure.unit === 'percent' ? '%' : unitLabel(measure.unit)}
           width={width}
           height={height}
+          targetText={
+            target != null
+              ? t('dashboardAgainstTarget')
+                  .replace('{0}', view.format(target))
+                  .replace('{1}', Math.round(againstTarget(view.value, target) * 100))
+              : undefined
+          }
         />
       );
   } else if (viz === 'donut' || viz === 'pie') {
@@ -217,15 +246,17 @@ const ChartWidget = ({
         moreLabel={t('dashboardMoreInTable')}
       />
     );
-  } else if (viz === 'line' || viz === 'area') {
+  } else if ((viz === 'line' || viz === 'area') && !(viz === 'area' && view.series?.length)) {
     content = (
       <LineAreaChart
         view={view}
         width={width}
-        height={height}
+        height={chartHeight}
         size={size}
         area={viz === 'area'}
         partialNote={partialNote}
+        target={target}
+        targetLabel={targetLabel}
       />
     );
   } else {
@@ -233,9 +264,12 @@ const ChartWidget = ({
       <ColumnChart
         view={view}
         width={width}
-        height={height}
+        height={chartHeight}
         size={size}
-        stacked={viz === 'stacked'}
+        // REP-18: a split shown as stacked areas read as cumulative lines; it is stacked columns.
+        stacked={viz === 'stacked' || viz === 'area'}
+        target={target}
+        targetLabel={targetLabel}
         onSelect={view.kind === 'categorical' ? select : undefined}
         partialNote={partialNote}
       />
@@ -248,6 +282,7 @@ const ChartWidget = ({
       style={{ margin: 0, ...stale }}
       aria-label={`${title}: ${view.summary ?? view.full ?? ''}`}
     >
+      {captioned && <figcaption className={classes.unit}>{unitText}</figcaption>}
       {content}
     </figure>
   );

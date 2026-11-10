@@ -3667,5 +3667,10 @@
     "moneyVatExcluded": "Before VAT",
     "sharedCopiedCheck": "Copied ✓",
     "sharedSavedNamed": "{0} saved",
-    "fleetApiKeyKept": "I saved the key somewhere safe (it will not be shown again)"
+    "fleetApiKeyKept": "I saved the key somewhere safe (it will not be shown again)",
+    "dashboardComparedTo": "vs. {0}",
+    "dashboardTargetOf": "Target {0}",
+    "dashboardAgainstTarget": "Against target {0} ({1}%)",
+    "dashboardTarget": "Target",
+    "dashboardTargetHelp": "A dashed line on a chart, a mark on a meter, and \"against target\" on a figure. Empty = no target."
 }

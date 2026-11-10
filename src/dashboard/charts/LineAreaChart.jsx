@@ -1,5 +1,15 @@
 import { useMemo } from 'react';
-import { Area, AreaChart, CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from 'recharts';
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ReferenceLine,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import TooltipCard from './ChartTooltip';
 import ChartLegend from './ChartLegend';
 import { reducedMotion, useChartTheme } from './chartTheme';
@@ -8,7 +18,16 @@ const LEGEND_HEIGHT = 26;
 
 // Trend over time: a 2px line, or an area with a light wash for a single series.
 // A crosshair finds the time; one tooltip lists every series at that point.
-const LineAreaChart = ({ view, width, height, size, area = false, partialNote }) => {
+const LineAreaChart = ({
+  view,
+  width,
+  height,
+  size,
+  area = false,
+  partialNote,
+  target,
+  targetLabel,
+}) => {
   const chart = useChartTheme();
   const series = view.series?.length ? view.series : null;
   const data = useMemo(
@@ -97,6 +116,22 @@ const LineAreaChart = ({ view, width, height, size, area = false, partialNote })
             tickFormatter={(value) => view.format(value)}
             allowDecimals={false}
           />
+          {target != null && (
+            // REP-18: a target, as a dashed line on the value axis.
+            <ReferenceLine
+              y={target}
+              stroke={chart.text}
+              strokeDasharray="5 4"
+              strokeWidth={1.5}
+              ifOverflow="extendDomain"
+              label={{
+                value: targetLabel,
+                position: 'insideTopRight',
+                fill: chart.textSecondary,
+                fontSize: 11,
+              }}
+            />
+          )}
           <Tooltip
             content={tooltip}
             isAnimationActive={false}
@@ -111,8 +146,7 @@ const LineAreaChart = ({ view, width, height, size, area = false, partialNote })
                 stroke={entry.color}
                 strokeWidth={2}
                 fill={entry.color}
-                fillOpacity={series ? chart.areaOpacity / 2 : chart.areaOpacity}
-                stackId={series ? 'stack' : undefined}
+                fillOpacity={chart.areaOpacity}
                 connectNulls={false}
                 dot={endDot(entry)}
                 activeDot={{ r: 4, stroke: chart.surface, strokeWidth: 2 }}

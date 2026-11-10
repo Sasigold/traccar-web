@@ -1,3 +1,4 @@
+import { parseTarget } from '../charts/chartContext';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Button,
@@ -144,9 +145,11 @@ const WidgetSettingsDialog = ({ open, config, onClose, onSave }) => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const [draft, setDraft] = useState(config);
+  const [targetText, setTargetText] = useState(null);
   useEffect(() => {
     if (open) {
       setDraft(config);
+      setTargetText(null);
     }
   }, [open, config]);
 
@@ -337,6 +340,20 @@ const WidgetSettingsDialog = ({ open, config, onClose, onSave }) => {
                     ))}
                   </ToggleButtonGroup>
                 </div>
+                {/* REP-18: a target for the figure: a dashed line, a mark on a meter, "against target". */}
+                {['line', 'area', 'columns', 'stacked', 'meter', 'kpi'].includes(viz) && (
+                  <TextField
+                    label={t('dashboardTarget')}
+                    helperText={t('dashboardTargetHelp')}
+                    value={targetText ?? (draft.target != null ? String(draft.target) : '')}
+                    onChange={(event) => {
+                      setTargetText(event.target.value);
+                      const target = parseTarget(event.target.value);
+                      setDraft((current) => ({ ...current, target }));
+                    }}
+                    slotProps={{ htmlInput: { inputMode: 'decimal', dir: 'ltr' } }}
+                  />
+                )}
               </>
             )}
             {preset.kind === 'kpis' && (

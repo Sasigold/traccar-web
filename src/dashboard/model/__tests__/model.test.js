@@ -150,3 +150,19 @@ describe('catalog', () => {
     expect(available).not.toContain('maintenanceDue');
   });
 });
+
+describe('widget targets (REP-18)', () => {
+  it('keep a positive target through normalize and the codec', () => {
+    const original = normalizeDoc(doc());
+    const dashboard = original.dashboards[0];
+    const [id, widget] = Object.entries(dashboard.widgets).find(
+      ([, item]) => PRESETS.find((preset) => preset.id === item.preset)?.kind === 'chart',
+    );
+    dashboard.widgets[id] = { ...widget, target: 1500 };
+    const decoded = decode(encode(normalizeDoc(original)));
+    expect(decoded.dashboards[0].widgets[id].target).toBe(1500);
+
+    dashboard.widgets[id] = { ...widget, target: -3 };
+    expect(normalizeDoc(original).dashboards[0].widgets[id].target).toBeUndefined();
+  });
+});

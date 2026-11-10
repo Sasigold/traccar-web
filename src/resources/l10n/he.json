@@ -3667,5 +3667,10 @@
     "moneyVatExcluded": "לפני מע\"מ",
     "sharedCopiedCheck": "הועתק ✓",
     "sharedSavedNamed": "{0} נשמר",
-    "fleetApiKeyKept": "שמרתי את המפתח במקום בטוח (הוא לא יוצג שוב)"
+    "fleetApiKeyKept": "שמרתי את המפתח במקום בטוח (הוא לא יוצג שוב)",
+    "dashboardComparedTo": "לעומת {0}",
+    "dashboardTargetOf": "יעד {0}",
+    "dashboardAgainstTarget": "מול יעד {0} ({1}%)",
+    "dashboardTarget": "יעד",
+    "dashboardTargetHelp": "קו מקווקו בגרף, סימון במד, ו\"מול יעד\" במספר. ריק = בלי יעד."
 }

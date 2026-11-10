@@ -29,6 +29,7 @@ const encodeWidget = (widget) => {
     widget.query ?? 0,
     widget.title ?? 0,
     widget.metrics ?? 0,
+    widget.target ?? 0,
   ]);
   return parts.length === 1 ? parts[0] : parts;
 };
@@ -40,13 +41,14 @@ const decodeWidget = (value) => {
   if (!Array.isArray(value)) {
     return null;
   }
-  const [preset, viz, query, title, metrics] = value;
+  const [preset, viz, query, title, metrics, target] = value;
   return {
     preset,
     ...(viz ? { viz } : {}),
     ...(query ? { query } : {}),
     ...(title ? { title } : {}),
     ...(metrics ? { metrics } : {}),
+    ...(target ? { target } : {}),
   };
 };
 
