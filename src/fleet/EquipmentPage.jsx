@@ -29,6 +29,7 @@ import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import FleetNotice from './components/FleetNotice';
 import { camel, cleanPayload, toNumber, useFleetVehicles } from './stage5Data';
+import { keepOnBackdrop } from '../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -95,7 +96,7 @@ const AssetDialog = ({ asset, vehicles, onClose, onSaved }) => {
   const ltr = { slotProps: { htmlInput: { dir: 'ltr' } } };
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="sm">
       <DialogTitle>{t(form.id ? 'fleetAssetEdit' : 'fleetAssetAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>

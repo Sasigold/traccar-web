@@ -3,6 +3,7 @@
 // verifies it against Traccar and returns a Supabase JWT for the same person.
 import fetchOrThrow from '../util/fetchOrThrow';
 import { fleetConfig } from './config';
+import { countEvent, counterName } from '../telemetry/metrics';
 
 const STORAGE_KEY = 'fleetSession';
 const REFRESH_MARGIN_MS = 5 * 60 * 1000;
@@ -96,10 +97,15 @@ export const ensureFleetSession = async (traccarUserId, { force = false } = {}) 
   pending = (async () => {
     try {
       const expiration = new Date(Date.now() + TRACCAR_TOKEN_TTL_MS).toISOString();
+      // FND-06: every failure to get a fleet token is counted, by step (token_failure.traccar,
+      // token_failure.network, token_failure.<status of traccar-auth>).
       const tokenResponse = await fetchOrThrow('api/session/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ expiration }).toString(),
+      }).catch((error) => {
+        countEvent('token_failure.traccar');
+        throw error;
       });
       const traccarToken = await tokenResponse.text();
 
@@ -111,8 +117,12 @@ export const ensureFleetSession = async (traccarUserId, { force = false } = {}) 
           Authorization: `Bearer ${fleetConfig.anonKey}`,
         },
         body: JSON.stringify({ token: traccarToken }),
+      }).catch((error) => {
+        countEvent('token_failure.network');
+        throw error;
       });
       if (!response.ok) {
+        countEvent(counterName('token_failure', response.status));
         let detail = '';
         try {
           detail = (await response.json()).error || '';

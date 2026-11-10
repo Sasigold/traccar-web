@@ -4,6 +4,8 @@ import dayjs from 'dayjs';
 import { activityGroup, activityOf } from '../common/util/activity';
 import { deviceSearchFields, matchDevice, tokenizeSearch } from '../common/util/deviceSearch';
 import { sameItems } from '../common/util/stableArray';
+import { byImportance } from './importance';
+import { pinFavorites } from './savedViews';
 
 export default (
   keyword,
@@ -13,6 +15,7 @@ export default (
   positions,
   setFilteredDevices,
   setFilteredPositions,
+  favorites = [],
 ) => {
   const groups = useSelector((state) => state.groups.items);
   const devices = useSelector((state) => state.devices.items);
@@ -78,19 +81,24 @@ export default (
         });
         break;
       default:
-        // Without a chosen order, the best match comes first.
+        // Without a chosen order: the best match first when searching, otherwise what needs
+        // attention first (LIV-11).
         if (tokens.length) {
           filtered.sort(
             (device1, device2) =>
               scores.get(device2.id) - scores.get(device1.id) ||
               device1.name.localeCompare(device2.name),
           );
+        } else {
+          filtered.sort(byImportance(positions, now));
         }
         break;
     }
-    if (!sameItems(lastDevicesRef.current, filtered)) {
-      lastDevicesRef.current = filtered;
-      setFilteredDevices(filtered);
+    // LIV-22: favorites on top, except while searching (the best match comes first then).
+    const ordered = tokens.length ? filtered : pinFavorites(filtered, favorites);
+    if (!sameItems(lastDevicesRef.current, ordered)) {
+      lastDevicesRef.current = ordered;
+      setFilteredDevices(ordered);
     }
     const shownPositions = filterMap
       ? filtered.map((device) => positions[device.id]).filter(Boolean)
@@ -110,5 +118,6 @@ export default (
     positions,
     setFilteredDevices,
     setFilteredPositions,
+    favorites,
   ]);
 };

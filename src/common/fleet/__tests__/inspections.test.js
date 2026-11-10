@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { evaluateItem, inspectionResult, issuesFromFailures, missingAnswers } from '../inspections';
+import {
+  allPassing,
+  criticalWithoutEvidence,
+  evaluateItem,
+  failedCritical,
+  inspectionResult,
+  issuesFromFailures,
+  missingAnswers,
+} from '../inspections';
 
 const items = [
   { id: 'a', label: 'Brakes', type: 'pass_fail', critical: true },
@@ -36,8 +44,34 @@ describe('inspections', () => {
       inspectionResult(items, { a: { value: 'pass' }, b: { value: 33 }, d: { value: 'pass' } }),
     ).toBe('pass');
     expect(issuesFromFailures(items, answers)).toEqual([
-      { title: 'Brakes', description: 'Soft pedal', severity: 'high', source: 'inspection' },
+      { title: 'Brakes', description: 'Soft pedal', severity: 'critical', source: 'inspection' },
       { title: 'Mirrors', description: null, severity: 'medium', source: 'inspection' },
     ]);
+  });
+});
+
+describe('morning check (ADM-11)', () => {
+  const items = [
+    { id: 'a', type: 'pass_fail', critical: true, label: 'בלמים' },
+    { id: 'b', type: 'pass_fail', critical: false, label: 'צופר' },
+    { id: 'c', type: 'text', critical: false, label: 'הערה' },
+  ];
+
+  it('"all OK" passes every unanswered pass/fail item and keeps the answers given', () => {
+    expect(allPassing(items, { b: { value: 'fail' } })).toEqual({
+      a: { value: 'pass' },
+      b: { value: 'fail' },
+    });
+  });
+
+  it('a failed critical item needs a photo and a comment', () => {
+    const photo = { name: 'x.jpg' };
+    expect(criticalWithoutEvidence(items, { a: { value: 'fail' } })).toHaveLength(1);
+    expect(criticalWithoutEvidence(items, { a: { value: 'fail', photo } })).toHaveLength(1);
+    expect(
+      criticalWithoutEvidence(items, { a: { value: 'fail', photo, comment: 'רך' } }),
+    ).toHaveLength(0);
+    expect(failedCritical(items, { a: { value: 'fail' } })).toBe(true);
+    expect(failedCritical(items, { a: { value: 'pass' }, b: { value: 'fail' } })).toBe(false);
   });
 });

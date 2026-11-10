@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { TextField } from '@mui/material';
+import { Alert, TextField } from '@mui/material';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import { useAttributePreference } from '../common/util/preferences';
 import usePersistedState from '../common/util/usePersistedState';
@@ -10,7 +10,7 @@ import { loadPrivacy } from '../common/fleet/privacyData';
 import { money } from '../fleet/fleetData';
 import useReportStyles from './common/useReportStyles';
 import FleetTableReport from './components/FleetTableReport';
-import { usageByVehicle } from './common/fleetReports';
+import { underusedVehicles, usageByVehicle } from './common/fleetReports';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -32,6 +32,7 @@ const UsageReportPage = () => {
   const distanceUnit = useAttributePreference('distanceUnit');
   const [idleBurn, setIdleBurn] = usePersistedState('usageIdleBurn', '0.8');
   const [fuelPrice, setFuelPrice] = usePersistedState('usageFuelPrice', '');
+  const [vehicleCost, setVehicleCost] = usePersistedState('usageVehicleCost', '');
 
   const load = useCallback(
     async (scope) => {
@@ -97,6 +98,34 @@ const UsageReportPage = () => {
         privateDistance: 'sum',
       }}
       load={load}
+      summary={(items) => {
+        // OPS-04: a smaller fleet, in one sentence.
+        const { vehicles, savings } = underusedVehicles(items, { monthlyCost: vehicleCost });
+        if (!vehicles.length) return null;
+        return (
+          <Alert severity="info" className={classes.recommendation}>
+            {(() => {
+              // The names keep their own direction inside the Hebrew sentence.
+              const [before, after] = t('usageUnderused')
+                .replace('{0}', vehicles.length)
+                .split('{1}');
+              return (
+                <>
+                  {before}
+                  <bdi>
+                    {vehicles
+                      .map((row) => row.name)
+                      .slice(0, 3)
+                      .join(', ')}
+                  </bdi>
+                  {after}
+                </>
+              );
+            })()}
+            {savings != null && ` ${t('usageUnderusedSaving').replace('{0}', money(savings))}`}
+          </Alert>
+        );
+      }}
       filterChildren={
         <>
           <div className={classes.filterItem}>
@@ -107,6 +136,17 @@ const UsageReportPage = () => {
               value={idleBurn}
               onChange={(event) => setIdleBurn(event.target.value)}
               slotProps={{ htmlInput: { dir: 'ltr', min: 0, step: 0.1 } }}
+              fullWidth
+            />
+          </div>
+          <div className={classes.filterItem}>
+            <TextField
+              type="number"
+              label={t('usageVehicleCost')}
+              helperText={t('usageVehicleCostHelp')}
+              value={vehicleCost}
+              onChange={(event) => setVehicleCost(event.target.value)}
+              slotProps={{ htmlInput: { dir: 'ltr', min: 0, step: 50 } }}
               fullWidth
             />
           </div>

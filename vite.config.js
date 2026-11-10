@@ -7,6 +7,13 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { buildEnvProblems } from './src/common/fleet/buildEnv.js';
 import { releaseFile } from './src/common/util/release.js';
+import { telemetryEnvProblems } from './src/common/telemetry/config.js';
+import {
+  contentSecurityPolicy,
+  inlineScripts,
+  scriptHash,
+  securityHeaders,
+} from './src/common/util/securityPolicy.js';
 
 // FND-05: the build says which release it is, "1.0.0+<commit>", in the app (Preferences) and in
 // version.json next to index.html (the deploy check reads it).
@@ -16,7 +23,9 @@ const commit = () => {
     return process.env.GITHUB_SHA;
   }
   try {
-    return execSync('git rev-parse HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    return execSync('git rev-parse HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .trim();
   } catch {
     return '';
   }
@@ -33,9 +42,11 @@ const brand = {
 };
 
 export default defineConfig(({ command, mode }) => {
+  const viteEnv = loadEnv(mode, process.cwd(), 'VITE_');
   // FND-04: a production or staging build says which fleet database it talks to.
+  // FND-06: and its error and analytics settings, when given, must be usable.
   if (command === 'build') {
-    const problems = buildEnvProblems(mode, loadEnv(mode, process.cwd(), 'VITE_'));
+    const problems = [...buildEnvProblems(mode, viteEnv), ...telemetryEnvProblems(viteEnv)];
     if (problems.length) {
       throw new Error(`Build environment (${mode}):\n- ${problems.join('\n- ')}`);
     }
@@ -43,7 +54,7 @@ export default defineConfig(({ command, mode }) => {
   const release = releaseFile({
     version: pkg.version,
     sha: commit(),
-    environment: loadEnv(mode, process.cwd(), 'VITE_').VITE_APP_ENV || mode,
+    environment: viteEnv.VITE_APP_ENV || mode,
     builtAt: new Date().toISOString(),
   });
   return {
@@ -59,10 +70,16 @@ export default defineConfig(({ command, mode }) => {
       },
     },
     test: {
-      include: ['src/**/*.test.js', 'supabase/functions/**/*.test.js'],
+      // *.test.jsx render components (React Testing Library, jsdom; FND-07).
+      include: ['src/**/*.test.{js,jsx}', 'supabase/functions/**/*.test.js', 'demo/**/*.test.js'],
+      setupFiles: ['src/test/setup.js'],
     },
     build: {
       outDir: 'build',
+      // FND-06: with an error service, source maps are made for it but never linked from the
+      // scripts; the deploy moves them out of build/ (they are uploaded to the error service, not
+      // served), so stack traces are readable there and the source stays private.
+      sourcemap: viteEnv.VITE_ERROR_DSN ? 'hidden' : false,
       chunkSizeWarningLimit: 1100,
       rolldownOptions: {
         output: {
@@ -99,6 +116,29 @@ export default defineConfig(({ command, mode }) => {
       svgr(),
       react(),
       {
+        // SEC-10: the Content-Security-Policy, with the hashes of the inline scripts of the
+        // final index.html, as a <meta> tag (no server change needed), and security-headers.json
+        // with every header for the reverse proxy (deploy/security-headers). Builds only: the
+        // dev server injects its own scripts.
+        name: 'security-policy',
+        apply: 'build',
+        transformIndexHtml: {
+          order: 'post',
+          handler(html) {
+            const scriptHashes = inlineScripts(html).map(scriptHash);
+            this.emitFile?.({
+              type: 'asset',
+              fileName: 'security-headers.json',
+              source: `${JSON.stringify(securityHeaders({ scriptHashes }), null, 2)}\n`,
+            });
+            return html.replace(
+              '<meta charset="utf-8" />',
+              `<meta charset="utf-8" />\n    <meta http-equiv="Content-Security-Policy" content="${contentSecurityPolicy({ scriptHashes })}" />\n    <meta name="referrer" content="strict-origin" />`,
+            );
+          },
+        },
+      },
+      {
         name: 'release-file',
         apply: 'build',
         generateBundle() {
@@ -113,12 +153,15 @@ export default defineConfig(({ command, mode }) => {
         injectRegister: false,
         includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon-180x180.png'],
         workbox: {
+          // The service worker is ours to debug locally; no map is shipped for it (FND-06).
+          sourcemap: false,
           navigateFallbackDenylist: [/\/api(\/|$)/],
           globPatterns: ['**/*.{js,css,html,woff,woff2,mp3}'],
         },
         manifest: {
           short_name: brand.title,
-          name: 'VIPER FLEET',
+          // BRD-06: the name is lowercase everywhere, the install screen included.
+          name: 'viper fleet',
           description: brand.description,
           theme_color: brand.colorPrimary,
           background_color: brand.background,

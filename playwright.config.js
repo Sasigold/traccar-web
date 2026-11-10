@@ -21,8 +21,16 @@ export default defineConfig({
     {
       name: 'desktop',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+      testIgnore: /performance\.spec\.js/,
     },
-    { name: 'mobile', use: { ...devices['Pixel 7'] } },
+    { name: 'mobile', use: { ...devices['Pixel 7'] }, testIgnore: /performance\.spec\.js/ },
+    // FND-07: the 2,000-vehicle profile runs last and alone, so other tests do not skew it.
+    {
+      name: 'performance',
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+      testMatch: /performance\.spec\.js/,
+      dependencies: ['desktop', 'mobile'],
+    },
   ],
   webServer: {
     command: 'npm run demo',

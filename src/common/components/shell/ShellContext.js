@@ -12,6 +12,7 @@ const ShellContext = createContext({
   railCollapsed: false,
   toggleRail: noop,
   chromeVisible: true,
+  openAssistant: null,
 });
 
 export const useShell = () => use(ShellContext);

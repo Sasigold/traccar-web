@@ -1,6 +1,13 @@
+import { useConfirm } from '../common/components/confirm/ConfirmProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import dayjs from 'dayjs';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { keyframes } from 'tss-react';
+import usePersistedState from '../common/util/usePersistedState';
+import TvHeader from './components/TvHeader';
+import TemplateGallery from './components/TemplateGallery';
+import { readShareParam, shareUrl } from './model/shareLink';
 import {
   Button,
   Dialog,
@@ -14,9 +21,11 @@ import {
   ListItemText,
   Menu,
   MenuItem,
+  Snackbar,
   Tooltip,
   useMediaQuery,
 } from '@mui/material';
+import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
 import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
@@ -42,6 +51,8 @@ import useFeatures from '../common/util/useFeatures';
 import { useFleetStatus } from '../common/fleet/useFleet';
 import { devicesActions, messagesActions } from '../store';
 import { DashboardDataProvider } from './data/DashboardDataContext';
+import VehiclePeriodDialog from './components/VehiclePeriodDialog';
+import { periodRange } from './data/periods';
 import DashboardCanvas from './layout/DashboardCanvas';
 import { HEIGHT_PRESETS, locate, uid } from './layout/model';
 import {
@@ -65,7 +76,11 @@ import WidgetSettingsDialog from './components/WidgetSettingsDialog';
 import FocusDialog from './components/FocusDialog';
 import DrillDialog from './components/DrillDialog';
 
-const TV_ROTATION = 60000;
+// REP-20: a fade between boards on the control-room screen.
+const boardIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
 
 const useStyles = makeStyles()((theme) => ({
   setup: {
@@ -84,6 +99,16 @@ const useStyles = makeStyles()((theme) => ({
     padding: theme.spacing(2, 3),
     overflowY: 'auto',
     height: '100%',
+  },
+  // A kiosk (?tv=1) covers the app around it, as full screen would.
+  kiosk: {
+    position: 'fixed',
+    inset: 0,
+    zIndex: theme.zIndex.modal - 1,
+  },
+  board: {
+    animation: `${boardIn} ${theme.tokens.motion.duration.enter}ms ${theme.tokens.motion.easing.standard}`,
+    '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
   },
   top: {
     position: 'sticky',
@@ -167,12 +192,18 @@ const DashboardPage = () => {
   const { doc, editing } = store;
 
   // ─── TV mode ─────────────────────────────────────────────────────────────
+  // REP-20: full screen where the browser can, or ?tv=1 for a kiosk (and for an iPhone, which
+  // has no full screen for pages).
   const rootRef = useRef(null);
-  const [tv, setTv] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const kiosk = searchParams.get('tv') === '1';
+  const [fullscreen, setFullscreen] = useState(false);
+  const tv = fullscreen || kiosk;
   const [tvIndex, setTvIndex] = useState(0);
+  const [tvRotation, setTvRotation] = usePersistedState('dashboardTvRotation', 60);
   useEffect(() => {
     const onChange = () =>
-      setTv(document.fullscreenElement === rootRef.current && Boolean(rootRef.current));
+      setFullscreen(document.fullscreenElement === rootRef.current && Boolean(rootRef.current));
     document.addEventListener('fullscreenchange', onChange);
     return () => document.removeEventListener('fullscreenchange', onChange);
   }, []);
@@ -182,10 +213,33 @@ const DashboardPage = () => {
     }
     const interval = setInterval(
       () => setTvIndex((index) => (index + 1) % doc.dashboards.length),
-      TV_ROTATION,
+      tvRotation * 1000,
     );
     return () => clearInterval(interval);
-  }, [tv, doc.dashboards.length]);
+  }, [tv, doc.dashboards.length, tvRotation]);
+  // The screen of a control room should not go dark while it shows the board.
+  useEffect(() => {
+    if (!tv || !navigator.wakeLock?.request) return undefined;
+    let lock = null;
+    let released = false;
+    const acquire = async () => {
+      try {
+        lock = await navigator.wakeLock.request('screen');
+      } catch {
+        lock = null;
+      }
+    };
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && !released) acquire();
+    };
+    acquire();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      released = true;
+      document.removeEventListener('visibilitychange', onVisible);
+      lock?.release?.().catch(() => {});
+    };
+  }, [tv]);
 
   const dashboard = tv ? (doc.dashboards[tvIndex] ?? store.active) : store.active;
   const minOf = useMemo(() => minOfFor(dashboard.widgets), [dashboard.widgets]);
@@ -209,10 +263,35 @@ const DashboardPage = () => {
   const [settingsId, setSettingsId] = useState(null);
   const [focusId, setFocusId] = useState(null);
   const [drill, setDrill] = useState(null);
+  const [vehiclePeriod, setVehiclePeriod] = useState(null);
+  const devicesRef = useRef({});
+  devicesRef.current = useSelector((state) => state.devices.items);
   const [highlightId, setHighlightId] = useState(null);
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [naming, setNaming] = useState(null); // 'rename' | 'duplicate'
   const [confirm, setConfirm] = useState(null); // 'delete' | 'reset' | 'publish'
+  // REP-19: "the widget was removed · undo".
+  const [removed, setRemoved] = useState(null);
+  // REP-19: a dashboard shared by link (?import=…) is offered as a copy of the user's own.
+  const confirmDialog = useConfirm();
+  const importParam = searchParams.get('import');
+  useEffect(() => {
+    if (!importParam) return;
+    const shared = readShareParam(importParam);
+    setSearchParams({}, { replace: true });
+    if (!shared) {
+      dispatch(messagesActions.push(t('dashboardShareInvalid')));
+      return;
+    }
+    confirmDialog({
+      title: t('dashboardShareImportTitle').replace('{0}', dashboardName(shared, t)),
+      message: t('dashboardShareImportMessage'),
+      confirmLabel: t('dashboardShareImport'),
+    }).then((yes) => {
+      if (yes) store.importCopy(shared);
+    });
+    // eslint-disable-next-line @eslint-react/exhaustive-deps -- once per link
+  }, [importParam]);
 
   useEffect(() => {
     if (!highlightId) {
@@ -269,13 +348,15 @@ const DashboardPage = () => {
     () => ({
       onSettings: setSettingsId,
       onFocusView: setFocusId,
-      onRemove: (id) =>
+      onRemove: (id) => {
+        setRemoved(id);
         update((current) => {
           const widgets = { ...current.widgets };
           const next = removeWidget(current.rows, id, minOfFor(current.widgets));
           delete widgets[id];
           return { ...current, rows: next, widgets };
-        }),
+        });
+      },
       onDuplicate: (id) => {
         const copyId = uid('w');
         update((current) => {
@@ -304,7 +385,18 @@ const DashboardPage = () => {
         ),
       onSelectItem: (id, item, query) => {
         if (query.d === 'vehicle' && !item.other) {
-          openDevice(item.key);
+          if (!query.ds || query.ds === 'live') {
+            openDevice(item.key);
+          } else {
+            // REP-07: a period chart: the vehicle's trips or replay in that period, or now.
+            const range = periodRange(dashboard.filters.period, dayjs(), dashboard.filters);
+            setVehiclePeriod({
+              deviceId: Number(item.key),
+              name: item.label || devicesRef.current[item.key]?.name || String(item.key),
+              from: range.from,
+              to: range.to,
+            });
+          }
         } else if (query.ds === 'live') {
           setDrill({ item, query });
         }
@@ -317,7 +409,7 @@ const DashboardPage = () => {
         );
       },
     }),
-    [update, updateRows, openDevice, dashboard.rows],
+    [update, updateRows, openDevice, dashboard.rows, dashboard.filters],
   );
 
   const onRows = useCallback(
@@ -395,13 +487,22 @@ const DashboardPage = () => {
         doc.dashboards.findIndex((item) => item.id === doc.activeId),
       ),
     );
-    rootRef.current?.requestFullscreen?.();
+    if (document.fullscreenEnabled && rootRef.current?.requestFullscreen) {
+      rootRef.current.requestFullscreen();
+    } else {
+      setSearchParams({ tv: '1' });
+    }
+  };
+  const exitTv = () => {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    if (kiosk) setSearchParams({});
   };
 
   // ─── header ──────────────────────────────────────────────────────────────
   const actions = editing ? (
     <div className={classes.actions}>
-      {desktop && (
+      {/* REP-19: undo and redo on every width (a removal on a phone could not be taken back). */}
+      {
         <>
           <Tooltip title={t('dashboardUndo')}>
             <span>
@@ -426,11 +527,11 @@ const DashboardPage = () => {
             </span>
           </Tooltip>
         </>
-      )}
+      }
       <Button variant="outlined" startIcon={<AddRoundedIcon />} onClick={() => setCatalog(true)}>
         {t('dashboardAddWidget')}
       </Button>
-      {desktop && <Button onClick={store.cancelEdit}>{t('sharedCancel')}</Button>}
+      <Button onClick={store.cancelEdit}>{t('sharedCancel')}</Button>
       <Button variant="contained" startIcon={<CheckRoundedIcon />} onClick={store.finishEdit}>
         {t('dashboardDone')}
       </Button>
@@ -509,6 +610,20 @@ const DashboardPage = () => {
             <ListItemText>{t('dashboardPublish')}</ListItemText>
           </MenuItem>
         )}
+        <MenuItem
+          onClick={async () => {
+            setMenuAnchor(null);
+            await navigator.clipboard?.writeText(shareUrl(dashboard));
+            dispatch(
+              messagesActions.push({ message: t('dashboardShareCopied'), severity: 'success' }),
+            );
+          }}
+        >
+          <ListItemIcon>
+            <ShareRoundedIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>{t('dashboardShareLink')}</ListItemText>
+        </MenuItem>
         <Divider />
         <MenuItem
           onClick={() => {
@@ -533,9 +648,15 @@ const DashboardPage = () => {
   const content = (
     <DashboardDataProvider
       filters={dashboard.filters}
+      onFilters={tv ? undefined : setFilters}
       refresh={tv ? dashboard.refresh || 300 : dashboard.refresh}
     >
-      <div ref={rootRef} className={tv ? `${classes.root} ${classes.tv}` : classes.root}>
+      <div
+        ref={rootRef}
+        className={
+          tv ? `${classes.root} ${classes.tv} ${kiosk ? classes.kiosk : ''}` : classes.root
+        }
+      >
         {!tv && (
           <div className={classes.top}>
             <DashboardTabs
@@ -566,7 +687,15 @@ const DashboardPage = () => {
             )}
           </div>
         )}
-        <div className={tv ? undefined : classes.body}>
+        {tv && (
+          <TvHeader
+            dashboard={dashboard}
+            rotation={tvRotation}
+            onRotation={setTvRotation}
+            rotating={doc.dashboards.length > 1}
+          />
+        )}
+        <div key={tv ? dashboard.id : 'board'} className={tv ? classes.board : classes.body}>
           {rows.length ? (
             <DashboardCanvas
               rows={rows}
@@ -582,28 +711,30 @@ const DashboardPage = () => {
               title={t('dashboardEmpty')}
               description={t('dashboardEmptyDescription')}
               action={
-                <Button
-                  variant="contained"
-                  startIcon={<AddRoundedIcon />}
-                  onClick={() => {
-                    if (!editing) {
-                      store.startEdit();
-                    }
-                    setCatalog(true);
-                  }}
-                >
-                  {t('dashboardAddWidget')}
-                </Button>
+                <>
+                  <TemplateGallery
+                    available={(key) => templateCoverage(key, available) >= 0.5}
+                    onPick={(key) => store.add(key)}
+                  />
+                  <Button
+                    variant="contained"
+                    startIcon={<AddRoundedIcon />}
+                    onClick={() => {
+                      if (!editing) {
+                        store.startEdit();
+                      }
+                      setCatalog(true);
+                    }}
+                  >
+                    {t('dashboardAddWidget')}
+                  </Button>
+                </>
               }
             />
           )}
         </div>
         {tv && (
-          <IconButton
-            className={classes.tvExit}
-            aria-label={t('dashboardExitTv')}
-            onClick={() => document.exitFullscreen?.()}
-          >
+          <IconButton className={classes.tvExit} aria-label={t('dashboardExitTv')} onClick={exitTv}>
             <FullscreenExitRoundedIcon />
           </IconButton>
         )}
@@ -633,8 +764,33 @@ const DashboardPage = () => {
         onClose={() => setFocusId(null)}
       />
       <DrillDialog drill={drill} onClose={() => setDrill(null)} />
+      <Snackbar
+        open={Boolean(removed)}
+        autoHideDuration={6000}
+        onClose={(_, reason) => reason !== 'clickaway' && setRemoved(null)}
+        message={t('dashboardWidgetRemoved')}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        action={
+          <Button
+            color="inherit"
+            size="small"
+            onClick={() => {
+              setRemoved(null);
+              store.undo();
+            }}
+          >
+            {t('dashboardBringBack')}
+          </Button>
+        }
+      />
+      <VehiclePeriodDialog vehicle={vehiclePeriod} onClose={() => setVehiclePeriod(null)} />
     </DashboardDataProvider>
   );
+
+  // REP-20: a kiosk shows only the board, without the page around it.
+  if (kiosk) {
+    return content;
+  }
 
   return (
     <PageLayout

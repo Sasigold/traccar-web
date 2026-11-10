@@ -1,4 +1,5 @@
-import { useMemo, useReducer, useState } from 'react';
+import { useEffect, useMemo, useReducer, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import {
   Alert,
@@ -54,6 +55,8 @@ import {
   useFleetVehicles,
 } from './stage5Data';
 import { DateTimeField } from '../common/components/pickers';
+import { keepOnBackdrop } from '../common/util/formDialog';
+import CopyButton from '../common/components/CopyButton';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -213,7 +216,7 @@ const JobDialog = ({ job, pois, vehicles, drivers, onClose, onSaved }) => {
   const none = { value: '', label: '—' };
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="sm">
       <DialogTitle>{t(form.id ? 'fleetJobEdit' : 'fleetJobAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>
@@ -326,7 +329,7 @@ const TrackingDialog = ({ job, deviceId, eta, onClose, onSaved }) => {
     : '';
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="sm">
       <DialogTitle>{t('fleetJobTracking')}</DialogTitle>
       <DialogContent>
         <div className={classes.stack}>
@@ -347,9 +350,7 @@ const TrackingDialog = ({ job, deviceId, eta, onClose, onSaved }) => {
         <Button onClick={onClose}>{t('sharedCancel')}</Button>
         {link ? (
           <>
-            <Button onClick={() => navigator.clipboard?.writeText(message)}>
-              {t('sharedCopy')}
-            </Button>
+            <CopyButton text={message} size="medium" />
             <Button
               variant="contained"
               href={whatsappLink(job.customer_phone, message)}
@@ -395,6 +396,18 @@ const DispatchPage = () => {
   const pois = useFleetRows('pois', { order: 'name', enabled: canWrite });
   const vehicles = useFleetVehicles(canWrite);
   const drivers = useFleetDrivers(canWrite);
+
+  // LIV-21: "send a job" from the map's nearby vehicles opens a new job at that point.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const latitude = searchParams.get('latitude');
+    const longitude = searchParams.get('longitude');
+    if (!canWrite || !latitude || !longitude || !vehicles) return;
+    const deviceId = Number(searchParams.get('deviceId'));
+    const vehicle = vehicles.find((item) => item.traccar_device_id === deviceId);
+    setEditing({ ...emptyJob(), latitude, longitude, vehicle_id: vehicle?.id || '' });
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams, canWrite, vehicles]);
 
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase();

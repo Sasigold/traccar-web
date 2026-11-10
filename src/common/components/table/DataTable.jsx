@@ -4,6 +4,11 @@ import EmptyState from './EmptyState';
 import ResponsiveTable from './ResponsiveTable';
 
 const useStyles = makeStyles()((theme) => ({
+  refreshing: {
+    opacity: 0.55,
+    transition: `opacity ${theme.tokens.motion.duration.fast}ms`,
+    '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+  },
   root: {
     display: 'flex',
     flexDirection: 'column',
@@ -64,6 +69,8 @@ const DataTable = ({
   minWidth,
   responsive = true,
   className,
+  // ADM-28: rows being reloaded stay on screen, dimmed.
+  refreshing = false,
 }) => {
   const { classes, cx } = useStyles();
   const card = variant === 'card';
@@ -79,7 +86,8 @@ const DataTable = ({
           responsive={responsive}
           stickyHeader={stickyHeader}
           size="small"
-          className={cx(classes.table, !card && classes.flush)}
+          className={cx(classes.table, !card && classes.flush, refreshing && classes.refreshing)}
+          aria-busy={refreshing || undefined}
           style={minWidth ? { minWidth } : undefined}
         >
           {children}

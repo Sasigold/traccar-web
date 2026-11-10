@@ -62,6 +62,10 @@ const useStyles = makeStyles()((theme) => ({
   deltaIcon: {
     fontSize: 14,
   },
+  context: {
+    ...theme.typography.caption,
+    color: theme.palette.surface.textSecondaryOnTint,
+  },
   spark: {
     marginTop: 'auto',
     minHeight: 0,
@@ -77,6 +81,11 @@ const StatTile = ({
   unit,
   deltaValue,
   deltaText,
+  // REP-18: what the change is against ("לעומת 1.11–7.11") and an optional target line.
+  deltaContext,
+  targetText,
+  // Kept for callers; a change is no longer colored as good or bad (REP-18).
+  // eslint-disable-next-line no-unused-vars
   goodWhenUp = true,
   points,
   width,
@@ -89,13 +98,8 @@ const StatTile = ({
   const chart = useChartTheme();
   const animated = useAnimatedNumber(value ?? 0);
   const shown = value == null ? '—' : format(animated);
-  const good = deltaValue == null || deltaValue === 0 ? null : deltaValue > 0 === goodWhenUp;
-  let deltaColor = chart.textSecondary;
-  if (good === true) {
-    deltaColor = chart.tone('success');
-  } else if (good === false) {
-    deltaColor = chart.tone('error');
-  }
+  // REP-18: a change is a fact, not a verdict: text color with an arrow, and what it is against.
+  const deltaColor = chart.text;
   const compact = width < 170 || height < 84;
   const sparkHeight = Math.min(48, height - 84);
   return (
@@ -123,6 +127,11 @@ const StatTile = ({
           </span>
         )}
       </div>
+      {!compact && ((deltaText && deltaContext) || targetText) ? (
+        <span className={classes.context}>
+          {[deltaText && deltaContext, targetText].filter(Boolean).join(' · ')}
+        </span>
+      ) : null}
       {points && sparkHeight >= 18 && width > 90 && (
         <div className={classes.spark}>
           <Sparkline

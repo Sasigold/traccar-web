@@ -30,7 +30,7 @@ const useStyles = makeStyles()((theme) => ({
 }));
 
 // A ratio against 100%: the fill and a lighter track of the same ramp.
-const Meter = ({ value, text, label }) => {
+const Meter = ({ value, text, label, target, targetLabel }) => {
   const { classes } = useStyles();
   const chart = useChartTheme();
   const ratio = Math.max(0, Math.min(1, (value ?? 0) / 100));
@@ -46,12 +46,30 @@ const Meter = ({ value, text, label }) => {
       <span className={classes.value} dir="ltr">
         {text}%
       </span>
-      <div className={classes.track} style={{ backgroundColor: chart.track }}>
+      <div
+        className={classes.track}
+        style={{ backgroundColor: chart.track, position: 'relative', overflow: 'visible' }}
+      >
         <div
           className={classes.fill}
           style={{ width: `${ratio * 100}%`, backgroundColor: chart.single }}
         />
+        {target != null && (
+          // REP-18: the target as a mark across the track.
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute',
+              top: -4,
+              bottom: -4,
+              width: 2,
+              insetInlineStart: `${Math.max(0, Math.min(100, target))}%`,
+              backgroundColor: chart.text,
+            }}
+          />
+        )}
       </div>
+      {target != null && <span className={classes.label}>{targetLabel}</span>}
       <span className={classes.label}>{label}</span>
     </div>
   );

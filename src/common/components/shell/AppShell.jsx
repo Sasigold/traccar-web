@@ -1,4 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { PAGE_FADE, beat } from '../../theme/motion';
+import { motion } from '../../theme/tokens';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useTranslation } from '../LocalizationProvider';
 import { useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
@@ -8,10 +12,15 @@ import ShellContext from './ShellContext';
 import NavRail from './NavRail';
 import TopBar from './TopBar';
 import MobileTabs from './MobileTabs';
-import MobileDrawer from './MobileDrawer';
 import CommandPalette from './CommandPalette';
+import ShortcutsDialog from './ShortcutsDialog';
 import EventsDrawer from './EventsDrawer';
 import AlertBanner from './AlertBanner';
+import ImpersonationBanner from './ImpersonationBanner';
+import { useAiAvailable } from '../../fleet/useAi';
+
+// AI-01: loaded the first time it is opened.
+const AssistantPanel = lazy(() => import('../assistant/AssistantPanel'));
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -33,6 +42,25 @@ const useStyles = makeStyles()((theme) => ({
   withRail: {
     [theme.breakpoints.up('md')]: {
       gridTemplateColumns: 'auto minmax(0, 1fr)',
+    },
+  },
+  skip: {
+    position: 'fixed',
+    top: theme.spacing(1),
+    insetInlineStart: theme.spacing(1),
+    zIndex: theme.zIndex.tooltip,
+    padding: theme.spacing(1, 2),
+    borderRadius: theme.tokens.radius.pill,
+    backgroundColor: theme.palette.cta.main,
+    color: theme.palette.cta.contrastText,
+    fontWeight: 600,
+    textDecoration: 'none',
+    transform: 'translateY(-200%)',
+    '&:focus': {
+      transform: 'none',
+    },
+    '@media print': {
+      display: 'none',
     },
   },
   content: {
@@ -61,9 +89,37 @@ const AppShell = ({ children }) => {
   const chromeVisible = !features.disableTabs;
 
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [eventsOpen, setEventsOpen] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [railCollapsed, setRailCollapsed] = usePersistedState('navRailCollapsed', false);
+  const aiAvailable = useAiAvailable();
+  const t = useTranslation();
+
+  // LIV-16: after moving to another screen, the focus goes to its title, not the menu item.
+  const { pathname } = useLocation();
+  const firstRouteRef = useRef(true);
+  useEffect(() => {
+    if (firstRouteRef.current) {
+      firstRouteRef.current = false;
+      return undefined;
+    }
+    // BRD-03: a short fade between pages (180ms), without remounting the page.
+    beat(document.getElementById('main-content'), PAGE_FADE, motion.duration.base);
+    const frame = requestAnimationFrame(() => {
+      const heading = document.querySelector('#main-content h1');
+      if (heading) {
+        heading.setAttribute('tabindex', '-1');
+        heading.focus({ preventScroll: true });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [pathname]);
+  // The assistant keeps its conversation while closed; null until first opened.
+  const [assistant, setAssistant] = useState(null);
+  const openAssistant = useCallback(
+    (question) => setAssistant({ open: true, question: question || null }),
+    [],
+  );
 
   const openPalette = useCallback(() => setPaletteOpen(true), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
@@ -73,6 +129,12 @@ const AppShell = ({ children }) => {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
+      // LIV-15: "?" opens the list of shortcuts.
+      if (event.key === '?' && !isEditable(event.target) && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        setShortcutsOpen(true);
+        return;
+      }
       const key = event.key?.toLowerCase();
       const command = key === 'k' && (event.ctrlKey || event.metaKey);
       const slash = event.key === '/' && !event.ctrlKey && !event.metaKey && !event.altKey;
@@ -96,6 +158,7 @@ const AppShell = ({ children }) => {
       railCollapsed,
       toggleRail,
       chromeVisible,
+      openAssistant: aiAvailable ? openAssistant : null,
     }),
     [
       paletteOpen,
@@ -107,6 +170,8 @@ const AppShell = ({ children }) => {
       railCollapsed,
       toggleRail,
       chromeVisible,
+      aiAvailable,
+      openAssistant,
     ],
   );
 
@@ -132,18 +197,22 @@ const AppShell = ({ children }) => {
   return (
     <ShellContext value={value}>
       <div className={cx(classes.root, showRail && classes.withRail)} style={vars}>
+        {/* LIV-16: the first stop of the keyboard. */}
+        <a href="#main-content" className={classes.skip}>
+          {t('shellSkipToContent')}
+        </a>
         {showRail && <NavRail />}
-        <TopBar onOpenDrawer={() => setDrawerOpen(true)} />
+        <TopBar />
+        <ImpersonationBanner />
         <main
+          id="main-content"
+          tabIndex={-1}
           className={classes.content}
           style={showTabs ? undefined : { paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         >
           {children}
         </main>
         {showTabs && <MobileTabs />}
-        {!desktop && chromeVisible && (
-          <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-        )}
         {!features.disableEvents && <EventsDrawer open={eventsOpen} onClose={closeEvents} />}
         {!features.disableEvents && (
           <AlertBanner
@@ -156,6 +225,16 @@ const AppShell = ({ children }) => {
           />
         )}
         <CommandPalette open={paletteOpen} onClose={closePalette} />
+        <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+        {assistant && aiAvailable && (
+          <Suspense fallback={null}>
+            <AssistantPanel
+              open={assistant.open}
+              initialQuestion={assistant.question}
+              onClose={() => setAssistant((current) => ({ ...current, open: false }))}
+            />
+          </Suspense>
+        )}
       </div>
     </ShellContext>
   );

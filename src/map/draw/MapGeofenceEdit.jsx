@@ -20,7 +20,7 @@ MapboxDraw.constants.classes.CONTROL_BASE = 'maplibregl-ctrl';
 MapboxDraw.constants.classes.CONTROL_PREFIX = 'maplibregl-ctrl-';
 MapboxDraw.constants.classes.CONTROL_GROUP = 'maplibregl-ctrl-group';
 
-const MapGeofenceEdit = ({ selectedGeofenceId }) => {
+const MapGeofenceEdit = ({ selectedGeofenceId, drawRequest = 0 }) => {
   const theme = useTheme();
   const halo = haloColor(theme);
   const dispatch = useDispatch();
@@ -159,6 +159,14 @@ const MapGeofenceEdit = ({ selectedGeofenceId }) => {
       draw.add(geofenceToFeature(theme, geofence));
     });
   }, [geofences, draw, theme]);
+
+  // LIV-19: the page's "new geofence" button starts drawing a polygon.
+  useEffect(() => {
+    if (drawRequest > 0) {
+      draw.changeMode('draw_polygon');
+      setHintDismissed(true);
+    }
+  }, [drawRequest, draw]);
 
   useEffect(() => {
     if (selectedGeofenceId) {

@@ -41,19 +41,45 @@ export const missingAnswers = (items, answers) =>
   items.filter(
     (item) =>
       (item.type === 'pass_fail' || item.type === 'number_range' || item.type === 'signature') &&
-      (answers[item.id]?.value === undefined || answers[item.id]?.value === ''),
+      (answers[item.id]?.value === undefined ||
+        answers[item.id]?.value === '' ||
+        answers[item.id]?.value === null),
   );
 
 export const inspectionResult = (items, answers) =>
   items.some((item) => evaluateItem(item, answers[item.id]?.value) === false) ? 'fail' : 'pass';
 
-// One issue per failed item; critical items become high severity.
+// ADM-11: a failed critical item needs a photo and a comment, so the manager sees what is wrong.
+export const criticalWithoutEvidence = (items, answers) =>
+  items.filter(
+    (item) =>
+      item.critical &&
+      evaluateItem(item, answers[item.id]?.value) === false &&
+      (!answers[item.id]?.photo || !answers[item.id]?.comment?.trim()),
+  );
+
+export const failedCritical = (items, answers) =>
+  items.some((item) => item.critical && evaluateItem(item, answers[item.id]?.value) === false);
+
+// "All OK": every unanswered pass/fail item passes; the answers given stay.
+export const allPassing = (items, answers) => {
+  const next = { ...answers };
+  items.forEach((item) => {
+    if (item.type === 'pass_fail' && next[item.id]?.value === undefined) {
+      next[item.id] = { ...next[item.id], value: 'pass' };
+    }
+  });
+  return next;
+};
+
+// One issue per failed item; a critical item is a critical issue, which keeps the vehicle off
+// the road until it is resolved (vehicle_out_of_service).
 export const issuesFromFailures = (items, answers) =>
   items
     .filter((item) => evaluateItem(item, answers[item.id]?.value) === false)
     .map((item) => ({
       title: item.label,
       description: answers[item.id]?.comment || null,
-      severity: item.critical ? 'high' : 'medium',
+      severity: item.critical ? 'critical' : 'medium',
       source: 'inspection',
     }));

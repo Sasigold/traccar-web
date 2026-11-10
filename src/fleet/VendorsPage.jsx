@@ -28,6 +28,9 @@ import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import FleetNotice from './components/FleetNotice';
 import { useVendors } from './fleetData';
+import ValidatedField from '../common/components/ValidatedField';
+import { keepOnBackdrop } from '../common/util/formDialog';
+import WazeButton from '../common/components/WazeButton';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -104,7 +107,7 @@ export const VendorDialog = ({ vendor, onClose, onSaved }) => {
   );
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="xs">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="xs">
       <DialogTitle>{t(form.id ? 'fleetVendorEdit' : 'fleetVendorAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>
@@ -155,7 +158,12 @@ export const VendorDialog = ({ vendor, onClose, onSaved }) => {
             </>
           )}
           {field('contact_name', 'fleetVendorContact')}
-          {field('phone', 'sharedPhone', { slotProps: { htmlInput: { dir: 'ltr' } } })}
+          <ValidatedField
+            kind="phone"
+            label={t('sharedPhone')}
+            value={form.phone}
+            onChange={(value) => setForm((current) => ({ ...current, phone: value }))}
+          />
           {field('email', 'userEmail', { slotProps: { htmlInput: { dir: 'ltr' } } })}
           {field('address', 'positionAddress')}
           {field('notes', 'fleetNotes', { multiline: true, minRows: 2 })}
@@ -235,7 +243,10 @@ const VendorsPage = () => {
               <TableCell>
                 <span dir="ltr">{vendor.phone}</span>
               </TableCell>
-              <TableCell>{vendor.address}</TableCell>
+              <TableCell>
+                {vendor.address}
+                <WazeButton place={{ address: vendor.address }} label={vendor.name} />
+              </TableCell>
               {canWrite && (
                 <TableCell className={classes.action}>
                   <Tooltip title={t('sharedEdit')}>

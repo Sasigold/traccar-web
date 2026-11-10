@@ -15,6 +15,9 @@ export const site = {
   contactEmail: '',
   // Optional phone number shown in the contact section, e.g. '03-0000000'.
   phone: '',
+  // The accessibility coordinator, shown in the accessibility statement (A11-07). Required by the
+  // service accessibility regulations: fill in before going live.
+  accessibility: { name: '', phone: '', email: '' },
 };
 
 // Screenshots. Drop the image files into website/public/screens/ and set `src`

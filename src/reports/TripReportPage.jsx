@@ -28,10 +28,13 @@ import PlayCircleRoundedIcon from '@mui/icons-material/PlayCircleRounded';
 import ResizeHandle from './components/ResizeHandle';
 import usePersistedState from '../common/util/usePersistedState';
 import { useCatch, useCatchCallback, useAsyncTask } from '../reactHelper';
+import { useFleetReady } from '../common/fleet/useFleet';
+import { assignmentResolver, loadAssignments } from '../fleet/safetyData';
+import { tripDriverKey } from '../common/fleet/checkin';
 import useReportStyles from './common/useReportStyles';
 import MapView from '../map/core/MapView';
 import MapRoutePath from '../map/MapRoutePath';
-import AddressValue from '../common/components/AddressValue';
+import AddressValue, { AllAddressesButton } from '../common/components/AddressValue';
 import TableShimmer from '../common/components/TableShimmer';
 import {
   ReportEmptyRow,
@@ -51,6 +54,10 @@ import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import exportExcel from '../common/util/exportExcel';
 import { deviceEquality } from '../common/util/deviceEquality';
+import VehicleCell from './components/VehicleCell';
+import { vehicleName, vehicleTitle } from './common/vehicle';
+import useSelectedRow from './common/useSelectedRow';
+import { litersPer100 } from './common/reportRules';
 
 const columnsArray = [
   ['startTime', 'reportStartTime'],
@@ -64,6 +71,7 @@ const columnsArray = [
   ['maxSpeed', 'reportMaximumSpeed'],
   ['duration', 'reportDuration'],
   ['spentFuel', 'reportSpentFuel'],
+  ['litersPer100', 'reportLitersPer100'],
   ['driverName', 'sharedDriver'],
   ['business', 'sharedType'],
 ];
@@ -77,6 +85,9 @@ const TOTALS = {
   maxSpeed: 'max',
   averageSpeed: 'avg:duration',
 };
+
+// The driver filter's choice for trips nobody is known to have driven (SAF-02).
+const NO_DRIVER = '__none';
 
 const TripReportPage = () => {
   const navigate = useNavigate();
@@ -98,15 +109,51 @@ const TripReportPage = () => {
     'averageSpeed',
   ]);
   const [tripType, setTripType] = useState(null);
+  const [driver, setDriver] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [queried, setQueried] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const selectedRowRef = useSelectedRow(selectedItem);
   const [hiddenRows, setHiddenRows] = useState(0);
   const [route, setRoute] = useState(null);
 
+  // SAF-02: a trip without an identified driver may still have an assigned one (check-in or a
+  // fixed assignment in the fleet database).
+  const fleetReady = useFleetReady();
+  const traccarDrivers = useSelector((state) => state.drivers.items);
+  const [resolve, setResolve] = useState(null);
+  useAsyncTask(async () => {
+    if (!fleetReady) return;
+    const byId = Object.fromEntries(Object.values(traccarDrivers).map((item) => [item.id, item]));
+    const assignments = await loadAssignments().catch(() => []);
+    setResolve(() => assignmentResolver(assignments, byId));
+  }, [fleetReady, traccarDrivers]);
+  const unassigned = (item) => !tripDriverKey(item, resolve);
+
+  // REP-05: the drivers who drove in the result, to show one driver's trips.
+  const driverOptions = useMemo(() => {
+    const names = new Map();
+    items.forEach((item) => {
+      if (item.driverUniqueId) {
+        names.set(item.driverUniqueId, item.driverName || item.driverUniqueId);
+      }
+    });
+    const options = [...names]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return items.some((item) => !tripDriverKey(item, resolve))
+      ? [...options, { id: NO_DRIVER, name: t('tripsWithoutDriver') }]
+      : options;
+  }, [items, resolve, t]);
+  // A driver who is not in a new result stops filtering it.
+  const activeDriver = driverOptions.some((option) => option.id === driver) ? driver : null;
+
   const filteredItems = items.filter(
-    (item) => !tripType || item.business === (tripType === 'business'),
+    (item) =>
+      (!tripType || item.business === (tripType === 'business')) &&
+      (!activeDriver ||
+        (activeDriver === NO_DRIVER ? unassigned(item) : item.driverUniqueId === activeDriver)),
   );
 
   const markers = selectedItem && [
@@ -171,7 +218,7 @@ const TripReportPage = () => {
     filteredItems.forEach((item) => {
       // One sheet per vehicle, keyed by id: two vehicles with the same name stay apart.
       if (!sheets.has(item.deviceId)) {
-        sheets.set(item.deviceId, { title: devices[item.deviceId].name, rows: [] });
+        sheets.set(item.deviceId, { title: vehicleTitle(devices, item.deviceId), rows: [] });
       }
       const row = {};
       columns.forEach((key) => {
@@ -263,7 +310,7 @@ const TripReportPage = () => {
     sort,
     toggle: toggleSort,
   } = useReportSort('trips', filteredItems, (item, key) =>
-    key === 'deviceId' ? devices[item.deviceId]?.name : item[key],
+    key === 'deviceId' ? vehicleName(devices, item.deviceId) : item[key],
   );
 
   const formatValue = (item, key) => {
@@ -273,7 +320,7 @@ const TripReportPage = () => {
     const value = item[key];
     switch (key) {
       case 'deviceId':
-        return devices[value].name;
+        return vehicleName(devices, value);
       case 'business':
         return t(value ? 'positionBusiness' : 'reportPrivate');
       case 'startTime':
@@ -290,6 +337,11 @@ const TripReportPage = () => {
         return formatNumericHours(value, t);
       case 'spentFuel':
         return value > 0 ? formatVolume(value, volumeUnit, t) : null;
+      case 'litersPer100': {
+        // REP-14: consumption, when the device reports fuel.
+        const rate = litersPer100(item.spentFuel, item.distance);
+        return rate == null ? null : rate.toFixed(1);
+      }
       case 'startAddress':
         return (
           <AddressValue
@@ -353,7 +405,44 @@ const TripReportPage = () => {
                   }}
                 />
               </div>
+              {driverOptions.length > 0 && (
+                <div className={classes.filterItem}>
+                  <SelectField
+                    fullWidth
+                    label={t('sharedDriver')}
+                    value={activeDriver}
+                    data={driverOptions}
+                    onChange={(event) => {
+                      setDriver(event.target.value || null);
+                      setSelectedItem(null);
+                    }}
+                  />
+                </div>
+              )}
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
+              <AllAddressesButton
+                className={classes.filterItem}
+                points={[
+                  ...(columns.includes('startAddress')
+                    ? filteredItems
+                        .filter((item) => !item.privacy)
+                        .map((item) => ({
+                          latitude: item.startLat,
+                          longitude: item.startLon,
+                          address: item.startAddress,
+                        }))
+                    : []),
+                  ...(columns.includes('endAddress')
+                    ? filteredItems
+                        .filter((item) => !item.privacy)
+                        .map((item) => ({
+                          latitude: item.endLat,
+                          longitude: item.endLon,
+                          address: item.endAddress,
+                        }))
+                    : []),
+                ]}
+              />
             </ReportFilter>
           </div>
           {!loading && <ReportKpis items={kpis} />}
@@ -377,7 +466,11 @@ const TripReportPage = () => {
               )}
               {!loading ? (
                 sortedItems.map((item) => (
-                  <TableRow key={item.startPositionId}>
+                  <TableRow
+                    key={item.startPositionId}
+                    ref={selectedItem === item ? selectedRowRef : undefined}
+                    className={selectedItem === item ? classes.selectedRow : undefined}
+                  >
                     <TableCell className={classes.columnAction} padding="none">
                       <div className={classes.columnActionContainer}>
                         {selectedItem === item ? (
@@ -407,7 +500,9 @@ const TripReportPage = () => {
                         </IconButton>
                       </div>
                     </TableCell>
-                    <TableCell>{devices[item.deviceId].name}</TableCell>
+                    <TableCell>
+                      <VehicleCell deviceId={item.deviceId} />
+                    </TableCell>
                     {columns.map((key) => (
                       <TableCell key={key}>{formatValue(item, key)}</TableCell>
                     ))}

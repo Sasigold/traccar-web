@@ -1,11 +1,21 @@
 import { Buffer } from 'node:buffer';
 import { test, expect, gotoReady, FLEET } from './fixtures';
+import { fakeFleet, writeMode } from './fakeFleet';
 
 // A driver linked to the demo's Delivery Van (device 1).
 const tables = {
   drivers: [{ id: 'd1', full_name: 'דנה לוי', traccar_driver_id: 1 }],
   current_assignments: [
     { driver_id: 'd1', vehicle_id: 'veh1', traccar_device_id: 1, plate_number: '12-345-67' },
+  ],
+  safety_event_reviews: [
+    {
+      id: 'sr1',
+      category: 'hardBraking',
+      occurred_at: '2026-11-08T07:30:00Z',
+      traccar_device_id: 1,
+      note: 'בלימה חדה ליד הצומת',
+    },
   ],
   inspection_templates: [
     {
@@ -18,7 +28,8 @@ const tables = {
   ],
 };
 
-const mockFleet = async (page) => {
+// `net.down` drops every write (no signal); `net.storageDown` only the photo uploads.
+const mockFleet = async (page, net = {}) => {
   const writes = [];
   await page.route('**/api/session/token', (route) => route.fulfill({ body: 'token' }));
   await page.route(`${FLEET}/**`, (route) => {
@@ -36,6 +47,12 @@ const mockFleet = async (page) => {
     }
     const name = url.pathname.split('/').at(-1);
     const single = (request.headers().accept || '').includes('vnd.pgrst.object');
+    if (
+      request.method() !== 'GET' &&
+      (net.down || (net.storageDown && url.pathname.includes('/storage/v1/')))
+    ) {
+      return route.abort('internetdisconnected');
+    }
     if (url.pathname.includes('/storage/v1/')) {
       writes.push({ name: 'storage', path: url.pathname });
       return route.fulfill({ json: { Key: url.pathname } });
@@ -118,7 +135,224 @@ test('a damage report starts with the camera and needs no manager fields', async
   });
   expect(writes.some((write) => write.name === 'storage')).toBe(true);
   expect(writes.find((write) => write.name === 'incident_photos').body).toMatchObject({
-    incident_id: 'incidents-1',
+    incident_id: incident.body.id,
     file_name: 'damage.jpg',
   });
+});
+
+// ADM-10: with no signal the report waits in the phone, and goes once the signal is back.
+const fillDamage = async (page) => {
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'damage.jpg',
+    mimeType: 'image/jpeg',
+    buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
+  });
+  await page.getByRole('button', { name: 'המשך' }).click();
+  await page.getByRole('button', { name: 'נזק', exact: true }).click();
+  await page.getByRole('group', { name: 'יש פצועים?' }).getByRole('button', { name: 'לא' }).click();
+  await page.getByRole('button', { name: 'המשך' }).click();
+  await page
+    .getByRole('group', { name: 'היה מעורב רכב או אדם נוסף?' })
+    .getByRole('button', { name: 'לא' })
+    .click();
+  await page.getByRole('button', { name: 'שליחת הדיווח' }).click();
+};
+
+test('with no signal the report waits in the phone and goes later, once', async ({ page }) => {
+  const net = { down: false };
+  const writes = await mockFleet(page, net);
+  await gotoReady(page, '/driver/damage');
+  await expect(page.getByText('רכב 12-345-67 · דנה לוי')).toBeVisible();
+  net.down = true;
+  await fillDamage(page);
+  await expect(page.getByRole('status').filter({ hasText: 'הדיווח נשמר בטלפון' })).toBeVisible();
+  expect(writes.filter((write) => write.name === 'incidents')).toHaveLength(0);
+
+  await page.getByRole('link', { name: 'חזרה לאזור הנהג' }).click();
+  await expect(page.getByText('ממתין לשליחה (1)')).toBeVisible();
+  net.down = false;
+  await page.getByRole('button', { name: 'לשלוח עכשיו' }).click();
+  await expect(page.getByText('ממתין לשליחה (1)')).toHaveCount(0);
+  expect(writes.filter((write) => write.name === 'incidents')).toHaveLength(1);
+  expect(writes.filter((write) => write.name === 'incident_photos')).toHaveLength(1);
+});
+
+test('photos that did not upload are sent again without a second report', async ({ page }) => {
+  const net = { storageDown: true };
+  const writes = await mockFleet(page, net);
+  await gotoReady(page, '/driver/damage');
+  await expect(page.getByText('רכב 12-345-67 · דנה לוי')).toBeVisible();
+  await fillDamage(page);
+  await expect(page.getByRole('alert').filter({ hasText: '1 תמונות לא עלו' })).toBeVisible();
+  net.storageDown = false;
+  await page.getByRole('button', { name: 'שליחה חוזרת של התמונות' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'הדיווח נשלח' })).toBeVisible();
+  expect(writes.filter((write) => write.name === 'incidents')).toHaveLength(1);
+  expect(writes.filter((write) => write.name === 'incident_photos')).toHaveLength(1);
+});
+
+// ADM-11: the first check creates the daily checklist; a failed critical item needs a photo and
+// a comment, and ends with "do not drive".
+test('a failed critical item stops the driver, with a photo and a comment', async ({ page }) => {
+  await writeMode(page);
+  const fleet = await fakeFleet(page, {
+    users: {
+      1: {
+        profile: { id: 'p1', org_id: 'o1', role: 'driver' },
+        permissions: ['incidents.write', 'inspections.write'],
+      },
+    },
+    tables: {
+      drivers: [{ id: 'd1', full_name: 'דנה לוי', traccar_driver_id: 1, profile_id: 'p1' }],
+      current_assignments: tables.current_assignments,
+    },
+    rpc: {
+      inspection_default_template: (body, state) => {
+        state.tables.inspection_templates = [
+          { id: 'tpl-default', name: 'בדיקת בוקר', active: true },
+        ];
+        state.tables.inspection_template_items = [
+          {
+            id: 'i1',
+            template_id: 'tpl-default',
+            inspection_template_id: 'tpl-default',
+            label: 'בלמים',
+            type: 'pass_fail',
+            critical: true,
+            sort_order: 0,
+          },
+          {
+            id: 'i2',
+            template_id: 'tpl-default',
+            inspection_template_id: 'tpl-default',
+            label: 'צופר',
+            type: 'pass_fail',
+            critical: false,
+            sort_order: 1,
+          },
+        ];
+        return 'tpl-default';
+      },
+    },
+  });
+
+  await gotoReady(page, '/driver/check');
+  await expect(page.getByRole('group', { name: 'בלמים' })).toBeVisible();
+  await expect(page.getByText('נותרו 2 סעיפים למילוי')).toBeVisible();
+
+  // "All OK", then the brakes fail.
+  await page.getByRole('button', { name: 'הכול תקין' }).click();
+  await expect(page.getByText(/נותרו/)).toHaveCount(0);
+  await page.getByRole('group', { name: 'בלמים' }).getByRole('button', { name: 'לא תקין' }).click();
+  await expect(page.getByText(/סעיף קריטי נכשל/)).toBeVisible();
+  await expect(page.getByText('נותרו 1 סעיפים למילוי')).toBeVisible();
+
+  await page.getByRole('button', { name: 'שליחת הבדיקה' }).click();
+  expect(fleet.tables.inspections || []).toHaveLength(0);
+  await page.getByLabel('מה הבעיה').fill('הדוושה רכה');
+  await page
+    .locator('input[type="file"]')
+    .first()
+    .setInputFiles({
+      name: 'brakes.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYPj/HwADAQH/rM3H5AAAAABJRU5ErkJggg==',
+        'base64',
+      ),
+    });
+  await page.getByRole('button', { name: 'שליחת הבדיקה' }).click();
+  await expect(page.getByText('אין לצאת לנסיעה.')).toBeVisible();
+  expect(fleet.tables.inspections[0]).toMatchObject({ result: 'fail', driver_id: 'd1' });
+  expect(fleet.tables.issues[0]).toMatchObject({ severity: 'critical', title: 'בלמים' });
+  expect([...fleet.files.keys()][0]).toMatch(/^o1\/inspections\/.*brakes\.png$/);
+});
+
+// SAF-01: an event the manager sent for a self-review: what happened, one question, understood.
+test('the driver answers a self-review in 30 seconds', async ({ page }) => {
+  const writes = await mockFleet(page);
+  await gotoReady(page, '/driver');
+  const card = page.getByRole('heading', { name: 'לבדיקה עצמית (1)' });
+  await expect(card).toBeVisible();
+  await expect(page.getByText('בלימה חדה ליד הצומת')).toBeVisible();
+  const done = page.getByRole('button', { name: 'הבנתי' });
+  await expect(done).toBeDisabled();
+  await page.getByRole('radio', { name: 'טעות שלי, אשים לב' }).check();
+  await done.click();
+  await expect
+    .poll(() => writes.find((write) => write.name === 'safety_driver_ack')?.body)
+    .toEqual({ p_id: 'sr1', p_answer: 'my_mistake' });
+});
+
+// SAF-02: the QR in the cabin opens the check-in; the database checks the code.
+test('the driver checks in to a vehicle from its QR link', async ({ page }) => {
+  const writes = await mockFleet(page);
+  await gotoReady(page, '/driver/checkin?d=1&c=abc123');
+  await expect(page.getByRole('status').filter({ hasText: 'נרשמתם לרכב' })).toBeVisible();
+  expect(writes.find((write) => write.name === 'driver_check_in').body).toEqual({
+    p_device: 1,
+    p_code: 'abc123',
+  });
+});
+
+// ADM-23: with injuries the numbers to dial stay on screen; "my location now" sets the place.
+test('injuries show the numbers to dial, and the phone sets the place', async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(['geolocation']);
+  await context.setGeolocation({ latitude: 32.794, longitude: 34.9896, accuracy: 12 });
+  const writes = await mockFleet(page);
+  await gotoReady(page, '/driver/damage');
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'damage.jpg',
+    mimeType: 'image/jpeg',
+    buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
+  });
+  await page.getByRole('button', { name: 'המשך' }).click();
+  await page.getByRole('button', { name: 'תאונה', exact: true }).click();
+  await page.getByRole('group', { name: 'יש פצועים?' }).getByRole('button', { name: 'כן' }).click();
+  await expect(page.getByRole('link', { name: 'מד״א 101' })).toHaveAttribute('href', 'tel:101');
+  await expect(page.getByRole('link', { name: 'משטרה 100' })).toHaveAttribute('href', 'tel:100');
+  await page.getByRole('button', { name: 'המיקום שלי עכשיו' }).click();
+  await expect(page.getByText(/המיקום נקבע לפי הטלפון/)).toBeVisible();
+  await page.getByRole('button', { name: 'המשך' }).click();
+  await page
+    .getByRole('group', { name: 'היה מעורב רכב או אדם נוסף?' })
+    .getByRole('button', { name: 'לא' })
+    .click();
+  await page.getByRole('button', { name: 'שליחת הדיווח' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'הדיווח נשלח' })).toBeVisible();
+  expect(writes.find((write) => write.name === 'incidents').body).toMatchObject({
+    injuries: true,
+    latitude: 32.794,
+    longitude: 34.9896,
+  });
+});
+
+// ADM-10 (Codex review on PR #26): a report with a third party is sent with that party.
+test('a report with a third party goes out with the other driver', async ({ page }) => {
+  const writes = await mockFleet(page);
+  await gotoReady(page, '/driver/damage');
+  await page
+    .locator('input[type=file]')
+    .first()
+    .setInputFiles({
+      name: 'damage.jpg',
+      mimeType: 'image/jpeg',
+      buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
+    });
+  await page.getByRole('button', { name: 'המשך' }).click();
+  await page.getByRole('button', { name: 'תאונה', exact: true }).click();
+  await page.getByRole('group', { name: 'יש פצועים?' }).getByRole('button', { name: 'לא' }).click();
+  await page.getByRole('button', { name: 'המשך' }).click();
+  await page
+    .getByRole('group', { name: 'היה מעורב רכב או אדם נוסף?' })
+    .getByRole('button', { name: 'כן' })
+    .click();
+  await page.getByLabel('שם', { exact: true }).fill('משה כהן');
+  await page.getByRole('button', { name: 'שליחת הדיווח' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'הדיווח נשלח' })).toBeVisible();
+  const party = writes.find((write) => write.name === 'incident_parties');
+  expect(party.body).toMatchObject({ role: 'third_party', name: 'משה כהן' });
 });

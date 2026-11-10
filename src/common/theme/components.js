@@ -115,6 +115,26 @@ export default {
         borderRadius: radius.xl,
         boxShadow: tokenShadows(theme).xl,
         backgroundImage: 'none',
+        // ADM-24: on a phone a form dialog (fullWidth) takes the whole screen, so the keyboard
+        // does not hide its buttons; short confirmations stay as cards.
+        [theme.breakpoints.down('sm')]: {
+          '&.MuiDialog-paperFullWidth': {
+            margin: 0,
+            width: '100%',
+            maxWidth: '100%',
+            height: '100%',
+            maxHeight: '100%',
+            borderRadius: 0,
+          },
+          '&.MuiDialog-paperFullWidth > .MuiDialogActions-root': {
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 1,
+            backgroundColor: theme.palette.background.paper,
+            borderTop: `1px solid ${theme.palette.surface.border}`,
+            paddingBottom: 'calc(8px + env(safe-area-inset-bottom, 0px))',
+          },
+        },
       }),
     },
   },
@@ -435,7 +455,7 @@ export default {
         '& .MuiTableCell-head': {
           fontSize: '0.75rem',
           fontWeight: 700,
-          letterSpacing: '0.02em',
+          letterSpacing: theme.direction === 'rtl' ? 0 : '0.02em',
           color: theme.palette.surface.textSecondaryOnTint,
           backgroundColor: theme.palette.surface.sunken,
           borderBottomColor: theme.palette.surface.borderStrong,
@@ -459,6 +479,8 @@ export default {
       root: ({ theme }) => ({
         borderBottomColor: theme.palette.surface.border,
         fontSize: '0.875rem',
+        // BRD-04: figures line up in columns.
+        fontVariantNumeric: 'tabular-nums',
         '@media print': {
           color: theme.palette.alwaysDark.main,
         },

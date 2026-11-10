@@ -20,6 +20,9 @@ import fetchOrThrow from '../common/util/fetchOrThrow';
 import SelectField from '../common/components/SelectField';
 import exportExcel from '../common/util/exportExcel';
 import { deviceEquality } from '../common/util/deviceEquality';
+import VehicleCell from './components/VehicleCell';
+import { vehicleTitle } from './common/vehicle';
+import { visitDuration } from './common/reportRules';
 
 const columnsArray = [
   ['geofenceId', 'sharedGeofence'],
@@ -40,10 +43,12 @@ const GeofenceReportPage = () => {
   const devices = useSelector((state) => state.devices.items, deviceEquality(['id', 'name']));
   const geofences = useSelector((state) => state.geofences.items);
 
+  // REP-14: how long, by default.
   const [columns, setColumns] = usePersistedState('geofenceColumns', [
     'geofenceId',
     'startTime',
     'endTime',
+    'duration',
   ]);
   const [items, setItems] = useState([]);
   const [hiddenRows, setHiddenRows] = useState(0);
@@ -81,7 +86,7 @@ const GeofenceReportPage = () => {
     items.forEach((item) => {
       // One sheet per vehicle, keyed by id: two vehicles with the same name stay apart.
       if (!sheets.has(item.deviceId)) {
-        sheets.set(item.deviceId, { title: devices[item.deviceId].name, rows: [] });
+        sheets.set(item.deviceId, { title: vehicleTitle(devices, item.deviceId), rows: [] });
       }
       const row = {};
       columns.forEach((key) => {
@@ -98,10 +103,16 @@ const GeofenceReportPage = () => {
       case 'geofenceId':
         return geofences[item.geofenceId]?.name || item.geofenceId;
       case 'startTime':
-      case 'endTime':
         return formatTime(item[key], 'minutes');
-      case 'duration':
-        return formatNumericHours(Date.parse(item.endTime) - Date.parse(item.startTime), t);
+      case 'endTime':
+        // REP-14: a visit without an exit yet is still inside, not "NaN".
+        return item.endTime ? formatTime(item.endTime, 'minutes') : t('reportStillInside');
+      case 'duration': {
+        const { open, duration } = visitDuration(item);
+        if (duration == null) return null;
+        const text = formatNumericHours(duration, t);
+        return open ? `${text} (${t('reportSoFar')})` : text;
+      }
       default:
         return item[key];
     }
@@ -148,7 +159,9 @@ const GeofenceReportPage = () => {
               <TableRow
                 key={`${item.deviceId}_${item.geofenceId}_${item.startTime}_${item.endTime}`}
               >
-                <TableCell>{devices[item.deviceId]?.name || item.deviceId}</TableCell>
+                <TableCell>
+                  <VehicleCell deviceId={item.deviceId} />
+                </TableCell>
                 {columns.map((key) => (
                   <TableCell key={key}>{formatValue(item, key)}</TableCell>
                 ))}

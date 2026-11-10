@@ -1,6 +1,9 @@
 import { WebSocketServer, WebSocket } from 'ws';
+import process from 'node:process';
 import { createDrivers, createFleet, createMaintenance, maintenanceFor } from './fleet.js';
+import { israeliDrivers } from './israel.js';
 import { eventTypes, findEvent, geofences, report, sampleEvent } from './reports.js';
+import { DEMO_USERS, handleSandbox, overlay, overlayOne, sandboxOf } from './sandbox.js';
 
 const commandTypes = ['positionSingle', 'engineStop', 'engineResume', 'custom'];
 
@@ -10,7 +13,23 @@ const groups = [
 ];
 
 export const demoServer = (server) => {
-  const fleet = createFleet();
+  // BRD-05: DEMO_FLEET=il serves the Israeli fleet to everyone (sales, screenshots).
+  const fleet = createFleet(Date.now(), { israeli: process.env.DEMO_FLEET === 'il' });
+  // FND-07: the performance profile's fleet of 2,000 (cookie demoFleet=large), made on first use.
+  let largeFleet = null;
+  let israeliFleet = fleet.israeli ? fleet : null;
+  const fleetFor = (request) => {
+    const cookie = request.headers.cookie || '';
+    if (/(?:^|;\s*)demoFleet=large(?:;|$)/.test(cookie)) {
+      return (largeFleet ||= createFleet(Date.now(), { size: 2000 }));
+    }
+    if (/(?:^|;\s*)demoFleet=il(?:;|$)/.test(cookie)) {
+      return (israeliFleet ||= createFleet(Date.now(), { israeli: true }));
+    }
+    return fleet;
+  };
+  const driversFor = (fleetOf) =>
+    fleetOf.israeli ? israeliDrivers(createDrivers()) : createDrivers();
   const sockets = new WebSocketServer({ noServer: true });
   const settings = {
     id: 1,
@@ -107,27 +126,50 @@ export const demoServer = (server) => {
       sendCommand(request, response);
       return;
     }
+    const send = (value) => {
+      response.setHeader('Content-Type', 'application/json');
+      response.end(JSON.stringify(value));
+    };
+    // FND-07: a test's own writable sandbox (cookie demoWrite), see sandbox.js.
+    const sandbox = sandboxOf(request);
+    if (sandbox) {
+      handleSandbox(sandbox, request, response, url, send).then((handled) => {
+        if (handled) return;
+        if (request.method !== 'GET') {
+          response.writeHead(404).end('Unavailable in this demo.');
+        } else if (sandbox.userId == null && url.pathname !== '/api/server') {
+          response.writeHead(401).end('Not signed in.');
+        } else {
+          read(url, response, send, sandbox, fleetFor(request));
+        }
+      });
+      return;
+    }
     if (request.method !== 'GET') {
       response.writeHead(403).end('This demo is read-only.');
       return;
     }
+    read(url, response, send, null, fleetFor(request));
+  });
+  const read = (url, response, send, sandbox, fleet) => {
     fleet.advance();
     let data;
+    const listed = (collection, items) => overlay(sandbox, collection, items);
     switch (url.pathname) {
       case '/api/server':
-        data = settings;
+        data = sandbox ? { ...settings, readonly: false } : settings;
         break;
       case '/api/session':
         data = user;
         break;
       case '/api/devices':
-        data = fleet.devices;
+        data = listed('devices', fleet.devices);
         break;
       case '/api/positions':
         data = fleet.query(url.searchParams);
         break;
       case '/api/geofences':
-        data = geofences;
+        data = listed('geofences', geofences);
         break;
       case '/api/notifications/types':
         data = eventTypes.map((type) => ({ type }));
@@ -142,18 +184,25 @@ export const demoServer = (server) => {
         data = report(fleet, url.pathname.split('/').at(-1), url.searchParams);
         break;
       case '/api/drivers':
-        data = createDrivers();
+        data = listed('drivers', driversFor(fleet));
         break;
       case '/api/maintenance':
-        data = url.searchParams.has('deviceId')
-          ? maintenanceFor(url.searchParams.get('deviceId'))
-          : createMaintenance();
+        data = listed(
+          'maintenance',
+          url.searchParams.has('deviceId')
+            ? maintenanceFor(url.searchParams.get('deviceId'))
+            : createMaintenance(),
+        );
         break;
       case '/api/groups':
-        data = groups;
+        data = listed('groups', groups);
         break;
       case '/api/calendars':
-        data = [];
+        data = listed('calendars', []);
+        break;
+      // The demo's users, in write mode (SEC-13 "log in as" works on them).
+      case '/api/users':
+        data = sandbox ? listed('users', DEMO_USERS) : [];
         break;
       case '/api/demo/event':
         data = sendDemoEvent(url.searchParams);
@@ -166,13 +215,44 @@ export const demoServer = (server) => {
         break;
       default:
         if (/^\/api\/devices\/\d+$/.test(url.pathname)) {
-          data = fleet.devices.find(
-            (device) => device.id === Number(url.pathname.split('/').at(-1)),
+          const id = Number(url.pathname.split('/').at(-1));
+          data = overlayOne(
+            sandbox,
+            'devices',
+            fleet.devices.find((device) => device.id === id),
+            id,
           );
           if (data) break;
         }
+        // One item of a listed collection (the edit pages load it this way).
+        {
+          const [, name, rawId] =
+            /^\/api\/(groups|geofences|maintenance)\/(\d+)$/.exec(url.pathname) || [];
+          if (name) {
+            const id = Number(rawId);
+            const lists = { groups, geofences, maintenance: createMaintenance() };
+            data = overlayOne(
+              sandbox,
+              name,
+              lists[name].find((item) => item.id === id),
+              id,
+            );
+            if (data) break;
+          }
+        }
+        // In a sandbox, any other collection lists what the test saved into it.
+        if (sandbox) {
+          const [, collection, id] = /^\/api\/([a-z]+)(?:\/(\d+))?$/.exec(url.pathname) || [];
+          if (collection && id) {
+            data = overlayOne(sandbox, collection, null, Number(id));
+            if (data) break;
+          } else if (collection) {
+            data = listed(collection, []);
+            break;
+          }
+        }
         if (/^\/api\/drivers\/\d+$/.test(url.pathname)) {
-          data = createDrivers().find(
+          data = driversFor(fleet).find(
             (driver) => driver.id === Number(url.pathname.split('/').at(-1)),
           );
           if (data) break;
@@ -191,24 +271,46 @@ export const demoServer = (server) => {
         response.writeHead(404).end('Unavailable in this demo.');
         return;
     }
-    response.setHeader('Content-Type', 'application/json');
-    response.end(JSON.stringify(data));
-  });
+    send(data);
+  };
   server.httpServer.on('upgrade', (request, socket, head) => {
     if (new URL(request.url, 'http://localhost').pathname === '/api/socket') {
       sockets.handleUpgrade(request, socket, head, (client) => {
         client.demoClient = /(?:^|;\s*)demoClient=([^;]+)/.exec(request.headers.cookie || '')?.[1];
-        fleet.advance();
-        client.send(JSON.stringify({ devices: fleet.devices, positions: fleet.positions }));
+        client.sandbox = sandboxOf(request);
+        client.fleet = fleetFor(request);
+        client.fleet.advance();
+        client.send(
+          JSON.stringify({
+            devices: overlay(client.sandbox, 'devices', client.fleet.devices),
+            positions: client.fleet.positions,
+          }),
+        );
       });
     }
   });
   const timer = setInterval(() => {
     if (sockets.clients.size === 0) return;
-    fleet.advance();
-    const message = JSON.stringify({ devices: fleet.devices, positions: fleet.positions });
+    // One message per fleet, shared by its clients; a sandbox sees its own changes.
+    const messages = new Map();
     sockets.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) client.send(message);
+      if (client.readyState !== WebSocket.OPEN) return;
+      const source = client.fleet || fleet;
+      if (!messages.has(source)) {
+        source.advance();
+        messages.set(
+          source,
+          JSON.stringify({ devices: source.devices, positions: source.positions }),
+        );
+      }
+      client.send(
+        client.sandbox
+          ? JSON.stringify({
+              devices: overlay(client.sandbox, 'devices', source.devices),
+              positions: source.positions,
+            })
+          : messages.get(source),
+      );
     });
   }, 5000);
   server.httpServer.on('close', () => {

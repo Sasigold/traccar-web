@@ -41,6 +41,15 @@ const VehiclePage = lazy(() => import('./fleet/VehiclePage'));
 const VehicleWizardPage = lazy(() => import('./fleet/VehicleWizardPage'));
 const SafetyOfficerPage = lazy(() => import('./fleet/SafetyOfficerPage'));
 const PrivacyPage = lazy(() => import('./fleet/PrivacyPage'));
+const AiSettingsPage = lazy(() => import('./fleet/AiSettingsPage'));
+const SafetyInboxPage = lazy(() => import('./fleet/SafetyInboxPage'));
+const DriverCheckInPage = lazy(() => import('./fleet/DriverCheckInPage'));
+const FuelChecksPage = lazy(() => import('./fleet/FuelChecksPage'));
+const AlertResponsePage = lazy(() => import('./fleet/AlertResponsePage'));
+const PoolPage = lazy(() => import('./fleet/PoolPage'));
+const WorkHoursReportPage = lazy(() => import('./reports/WorkHoursReportPage'));
+const TollsReportPage = lazy(() => import('./reports/TollsReportPage'));
+const AutomationsPage = lazy(() => import('./fleet/AutomationsPage'));
 const DriverFilePage = lazy(() => import('./fleet/DriverFilePage'));
 const PoiPage = lazy(() => import('./fleet/PoiPage'));
 const DispatchPage = lazy(() => import('./fleet/DispatchPage'));
@@ -88,6 +97,7 @@ const CommandPage = lazy(() => import('./settings/CommandPage'));
 const DeviceStatisticsPage = lazy(() => import('./reports/DeviceStatisticsPage'));
 const StatisticsPage = lazy(() => import('./reports/StatisticsPage'));
 const LoginPage = lazy(() => import('./login/LoginPage'));
+const AccessibilityPage = lazy(() => import('./other/AccessibilityPage'));
 const RegisterPage = lazy(() => import('./login/RegisterPage'));
 const ResetPasswordPage = lazy(() => import('./login/ResetPasswordPage'));
 const GeofencesPage = lazy(() => import('./other/GeofencesPage'));
@@ -108,6 +118,7 @@ const SharePage = lazy(() => import('./settings/SharePage'));
 const AnnouncementPage = lazy(() => import('./settings/AnnouncementPage'));
 const EmulatorPage = lazy(() => import('./other/EmulatorPage'));
 const StreamPage = lazy(() => import('./other/StreamPage'));
+const TodayPage = lazy(() => import('./main/TodayPage'));
 const AuditPage = lazy(() => import('./reports/AuditPage'));
 const SettingsHubPage = lazy(() => import('./settings/SettingsHubPage'));
 const AdminOverviewPage = lazy(() => import('./admin/AdminOverviewPage'));
@@ -120,6 +131,7 @@ const BillingPage = lazy(() => import('./admin/BillingPage'));
 const PlansPage = lazy(() => import('./admin/PlansPage'));
 const MessagingPage = lazy(() => import('./admin/MessagingPage'));
 const ApiLimitsPage = lazy(() => import('./admin/ApiLimitsPage'));
+const ClientHealthPage = lazy(() => import('./admin/ClientHealthPage'));
 const InvoicingPage = lazy(() => import('./admin/InvoicingPage'));
 
 const Navigation = () => {
@@ -182,12 +194,15 @@ const Navigation = () => {
     <Suspense fallback={<Loader />}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        {/* A11-07: open without signing in. */}
+        <Route path="/accessibility" element={<AccessibilityPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/change-server" element={<ChangeServerPage />} />
         <Route path="/" element={<App />}>
           <Route index element={<MainPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="today" element={<TodayPage />} />
 
           <Route path="position/:id" element={<PositionPage />} />
           <Route path="telemetry/:deviceId" element={<TelemetryPage />} />
@@ -204,6 +219,7 @@ const Navigation = () => {
             <Route index element={<DriverPortalPage />} />
             <Route path="check" element={<InspectionPage driverMode />} />
             <Route path="damage" element={<DriverDamagePage />} />
+            <Route path="checkin" element={<DriverCheckInPage />} />
           </Route>
           <Route path="fleet">
             <Route index element={<FleetHubPage />} />
@@ -217,12 +233,17 @@ const Navigation = () => {
             <Route path="incident/:id" element={<IncidentPage />} />
             <Route path="incident" element={<IncidentPage />} />
             <Route path="costs" element={<CostsPage />} />
+            <Route path="fuel-checks" element={<FuelChecksPage />} />
+            <Route path="alerts/response" element={<AlertResponsePage />} />
+            <Route path="pool" element={<PoolPage />} />
+            <Route path="automations" element={<AutomationsPage />} />
             <Route path="inspections" element={<InspectionsPage />} />
             <Route path="inspection/:id" element={<InspectionPage />} />
             <Route path="inspection" element={<InspectionPage />} />
             <Route path="roles" element={<RolesPage />} />
             <Route path="users" element={<FleetUsersPage />} />
             <Route path="safety" element={<SafetyPage />} />
+            <Route path="safety/inbox" element={<SafetyInboxPage />} />
             <Route path="safety-officer" element={<SafetyOfficerPage />} />
             <Route path="driver-file/:id" element={<DriverFilePage />} />
             <Route path="poi" element={<PoiPage />} />
@@ -232,6 +253,7 @@ const Navigation = () => {
             <Route path="integrations" element={<IntegrationsPage />} />
             <Route path="integrations/api" element={<ApiDocsPage />} />
             <Route path="privacy" element={<PrivacyPage />} />
+            <Route path="ai" element={<AiSettingsPage />} />
             <Route path="vehicles" element={<DevicesPage />} />
             <Route path="vehicle/new" element={<VehicleWizardPage />} />
             <Route path="vehicle/:id" element={<VehiclePage />} />
@@ -296,6 +318,7 @@ const Navigation = () => {
             <Route path="plans" element={<PlansPage />} />
             <Route path="messaging" element={<MessagingPage />} />
             <Route path="api" element={<ApiLimitsPage />} />
+            <Route path="health" element={<ClientHealthPage />} />
             <Route path="invoicing" element={<InvoicingPage />} />
           </Route>
 
@@ -304,6 +327,8 @@ const Navigation = () => {
             <Route path="combined" element={<CombinedReportPage />} />
             <Route path="timeline" element={<TimelineReportPage />} />
             <Route path="usage" element={<UsageReportPage />} />
+            <Route path="work-hours" element={<WorkHoursReportPage />} />
+            <Route path="tolls" element={<TollsReportPage />} />
             <Route path="cost-per-km" element={<CostPerKmReportPage />} />
             <Route path="device-health" element={<DeviceHealthReportPage />} />
             <Route path="chart" element={<ChartReportPage />} />

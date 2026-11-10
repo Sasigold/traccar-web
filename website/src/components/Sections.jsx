@@ -354,6 +354,7 @@ export const Footer = () => (
         <a href="#features">יכולות</a>
         <a href="#faq">שאלות</a>
         <a href={site.appUrl}>כניסה למערכת</a>
+        <a href="accessibility.html">הצהרת נגישות</a>
       </nav>
     </div>
     <div className="container footer__legal" dir="ltr">

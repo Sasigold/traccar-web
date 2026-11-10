@@ -25,7 +25,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { alpha } from '@mui/material/styles';
 import { ctaFill } from '../common/theme/surfaces';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { sessionActions } from '../store';
 import { useLocalization, useTranslation } from '../common/components/LocalizationProvider';
 import LoginLayout from './LoginLayout';
@@ -185,6 +185,7 @@ const LoginPage = () => {
   const [codeEnabled, setCodeEnabled] = useState(false);
 
   const [announcementShown, setAnnouncementShown] = useState(false);
+  const [resetHelp, setResetHelp] = useState(false);
   const announcement = useSelector((state) => state.session.server.announcement);
 
   const handlePasswordLogin = useCatch(async (event) => {
@@ -305,7 +306,7 @@ const LoginPage = () => {
     >
       <div className={classes.container} ref={containerRef}>
         <div className={classes.heading}>
-          <Typography variant="h4" className={classes.title}>
+          <Typography variant="h4" component="h1" className={classes.title}>
             {t('loginWelcome')}
           </Typography>
           <Typography variant="body2" className={classes.subtitle}>
@@ -315,6 +316,12 @@ const LoginPage = () => {
         {!!announcement && !announcementShown && (
           <Alert severity="info" onClose={() => setAnnouncementShown(true)}>
             {announcement}
+          </Alert>
+        )}
+        {/* LIV-20: a failed sign-in is read out, and marks both fields. */}
+        {failed && (
+          <Alert severity="error" role="alert">
+            {t('loginFailed')}
           </Alert>
         )}
         {!openIdForced && (
@@ -328,8 +335,8 @@ const LoginPage = () => {
               autoComplete="email"
               autoFocus={!email}
               onChange={(e) => setEmail(e.target.value)}
-              helperText={failed && t('loginFailed')}
               slotProps={{
+                htmlInput: { dir: 'ltr', inputMode: 'email', 'aria-invalid': failed },
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
@@ -349,6 +356,7 @@ const LoginPage = () => {
               autoFocus={!!email}
               onChange={(e) => setPassword(e.target.value)}
               slotProps={{
+                htmlInput: { dir: 'ltr' },
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
@@ -365,8 +373,12 @@ const LoginPage = () => {
                 label={t('loginTotpCode')}
                 name="code"
                 value={code}
-                type="number"
-                onChange={(e) => setCode(e.target.value)}
+                autoFocus
+                autoComplete="one-time-code"
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                slotProps={{
+                  htmlInput: { dir: 'ltr', inputMode: 'numeric', pattern: '[0-9]*', maxLength: 8 },
+                }}
               />
             )}
             <Button
@@ -400,6 +412,8 @@ const LoginPage = () => {
           <div className={classes.extraContainer}>
             {registrationEnabled && (
               <Link
+                component="button"
+                type="button"
                 onClick={() => navigate('/register')}
                 className={classes.link}
                 underline="hover"
@@ -408,18 +422,36 @@ const LoginPage = () => {
                 {t('loginRegister')}
               </Link>
             )}
-            {emailEnabled && (
-              <Link
-                onClick={() => navigate('/reset-password')}
-                className={classes.link}
-                underline="hover"
-                variant="body2"
-              >
-                {t('loginReset')}
-              </Link>
-            )}
+            {/* LIV-20: without e-mail on the server, the link explains whom to ask instead. */}
+            <Link
+              component="button"
+              type="button"
+              onClick={() => (emailEnabled ? navigate('/reset-password') : setResetHelp(true))}
+              className={classes.link}
+              underline="hover"
+              variant="body2"
+            >
+              {t('loginReset')}
+            </Link>
           </div>
         )}
+        {resetHelp && (
+          <Alert severity="info" onClose={() => setResetHelp(false)}>
+            {t('loginResetByAdmin')}
+          </Alert>
+        )}
+        {/* A11-07: the accessibility statement, reachable before signing in. */}
+        <div className={classes.extraContainer}>
+          <Link
+            component={RouterLink}
+            to="/accessibility"
+            className={classes.link}
+            underline="hover"
+            variant="body2"
+          >
+            {t('settingsAccessibility')}
+          </Link>
+        </div>
       </div>
       <ServerQrCodeDialog open={showQr} onClose={() => setShowQr(false)} />
     </LoginLayout>

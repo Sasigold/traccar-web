@@ -1,4 +1,4 @@
-import { useMemo, useReducer, useState } from 'react';
+import { Fragment, useMemo, useReducer, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import {
@@ -23,6 +23,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import HealthAndSafetyRoundedIcon from '@mui/icons-material/HealthAndSafetyRounded';
+import InboxRoundedIcon from '@mui/icons-material/InboxRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedInRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
@@ -40,9 +41,13 @@ import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import {
   DEFAULT_HOURS_RULES,
   DEFAULT_SCORE_WEIGHTS,
+  drivingAllowance,
   drivingHours,
+  eventCategory,
+  weeklyRestViolations,
   scoreDrivers,
 } from '../common/fleet/safety';
+import { cleanStreak, driverDays, leaderboard, weekOf } from '../common/fleet/leaderboard';
 import FleetNotice from './components/FleetNotice';
 import ExpiryBadge from './components/ExpiryBadge';
 import ViolationDialog, { violationKey } from './components/ViolationDialog';
@@ -51,8 +56,13 @@ import { money } from './fleetData';
 import { assignmentResolver, loadAssignments, loadDriving, loadSafetySettings } from './safetyData';
 import { formatDays } from '../common/util/plural';
 import { violationUrgency, violationsByDriver } from '../common/fleet/violations';
+import { keepOnBackdrop } from '../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
+  groupRow: {
+    fontWeight: 700,
+    backgroundColor: theme.palette.surface.tint,
+  },
   number: {
     whiteSpace: 'nowrap',
     fontVariantNumeric: 'tabular-nums',
@@ -72,7 +82,7 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const views = ['scores', 'hours', 'compliance', 'violations', 'byDriver'];
+const views = ['scores', 'leaders', 'hours', 'compliance', 'violations', 'byDriver'];
 const recordViews = ['compliance', 'violations', 'byDriver'];
 const periods = [7, 30, 90];
 const capital = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
@@ -106,7 +116,7 @@ const SettingsDialog = ({ settings, onClose, onSaved }) => {
   });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="sm">
       <DialogTitle>{t('fleetSafetySettings')}</DialogTitle>
       <DialogContent>
         <div className={classes.settings}>
@@ -187,18 +197,31 @@ const SafetyPage = () => {
   // Trips and events from Traccar for the scores and hours views.
   useAsyncTask(
     async ({ signal }) => {
-      if (!canRead || (view !== 'scores' && view !== 'hours')) {
+      if (!canRead || !['scores', 'leaders', 'hours'].includes(view)) {
         return;
       }
       setDriving(null);
       const to = new Date();
       const from = new Date(to - days * 86400000);
       const ids = deviceIds ? deviceIds.split(',') : [];
-      const [data, assignments] = await Promise.all([
+      const [data, assignments, dismissed] = await Promise.all([
         loadDriving(ids, from, to, signal),
         loadAssignments(),
+        // SAF-01: events dismissed in the safety inbox leave the score.
+        getFleetClient()
+          .from('safety_event_reviews')
+          .select('traccar_event_id')
+          .eq('status', 'dismissed')
+          .gte('occurred_at', from.toISOString())
+          .then(
+            ({ data: rows }) => new Set((rows || []).map((row) => Number(row.traccar_event_id))),
+          ),
       ]);
-      setDriving({ ...data, resolve: assignmentResolver(assignments, driversById) });
+      setDriving({
+        ...data,
+        dismissed,
+        resolve: assignmentResolver(assignments, driversById),
+      });
     },
     [canRead, view, days, deviceIds, driversById],
   );
@@ -242,8 +265,50 @@ const SafetyPage = () => {
     return scoreDrivers(driving.trips, driving.events, {
       weights: settings.weights,
       fallbackDriver: driving.resolve,
+      excluded: driving.dismissed,
     });
   }, [driving, settings]);
+
+  // SAF-05: this week's leaders, in fair groups (by the group of the vehicle each drove most),
+  // with the streak of driving days without a safety event.
+  const groups = useSelector((state) => state.groups.items);
+  const leaders = useMemo(() => {
+    if (!driving || !settings) return null;
+    const [from, to] = weekOf(new Date());
+    const inWeek = (time) => Date.parse(time) >= from.getTime() && Date.parse(time) < to.getTime();
+    const weekTrips = driving.trips.filter((trip) => inWeek(trip.startTime));
+    const weekEvents = driving.events.filter((event) => inWeek(event.eventTime));
+    const scored = scoreDrivers(weekTrips, weekEvents, {
+      weights: settings.weights,
+      fallbackDriver: driving.resolve,
+      excluded: driving.dismissed,
+    });
+    const driverOf = (trip) =>
+      trip.driverUniqueId || driving.resolve(trip.deviceId, Date.parse(trip.startTime));
+    const mainGroup = (driver) => {
+      const km = new Map();
+      weekTrips
+        .filter((trip) => driverOf(trip) === driver)
+        .forEach((trip) =>
+          km.set(trip.deviceId, (km.get(trip.deviceId) || 0) + (trip.distance || 0)),
+        );
+      const top = [...km.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+      return groups[devices[top]?.groupId]?.name || t('fleetSafetyAllVehicles');
+    };
+    const days = driverDays(
+      driving.trips,
+      driving.events,
+      driverOf,
+      (event) => Boolean(eventCategory(event)) && !driving.dismissed?.has(event.id),
+    );
+    return leaderboard(
+      scored.map((row) => ({
+        ...row,
+        group: mainGroup(row.driver),
+        streak: cleanStreak(days.get(row.driver) || []),
+      })),
+    );
+  }, [driving, settings, groups, devices, t]);
 
   const hours = useMemo(() => {
     if (!driving || !settings) return null;
@@ -255,7 +320,16 @@ const SafetyPage = () => {
       }
     });
     return [...byDriver.entries()]
-      .map(([driver, trips]) => ({ driver, ...drivingHours(trips, settings.rules) }))
+      .map(([driver, trips]) => {
+        const result = drivingHours(trips, settings.rules);
+        return {
+          driver,
+          ...result,
+          // ISR-07: 25 hours of rest in every 8 days, and what is left today before a limit.
+          violations: [...result.violations, ...weeklyRestViolations(trips, settings.rules)],
+          allowance: drivingAllowance(trips, settings.rules),
+        };
+      })
       .sort((a, b) => b.violations.length - a.violations.length || b.totalMinutes - a.totalMinutes);
   }, [driving, settings]);
 
@@ -365,7 +439,7 @@ const SafetyPage = () => {
 
   const actions = (
     <>
-      {(view === 'scores' || view === 'hours') && (
+      {['scores', 'hours'].includes(view) && (
         <TextField
           select
           size="small"
@@ -381,6 +455,14 @@ const SafetyPage = () => {
           ))}
         </TextField>
       )}
+      <Button
+        size="small"
+        startIcon={<InboxRoundedIcon />}
+        component={RouterLink}
+        to="/fleet/safety/inbox"
+      >
+        {t('safetyInboxTitle')}
+      </Button>
       <Button
         size="small"
         startIcon={<AssignmentTurnedInRoundedIcon />}
@@ -412,7 +494,14 @@ const SafetyPage = () => {
     </>
   );
 
-  const rows = { scores, hours, compliance, violations: records?.violations, byDriver }[view];
+  const rows = {
+    scores,
+    leaders: leaders && leaders.flatMap((group) => group.ranking),
+    hours,
+    compliance,
+    violations: records?.violations,
+    byDriver,
+  }[view];
 
   return (
     <PageLayout
@@ -427,7 +516,9 @@ const SafetyPage = () => {
             count={rows ? rows.length : undefined}
             filters={viewChips}
             actions={actions}
-            exportHandler={rows && view !== 'compliance' ? handleExport : undefined}
+            exportHandler={
+              rows && !['compliance', 'leaders'].includes(view) ? handleExport : undefined
+            }
           />
         }
         empty={rows != null && rows.length === 0}
@@ -480,6 +571,46 @@ const SafetyPage = () => {
             </TableBody>
           </>
         )}
+        {view === 'leaders' && (
+          <>
+            <TableHead>
+              <TableRow>
+                <TableCell>{t('fleetSafetyRank')}</TableCell>
+                <TableCell>{t('sharedDriver')}</TableCell>
+                <TableCell>{t('fleetSafetyScore')}</TableCell>
+                <TableCell>{t('fleetSafetyKm')}</TableCell>
+                <TableCell>{t('fleetSafetyStreak')}</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {rows == null && canRead && <TableShimmer columns={5} />}
+              {leaders?.map((group) => (
+                <Fragment key={group.group}>
+                  <TableRow>
+                    <TableCell colSpan={5} className={classes.groupRow}>
+                      {group.group}
+                    </TableCell>
+                  </TableRow>
+                  {group.ranking.map((row) => (
+                    <TableRow key={row.driver} hover>
+                      <TableCell className={classes.number}>{row.rank}</TableCell>
+                      <TableCell>{driverName(row.driver)}</TableCell>
+                      <TableCell>
+                        <Chip size="small" color={scoreColor(row.score)} label={row.score} />
+                      </TableCell>
+                      <TableCell className={classes.number}>{formatGrouped(row.km, 0)}</TableCell>
+                      <TableCell>
+                        {row.streak > 0
+                          ? t('fleetSafetyStreakDays').replace('{0}', formatDays(row.streak, t))
+                          : '—'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </Fragment>
+              ))}
+            </TableBody>
+          </>
+        )}
         {view === 'hours' && (
           <>
             <TableHead>
@@ -495,7 +626,24 @@ const SafetyPage = () => {
               {hours?.map((row) => (
                 <TableRow key={row.driver} hover>
                   <TableCell>{driverName(row.driver)}</TableCell>
-                  <TableCell className={classes.number}>{hoursText(row.totalMinutes)}</TableCell>
+                  <TableCell className={classes.number}>
+                    {hoursText(row.totalMinutes)}
+                    {row.allowance.level !== 'ok' && (
+                      <Chip
+                        size="small"
+                        sx={{ mx: 0.5 }}
+                        color={row.allowance.level === 'over' ? 'error' : 'warning'}
+                        label={
+                          row.allowance.level === 'over'
+                            ? t('fleetSafetyNoDrivingLeft')
+                            : t('fleetSafetyDrivingLeft').replace(
+                                '{0}',
+                                hoursText(row.allowance.leftMinutes),
+                              )
+                        }
+                      />
+                    )}
+                  </TableCell>
                   <TableCell className={classes.number}>{row.daily.length}</TableCell>
                   <TableCell>
                     {row.violations.length === 0

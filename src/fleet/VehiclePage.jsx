@@ -19,6 +19,8 @@ import { makeStyles } from 'tss-react/mui';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
+import QrCode2RoundedIcon from '@mui/icons-material/QrCode2Rounded';
+import CheckInQrDialog from './components/CheckInQrDialog';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import SettingsMenu from '../settings/components/SettingsMenu';
@@ -45,6 +47,7 @@ import {
 import { devicesActions } from '../store';
 import useExpiries from './useExpiries';
 import { money } from './fleetData';
+import { monthlyBenefit, propulsionOf } from '../common/fleet/benefit';
 import { workOrderStatusKey } from './WorkOrdersPage';
 import { incidentKey } from './IncidentsPage';
 
@@ -182,7 +185,7 @@ const useFleetFacts = (deviceId) => {
     const client = getFleetClient();
     const { data: vehicle } = await client
       .from('vehicles')
-      .select('id, plate_number')
+      .select('id, plate_number, checkin_code')
       .eq('traccar_device_id', deviceId)
       .maybeSingle();
     if (!vehicle) {
@@ -290,6 +293,10 @@ const VehiclePage = () => {
   const tab = TABS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'overview';
 
   const device = useSelector((state) => state.devices.items[deviceId]);
+  const benefit = monthlyBenefit(
+    device?.attributes?.listPrice,
+    propulsionOf(device?.attributes?.fuelType),
+  );
   const position = useLivePosition(deviceId);
   const distanceUnit = useAttributePreference('distanceUnit');
   const canDocuments = useFleetPermission('documents.read');
@@ -297,6 +304,9 @@ const VehiclePage = () => {
   const expiries = useExpiries();
   const traccar = useTraccarFacts(deviceId);
   const fleet = useFleetFacts(deviceId);
+  // SAF-02: the cabin QR for the drivers' check-in.
+  const canWriteVehicles = useFleetPermission('vehicles.write');
+  const [qrOpen, setQrOpen] = useState(false);
 
   const expiry = nearestExpiry(expiries.rows, deviceId);
   const maintenance = nextMaintenance(traccar.maintenances, position);
@@ -365,6 +375,11 @@ const VehiclePage = () => {
             >
               {t('reportReplay')}
             </Button>
+            {fleet?.vehicle?.checkin_code && canWriteVehicles && (
+              <Button startIcon={<QrCode2RoundedIcon />} onClick={() => setQrOpen(true)}>
+                {t('checkinQrTitle')}
+              </Button>
+            )}
             <Button
               variant="outlined"
               startIcon={<EditRoundedIcon />}
@@ -456,6 +471,14 @@ const VehiclePage = () => {
                     <Typography key={key}>{device.attributes[key]}</Typography>,
                   ],
               )}
+              {benefit != null && [
+                <Typography key="benefit-label" color="textSecondary">
+                  {t('fleetMonthlyBenefit')}
+                </Typography>,
+                <Typography key="benefit">
+                  {`${money(benefit)} · ${t('fleetMonthlyBenefitHint')}`}
+                </Typography>,
+              ]}
             </div>
           </Paper>
         )}
@@ -583,6 +606,14 @@ const VehiclePage = () => {
 
         {tab === 'history' && <HistorySection entity="vehicle" traccarId={device.id} />}
       </div>
+      {qrOpen && fleet?.vehicle && (
+        <CheckInQrDialog
+          vehicle={fleet.vehicle}
+          deviceId={deviceId}
+          name={device.name}
+          onClose={() => setQrOpen(false)}
+        />
+      )}
     </PageLayout>
   );
 };

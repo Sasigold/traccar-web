@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { sessionActions } from '../../store';
 import { nativePostMessage } from '../components/NativeInterface';
 import { clearFleetSession } from '../fleet/session';
+import queryClient from '../data/queryClient';
+import { clearImpersonation } from './impersonation';
 
 export default () => {
   const navigate = useNavigate();
@@ -35,6 +37,9 @@ export default () => {
     }
 
     clearFleetSession();
+    // ARC-06: nothing of this user stays in the cache for the next one.
+    queryClient.clear();
+    clearImpersonation();
     await fetch('api/session', { method: 'DELETE' });
     nativePostMessage('logout');
     dispatch(sessionActions.updateUser(null));

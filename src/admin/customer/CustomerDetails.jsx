@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Button, MenuItem, TextField } from '@mui/material';
+import ValidatedField from '../../common/components/ValidatedField';
+import { digitsOf, fieldError } from '../../common/util/israeliFields';
 import { makeStyles } from 'tss-react/mui';
 import StoreRoundedIcon from '@mui/icons-material/StoreRounded';
 import { useTranslation } from '../../common/components/LocalizationProvider';
@@ -28,15 +30,15 @@ const useStyles = makeStyles()((theme) => ({
 
 const fields = [
   { key: 'name', label: 'adminCustomerName', required: true, wide: true },
-  { key: 'company_number', label: 'adminCompanyNumber', ltr: true },
+  { key: 'company_number', label: 'adminCompanyNumber', ltr: true, kind: 'companyId' },
   { key: 'contact_name', label: 'adminContactName' },
-  { key: 'phone', label: 'sharedPhone', ltr: true },
-  { key: 'email', label: 'userEmail', ltr: true },
-  { key: 'billing_email', label: 'adminBillingEmail', ltr: true },
+  { key: 'phone', label: 'sharedPhone', ltr: true, kind: 'phone' },
+  { key: 'email', label: 'userEmail', ltr: true, kind: 'email' },
+  { key: 'billing_email', label: 'adminBillingEmail', ltr: true, kind: 'email' },
   { key: 'address', label: 'adminAddress' },
 ];
 
-const CustomerDetails = ({ customer, editable, onSaved }) => {
+const CustomerDetails = ({ customer, editable, onSaved, customers = [] }) => {
   const { classes } = useStyles();
   const t = useTranslation();
   const [form, setForm] = useState(customer);
@@ -56,18 +58,40 @@ const CustomerDetails = ({ customer, editable, onSaved }) => {
   return (
     <FormSection icon={<StoreRoundedIcon />} title={t('adminCustomerDetails')}>
       <div className={classes.grid}>
-        {fields.map((field) => (
-          <TextField
-            key={field.key}
-            className={field.wide ? classes.wide : undefined}
-            required={field.required}
-            label={t(field.label)}
-            value={form[field.key] || ''}
-            onChange={(event) => setForm({ ...form, [field.key]: event.target.value })}
-            disabled={!editable}
-            slotProps={field.ltr ? { htmlInput: { dir: 'ltr' } } : undefined}
-          />
-        ))}
+        {fields.map((field) =>
+          field.kind ? (
+            <ValidatedField
+              key={field.key}
+              kind={field.kind}
+              label={t(field.label)}
+              value={form[field.key]}
+              onChange={(value) => setForm((current) => ({ ...current, [field.key]: value }))}
+              disabled={!editable}
+              // ADM-06: another customer with the same company number.
+              duplicateOf={
+                field.key === 'company_number'
+                  ? (value) =>
+                      customers.find(
+                        (other) =>
+                          other.id !== customer.id &&
+                          digitsOf(other.company_number) === digitsOf(value),
+                      )?.name
+                  : undefined
+              }
+            />
+          ) : (
+            <TextField
+              key={field.key}
+              className={field.wide ? classes.wide : undefined}
+              required={field.required}
+              label={t(field.label)}
+              value={form[field.key] || ''}
+              onChange={(event) => setForm({ ...form, [field.key]: event.target.value })}
+              disabled={!editable}
+              slotProps={field.ltr ? { htmlInput: { dir: 'ltr' } } : undefined}
+            />
+          ),
+        )}
         <TextField
           select
           label={t('deviceStatus')}
@@ -96,7 +120,12 @@ const CustomerDetails = ({ customer, editable, onSaved }) => {
           <Button
             variant="contained"
             onClick={handleSave}
-            disabled={saving || !form.name?.trim() || (customer.id && !dirty)}
+            disabled={
+              saving ||
+              !form.name?.trim() ||
+              (customer.id && !dirty) ||
+              fields.some((field) => field.kind && fieldError(field.kind, form[field.key]))
+            }
           >
             {customer.id ? t('sharedSave') : t('adminCreateCustomer')}
           </Button>

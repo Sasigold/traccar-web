@@ -24,7 +24,6 @@ import {
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import CachedRoundedIcon from '@mui/icons-material/CachedRounded';
-import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
 import DnsRoundedIcon from '@mui/icons-material/DnsRounded';
 import VolumeUpRoundedIcon from '@mui/icons-material/VolumeUpRounded';
@@ -46,6 +45,10 @@ import { sessionActions } from '../store';
 import { useAdministrator, useRestriction } from '../common/util/permissions';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import { DateField } from '../common/components/pickers';
+import usePersistedState from '../common/util/usePersistedState';
+import { config as telemetry } from '../common/telemetry/install';
+import { ANALYTICS_OPT_OUT_KEY, browserOptedOut } from '../common/telemetry/analytics';
+import CopyButton from '../common/components/CopyButton';
 
 const deviceFields = [
   { id: 'name', name: 'sharedName' },
@@ -128,6 +131,9 @@ const PreferencesPage = () => {
   const [saving, setSaving] = useState(false);
 
   const versionApp = import.meta.env.VITE_APP_VERSION;
+  // FND-06: anonymous usage statistics, only when this build has an analytics service.
+  const [analyticsOptOut, setAnalyticsOptOut] = usePersistedState(ANALYTICS_OPT_OUT_KEY, false);
+  const browserNoTrack = browserOptedOut(window.navigator);
   const versionServer = useSelector((state) => state.session.server.version);
   const socket = useSelector((state) => state.session.socket);
 
@@ -490,19 +496,7 @@ const PreferencesPage = () => {
                         </IconButton>
                       </span>
                     </Tooltip>
-                    <Tooltip title={t('sharedCopy')} describeChild>
-                      <span>
-                        <IconButton
-                          aria-label={t('sharedCopy')}
-                          size="small"
-                          edge="end"
-                          onClick={() => navigator.clipboard.writeText(token)}
-                          disabled={!token}
-                        >
-                          <ContentCopyRoundedIcon fontSize="small" />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
+                    <CopyButton icon text={token} edge="end" />
                   </div>
                 </InputAdornment>
               }
@@ -519,7 +513,7 @@ const PreferencesPage = () => {
                 {t('settingsAppVersion')}
               </Typography>
               <Typography variant="body1" className={classes.infoValue}>
-                {versionApp}
+                <bdi dir="ltr">{versionApp}</bdi>
               </Typography>
             </div>
             <div className={classes.infoTile}>
@@ -543,6 +537,17 @@ const PreferencesPage = () => {
               </div>
             </div>
           </div>
+          {telemetry.analytics && (
+            <CheckboxField
+              checked={!analyticsOptOut && !browserNoTrack}
+              disabled={browserNoTrack}
+              onChange={(event) => setAnalyticsOptOut(!event.target.checked)}
+              label={t('settingsUsageStatistics')}
+              helperText={t(
+                browserNoTrack ? 'settingsUsageStatisticsBrowser' : 'settingsUsageStatisticsHelp',
+              )}
+            />
+          )}
           <div className={classes.actions}>
             <Button variant="outlined" color="primary" onClick={() => navigate('/emulator')}>
               {t('sharedEmulator')}

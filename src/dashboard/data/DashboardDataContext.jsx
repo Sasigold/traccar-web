@@ -114,7 +114,7 @@ const useLiveRows = (deviceIds, speedUnit) => {
   return state;
 };
 
-export const DashboardDataProvider = ({ filters, refresh = 0, children }) => {
+export const DashboardDataProvider = ({ filters, onFilters, refresh = 0, children }) => {
   const devices = useSelector((state) => state.devices.items);
   const groups = useSelector((state) => state.groups.items);
   const speedUnit = useAttributePreference('speedUnit', 'kmh');
@@ -135,7 +135,7 @@ export const DashboardDataProvider = ({ filters, refresh = 0, children }) => {
   const range = useMemo(
     () => periodRange(filters.period, dayjs(), filters),
     // eslint-disable-next-line @eslint-react/exhaustive-deps
-    [filters.period, filters.from, filters.to, day],
+    [filters.period, filters.from, filters.to, filters.offset, day],
   );
   const previous = useMemo(
     () => previousRange(filters.period, range, dayjs()),
@@ -189,6 +189,7 @@ export const DashboardDataProvider = ({ filters, refresh = 0, children }) => {
       refresh,
       refreshNow,
       speedUnit,
+      setFilters: onFilters,
     }),
     [
       filters,
@@ -204,6 +205,7 @@ export const DashboardDataProvider = ({ filters, refresh = 0, children }) => {
       refresh,
       refreshNow,
       speedUnit,
+      onFilters,
     ],
   );
 

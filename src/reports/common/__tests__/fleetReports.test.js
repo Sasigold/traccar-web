@@ -85,3 +85,20 @@ describe('device health', () => {
     expect(rows[1].silentHours).toBe(49);
   });
 });
+
+describe('a smaller fleet (OPS-04)', () => {
+  it('lists the least used vehicles under 20%, and the saving of returning one', async () => {
+    const { underusedVehicles } = await import('../fleetReports');
+    const rows = [
+      { name: 'א', utilization: 10 },
+      { name: 'ב', utilization: 80 },
+      { name: 'ג', utilization: 5 },
+      { name: 'ד', utilization: null },
+    ];
+    const result = underusedVehicles(rows, { monthlyCost: 3200 });
+    expect(result.vehicles.map((row) => row.name)).toEqual(['ג', 'א']);
+    expect(result.savings).toBe(3200);
+    expect(underusedVehicles(rows).savings).toBeNull();
+    expect(underusedVehicles([{ utilization: 90 }]).vehicles).toEqual([]);
+  });
+});

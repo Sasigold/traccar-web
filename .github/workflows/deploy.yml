@@ -50,11 +50,52 @@ jobs:
       env:
         VITE_FLEET_URL: ${{ vars.STAGING_FLEET_URL }}
         VITE_FLEET_ANON_KEY: ${{ vars.STAGING_FLEET_ANON_KEY }}
+        # FND-06: error reports and analytics, off while these variables are empty (none secret).
+        VITE_ERROR_DSN: ${{ vars.STAGING_ERROR_DSN }}
+        VITE_ANALYTICS_PROVIDER: ${{ vars.STAGING_ANALYTICS_PROVIDER }}
+        VITE_ANALYTICS_URL: ${{ vars.STAGING_ANALYTICS_URL }}
+        VITE_ANALYTICS_SITE: ${{ vars.STAGING_ANALYTICS_SITE }}
+    # FND-06: source maps (made only with an error service) never go to the site; they are kept
+    # as their own artifact for the upload job below.
+    - run: sh deploy/sourcemaps.sh split
     - uses: actions/upload-artifact@v7
       with:
         name: web-build-staging
         path: build
         retention-days: 7
+    - uses: actions/upload-artifact@v7
+      if: hashFiles('sourcemaps/**') != ''
+      with:
+        name: sourcemaps-staging
+        path: sourcemaps
+        retention-days: 7
+
+  sourcemaps:
+    # FND-06: the private source maps go to the error service, for readable stack traces. This
+    # job holds only the error service's token (secret ERROR_AUTH_TOKEN), never the server key,
+    # and runs only when ERROR_SOURCEMAPS_URL and STAGING_ERROR_PROJECT are set.
+    needs: build
+    if: vars.STAGING_ERROR_DSN != '' && vars.ERROR_SOURCEMAPS_URL != '' && vars.STAGING_ERROR_PROJECT != ''
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+    - uses: actions/download-artifact@v7
+      with:
+        name: web-build-staging
+        path: build
+    - uses: actions/download-artifact@v7
+      with:
+        name: sourcemaps-staging
+        path: sourcemaps
+    - run: sh deploy/sourcemaps.sh upload
+      env:
+        SENTRY_URL: ${{ vars.ERROR_SOURCEMAPS_URL }}
+        SENTRY_ORG: ${{ vars.ERROR_SOURCEMAPS_ORG }}
+        SENTRY_PROJECT: ${{ vars.STAGING_ERROR_PROJECT }}
+        SENTRY_AUTH_TOKEN: ${{ secrets.ERROR_AUTH_TOKEN }}
 
   deploy:
     # No npm here: third-party packages never run next to the server key.
@@ -62,7 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: staging
     env:
-      DEPLOY_HOST: root@72.61.153.60
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
       DEPLOY_DIR: ${{ vars.STAGING_WEB_DIR }}
       SITE_URL: ${{ vars.STAGING_SITE_URL }}
       FLEET_DIR: ${{ vars.STAGING_FLEET_DIR }}
@@ -79,13 +120,19 @@ jobs:
     - name: Configure SSH
       env:
         SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        VPS_HOST_KEY: ${{ vars.VPS_HOST_KEY }}
       run: |
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
         printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
-        # Pinned host key of the VPS (ssh-keyscan -t ed25519 72.61.153.60)
-        echo '72.61.153.60 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID5SogCUGVSqGkOEvyAJz8/h8e5bvMed6JOhA3oE23R9' >> ~/.ssh/known_hosts
+        # SEC-21: the server's address and its pinned host key are repository variables
+        # (DEPLOY_HOST = user@address, VPS_HOST_KEY = the line of `ssh-keyscan -t ed25519 <address>`).
+        if [ -z "$DEPLOY_HOST" ] || [ -z "$VPS_HOST_KEY" ]; then
+          echo "::error::Set the repository variables DEPLOY_HOST and VPS_HOST_KEY (deploy/SERVER-HARDENING.md)."
+          exit 1
+        fi
+        printf '%s\n' "$VPS_HOST_KEY" >> ~/.ssh/known_hosts
 
     - name: Upload to the staging Traccar (retries on connection problems)
       run: |

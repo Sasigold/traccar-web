@@ -40,6 +40,11 @@ import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import { circleArea, pairVisits, visitTotals } from '../common/fleet/visits';
 import FleetNotice from './components/FleetNotice';
 import { camel, cleanPayload, toNumber, useFleetRows } from './stage5Data';
+import { keepOnBackdrop } from '../common/util/formDialog';
+import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
+import ImportDialog from './components/ImportDialog';
+import { importEntity } from '../common/fleet/bulkImport';
+import WazeButton from '../common/components/WazeButton';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -160,7 +165,7 @@ const PoiDialog = ({ poi, onClose, onSaved }) => {
   const ltr = { slotProps: { htmlInput: { dir: 'ltr' } } };
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="sm">
       <DialogTitle>{t(form.id ? 'fleetPoiEdit' : 'fleetPoiAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>
@@ -227,8 +232,29 @@ const PoiPage = () => {
   const [from, setFrom] = useState(() => dayjs().startOf('day').format('YYYY-MM-DD'));
   const [to, setTo] = useState(() => dayjs().format('YYYY-MM-DD'));
   const [visits, setVisits] = useState(null);
+  // ADM-13: points from a spreadsheet; each gets its Traccar circle like one added by hand.
+  const [importing, setImporting] = useState(false);
+  const profile = useFleetProfile();
 
   const pois = useFleetRows('pois', { order: 'name', enabled: canRead, reloadKey });
+  const existingPois = useMemo(
+    () => ({ names: new Set((pois || []).map((poi) => String(poi.name).toLowerCase())) }),
+    [pois],
+  );
+  const importPoi = async (values) => {
+    const row = importEntity('pois', values);
+    const traccarGeofenceId = await syncGeofence(row);
+    unwrap(
+      await getFleetClient()
+        .from('pois')
+        .insert({
+          ...row,
+          traccar_geofence_id: traccarGeofenceId,
+          org_id: profile.org_id,
+          created_by: profile.id,
+        }),
+    );
+  };
 
   const poiByGeofence = useMemo(
     () =>
@@ -376,6 +402,16 @@ const PoiPage = () => {
                     />
                   </>
                 )}
+                {view === 'points' && canWrite && (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<UploadFileRoundedIcon />}
+                    onClick={() => setImporting(true)}
+                  >
+                    {t('importFromExcel')}
+                  </Button>
+                )}
                 {view === 'points' && canWrite && deviceList.length > 0 && (
                   <TextField
                     select
@@ -432,7 +468,10 @@ const PoiPage = () => {
                   <TableRow key={poi.id} hover>
                     <TableCell>{poi.name}</TableCell>
                     <TableCell>{t(poiCategoryKey(poi.category))}</TableCell>
-                    <TableCell>{poi.address}</TableCell>
+                    <TableCell>
+                      {poi.address}
+                      <WazeButton place={poi} label={poi.name} />
+                    </TableCell>
                     <TableCell>
                       {poi.contact_name}
                       {poi.phone && (
@@ -505,6 +544,15 @@ const PoiPage = () => {
             setEditing(null);
             reload();
           }}
+        />
+      )}
+      {importing && (
+        <ImportDialog
+          kind="pois"
+          existing={existingPois}
+          save={importPoi}
+          onClose={() => setImporting(false)}
+          onImported={reload}
         />
       )}
     </PageLayout>

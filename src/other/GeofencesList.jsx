@@ -122,6 +122,7 @@ const GeofencesList = ({ onGeofenceSelected, selectedId }) => {
               </ListItemButton>
               <CollectionActions
                 itemId={item.id}
+                itemName={item.name}
                 editPath="/settings/geofence"
                 endpoint="geofences"
                 onReload={refreshGeofences}

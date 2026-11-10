@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
+import { useFleetReader } from '../../fleet/useFleet';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
+import TodayRoundedIcon from '@mui/icons-material/TodayRounded';
 import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import HexagonRoundedIcon from '@mui/icons-material/HexagonRounded';
@@ -30,12 +32,26 @@ export default () => {
   // Fleet role "driver" gets the driver portal (roadmap 4.6) instead of the fleet screens.
   const driverRole = useSelector((state) => state.fleet.profile?.role === 'driver');
   const temporary = useSelector((state) => Boolean(state.session.user?.temporary));
+  // ADM-03: the fleet follows the fleet permissions; Traccar's read only flag only hides it when
+  // the user reads nothing in the fleet database either.
+  const fleetReader = useFleetReader();
 
   return useMemo(() => {
     // The reports page (REP-02); a report opened from it takes the selected vehicle along.
     const reportsPath = '/reports';
     return (
       [
+        // LIV-23: the phone's home: the day at a glance. A phone tab only; the desktop has the
+        // map and the dashboard side by side.
+        {
+          key: 'today',
+          titleKey: 'todayTitle',
+          icon: TodayRoundedIcon,
+          path: '/today',
+          match: (pathname) => pathname === '/today',
+          hidden: driverRole,
+          phoneOnly: true,
+        },
         {
           key: 'map',
           titleKey: 'mapTitle',
@@ -77,7 +93,7 @@ export default () => {
           icon: LocalShippingRoundedIcon,
           path: '/fleet',
           match: isFleetPath,
-          hidden: readonly || driverRole,
+          hidden: driverRole || (readonly && !fleetReader),
         },
         {
           key: 'driver',
@@ -110,5 +126,5 @@ export default () => {
         // A driver's first tab is their area (ADM-09).
         .sort((a, b) => (driverRole ? (b.key === 'driver') - (a.key === 'driver') : 0))
     );
-  }, [readonly, disableReports, admin, driverRole, temporary]);
+  }, [readonly, disableReports, admin, driverRole, temporary, fleetReader]);
 };

@@ -43,8 +43,9 @@ const useStyles = makeStyles()((theme, { tone }) => ({
   },
 }));
 
-// Ice KPI tile (brand book: KPI cards sit on ice). Links when `to` is set.
-const KpiTile = ({ icon, label, value, hint, to, tone = 'default' }) => {
+// Ice KPI tile (brand book: KPI cards sit on ice). Links when `to` is set; `wrapHint` lets a long
+// hint take two lines instead of being cut.
+const KpiTile = ({ icon, label, value, hint, to, tone = 'default', wrapHint = false }) => {
   const { classes } = useStyles({ tone });
   const props = to ? { component: Link, to } : { component: 'div' };
   const Root = props.component;
@@ -58,7 +59,7 @@ const KpiTile = ({ icon, label, value, hint, to, tone = 'default' }) => {
       </span>
       <span className={classes.value}>{value}</span>
       {hint && (
-        <Typography variant="caption" className={classes.hint} noWrap>
+        <Typography variant="caption" className={classes.hint} noWrap={!wrapHint}>
           {hint}
         </Typography>
       )}

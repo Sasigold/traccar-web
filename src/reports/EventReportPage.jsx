@@ -31,13 +31,17 @@ import { privateRows } from '../common/fleet/privacyData';
 import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import exportExcel from '../common/util/exportExcel';
-import AddressValue from '../common/components/AddressValue';
+import AddressValue, { AllAddressesButton } from '../common/components/AddressValue';
 import formatEventData from './common/formatEventData';
 import { eventIconKey } from '../map/core/preloadImages';
 import { deviceEquality } from '../common/util/deviceEquality';
+import VehicleCell from './components/VehicleCell';
+import { vehicleName, vehicleTitle } from './common/vehicle';
+import useSelectedRow from './common/useSelectedRow';
 
 const columnsArray = [
-  ['eventTime', 'positionFixTime'],
+  // REP-14: when it happened, not when the position was fixed.
+  ['eventTime', 'reportEventTime'],
   ['type', 'sharedType'],
   ['geofenceId', 'sharedGeofence'],
   ['maintenanceId', 'sharedMaintenance'],
@@ -88,6 +92,7 @@ const EventReportPage = () => {
   const [loading, setLoading] = useState(false);
   const [queried, setQueried] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const selectedRowRef = useSelectedRow(selectedItem);
   const [position, setPosition] = useState(null);
 
   useEffect(() => {
@@ -177,7 +182,7 @@ const EventReportPage = () => {
     items.forEach((item) => {
       // One sheet per vehicle, keyed by id: two vehicles with the same name stay apart.
       if (!sheets.has(item.deviceId)) {
-        sheets.set(item.deviceId, { title: devices[item.deviceId].name, rows: [] });
+        sheets.set(item.deviceId, { title: vehicleTitle(devices, item.deviceId), rows: [] });
       }
       const row = {};
       columns.forEach((key) => {
@@ -211,7 +216,7 @@ const EventReportPage = () => {
     toggle: toggleSort,
   } = useReportSort('events', items, (item, sortKey) => {
     if (sortKey === 'deviceId') {
-      return devices[item.deviceId]?.name;
+      return vehicleName(devices, item.deviceId);
     }
     if (sortKey === 'type') {
       return t(prefixString('event', item.type));
@@ -223,7 +228,7 @@ const EventReportPage = () => {
     const value = item[key];
     switch (key) {
       case 'deviceId':
-        return devices[value].name;
+        return vehicleName(devices, value);
       case 'eventTime':
         return formatTime(value, 'seconds');
       case 'type':
@@ -336,6 +341,14 @@ const EventReportPage = () => {
                 </div>
               )}
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
+              <AllAddressesButton
+                className={classes.filterItem}
+                points={
+                  columns.includes('address')
+                    ? items.map((item) => positions[item.positionId]).filter(Boolean)
+                    : []
+                }
+              />
             </ReportFilter>
           </div>
           <DataTable variant="flush">
@@ -358,7 +371,11 @@ const EventReportPage = () => {
               )}
               {!loading ? (
                 sortedItems.map((item) => (
-                  <TableRow key={item.id}>
+                  <TableRow
+                    key={item.id}
+                    ref={selectedItem === item ? selectedRowRef : undefined}
+                    className={selectedItem === item ? classes.selectedRow : undefined}
+                  >
                     <TableCell className={classes.columnAction} padding="none">
                       {(item.positionId &&
                         (selectedItem === item ? (
@@ -380,7 +397,9 @@ const EventReportPage = () => {
                         ))) ||
                         ''}
                     </TableCell>
-                    <TableCell>{devices[item.deviceId].name}</TableCell>
+                    <TableCell>
+                      <VehicleCell deviceId={item.deviceId} />
+                    </TableCell>
                     {columns.map((key) => (
                       <TableCell key={key}>{formatValue(item, key)}</TableCell>
                     ))}

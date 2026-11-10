@@ -20,6 +20,7 @@ import { useFleetProfile } from '../../common/fleet/useFleet';
 import { ensureDriver, uploadFleetFile } from '../fleetData';
 import { DateField } from '../../common/components/pickers';
 import { DEFAULT_OFFICER_RULES, addMonths } from '../../common/fleet/safetyOfficer';
+import { keepOnBackdrop } from '../../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -143,7 +144,7 @@ const SafetyRecordDialog = ({
   const valid = driverId && form.date && (kind !== 'training' || form.topic.trim());
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="xs">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="xs">
       <DialogTitle>{t(`fleetSafetyAdd${kind.replace(/^\w/, (c) => c.toUpperCase())}`)}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>

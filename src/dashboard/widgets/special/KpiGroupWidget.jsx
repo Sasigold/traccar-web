@@ -1,3 +1,5 @@
+import { useDashboardData } from '../../data/DashboardDataContext';
+import { compareRangeText } from '../../charts/chartContext';
 import { makeStyles } from 'tss-react/mui';
 import { useTranslation } from '../../../common/components/LocalizationProvider';
 import { useFleetStatus } from '../../../common/fleet/useFleet';
@@ -46,6 +48,8 @@ const Metric = ({ metric, compare, width, height, stale }) => {
   const t = useTranslation();
   const { unitLabel, displayText, prefs, language } = useLabels();
   const result = useMetric(metric, { compare });
+  const { previous } = useDashboardData();
+  const compareText = compareRangeText(previous);
   const fleetStatus = useFleetStatus();
   const unit = result.measure?.unit;
   const value = result.status === 'success' ? toDisplay(result.value, unit, prefs) : null;
@@ -71,6 +75,11 @@ const Metric = ({ metric, compare, width, height, stale }) => {
       }
       deltaValue={result.delta}
       deltaText={formatDelta(result.delta, language)}
+      deltaContext={
+        result.delta != null && compareText
+          ? t('dashboardComparedTo').replace('{0}', compareText)
+          : undefined
+      }
       goodWhenUp={result.measure?.good !== 'down'}
       points={result.points?.map((point) => toDisplay(point.value, unit, prefs))}
       width={width}

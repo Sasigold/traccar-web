@@ -1,4 +1,5 @@
 import { ApiError, endpointOf, parseErrorBody } from './apiError';
+import { countEvent, counterName } from '../telemetry/metrics';
 
 // Long enough for big reports, short enough that a dead connection does not spin forever.
 const TIMEOUT_MS = 120000;
@@ -28,11 +29,17 @@ export default async (input, init = {}) => {
       throw error;
     }
     if (timeout?.aborted) {
+      countEvent('api_error.timeout');
       throw new ApiError({ kind: 'timeout', endpoint });
     }
+    countEvent('api_error.network');
     throw new ApiError({ kind: 'network', endpoint, detail: error.message });
   }
   if (!response.ok) {
+    // FND-06: expired sessions and server errors are counted; 4xx answers are the user's input.
+    if (response.status === 401 || response.status >= 500) {
+      countEvent(counterName('api_error', response.status));
+    }
     const { code, detail } = parseErrorBody(await response.text());
     // The session may have expired: the app checks it and returns to the login screen.
     if (response.status === 401 && !endpoint.startsWith('api/session')) {

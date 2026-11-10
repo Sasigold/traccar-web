@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import fetchOrThrow from '../common/util/fetchOrThrow';
 import { useDispatch } from 'react-redux';
 import { TextField } from '@mui/material';
 import EditItemView from './components/EditItemView';
@@ -19,8 +21,33 @@ const GeofencePage = () => {
 
   const [item, setItem] = useState();
 
-  const onItemSaved = (result) => {
+  // LIV-14: "create a geofence" from a vehicle's card opens a draft circle around it; it is
+  // created, and linked to the vehicle, only when saved.
+  const [searchParams] = useSearchParams();
+  const draftLatitude = searchParams.get('latitude');
+  const draftLongitude = searchParams.get('longitude');
+  const draftDevice = Number(searchParams.get('deviceId')) || null;
+  const defaultItem = useMemo(
+    () =>
+      draftLatitude && draftLongitude
+        ? {
+            name: '',
+            area: `CIRCLE (${Number(draftLatitude)} ${Number(draftLongitude)}, 50)`,
+            attributes: {},
+          }
+        : { attributes: {} },
+    [draftLatitude, draftLongitude],
+  );
+
+  const onItemSaved = async (result) => {
     dispatch(geofencesActions.update([result]));
+    if (draftDevice) {
+      await fetchOrThrow('api/permissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId: draftDevice, geofenceId: result.id }),
+      });
+    }
   };
 
   const validate = () => item && item.name;
@@ -30,6 +57,7 @@ const GeofencePage = () => {
       endpoint="geofences"
       item={item}
       setItem={setItem}
+      defaultItem={defaultItem}
       validate={validate}
       onItemSaved={onItemSaved}
       menu={<SettingsMenu />}

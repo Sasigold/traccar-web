@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import ImpersonateDialog from '../../common/components/ImpersonateDialog';
 import { useNavigate } from 'react-router-dom';
 import {
   Autocomplete,
@@ -29,12 +30,13 @@ import SyncRoundedIcon from '@mui/icons-material/SyncRounded';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import { useCatch } from '../../reactHelper';
-import fetchOrThrow from '../../common/util/fetchOrThrow';
 import { messagesActions } from '../../store';
 import FormSection from '../../settings/components/FormSection';
 import EmptyState from '../../common/components/table/EmptyState';
 import PasswordField from '../../common/components/PasswordField';
 import { assignUser, createTraccarUser, syncCustomerAccess } from '../adminApi';
+import { useConfirm } from '../../common/components/confirm/ConfirmProvider';
+import { keepOnBackdrop } from '../../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   name: {
@@ -63,6 +65,7 @@ const useStyles = makeStyles()((theme) => ({
 const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged }) => {
   const { classes } = useStyles();
   const t = useTranslation();
+  const confirm = useConfirm();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [dialog, setDialog] = useState(null);
@@ -103,7 +106,16 @@ const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged })
     directory.reload();
   });
 
-  const handleUnlink = useCatch(async (userId) => {
+  const handleUnlink = useCatch(async (userId, name) => {
+    if (
+      !(await confirm({
+        title: t('adminUnlinkUserConfirm').replace('{0}', name || userId),
+        message: t('adminUnlinkUserConsequence'),
+        confirmLabel: t('adminUnlinkUser'),
+      }))
+    ) {
+      return;
+    }
     await assignUser(userId, null);
     directory.reload();
   });
@@ -112,16 +124,32 @@ const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged })
     const result = await syncCustomerAccess(customer.id);
     dispatch(
       messagesActions.push({
-        message: t('adminSyncDone').replace('{0}', result.users).replace('{1}', result.devices),
+        message: t('adminSyncDone')
+          .replace('{0}', result.users)
+          .replace('{1}', result.devices)
+          .replace('{2}', result.added)
+          .replace('{3}', result.removed),
         severity: 'success',
       }),
     );
+    if (result.unknown.length) {
+      dispatch(
+        messagesActions.push({
+          message: t('adminSyncUnknown')
+            .replace('{0}', result.unknown.length)
+            .replace('{1}', result.unknown.join(', ')),
+          severity: 'warning',
+        }),
+      );
+    }
   });
 
-  const handleLogin = useCatch(async (userId) => {
-    await fetchOrThrow(`api/session/${userId}`);
-    window.location.replace(document.baseURI);
-  });
+  // SEC-13: "log in as" asks for a reason and records it.
+  const [impersonating, setImpersonating] = useState(null);
+  const handleLogin = (userId) =>
+    setImpersonating(
+      rows.find((item) => item.id === userId) || { id: userId, name: String(userId) },
+    );
 
   return (
     <FormSection
@@ -210,7 +238,7 @@ const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged })
                         <IconButton
                           size="small"
                           aria-label={t('adminUnassign')}
-                          onClick={() => handleUnlink(user.id)}
+                          onClick={() => handleUnlink(user.id, user.name)}
                         >
                           <LinkOffRoundedIcon fontSize="small" />
                         </IconButton>
@@ -231,7 +259,7 @@ const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged })
         </div>
       )}
 
-      <Dialog open={dialog === 'link'} onClose={close} maxWidth="xs" fullWidth>
+      <Dialog open={dialog === 'link'} onClose={keepOnBackdrop(close)} maxWidth="xs" fullWidth>
         <DialogTitle>{t('adminLinkUser')}</DialogTitle>
         <DialogContent className={classes.form}>
           <Autocomplete
@@ -256,7 +284,7 @@ const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged })
         </DialogActions>
       </Dialog>
 
-      <Dialog open={dialog === 'create'} onClose={close} maxWidth="xs" fullWidth>
+      <Dialog open={dialog === 'create'} onClose={keepOnBackdrop(close)} maxWidth="xs" fullWidth>
         <DialogTitle>{t('adminCreateUser')}</DialogTitle>
         <DialogContent className={classes.form}>
           <TextField
@@ -293,6 +321,9 @@ const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged })
           </Button>
         </DialogActions>
       </Dialog>
+      {impersonating && (
+        <ImpersonateDialog user={impersonating} onClose={() => setImpersonating(null)} />
+      )}
     </FormSection>
   );
 };

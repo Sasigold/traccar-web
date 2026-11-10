@@ -91,10 +91,16 @@ describe('replaySegmentDuration', () => {
   });
 
   it('keeps dense and sparse tracks within the playable range', () => {
-    expect(replaySegmentDuration(fix(32, 34.8, 0), fix(32.001, 34.8, 1))).toBe(REPLAY_MIN_SEGMENT);
+    expect(replaySegmentDuration(fix(32, 34.8, 0), fix(32.001, 34.8, 0))).toBe(REPLAY_MIN_SEGMENT);
     expect(replaySegmentDuration(fix(32, 34.8, 0), fix(32.001, 34.8, 3600))).toBe(
       REPLAY_MAX_SEGMENT,
     );
+  });
+
+  it('follows the chosen speed (LIV-10)', () => {
+    expect(replaySegmentDuration(fix(32, 34.8, 0), fix(32.001, 34.8, 10), 1)).toBe(2000);
+    expect(replaySegmentDuration(fix(32, 34.8, 0), fix(32.001, 34.8, 10), 5)).toBe(2000);
+    expect(replaySegmentDuration(fix(32, 34.8, 0), fix(32.001, 34.8, 60), 60)).toBe(1000);
   });
 
   it('copes with a missing fix time', () => {

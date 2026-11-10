@@ -29,9 +29,9 @@ jobs:
       group: deploy-${{ inputs.environment }}
       cancel-in-progress: false
     env:
-      DEPLOY_HOST: root@72.61.153.60
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
       DEPLOY_DIR: ${{ inputs.environment == 'production' && '/docker/traccar-ovjj/web' || vars.STAGING_WEB_DIR }}
-      SITE_URL: ${{ inputs.environment == 'production' && 'https://traccar-ovjj.srv2122641.hstgr.cloud' || vars.STAGING_SITE_URL }}
+      SITE_URL: ${{ inputs.environment == 'production' && vars.PRODUCTION_SITE_URL || vars.STAGING_SITE_URL }}
       RELEASE: ${{ inputs.release }}
     steps:
     - uses: actions/checkout@v7
@@ -39,13 +39,19 @@ jobs:
     - name: Configure SSH
       env:
         SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        VPS_HOST_KEY: ${{ vars.VPS_HOST_KEY }}
       run: |
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
         printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
-        # Pinned host key of the VPS (ssh-keyscan -t ed25519 72.61.153.60)
-        echo '72.61.153.60 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID5SogCUGVSqGkOEvyAJz8/h8e5bvMed6JOhA3oE23R9' >> ~/.ssh/known_hosts
+        # SEC-21: the server's address and its pinned host key are repository variables
+        # (DEPLOY_HOST = user@address, VPS_HOST_KEY = the line of `ssh-keyscan -t ed25519 <address>`).
+        if [ -z "$DEPLOY_HOST" ] || [ -z "$VPS_HOST_KEY" ]; then
+          echo "::error::Set the repository variables DEPLOY_HOST and VPS_HOST_KEY (deploy/SERVER-HARDENING.md)."
+          exit 1
+        fi
+        printf '%s\n' "$VPS_HOST_KEY" >> ~/.ssh/known_hosts
 
     - name: Roll back
       run: |

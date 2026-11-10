@@ -44,7 +44,7 @@ import {
 const useStyles = makeStyles()((theme) => ({
   section: {
     padding: theme.spacing(1, 2, 0.5),
-    ...theme.typography.overline,
+    ...theme.typography.sectionLabel,
     color: theme.palette.text.secondary,
   },
   sizes: {

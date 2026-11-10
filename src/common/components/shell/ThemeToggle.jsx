@@ -1,21 +1,27 @@
 import { IconButton, Tooltip } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
+import { keyframes } from 'tss-react';
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import useThemeMode from '../../theme/useThemeMode';
 import { useTranslation } from '../LocalizationProvider';
 
-const useStyles = makeStyles()(() => ({
+// BRD-03: the two icons are different elements, so a transition never ran; the new one turns
+// in as it appears instead.
+const turnIn = keyframes`
+  from { transform: rotate(-90deg) scale(0.6); opacity: 0; }
+  to { transform: none; opacity: 1; }
+`;
+
+const useStyles = makeStyles()((theme) => ({
   icon: {
-    transition: 'transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1)',
-  },
-  rotated: {
-    transform: 'rotate(-30deg)',
+    animation: `${turnIn} ${theme.tokens.motion.duration.slow}ms ${theme.tokens.motion.easing.emphasized}`,
+    '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
   },
 }));
 
 const ThemeToggle = () => {
-  const { classes, cx } = useStyles();
+  const { classes } = useStyles();
   const t = useTranslation();
   const { dark, forced, toggle } = useThemeMode();
 
@@ -29,9 +35,9 @@ const ThemeToggle = () => {
     <Tooltip title={label}>
       <IconButton onClick={toggle} aria-label={label}>
         {dark ? (
-          <LightModeRoundedIcon className={cx(classes.icon, classes.rotated)} />
+          <LightModeRoundedIcon key="light" className={classes.icon} />
         ) : (
-          <DarkModeRoundedIcon className={classes.icon} />
+          <DarkModeRoundedIcon key="dark" className={classes.icon} />
         )}
       </IconButton>
     </Tooltip>

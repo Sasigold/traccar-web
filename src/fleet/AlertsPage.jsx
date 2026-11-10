@@ -1,4 +1,4 @@
-import { useReducer, useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -27,6 +27,8 @@ import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsAct
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import SendRoundedIcon from '@mui/icons-material/SendRounded';
+import { useFleetRows } from './stage5Data';
 import ValidityTabs from './components/ValidityTabs';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
@@ -44,16 +46,19 @@ import {
   useFleetProfile,
   useFleetStatus,
 } from '../common/fleet/useFleet';
-import { fleetActions } from '../store';
+import { fleetActions, messagesActions } from '../store';
 import ExpiryBadge, { useDaysText } from './components/ExpiryBadge';
 import {
   acknowledgeAlerts,
   alertChannels,
   alertKinds,
   isPhoneChannel,
+  normalizeRecipientAddress,
   loadOpenAlerts,
   validRecipientAddress,
 } from './alerts';
+import { useConfirm } from '../common/components/confirm/ConfirmProvider';
+import { keepOnBackdrop } from '../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   row: {
@@ -77,6 +82,9 @@ const useStyles = makeStyles()((theme) => ({
 
 const capital = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
 // document_expiry -> fleetAlertKindDocumentExpiry
+// The alert kinds that something produces today (ADM-08); the others are offered as "soon".
+const WORKING_KINDS = ['document_expiry'];
+
 const kindKey = (kind) =>
   `fleetAlertKind${capital(kind.replace(/_(\w)/g, (_, c) => c.toUpperCase()))}`;
 const emptyRecipient = {
@@ -98,6 +106,7 @@ const deliveryColor = {
 const AlertsPage = () => {
   const { classes } = useStyles();
   const t = useTranslation();
+  const confirm = useConfirm();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const label = useFleetLabel();
@@ -112,6 +121,8 @@ const AlertsPage = () => {
 
   const views = ['open', ...(canManage ? ['recipients', 'outbox'] : [])];
   const [view, setView] = useState('open');
+  // null while unknown (an older database without messaging_ready).
+  const [sendingReady, setSendingReady] = useState(null);
   const [reloadKey, reload] = useReducer((k) => k + 1, 0);
   const [rows, setRows] = useState(null);
   const [selected, setSelected] = useState([]);
@@ -129,6 +140,9 @@ const AlertsPage = () => {
     } else if (view === 'recipients') {
       setRows(unwrap(await client.from('alert_recipients').select('*').order('name')) || []);
     } else {
+      // ADM-08: is any channel set up? Otherwise the queued messages are only waiting.
+      const { data: channels } = await client.rpc('messaging_ready');
+      setSendingReady(channels ? channels.some((channel) => channel.ready) : null);
       setRows(
         unwrap(
           await client
@@ -151,9 +165,7 @@ const AlertsPage = () => {
   const saveRecipient = useCatch(async () => {
     const client = getFleetClient();
     const { id, ...values } = editing;
-    const address = isPhoneChannel(values.channel)
-      ? values.address.replace(/[\s-]/g, '')
-      : values.address.trim();
+    const address = normalizeRecipientAddress(values.channel, values.address);
     const payload = { ...values, address, name: values.name.trim() };
     if (id) {
       unwrap(await client.from('alert_recipients').update(payload).eq('id', id));
@@ -164,7 +176,41 @@ const AlertsPage = () => {
     reload();
   });
 
-  const removeRecipient = useCatch(async (id) => {
+  // ADM-27: a test message, once the channel can send.
+  const [ready, setReady] = useState({});
+  useEffect(() => {
+    if (!canManage || view !== 'recipients') return;
+    getFleetClient()
+      .rpc('messaging_ready')
+      .then(({ data }) =>
+        setReady(Object.fromEntries((data || []).map((row) => [row.channel, row.ready]))),
+      );
+  }, [canManage, view]);
+  const people = useFleetRows('profiles', {
+    select: 'id, full_name, email',
+    order: 'full_name',
+    enabled: Boolean(editing),
+  });
+  const testRecipient = useCatch(async (row) => {
+    unwrap(await getFleetClient().rpc('alert_recipient_test', { p_recipient: row.id }));
+    dispatch(
+      messagesActions.push({
+        message: t('fleetRecipientTestSent').replace('{0}', row.name),
+        severity: 'success',
+      }),
+    );
+  });
+
+  const removeRecipient = useCatch(async (id, name) => {
+    if (
+      !(await confirm({
+        title: t('sharedRemoveNamed').replace('{0}', name || ''),
+        message: t('alertRecipientRemoveConsequence'),
+        confirmLabel: t('sharedRemove'),
+      }))
+    ) {
+      return;
+    }
     unwrap(await getFleetClient().from('alert_recipients').delete().eq('id', id));
     reload();
   });
@@ -233,6 +279,11 @@ const AlertsPage = () => {
       {view === 'recipients' && (
         <Alert severity="info" sx={{ mx: 3, mb: 2 }}>
           {t('fleetRecipientsHint')}
+        </Alert>
+      )}
+      {view === 'outbox' && sendingReady === false && (
+        <Alert severity="warning" sx={{ mx: 3, mb: 2 }}>
+          {t('fleetOutboxNotConnected')}
         </Alert>
       )}
       <DataTable
@@ -335,6 +386,22 @@ const AlertsPage = () => {
                     {t(row.active ? 'fleetRecipientActive' : 'fleetRecipientPaused')}
                   </TableCell>
                   <TableCell className={classes.actions}>
+                    <Tooltip
+                      title={t(
+                        ready[row.channel] ? 'fleetRecipientTest' : 'fleetRecipientTestNotReady',
+                      )}
+                    >
+                      <span>
+                        <IconButton
+                          size="small"
+                          disabled={!ready[row.channel]}
+                          onClick={() => testRecipient(row)}
+                          aria-label={`${t('fleetRecipientTest')}: ${row.name}`}
+                        >
+                          <SendRoundedIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                     <Tooltip title={t('sharedEdit')}>
                       <IconButton
                         size="small"
@@ -347,7 +414,7 @@ const AlertsPage = () => {
                     <Tooltip title={t('sharedRemove')}>
                       <IconButton
                         size="small"
-                        onClick={() => removeRecipient(row.id)}
+                        onClick={() => removeRecipient(row.id, row.name)}
                         aria-label={t('sharedRemove')}
                       >
                         <DeleteOutlineRoundedIcon fontSize="small" />
@@ -397,7 +464,12 @@ const AlertsPage = () => {
           </>
         )}
       </DataTable>
-      <Dialog open={Boolean(editing)} onClose={() => setEditing(null)} fullWidth maxWidth="xs">
+      <Dialog
+        open={Boolean(editing)}
+        onClose={keepOnBackdrop(() => setEditing(null))}
+        fullWidth
+        maxWidth="xs"
+      >
         <DialogTitle>{t(editing?.id ? 'fleetRecipientEdit' : 'fleetRecipientAdd')}</DialogTitle>
         {editing && (
           <DialogContent>
@@ -419,10 +491,42 @@ const AlertsPage = () => {
                   </MenuItem>
                 ))}
               </TextField>
+              <Autocomplete
+                options={people || []}
+                getOptionLabel={(person) => person.full_name || person.email || ''}
+                onChange={(_, person) =>
+                  person &&
+                  setEditing({
+                    ...editing,
+                    name: person.full_name || editing.name,
+                    profile_id: person.id,
+                    address:
+                      editing.channel === 'email'
+                        ? person.email || ''
+                        : person.phone || editing.address,
+                  })
+                }
+                renderInput={(params) => (
+                  <TextField {...params} label={t('fleetRecipientFromUsers')} />
+                )}
+              />
               <TextField
                 label={t(editing.channel === 'email' ? 'userEmail' : 'fleetRecipientPhone')}
+                error={
+                  Boolean(editing.address.trim()) &&
+                  !validRecipientAddress(editing.channel, editing.address)
+                }
                 helperText={
-                  isPhoneChannel(editing.channel) ? t('fleetRecipientPhoneHint') : undefined
+                  Boolean(editing.address.trim()) &&
+                  !validRecipientAddress(editing.channel, editing.address)
+                    ? t(
+                        isPhoneChannel(editing.channel)
+                          ? 'fleetRecipientBadPhone'
+                          : 'fleetRecipientBadEmail',
+                      )
+                    : isPhoneChannel(editing.channel)
+                      ? t('fleetRecipientPhoneHint')
+                      : undefined
                 }
                 value={editing.address}
                 onChange={(event) => setEditing({ ...editing, address: event.target.value })}
@@ -432,7 +536,13 @@ const AlertsPage = () => {
                 multiple
                 options={alertKinds}
                 value={editing.kinds}
-                getOptionLabel={(kind) => t(kindKey(kind))}
+                getOptionLabel={(kind) =>
+                  WORKING_KINDS.includes(kind)
+                    ? t(kindKey(kind))
+                    : `${t(kindKey(kind))} (${t('sharedComingSoon')})`
+                }
+                // ADM-08: only expiry alerts are sent today.
+                getOptionDisabled={(kind) => !WORKING_KINDS.includes(kind)}
                 onChange={(_, kinds) => setEditing({ ...editing, kinds })}
                 renderInput={(params) => <TextField {...params} label={t('fleetRecipientKinds')} />}
               />

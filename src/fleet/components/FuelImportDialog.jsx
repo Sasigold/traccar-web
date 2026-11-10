@@ -28,10 +28,11 @@ import {
   REQUIRED_FUEL_FIELDS,
   buildTransactions,
   guessColumns,
-  parseCsv,
 } from '../../common/fleet/fuelImport';
+import readSheet from '../../common/util/readSheet';
 import { formatTime } from '../../common/util/formatter';
 import { ensureVehicle, money } from '../fleetData';
+import { keepOnBackdrop } from '../../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   body: {
@@ -58,25 +59,6 @@ const useStyles = makeStyles()((theme) => ({
 
 const camel = (value) => value.replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase());
 export const fuelFlagKey = (flag) => `fleetFuelFlag${camel(flag)}`;
-
-// Reads the first worksheet of an .xlsx file into rows of cell values.
-const readWorkbook = async (file) => {
-  const { default: ExcelJS } = await import('exceljs');
-  const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(await file.arrayBuffer());
-  const sheet = workbook.worksheets[0];
-  const rows = [];
-  sheet.eachRow((row) => {
-    rows.push(
-      row.values
-        .slice(1)
-        .map((value) =>
-          value && typeof value === 'object' && 'result' in value ? value.result : value,
-        ),
-    );
-  });
-  return rows;
-};
 
 // Fuel company file -> fuel_transactions, with column mapping, preview and anomaly flags.
 // Transactions already imported (same provider and transaction number) are skipped.
@@ -113,9 +95,7 @@ const FuelImportDialog = ({ onClose, onImported }) => {
       setRows(null);
       return;
     }
-    const all = /\.xlsx$/i.test(selected.name)
-      ? await readWorkbook(selected)
-      : parseCsv(await selected.text());
+    const all = await readSheet(selected);
     setRows(all);
     setMapping(guessColumns(all[0] || []));
   });
@@ -182,7 +162,7 @@ const FuelImportDialog = ({ onClose, onImported }) => {
   });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="md">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="md">
       <DialogTitle>{t('fleetFuelImport')}</DialogTitle>
       <DialogContent>
         <div className={classes.body}>

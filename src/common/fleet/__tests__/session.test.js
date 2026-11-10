@@ -55,4 +55,18 @@ describe('fleet session', () => {
     await expect(request).rejects.toThrow();
     expect(session.getFleetAccessToken()).toBeNull();
   });
+
+  it('counts the failures to get a fleet token (FND-06)', async () => {
+    const { metrics } = await import('../../telemetry/metrics');
+    metrics.take();
+    globalThis.fetch
+      .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({ error: 'invalid' }) })
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    await expect(session.ensureFleetSession(7)).rejects.toThrow('invalid');
+    await expect(session.ensureFleetSession(7)).rejects.toThrow();
+    expect(metrics.take().counters).toEqual({
+      'token_failure.401': 1,
+      'token_failure.network': 1,
+    });
+  });
 });

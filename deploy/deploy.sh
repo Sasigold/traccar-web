@@ -17,7 +17,8 @@
 # DEPLOY_HOST=local runs the server side on this machine (for testing the script).
 set -eu
 
-HOST="${DEPLOY_HOST:-root@72.61.153.60}"
+# SEC-21: no address in the repository; set DEPLOY_HOST=user@address (or use ~/.ssh/config).
+HOST="${DEPLOY_HOST:?Set DEPLOY_HOST=user@address of the VPS}"
 REMOTE_DIR="${DEPLOY_DIR:-/docker/traccar-ovjj/web}"
 KEEP="${KEEP_RELEASES:-5}"
 
@@ -98,7 +99,8 @@ SERVER"
     [ -n "$release" ] || { echo "build/version.json is missing; build again."; exit 1; }
     name="$(date -u +%Y%m%dT%H%M%SZ)-$release"
     echo "Uploading $release to $HOST:$releases_dir/$name"
-    tar czf - -C build . | remote "set -e; mkdir -p '$releases_dir/$name.partial'; tar xzf - -C '$releases_dir/$name.partial'; mv '$releases_dir/$name.partial' '$releases_dir/$name'"
+    # FND-06: source maps never go to the server (they are for the error service only).
+    tar czf - --exclude='*.map' -C build . | remote "set -e; mkdir -p '$releases_dir/$name.partial'; tar xzf - -C '$releases_dir/$name.partial'; mv '$releases_dir/$name.partial' '$releases_dir/$name'"
     remote "sh -s -- '$name' <<'SERVER'
 $(server_script)
 SERVER"

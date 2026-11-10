@@ -31,6 +31,9 @@ import { storeLastSeen } from '../../../store/events';
 import { useAttributePreference } from '../../util/preferences';
 import { eventSeverity, eventTime } from '../../util/eventSeverity';
 import { eventIconKey, eventIcons } from '../../../map/core/preloadImages';
+import { useAlertCaseAccess, useAlertCases } from '../../fleet/useAlertCases';
+import { slaState } from '../../fleet/alertCases';
+import AlertCaseDialog from './AlertCaseDialog';
 
 dayjs.extend(relativeTime);
 
@@ -149,6 +152,15 @@ const useStyles = makeStyles()((theme) => ({
       opacity: 0.85,
     },
   },
+  // LIV-24: the handling chip: status, and the countdown to the response target.
+  withCase: {
+    paddingBottom: theme.spacing(5),
+  },
+  caseChip: {
+    position: 'absolute',
+    insetBlockEnd: theme.spacing(1.25),
+    insetInlineStart: theme.spacing(7.5),
+  },
   delete: {
     position: 'absolute',
     insetBlockStart: theme.spacing(1),
@@ -201,6 +213,40 @@ const EventsDrawer = ({ open, onClose }) => {
   const soundEvents = useAttributePreference('soundEvents', '');
 
   const [filter, setFilter] = useState('all');
+  const caseAccess = useAlertCaseAccess();
+  const { byEvent, slaMinutes, people } = useAlertCases(7, caseAccess && open);
+  const [handling, setHandling] = useState(null);
+  // The countdown moves on its own while the list is open.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!open || !caseAccess) return undefined;
+    const timer = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(timer);
+  }, [open, caseAccess]);
+
+  const caseChip = (event) => {
+    const item = byEvent.get(Number(event.id));
+    const status = item?.status || 'new';
+    const sla = slaState(event.eventTime, status, slaMinutes, now);
+    const label =
+      status === 'in_progress'
+        ? t('alertCaseInProgress')
+        : status === 'closed'
+          ? t('alertCaseClosed')
+          : sla.kind === 'late'
+            ? t('alertCaseLate').replace('{0}', sla.minutes)
+            : t('alertCaseDue').replace('{0}', sla.minutes);
+    return {
+      label,
+      color:
+        status === 'new' && sla.kind === 'late'
+          ? 'error'
+          : status === 'closed'
+            ? 'success'
+            : 'default',
+      variant: status === 'in_progress' || sla.kind === 'late' ? 'filled' : 'outlined',
+    };
+  };
   const [grouped, setGrouped] = useState(false);
   // What was unread when the list opened stays marked while it is open.
   const [seenBefore, setSeenBefore] = useState(lastSeen);
@@ -380,7 +426,11 @@ const EventsDrawer = ({ open, onClose }) => {
                       className={classes.row}
                     >
                       <ListItemButton
-                        className={cx(classes.item, unread && classes.unread)}
+                        className={cx(
+                          classes.item,
+                          unread && classes.unread,
+                          caseAccess && event.id && classes.withCase,
+                        )}
                         onClick={() => openEvent(event)}
                       >
                         <span className={classes.icon}>
@@ -407,6 +457,15 @@ const EventsDrawer = ({ open, onClose }) => {
                           }}
                         />
                       </ListItemButton>
+                      {caseAccess && event.id && (
+                        <Chip
+                          size="small"
+                          className={classes.caseChip}
+                          {...caseChip(event)}
+                          aria-label={`${t('alertCaseHandle')} · ${devices[event.deviceId]?.name || ''} · ${caseChip(event).label}`}
+                          onClick={() => setHandling(event)}
+                        />
+                      )}
                       <IconButton
                         aria-label={`${t('sharedRemove')} · ${devices[event.deviceId]?.name || ''}`}
                         size="small"
@@ -425,6 +484,14 @@ const EventsDrawer = ({ open, onClose }) => {
             </li>
           ))}
         </List>
+      )}
+      {handling && (
+        <AlertCaseDialog
+          event={handling}
+          alertCase={byEvent.get(Number(handling.id))}
+          people={people}
+          onClose={() => setHandling(null)}
+        />
       )}
     </Drawer>
   );

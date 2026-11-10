@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import {
   FormControl,
@@ -9,20 +9,28 @@ import {
   MenuItem,
   Button,
   Typography,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
 import EventRepeatRoundedIcon from '@mui/icons-material/EventRepeatRounded';
+import BookmarkAddRoundedIcon from '@mui/icons-material/BookmarkAddRounded';
+import usePersistedState from '../../common/util/usePersistedState';
+import { addSavedReport, savedReportView } from '../common/savedReports';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import useReportStyles from '../common/useReportStyles';
 import SplitButton from '../../common/components/SplitButton';
 import ScheduleDialog from './ScheduleDialog';
 import { useReportsSectionItems } from './reportsSections';
-import SelectField from '../../common/components/SelectField';
+import VehiclePicker from '../../common/components/vehiclePicker/VehiclePicker';
 import { useRestriction } from '../../common/util/permissions';
-import { deviceEquality } from '../../common/util/deviceEquality';
-import { reportsActions } from '../../store';
+import { messagesActions, reportsActions } from '../../store';
 import ReportIntro from './ReportIntro';
+import PrintHeader from './PrintHeader';
 import { getFormatLocale } from '../../common/util/formatter';
 import { DateRangeField } from '../../common/components/pickers';
 import { PERIODS, periodRange, shiftRange } from '../../dashboard/data/periods';
@@ -67,22 +75,8 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
 
   const readonly = useRestriction('readonly');
 
-  const devices = useSelector((state) => state.devices.items, deviceEquality(['id', 'name']));
-  const groups = useSelector((state) => state.groups.items);
   const savedPeriod = useSelector((state) => state.reports.period);
   const savedRange = useSelector((state) => state.reports.range);
-  const deviceList = useMemo(
-    () => [
-      { id: 'all', name: t('notificationAlways') },
-      ...Object.values(devices).sort((a, b) => a.name.localeCompare(b.name)),
-    ],
-    [devices, t],
-  );
-  const groupList = useMemo(
-    () => Object.values(groups).sort((a, b) => a.name.localeCompare(b.name)),
-    [groups],
-  );
-
   const deviceIds = useMemo(
     () => searchParams.getAll('deviceId').map((it) => (it === 'all' ? it : Number(it))),
     [searchParams],
@@ -111,6 +105,19 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
   }, [from, to, urlPeriod]);
 
   const [scheduling, setScheduling] = useState(false);
+  // REP-09: this report, these vehicles and this period preset, under a name.
+  const [savedReports, setSavedReports] = usePersistedState('savedReports', []);
+  const [viewName, setViewName] = useState(null);
+  const saveView = () => {
+    setSavedReports(
+      addSavedReport(
+        savedReports,
+        savedReportView({ name: viewName, path: location.pathname, deviceIds, groupIds, period }),
+      ),
+    );
+    setViewName(null);
+    dispatch(messagesActions.push({ message: t('reportViewSaved'), severity: 'success' }));
+  };
 
   const selectedFrom = dayjs(range[0]);
   const selectedTo = dayjs(range[1]);
@@ -143,11 +150,28 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
   };
   const options = evaluateOptions();
 
+  // REP-10: what the results on screen were made for. Once the filter no longer says that (other
+  // vehicles, or a period not applied yet), the results dim and a bar offers to update them.
+  const [shownFor, setShownFor] = useState(null);
   useEffect(() => {
     if (from && to) {
       onShow({ deviceIds: deviceIds.filter((it) => it !== 'all'), groupIds, from, to });
+      setShownFor({ from, to });
     }
   }, [deviceIds, groupIds, from, to, onShow]);
+  const stale = Boolean(
+    shownFor &&
+    (!from || !to || !dayjs(range[0]).isSame(dayjs(from)) || !dayjs(range[1]).isSame(dayjs(to))),
+  );
+  const rootRef = useRef(null);
+  useEffect(() => {
+    const header = rootRef.current?.parentElement;
+    if (!header) return undefined;
+    header.dataset.stale = String(stale);
+    return () => {
+      delete header.dataset.stale;
+    };
+  }, [stale]);
 
   const dateFormat = new Intl.DateTimeFormat(getFormatLocale(), {
     year: 'numeric',
@@ -219,41 +243,29 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
   }
 
   return (
-    <div className={classes.filter}>
+    <div className={classes.filter} ref={rootRef}>
+      <PrintHeader
+        title={reportName ? t(reportName) : ''}
+        from={from}
+        to={to}
+        deviceIds={deviceIds}
+        groupIds={groupIds}
+      />
       <ReportIntro hint={hint} />
       {deviceType !== 'none' && (
-        <div className={classes.filterItem}>
-          <SelectField
+        <div className={classes.filterItem} style={{ flexBasis: 260 }}>
+          {/* REP-05: one picker for vehicles and groups, with search by plate. */}
+          <VehiclePicker
             label={t(deviceType === 'multiple' ? 'deviceTitle' : 'reportDevice')}
-            data={
-              deviceType === 'multiple' ? deviceList : deviceList.filter((it) => it.id !== 'all')
-            }
-            value={deviceType === 'multiple' ? deviceIds : deviceIds.find(() => true)}
-            allValue="all"
-            onChange={(e) => {
-              const values =
-                deviceType === 'multiple' ? e.target.value : [e.target.value].filter((id) => id);
-              updateReportParams(searchParams, setSearchParams, 'deviceId', values);
-            }}
             multiple={deviceType === 'multiple'}
-            singleLine={deviceType === 'multiple'}
-            fullWidth
-          />
-        </div>
-      )}
-      {deviceType === 'multiple' && (
-        <div className={classes.filterItem}>
-          <SelectField
-            label={t('settingsGroups')}
-            data={groupList}
-            value={groupIds}
-            onChange={(e) => {
-              const values = e.target.value;
-              updateReportParams(searchParams, setSearchParams, 'groupId', values);
+            value={{ deviceIds, groupIds: deviceType === 'multiple' ? groupIds : [] }}
+            onChange={(selection) => {
+              const newParams = new URLSearchParams(searchParams);
+              ['deviceId', 'groupId', 'from', 'to'].forEach((key) => newParams.delete(key));
+              selection.deviceIds.forEach((id) => newParams.append('deviceId', id));
+              selection.groupIds.forEach((id) => newParams.append('groupId', id));
+              setSearchParams(newParams, { replace: true });
             }}
-            multiple
-            singleLine
-            fullWidth
           />
         </div>
       )}
@@ -373,6 +385,50 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
             onClick={() => setScheduling(true)}
           >
             {t('reportScheduleButton')}
+          </Button>
+        </div>
+      )}
+      {deviceType !== 'none' && (
+        <div className={classes.filterItem}>
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<BookmarkAddRoundedIcon />}
+            disabled={!deviceIds.length && !groupIds.length}
+            onClick={() => setViewName(reportName ? t(reportName) : '')}
+          >
+            {t('reportSaveView')}
+          </Button>
+        </div>
+      )}
+      {viewName !== null && (
+        <Dialog open onClose={() => setViewName(null)} fullWidth maxWidth="xs">
+          <DialogTitle>{t('reportSaveView')}</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              fullWidth
+              margin="dense"
+              label={t('viewName')}
+              helperText={t('reportSaveViewHint')}
+              value={viewName}
+              onChange={(event) => setViewName(event.target.value)}
+              slotProps={{ htmlInput: { maxLength: 60 } }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setViewName(null)}>{t('sharedCancel')}</Button>
+            <Button onClick={saveView} disabled={!viewName.trim()}>
+              {t('sharedSave')}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+      {stale && (
+        <div className={classes.staleBar} role="status">
+          <Typography variant="body2">{t('reportFilterChanged')}</Typography>
+          <Button size="small" variant="outlined" onClick={showReport} disabled={disabled}>
+            {t('reportUpdate')}
           </Button>
         </div>
       )}

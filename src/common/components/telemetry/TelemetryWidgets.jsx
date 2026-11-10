@@ -86,7 +86,8 @@ const useStyles = makeStyles()((theme) => ({
     transition: `background-color ${theme.tokens.motion.duration.slow}ms ease`,
   },
   charging: {
-    animation: `${charge} 1.6s ease-in-out infinite`,
+    // BRD-03: one beat when charging starts, not an endless loop.
+    animation: `${charge} 1.6s ease-in-out 1`,
   },
   // Signal bars -------------------------------------------------------------
   bars: {

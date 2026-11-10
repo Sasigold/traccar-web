@@ -99,3 +99,18 @@ export const whatsappLink = (phone, text) => {
   const query = `text=${encodeURIComponent(text)}`;
   return number ? `https://wa.me/${number}?${query}` : `https://wa.me/?${query}`;
 };
+
+// LIV-21: who is closest to a point on the map. Sorted by straight-line distance, each with the
+// road ETA estimate; vehicles without a position, and disabled ones, are left out.
+export const nearbyVehicles = (positions, devices, point, limit = 8) =>
+  Object.values(positions || {})
+    .filter((position) => hasPoint(position) && devices[position.deviceId])
+    .filter((position) => !devices[position.deviceId].disabled)
+    .map((position) => ({
+      device: devices[position.deviceId],
+      position,
+      km: distanceKm(position, point),
+      eta: estimateEta(position, point),
+    }))
+    .sort((a, b) => a.km - b.km)
+    .slice(0, limit);

@@ -36,3 +36,13 @@ describe('translations', () => {
       .forEach((name) => expect(() => load(name)).not.toThrow());
   });
 });
+
+describe('shipped languages (FND-09)', () => {
+  it('only the languages the app offers are kept', () => {
+    expect(
+      readdirSync(dir)
+        .filter((name) => name.endsWith('.json'))
+        .sort(),
+    ).toEqual(['ar.json', 'en.json', 'he.json', 'ru.json']);
+  });
+});

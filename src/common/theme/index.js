@@ -8,19 +8,27 @@ import { layers, motion, radius, shadows, type } from './tokens';
 
 export const { fontFamily } = type;
 
-const typography = Object.fromEntries(
-  Object.entries(type.scale).map(([variant, [fontSize, fontWeight, lineHeight]]) => [
-    variant,
-    {
-      fontSize,
-      fontWeight,
-      lineHeight,
-      ...(variant.startsWith('h') && { letterSpacing: '-0.01em' }),
-      ...(variant === 'overline' && { letterSpacing: '0.06em', textTransform: 'uppercase' }),
-      ...(variant === 'button' && { textTransform: 'none' }),
-    },
-  ]),
-);
+// A11-11 (BRAND §5): capitals and letter spacing are for Latin labels only. In a right-to-left
+// layout `overline` reads plain, like `sectionLabel`, because spaced Hebrew letters are harder
+// to read.
+export const typographyFor = (direction) =>
+  Object.fromEntries(
+    Object.entries(type.scale).map(([variant, [fontSize, fontWeight, lineHeight]]) => [
+      variant,
+      {
+        fontSize,
+        fontWeight,
+        lineHeight,
+        ...(variant.startsWith('h') && { letterSpacing: '-0.01em' }),
+        ...(variant === 'overline' &&
+          (direction === 'rtl'
+            ? { letterSpacing: 0, textTransform: 'none', fontSize: '0.8125rem' }
+            : { letterSpacing: '0.06em', textTransform: 'uppercase' })),
+        ...(variant === 'sectionLabel' && { letterSpacing: 0, textTransform: 'none' }),
+        ...(variant === 'button' && { textTransform: 'none' }),
+      },
+    ]),
+  );
 
 const shadowScale = (mode) => {
   const scale = shadows[mode];
@@ -41,7 +49,7 @@ export default (server, darkMode, direction, language) =>
         {
           typography: {
             fontFamily,
-            ...typography,
+            ...typographyFor(direction),
           },
           shape: {
             borderRadius: radius.md,

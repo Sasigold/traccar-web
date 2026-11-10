@@ -31,6 +31,7 @@ import { useAdminAccess, useAdminDirectory } from './useAdmin';
 import { deletePlan, savePlan } from './adminApi';
 import { cycles, formatMoney } from './billing';
 import { capitalize } from './CustomersPage';
+import { keepOnBackdrop } from '../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   row: {
@@ -183,7 +184,7 @@ const PlansPage = () => {
         </DataTable>
       )}
       {editing && (
-        <Dialog open onClose={() => setEditing(null)} maxWidth="sm" fullWidth>
+        <Dialog open onClose={keepOnBackdrop(() => setEditing(null))} maxWidth="sm" fullWidth>
           <DialogTitle>{editing.id ? editing.name : t('adminNewPlan')}</DialogTitle>
           <DialogContent className={classes.form}>
             <TextField

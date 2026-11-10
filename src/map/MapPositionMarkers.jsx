@@ -7,6 +7,7 @@ import { deviceIconKey, isDeviceMoving, isHeadingIcon } from './core/preloadImag
 import { useAttributePreference } from '../common/util/preferences';
 import { fromMapCoordinates } from './core/mapUtil';
 import { useStableArray } from '../common/util/stableArray';
+import { setMovingAnimation } from './core/movingIcon';
 
 const SMOOTH_LIMIT = 300;
 
@@ -122,8 +123,14 @@ const MapPositionMarkers = ({
       [markers, selectedDeviceId],
     ),
   );
-  // Gliding every marker costs a map update per frame; above this many it is switched off.
+  // Gliding every marker costs a map update per frame; above this many it is switched off, and
+  // so is the animation of the driving icon (a repaint of the whole map 15 times a second).
   const glide = Boolean(smooth) && markers.length <= SMOOTH_LIMIT;
+  const fewMarkers = markers.length <= SMOOTH_LIMIT;
+  useEffect(() => {
+    setMovingAnimation(fewMarkers);
+  }, [fewMarkers]);
+  useEffect(() => () => setMovingAnimation(true), []);
 
   const onClick = useCallback(
     (properties) => onMarkerClick?.(properties.id, properties.deviceId),

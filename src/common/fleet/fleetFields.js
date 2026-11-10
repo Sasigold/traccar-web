@@ -1,3 +1,4 @@
+import { fieldError } from '../util/israeliFields';
 // Roadmap stage 0: structured vehicle and driver details kept in the Traccar `attributes`
 // JSON, so they work without the fleet database. Stage 1 migrates these keys into the
 // `vehicles` / `drivers` tables; keep the keys stable until then.
@@ -26,14 +27,15 @@ export const OWNERSHIP_TYPES = ['owned', 'leased', 'rented'];
 
 export const DRIVER_STATUSES = ['active', 'suspended', 'ended'];
 
-// type: text | date | select | multiselect | number | multiline.
+// type: text | date | select | multiselect | number | multiline | boolean.
+// kind: an Israeli identifier checked and normalized on blur (common/util/israeliFields.js).
 // ltr: values that stay left-to-right in a Hebrew UI (numbers, codes, plates).
 export const vehicleFields = [
-  { key: 'plateNumber', labelKey: 'fleetPlateNumber', type: 'text', ltr: true },
-  { key: 'vin', labelKey: 'fleetVin', type: 'text', ltr: true },
+  { key: 'plateNumber', labelKey: 'fleetPlateNumber', type: 'text', ltr: true, kind: 'plate' },
+  { key: 'vin', labelKey: 'fleetVin', type: 'text', ltr: true, kind: 'vin' },
   { key: 'make', labelKey: 'fleetMake', type: 'text' },
   { key: 'vehicleModel', labelKey: 'fleetVehicleModel', type: 'text' },
-  { key: 'modelYear', labelKey: 'fleetModelYear', type: 'number', ltr: true },
+  { key: 'modelYear', labelKey: 'fleetModelYear', type: 'number', ltr: true, kind: 'year' },
   {
     key: 'fuelType',
     labelKey: 'fleetFuelType',
@@ -48,6 +50,10 @@ export const vehicleFields = [
     options: OWNERSHIP_TYPES,
     optionPrefix: 'fleetOwnership',
   },
+  // ISR-05: the list price ("מחיר מחירון"), for the taxable benefit of a company car.
+  { key: 'listPrice', labelKey: 'fleetListPrice', type: 'number', ltr: true, money: true },
+  // ISR-12: a vehicle new drivers should not get (a truck, a passenger van).
+  { key: 'noNewDrivers', labelKey: 'fleetNoNewDrivers', type: 'boolean' },
 ];
 
 export const vehicleExpiryFields = [
@@ -62,9 +68,9 @@ export const vehicleExpiryFields = [
 ];
 
 export const driverFields = [
-  { key: 'nationalId', labelKey: 'fleetNationalId', type: 'text', ltr: true },
-  { key: 'phone', labelKey: 'sharedPhone', type: 'text', ltr: true },
-  { key: 'email', labelKey: 'userEmail', type: 'text', ltr: true },
+  { key: 'nationalId', labelKey: 'fleetNationalId', type: 'text', ltr: true, kind: 'israeliId' },
+  { key: 'phone', labelKey: 'sharedPhone', type: 'text', ltr: true, kind: 'phone' },
+  { key: 'email', labelKey: 'userEmail', type: 'text', ltr: true, kind: 'email' },
   { key: 'hireDate', labelKey: 'fleetHireDate', type: 'date' },
   {
     key: 'driverStatus',
@@ -83,6 +89,8 @@ export const driverLicenseFields = [
     type: 'multiselect',
     options: LICENSE_CLASSES,
   },
+  // ISR-12: when the license was first issued; a driver is "new" for the first two years.
+  { key: 'licenseIssued', labelKey: 'fleetLicenseIssued', type: 'date', newDriver: true },
 ];
 
 export const driverExpiryFields = [
@@ -234,3 +242,7 @@ export const faultCodes = (position) => {
     ),
   ];
 };
+
+// ADM-06: are the fleet fields valid (every field with a kind holds a valid value or nothing)?
+export const fleetFieldsValid = (fields, attributes) =>
+  fields.every((field) => !field.kind || !fieldError(field.kind, attributes?.[field.key]));

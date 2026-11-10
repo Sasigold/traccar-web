@@ -12,6 +12,13 @@ export const useFleetProfile = () => useSelector((state) => state.fleet.profile)
 export const useFleetPermission = (key) =>
   useSelector((state) => state.fleet.status === 'ready' && state.fleet.permissions.includes(key));
 
+// ADM-03: may this user look at the fleet area at all? Any fleet read permission is enough. A
+// Traccar "read only" user (the viewer role) still reads the fleet; read only limits writing.
+export const canReadFleet = (fleet) =>
+  fleet.status === 'ready' && fleet.permissions.some((key) => key.endsWith('.read'));
+
+export const useFleetReader = () => useSelector((state) => canReadFleet(state.fleet));
+
 // Document types carry Hebrew and English labels; pick by the active UI language.
 export const useFleetLabel = () => {
   const { language } = useLocalization();

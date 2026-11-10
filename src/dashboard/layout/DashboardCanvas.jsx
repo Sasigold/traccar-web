@@ -16,6 +16,8 @@ import useFlip from './useFlip';
 
 const HANDLE = 14;
 
+export const LONG_PRESS_MS = 250;
+
 const useStyles = makeStyles()((theme) => ({
   canvas: {
     position: 'relative',
@@ -215,7 +217,6 @@ const DashboardCanvas = ({ rows, widgets, editing, api, onRows, highlightId }) =
   const t = useTranslation();
   const theme = useTheme();
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
-  const finePointer = useMediaQuery('(pointer: fine)');
   const gap = desktop ? GAP : GAP_COMPACT;
   const rtl = theme.direction === 'rtl';
   const containerRef = useRef(null);
@@ -242,7 +243,8 @@ const DashboardCanvas = ({ rows, widgets, editing, api, onRows, highlightId }) =
     () => toVisual(rows, size.width || 1200, infoOf, gap),
     [rows, size.width, infoOf, gap],
   );
-  const pointerEdit = editing && mode === 'wide' && finePointer;
+  // REP-19: a tablet edits too: by touch, a widget is picked up after a 250ms press.
+  const pointerEdit = editing && mode === 'wide';
 
   // ─── live resizing ───────────────────────────────────────────────────────
   const [resizing, setResizing] = useState(null); // { badge: { x, y, text } }
@@ -294,13 +296,23 @@ const DashboardCanvas = ({ rows, widgets, editing, api, onRows, highlightId }) =
         return;
       }
       event.preventDefault();
-      dragRef.current = {
+      const touch = event.pointerType === 'touch' || event.pointerType === 'pen';
+      const state = {
         id,
         startX: event.clientX,
         startY: event.clientY,
         started: false,
         target: null,
+        touch,
+        armed: !touch,
       };
+      if (touch) {
+        state.timer = setTimeout(() => {
+          state.armed = true;
+          navigator.vibrate?.(10);
+        }, LONG_PRESS_MS);
+      }
+      dragRef.current = state;
     },
     [pointerEdit],
   );
@@ -320,6 +332,14 @@ const DashboardCanvas = ({ rows, widgets, editing, api, onRows, highlightId }) =
     const onMove = (event) => {
       const state = dragRef.current;
       if (!state) {
+        return;
+      }
+      // A finger that moves before the press is long enough is scrolling, not dragging.
+      if (!state.armed) {
+        if (Math.hypot(event.clientX - state.startX, event.clientY - state.startY) > 8) {
+          clearTimeout(state.timer);
+          dragRef.current = null;
+        }
         return;
       }
       if (
@@ -361,6 +381,7 @@ const DashboardCanvas = ({ rows, widgets, editing, api, onRows, highlightId }) =
     };
     const finish = (commit) => {
       const state = dragRef.current;
+      clearTimeout(state?.timer);
       dragRef.current = null;
       scrollSpeed = 0;
       setDrag(null);

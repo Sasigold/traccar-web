@@ -29,6 +29,7 @@ const encodeWidget = (widget) => {
     widget.query ?? 0,
     widget.title ?? 0,
     widget.metrics ?? 0,
+    widget.target ?? 0,
   ]);
   return parts.length === 1 ? parts[0] : parts;
 };
@@ -40,13 +41,14 @@ const decodeWidget = (value) => {
   if (!Array.isArray(value)) {
     return null;
   }
-  const [preset, viz, query, title, metrics] = value;
+  const [preset, viz, query, title, metrics, target] = value;
   return {
     preset,
     ...(viz ? { viz } : {}),
     ...(query ? { query } : {}),
     ...(title ? { title } : {}),
     ...(metrics ? { metrics } : {}),
+    ...(target ? { target } : {}),
   };
 };
 
@@ -54,7 +56,12 @@ export const encodeDashboard = (dashboard) => {
   const { filters } = dashboard;
   const out = {
     i: dashboard.id,
-    f: filters.period === 'custom' ? [filters.period, filters.from, filters.to] : [filters.period],
+    f:
+      filters.period === 'custom'
+        ? [filters.period, filters.from, filters.to]
+        : filters.offset
+          ? [filters.period, null, null, filters.offset]
+          : [filters.period],
     g: filters.groupIds,
     r: dashboard.refresh,
     L: dashboard.rows.map((row) => [
@@ -99,12 +106,12 @@ const decodeDashboard = (value) => {
       }),
     };
   });
-  const [period, from, to] = Array.isArray(value.f) ? value.f : [];
+  const [period, from, to, offset] = Array.isArray(value.f) ? value.f : [];
   return {
     id: value.i,
     name: value.n,
     nameKey: value.k,
-    filters: { period, from, to, groupIds: value.g },
+    filters: { period, from, to, offset, groupIds: value.g },
     refresh: value.r,
     rows,
     widgets: Object.fromEntries(
@@ -154,3 +161,7 @@ export const fitsRemote = (encoded, attributes = {}) => {
   delete others[ATTRIBUTE];
   return JSON.stringify({ ...others, [ATTRIBUTE]: encoded }).length <= MAX_ATTRIBUTES_CHARS;
 };
+
+// REP-19: one dashboard, as it travels in a share link.
+export const encodeDashboardValue = (dashboard) => encodeDashboard(dashboard);
+export const decodeDashboardValue = (value) => decodeDashboard(value);

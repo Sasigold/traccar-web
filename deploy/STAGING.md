@@ -44,7 +44,7 @@ Nothing here has been run yet; it needs SSH access to the server. Same server, s
 5. **Demo data** goes to staging only:
    `node deploy/demo-data.mjs run --url https://<staging traccar> --email … --password …`.
    If demo vehicles were seeded into production earlier, remove them there with
-   `node deploy/demo-data.mjs clean --url https://traccar-ovjj.srv2122641.hstgr.cloud --allow-production …`
+   `node deploy/demo-data.mjs clean --url https://<site> --allow-production …`
    (it deletes only what the script created).
 
 ## Releases and rollback (FND-05)
@@ -67,7 +67,7 @@ served and that a script of its page downloads.
 `sh deploy/deploy.sh` builds before it uploads, so it needs the build's fleet database:
 
 ```sh
-VITE_FLEET_URL=https://viper-fleet-api.srv2122641.hstgr.cloud VITE_FLEET_ANON_KEY=<anon key> sh deploy/deploy.sh
+VITE_FLEET_URL=https://<fleet-api> VITE_FLEET_ANON_KEY=<anon key> sh deploy/deploy.sh
 ```
 
 or put both in `.env.production.local` (git ignores it). For staging:

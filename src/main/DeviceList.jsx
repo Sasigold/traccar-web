@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { makeStyles } from 'tss-react/mui';
 import { List } from 'react-window';
@@ -18,7 +18,7 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const DeviceList = ({ devices, keyword = '' }) => {
+const DeviceList = ({ devices, keyword = '', favorites }) => {
   const { classes } = useStyles();
   const dispatch = useDispatch();
 
@@ -27,6 +27,33 @@ const DeviceList = ({ devices, keyword = '' }) => {
   const listRef = useRef(null);
   const selectedId = useSelector((state) => state.devices.selectedId);
   const selectTime = useSelector((state) => state.devices.selectTime);
+  const [focusIndex, setFocusIndex] = useState(0);
+  const current = Math.min(focusIndex, Math.max(devices.length - 1, 0));
+
+  // LIV-30: a roving tab stop. Tab enters the list once; the arrows, Home and End move between
+  // rows (scrolling the virtual list so the row exists), Enter or Space selects.
+  const onKeyDown = (event) => {
+    const moves = {
+      ArrowDown: current + 1,
+      ArrowUp: current - 1,
+      Home: 0,
+      End: devices.length - 1,
+      PageDown: current + 5,
+      PageUp: current - 5,
+    };
+    if (!(event.key in moves) || !event.target.closest?.('[data-row]')) return;
+    event.preventDefault();
+    const next = Math.max(0, Math.min(devices.length - 1, moves[event.key]));
+    setFocusIndex(next);
+    listRef.current?.scrollToRow({ index: next, align: 'smart', behavior: 'auto' });
+    requestAnimationFrame(() =>
+      listRef.current?.element?.querySelector(`[data-row="${next}"]`)?.focus(),
+    );
+  };
+  const onFocus = (event) => {
+    const row = event.target.closest?.('[data-row]');
+    if (row) setFocusIndex(Number(row.dataset.row));
+  };
 
   // A vehicle picked on the map or in the quick search scrolls into view in the list.
   useEffect(() => {
@@ -62,7 +89,9 @@ const DeviceList = ({ devices, keyword = '' }) => {
       rowComponent={DeviceRow}
       rowCount={devices.length}
       rowHeight={72}
-      rowProps={{ devices, tokens }}
+      rowProps={{ devices, tokens, favorites, focusIndex: current }}
+      onKeyDown={onKeyDown}
+      onFocus={onFocus}
       overscanCount={5}
     />
   );

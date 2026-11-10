@@ -30,6 +30,7 @@ import { exportTouchesHidden, privatePositions } from '../common/fleet/privacyDa
 import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import SelectField from '../common/components/SelectField';
+import useSelectedRow from './common/useSelectedRow';
 
 // Rows drawn on screen; the export has them all, and the page says when rows are left out.
 const SHOWN_LIMIT = 4000;
@@ -55,6 +56,7 @@ const PositionsReportPage = () => {
   const [loading, setLoading] = useState(false);
   const [queried, setQueried] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const selectedRowRef = useSelectedRow(selectedItem);
 
   const selectedRef = useRef();
 
@@ -210,7 +212,11 @@ const PositionsReportPage = () => {
               )}
               {!loading ? (
                 items.slice(0, SHOWN_LIMIT).map((item) => (
-                  <TableRow key={item.id}>
+                  <TableRow
+                    key={item.id}
+                    ref={selectedItem === item ? selectedRowRef : undefined}
+                    className={selectedItem === item ? classes.selectedRow : undefined}
+                  >
                     <TableCell className={classes.columnAction} padding="none">
                       {selectedItem === item ? (
                         <IconButton

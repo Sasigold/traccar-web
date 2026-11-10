@@ -12,7 +12,7 @@ export const LIVE_SNAP_GAP = 5 * 60 * 1000; // ms between fixes: the device was 
 // Replay: real time compressed by this factor, so one hour of driving plays in three minutes
 // (the same pace as the old fixed 500 ms per point for a 10 s reporting interval).
 export const REPLAY_TIME_SCALE = 20;
-export const REPLAY_MIN_SEGMENT = 100; // ms, dense tracks still advance visibly per frame
+export const REPLAY_MIN_SEGMENT = 16; // ms, one frame: at 60× a dense track still keeps up
 export const REPLAY_MAX_SEGMENT = 2000; // ms, parking gaps do not stall the playback
 
 const EARTH_RADIUS = 6371000;
@@ -70,8 +70,9 @@ export const liveTransitionDuration = (from, to) => {
 };
 
 // Playback time for one replay segment, derived from the real time the vehicle took.
-export const replaySegmentDuration = (from, to) =>
-  clamp(fixTimeGap(from, to) / REPLAY_TIME_SCALE, REPLAY_MIN_SEGMENT, REPLAY_MAX_SEGMENT);
+// LIV-10: `scale` is the chosen speed (1×, 5×, 20×, 60× real time).
+export const replaySegmentDuration = (from, to, scale = REPLAY_TIME_SCALE) =>
+  clamp(fixTimeGap(from, to) / scale, REPLAY_MIN_SEGMENT, REPLAY_MAX_SEGMENT);
 
 // One device's glide between fixes. The live markers (MapMarkers) and the follow camera
 // (MapSelectedDevice) each keep a track fed with the same fixes, so the camera moves in step with

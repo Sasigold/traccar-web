@@ -12,15 +12,21 @@ process.env.VITE_FLEET_ANON_KEY = 'demo-anon-key';
 process.env.VITE_APP_ENV ||= 'demo';
 
 export default defineConfig((env) => {
-  const config = appConfig(env);
+  // BRD-05: `npm run demo:il` (--mode il) serves the Israeli demo fleet.
+  if (env.mode === 'il') process.env.DEMO_FLEET = 'il';
+  const config = appConfig(env.mode === 'il' ? { ...env, mode: 'development' } : env);
   return {
     ...config,
     server: { host: 'localhost', port: 3000 },
+    preview: { host: 'localhost', port: 3000 },
     plugins: [
       ...config.plugins,
       {
         name: 'demo-server',
         configureServer: demoServer,
+        // FND-07: `vite preview` of a production build, with the same mock server, for the
+        // performance profile (docs/PERFORMANCE.md).
+        configurePreviewServer: demoServer,
         transformIndexHtml: (html) =>
           html
             .replaceAll('${title}', 'viper fleet demo')

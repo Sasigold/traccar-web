@@ -28,3 +28,5 @@ website/dist
 
 # Local environment overrides (FND-04)
 *.local
+/sourcemaps
+/build-demo

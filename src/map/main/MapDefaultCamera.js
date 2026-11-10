@@ -5,6 +5,12 @@ import { usePreference } from '../../common/util/preferences';
 import { map } from '../core/MapView';
 import { toMapCoordinates } from '../core/mapUtil';
 
+// [west, south], [east, north]
+export const ISRAEL = [
+  [34.2, 29.45],
+  [35.9, 33.35],
+];
+
 const MapDefaultCamera = ({ filteredPositions }) => {
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
   const positions = useSelector((state) => state.session.positions);
@@ -55,6 +61,9 @@ const MapDefaultCamera = ({ filteredPositions }) => {
             zoom: Math.max(defaultZoom > 0 ? defaultZoom : map.getZoom(), 10),
           });
           setInitialized(true);
+        } else if (map.getZoom() < 3) {
+          // LIV-12: no vehicle yet: Israel, not the whole world at zoom 0.
+          map.fitBounds(ISRAEL, { duration: 0, padding: 24 });
         }
       }
     }

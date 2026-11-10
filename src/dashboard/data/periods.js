@@ -33,8 +33,28 @@ export const validCustom = (from, to) => {
   return Boolean(from && to && start.isValid() && end.isValid() && start.isBefore(end));
 };
 
-// { from, to } as dayjs, for a preset (or a custom range).
+// REP-17: a preset moved back (or forward) by whole periods: "this month" with offset -1 is
+// October, computed on the calendar (no lost days at month ends, no hour lost to daylight
+// saving). Rolling presets move by their length in days.
+const ROLLING_DAYS = { last7: 7, last30: 30 };
+
+// { from, to } as dayjs, for a preset (or a custom range), moved by `custom.offset` periods.
 export const periodRange = (period, now = dayjs(), custom = {}) => {
+  const offset = Number(custom?.offset) || 0;
+  if (offset && period !== 'custom') {
+    const unit = CALENDAR_UNIT[period];
+    if (unit) {
+      return periodRange(period, dayjs(now).add(offset, unit));
+    }
+    const length = ROLLING_DAYS[period];
+    if (length) {
+      const base = periodRange(period, now);
+      return {
+        from: base.from.add(offset * length, 'day'),
+        to: base.to.add(offset * length, 'day'),
+      };
+    }
+  }
   const today = dayjs(now);
   switch (period) {
     case 'yesterday': {
@@ -76,6 +96,17 @@ const CALENDAR_UNIT = {
   lastWeek: 'week',
   thisMonth: 'month',
   lastMonth: 'month',
+};
+
+// The arrows next to the period select: a preset keeps its name and moves by `offset`; nothing
+// after the current period.
+export const shiftFilters = (filters, step) => {
+  if (filters.period === 'custom') {
+    const range = periodRange('custom', dayjs(), filters);
+    const next = shiftRange('custom', range, step);
+    return { ...filters, from: next.from.toISOString(), to: next.to.toISOString() };
+  }
+  return { ...filters, offset: Math.min(0, (Number(filters.offset) || 0) + step) };
 };
 
 // Moves a range by whole periods (the arrows next to the period select).

@@ -1,10 +1,14 @@
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { Breadcrumbs, IconButton, Link, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import MenuOpenRoundedIcon from '@mui/icons-material/MenuOpenRounded';
 import BackIcon from '../BackIcon';
 import { useTranslation } from '../LocalizationProvider';
+import { useConfirm } from '../confirm/ConfirmProvider';
+import { goBack, useLeaveGuard } from '../confirm/unsavedChanges';
+import useNavItems from './navItems';
 
 const crumbLinks = {
   settingsTitle: '/settings',
@@ -69,17 +73,32 @@ const PageHeader = ({ breadcrumbs, title, description, actions, onOpenMenu, back
   const theme = useTheme();
   const navigate = useNavigate();
   const t = useTranslation();
+  // ADM-05: unsaved changes are asked about before leaving.
+  const leave = useLeaveGuard(useConfirm(), t);
 
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
+  // LIV-09: a tab's own page has no way back; the arrow is for pages deeper in.
+  const location = useLocation();
+  const destination = useNavItems().some((item) => item.path === location.pathname);
 
   const crumbs = breadcrumbs || [];
   const resolvedTitle = title ?? (crumbs.length ? t(crumbs[crumbs.length - 1]) : '');
+  // LIV-16: the browser tab says which screen this is.
+  useEffect(() => {
+    if (typeof resolvedTitle === 'string' && resolvedTitle) {
+      document.title = `${resolvedTitle} · viper fleet`;
+    }
+  }, [resolvedTitle]);
   const parents = crumbs.slice(0, -1);
 
   return (
-    <header className={classes.root}>
-      {(!desktop || back) && (
-        <IconButton edge="start" onClick={() => navigate(backTo ?? -1)} aria-label={t('a11yBack')}>
+    <header className={`${classes.root} app-page-header`}>
+      {((!desktop && !destination) || back) && (
+        <IconButton
+          edge="start"
+          onClick={() => leave(() => (backTo != null ? navigate(backTo) : goBack(navigate)))}
+          aria-label={t('a11yBack')}
+        >
           <BackIcon />
         </IconButton>
       )}
@@ -105,7 +124,7 @@ const PageHeader = ({ breadcrumbs, title, description, actions, onOpenMenu, back
             )}
           </Breadcrumbs>
         )}
-        <Typography variant={desktop ? 'h4' : 'h6'} className={classes.title} noWrap>
+        <Typography variant={desktop ? 'h4' : 'h6'} component="h1" className={classes.title} noWrap>
           {resolvedTitle}
         </Typography>
         {desktop && description && (

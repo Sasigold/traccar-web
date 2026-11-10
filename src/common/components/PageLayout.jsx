@@ -49,11 +49,42 @@ const useStyles = makeStyles()((theme) => ({
       overflow: 'visible',
     },
   },
+  // BRD-06: on a phone the section menu is navigation, so it is a navy surface like the rail,
+  // with the current item as an aqua pill with ink text.
   mobileDrawer: {
     width: 300,
     maxWidth: '85vw',
     paddingTop: `calc(${theme.spacing(1)} + env(safe-area-inset-top, 0px))`,
     paddingBottom: `calc(${theme.spacing(1)} + env(safe-area-inset-bottom, 0px))`,
+    paddingInline: theme.spacing(1),
+    backgroundColor: theme.palette.chrome.background,
+    backgroundImage: 'none',
+    color: theme.palette.chrome.text,
+    '& .MuiListSubheader-root': {
+      backgroundColor: 'transparent',
+      color: theme.palette.chrome.text,
+    },
+    '& .MuiDivider-root': {
+      borderColor: theme.palette.chrome.border,
+    },
+    '& .MuiListItemButton-root': {
+      color: theme.palette.chrome.text,
+      borderRadius: 999,
+      '& .MuiListItemIcon-root, & .MuiSvgIcon-root': { color: 'inherit' },
+      '& .MuiListItemText-primary, & .MuiListItemText-secondary': { color: 'inherit' },
+      '&:hover': {
+        backgroundColor: theme.palette.chrome.backgroundHover,
+        color: theme.palette.chrome.textStrong,
+      },
+      '&.Mui-selected, &.Mui-selected:hover': {
+        backgroundColor: theme.palette.chrome.activeBackground,
+        color: theme.palette.chrome.activeText,
+      },
+      '&.Mui-focusVisible': {
+        outline: `2px solid ${theme.palette.chrome.activeBackground}`,
+        outlineOffset: 2,
+      },
+    },
   },
 }));
 

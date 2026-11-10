@@ -9,7 +9,8 @@ import {
   ListItemText,
   Menu,
   MenuItem,
-  Switch,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
@@ -34,6 +35,12 @@ const useStyles = makeStyles()((theme) => ({
     width: 34,
     height: 34,
     fontSize: '0.9375rem',
+  },
+  theme: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(1, 2),
   },
   header: {
     padding: theme.spacing(1, 2, 1.5),
@@ -60,7 +67,7 @@ export const UserMenuPopover = ({ anchorEl, open, onClose }) => {
   const user = useSelector((state) => state.session.user);
   const readonly = useRestriction('readonly');
   const logout = useLogout();
-  const { dark, forced, toggle } = useThemeMode();
+  const { choice, forced, setMode } = useThemeMode();
 
   const go = (path) => {
     onClose();
@@ -99,13 +106,21 @@ export const UserMenuPopover = ({ anchorEl, open, onClose }) => {
         <ListItemText>{t('sharedPreferences')}</ListItemText>
       </MenuItem>
       {!forced && (
-        <MenuItem onClick={toggle}>
-          <ListItemIcon>
-            <DarkModeRoundedIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>{t('settingsDarkMode')}</ListItemText>
-          <Switch edge="end" size="small" checked={dark} onChange={() => {}} tabIndex={-1} />
-        </MenuItem>
+        // BRD-07: light, dark, or as the system says.
+        <div className={classes.theme}>
+          <DarkModeRoundedIcon fontSize="small" color="action" />
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={choice}
+            onChange={(_, value) => value && setMode(value)}
+            aria-label={t('settingsThemeMode')}
+          >
+            <ToggleButton value="light">{t('settingsThemeLight')}</ToggleButton>
+            <ToggleButton value="dark">{t('settingsThemeDark')}</ToggleButton>
+            <ToggleButton value="system">{t('settingsThemeSystem')}</ToggleButton>
+          </ToggleButtonGroup>
+        </div>
       )}
       <Divider />
       <MenuItem

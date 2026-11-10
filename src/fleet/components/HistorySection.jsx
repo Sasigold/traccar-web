@@ -55,6 +55,7 @@ const fieldLabels = {
   license_number: 'fleetLicenseNumber',
   license_classes: 'fleetLicenseClasses',
   license_expiry: 'fleetLicenseExpiry',
+  license_issued: 'fleetLicenseIssued',
   driver_id: 'historyFieldDriver',
   vehicle_id: 'historyFieldVehicle',
   is_primary: 'historyFieldIsPrimary',

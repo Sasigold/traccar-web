@@ -1,3 +1,6 @@
+import AccessibilityNewRoundedIcon from '@mui/icons-material/AccessibilityNewRounded';
+import SavingsRoundedIcon from '@mui/icons-material/SavingsRounded';
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
 import PrivacyTipRoundedIcon from '@mui/icons-material/PrivacyTipRounded';
 import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedInRounded';
 import { useMemo } from 'react';
@@ -20,6 +23,9 @@ import RouterRoundedIcon from '@mui/icons-material/RouterRounded';
 import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
+import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
+import AutoModeRoundedIcon from '@mui/icons-material/AutoModeRounded';
+import EventSeatRoundedIcon from '@mui/icons-material/EventSeatRounded';
 import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
 import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
 import HandymanRoundedIcon from '@mui/icons-material/HandymanRounded';
@@ -36,6 +42,7 @@ import WebhookRoundedIcon from '@mui/icons-material/WebhookRounded';
 import { useAdministrator, useManager, useRestriction } from '../../common/util/permissions';
 import useFeatures from '../../common/util/useFeatures';
 import { useFleetPermission } from '../../common/fleet/useFleet';
+import { hasFleetFeature, useFleetFeatures } from '../../common/fleet/features';
 
 // Single source of truth for the menus: the settings area and the fleet area drive their side
 // menus, hub cards and the command palette.
@@ -58,10 +65,15 @@ const useSectionCatalog = () => {
   const fleetPoi = useFleetPermission('poi.read');
   const fleetDispatch = useFleetPermission('dispatch.read');
   const fleetVehicles = useFleetPermission('vehicles.read');
+  const fleetDrivers = useFleetPermission('drivers.read');
   const fleetIntegrations = useFleetPermission('integrations.manage');
   const fleetPrivacy = useFleetPermission('privacy.manage');
+  const fleetUsersManage = useFleetPermission('users.manage');
+  // ADM-08: areas whose tables this fleet database does not have are not offered.
+  const fleetFeatures = useFleetFeatures();
 
   return useMemo(() => {
+    const has = (feature) => hasFleetFeature(fleetFeatures, feature);
     const profilePath = `/settings/user/${userId}`;
     const tidy = (groups) =>
       groups
@@ -165,7 +177,7 @@ const useSectionCatalog = () => {
             icon: WebhookRoundedIcon,
             path: '/fleet/integrations',
             match: (pathname) => pathname.startsWith('/fleet/integrations'),
-            visible: fleetIntegrations,
+            visible: fleetIntegrations && has('integrations'),
           },
           {
             id: 'privacy',
@@ -174,7 +186,17 @@ const useSectionCatalog = () => {
             icon: PrivacyTipRoundedIcon,
             path: '/fleet/privacy',
             match: (pathname) => pathname.startsWith('/fleet/privacy'),
-            visible: fleetPrivacy,
+            visible: fleetPrivacy && has('privacy'),
+          },
+          {
+            id: 'ai',
+            titleKey: 'aiSettingsPage',
+            descriptionKey: 'aiSettingsDescription',
+            icon: AutoAwesomeRoundedIcon,
+            path: '/fleet/ai',
+            match: (pathname) => pathname.startsWith('/fleet/ai'),
+            // AI-01..04: only where the fleet database has it (unknown is no).
+            visible: fleetUsersManage && Boolean(fleetFeatures?.includes('ai')),
           },
           {
             id: 'server',
@@ -236,6 +258,15 @@ const useSectionCatalog = () => {
         titleKey: 'settingsGroupHelp',
         items: [
           {
+            // A11-07
+            id: 'accessibility',
+            titleKey: 'settingsAccessibility',
+            descriptionKey: 'settingsAccessibilityDescription',
+            icon: AccessibilityNewRoundedIcon,
+            path: '/accessibility',
+            match: (pathname) => pathname === '/accessibility',
+          },
+          {
             id: 'support',
             titleKey: 'settingsSupport',
             descriptionKey: 'settingsSupportDescription',
@@ -268,7 +299,16 @@ const useSectionCatalog = () => {
             icon: LocalShippingRoundedIcon,
             path: '/fleet/dispatch',
             match: (pathname) => pathname.startsWith('/fleet/dispatch'),
-            visible: fleetDispatch,
+            visible: fleetDispatch && has('dispatch'),
+          },
+          {
+            id: 'pool',
+            titleKey: 'poolTitle',
+            descriptionKey: 'poolDescription',
+            icon: EventSeatRoundedIcon,
+            path: '/fleet/pool',
+            match: (pathname) => pathname.startsWith('/fleet/pool'),
+            visible: has('pool'),
           },
           {
             id: 'workOrders',
@@ -278,7 +318,7 @@ const useSectionCatalog = () => {
             path: '/fleet/work-orders',
             match: (pathname) =>
               pathname.startsWith('/fleet/work-order') || pathname.startsWith('/fleet/vendors'),
-            visible: fleetMaintenance,
+            visible: fleetMaintenance && has('workOrders'),
           },
           {
             id: 'inspections',
@@ -287,7 +327,7 @@ const useSectionCatalog = () => {
             icon: FactCheckRoundedIcon,
             path: '/fleet/inspections',
             match: (pathname) => pathname.startsWith('/fleet/inspection'),
-            visible: fleetInspections,
+            visible: fleetInspections && has('inspections'),
           },
           {
             id: 'incidents',
@@ -296,7 +336,7 @@ const useSectionCatalog = () => {
             icon: CarCrashRoundedIcon,
             path: '/fleet/incidents',
             match: (pathname) => pathname.startsWith('/fleet/incident'),
-            visible: fleetIncidents,
+            visible: fleetIncidents && has('incidents'),
           },
           {
             id: 'maintenance',
@@ -323,7 +363,8 @@ const useSectionCatalog = () => {
               pathname.startsWith('/fleet/vehicle') ||
               pathname.startsWith('/settings/device') ||
               pathname.startsWith('/settings/accumulators'),
-            visible: !readonly,
+            // ADM-03: a viewer reads the vehicles (the list is read only for them).
+            visible: !readonly || fleetVehicles,
           },
           {
             id: 'drivers',
@@ -333,7 +374,7 @@ const useSectionCatalog = () => {
             path: '/fleet/drivers',
             match: (pathname) =>
               pathname.startsWith('/fleet/drivers') || pathname.startsWith('/settings/driver'),
-            visible: !readonly && !features.disableDrivers,
+            visible: (!readonly || fleetDrivers) && !features.disableDrivers,
           },
           {
             id: 'equipment',
@@ -342,7 +383,7 @@ const useSectionCatalog = () => {
             icon: RvHookupRoundedIcon,
             path: '/fleet/equipment',
             match: (pathname) => pathname.startsWith('/fleet/equipment'),
-            visible: fleetVehicles,
+            visible: fleetVehicles && has('equipment'),
           },
           {
             id: 'sensors',
@@ -351,6 +392,7 @@ const useSectionCatalog = () => {
             icon: ThermostatRoundedIcon,
             path: '/fleet/sensors',
             match: (pathname) => pathname.startsWith('/fleet/sensors'),
+            visible: has('sensors'),
           },
           {
             id: 'poi',
@@ -359,7 +401,7 @@ const useSectionCatalog = () => {
             icon: PlaceRoundedIcon,
             path: '/fleet/poi',
             match: (pathname) => pathname.startsWith('/fleet/poi'),
-            visible: fleetPoi,
+            visible: fleetPoi && has('poi'),
           },
         ],
       },
@@ -381,8 +423,28 @@ const useSectionCatalog = () => {
             descriptionKey: 'fleetAlertsPageDescription',
             icon: NotificationsActiveRoundedIcon,
             path: '/fleet/alerts',
-            match: (pathname) => pathname.startsWith('/fleet/alerts'),
-            visible: fleetAlerts,
+            match: (pathname) =>
+              pathname.startsWith('/fleet/alerts') &&
+              !pathname.startsWith('/fleet/alerts/response'),
+            visible: fleetAlerts && has('alerts'),
+          },
+          {
+            id: 'automations',
+            titleKey: 'autoTitle',
+            descriptionKey: 'autoMenuDescription',
+            icon: AutoModeRoundedIcon,
+            path: '/fleet/automations',
+            match: (pathname) => pathname.startsWith('/fleet/automations'),
+            visible: fleetAlerts && has('automations'),
+          },
+          {
+            id: 'alertResponse',
+            titleKey: 'alertResponseTitle',
+            descriptionKey: 'alertResponseMenuDescription',
+            icon: TimerRoundedIcon,
+            path: '/fleet/alerts/response',
+            match: (pathname) => pathname.startsWith('/fleet/alerts/response'),
+            visible: fleetAlerts && has('alertCases'),
           },
           {
             id: 'fleetDocuments',
@@ -406,7 +468,16 @@ const useSectionCatalog = () => {
             icon: LocalGasStationRoundedIcon,
             path: '/fleet/costs',
             match: (pathname) => pathname.startsWith('/fleet/costs'),
-            visible: fleetCosts,
+            visible: fleetCosts && has('costs'),
+          },
+          {
+            id: 'fuelChecks',
+            titleKey: 'fuelChecksTitle',
+            descriptionKey: 'fuelChecksDescription',
+            icon: SavingsRoundedIcon,
+            path: '/fleet/fuel-checks',
+            match: (pathname) => pathname.startsWith('/fleet/fuel-checks'),
+            visible: fleetCosts && has('costs'),
           },
         ],
       },
@@ -424,7 +495,7 @@ const useSectionCatalog = () => {
               (pathname.startsWith('/fleet/safety') &&
                 !pathname.startsWith('/fleet/safety-officer')) ||
               pathname.startsWith('/fleet/driver-file'),
-            visible: fleetSafety,
+            visible: fleetSafety && has('safety'),
           },
           {
             id: 'safetyOfficer',
@@ -433,7 +504,7 @@ const useSectionCatalog = () => {
             icon: AssignmentTurnedInRoundedIcon,
             path: '/fleet/safety-officer',
             match: (pathname) => pathname.startsWith('/fleet/safety-officer'),
-            visible: fleetSafety,
+            visible: fleetSafety && has('safetyOfficer'),
           },
         ],
       },
@@ -458,8 +529,11 @@ const useSectionCatalog = () => {
     fleetPoi,
     fleetDispatch,
     fleetVehicles,
+    fleetDrivers,
     fleetIntegrations,
     fleetPrivacy,
+    fleetUsersManage,
+    fleetFeatures,
   ]);
 };
 

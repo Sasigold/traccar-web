@@ -13,12 +13,12 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const BaseFab = ({ children, color = 'primary', onClick }) => {
+const BaseFab = ({ children, color = 'primary', onClick, label }) => {
   const { classes } = useStyles();
 
   return (
     <div className={classes.fab}>
-      <Fab size="medium" color={color} onClick={onClick}>
+      <Fab size="medium" color={color} onClick={onClick} aria-label={label}>
         {children}
       </Fab>
     </div>

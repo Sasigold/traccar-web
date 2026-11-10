@@ -10,7 +10,7 @@ const FOLLOW_EASE = 600; // ms, the camera glides onto the vehicle when playback
 // The replay vehicle. While playing it drives along the route at a pace derived from the real
 // timestamps, and the camera follows it until the user moves the map by hand. `index` is the
 // point the vehicle has passed; the owner is told each time it reaches the next one.
-const MapReplayMarker = ({ positions, index, playing, onIndexChange, onMarkerClick }) => {
+const MapReplayMarker = ({ positions, index, playing, speed, onIndexChange, onMarkerClick }) => {
   const progressRef = useRef(index);
   const followRef = useRef(true);
   const onIndexChangeRef = useRef(onIndexChange);
@@ -55,6 +55,8 @@ const MapReplayMarker = ({ positions, index, playing, onIndexChange, onMarkerCli
 
     let last = performance.now();
     let frame;
+    // A new route starts from its own beginning, not where the old one was.
+    progressRef.current = Math.min(progressRef.current, positions.length - 1);
     const step = (now) => {
       const elapsed = now - last;
       last = now;
@@ -62,7 +64,7 @@ const MapReplayMarker = ({ positions, index, playing, onIndexChange, onMarkerCli
       if (current >= positions.length - 1) {
         return;
       }
-      const duration = replaySegmentDuration(positions[current], positions[current + 1]);
+      const duration = replaySegmentDuration(positions[current], positions[current + 1], speed);
       const progress = Math.min(progressRef.current + elapsed / duration, current + 1);
       progressRef.current = progress;
       const reached = Math.floor(progress);
@@ -72,6 +74,9 @@ const MapReplayMarker = ({ positions, index, playing, onIndexChange, onMarkerCli
       }
       const from = positions[current];
       const to = positions[Math.min(current + 1, positions.length - 1)];
+      if (!from || !to) {
+        return;
+      }
       const position = animate
         ? { ...from, ...interpolateCoordinates(from, to, progress - current) }
         : from;
@@ -87,7 +92,7 @@ const MapReplayMarker = ({ positions, index, playing, onIndexChange, onMarkerCli
       cancelAnimationFrame(frame);
       map.off('movestart', onMoveStart);
     };
-  }, [playing, positions, animate]);
+  }, [playing, positions, animate, speed]);
 
   if (!shown) {
     return null;

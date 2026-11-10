@@ -62,6 +62,7 @@ const MapGeocoder = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(null);
 
   useEffect(() => {
     if (!query.trim()) {
@@ -73,10 +74,12 @@ const MapGeocoder = () => {
     const timeoutId = setTimeout(async () => {
       setLoading(true);
       try {
-        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=geojson&addressdetails=1`;
+        // LIV-12: Hebrew names first, and places in Israel.
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=geojson&addressdetails=1&accept-language=he,en&countrycodes=il`;
         const response = await fetch(url, { signal: controller.signal });
         const data = await response.json();
         setResults(data.features || []);
+        setSearched(query);
       } catch (e) {
         if (e.name !== 'AbortError') {
           dispatch(messagesActions.push(e.message));
@@ -174,6 +177,14 @@ const MapGeocoder = () => {
                   <ListItemText primary={feature.properties.display_name} />
                 </ListItemButton>
               ))}
+          {/* LIV-12: a search that found nothing says so. */}
+          {!loading && query.trim().length > 2 && searched === query && !results.length && (
+            <ListItemText
+              role="status"
+              sx={{ px: 2, py: 1, color: 'text.secondary' }}
+              primary={t('mapSearchNotFound')}
+            />
+          )}
         </List>
       </Box>
     </Popover>

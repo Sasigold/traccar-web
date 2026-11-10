@@ -238,6 +238,16 @@ today Morning (Green Invoice). No direct connection to the Tax Authority is buil
 - *Not yet.* iCount and Rivhit (the provider is one row, ready for another adapter), credit invoices from
   here, and a clearing company other than Morning's.
 
+**Interface health (`/admin/health`, FND-06).** Web vitals (p75 per release, with the good / needs
+improvement / slow thresholds), long tasks and the operational counters (socket drops, fleet-token
+failures, chunk-load errors, Supabase and Traccar error codes) that browsers send. Migration
+`20261113100000_client_metrics.sql` (tests in `client_metrics.test.sql`): `client_metrics` is written only
+through `record_client_metrics(release, environment, batch)`, which checks every value, records the
+organization but never the user, and accepts 500 rows per user per hour; `client_metrics_overview(days)`
+answers platform administrators only; a nightly job keeps 30 days. Error reports (Sentry or GlitchTip) and
+product analytics (Umami, Plausible or PostHog) are separate and off until the build sets them:
+`docs/OBSERVABILITY.md`.
+
 **Database.** `supabase/migrations/20261104120000_super_admin.sql` adds `customers`, `customer_users`,
 `device_registry`, `device_assignment_history`, `billing_plans`, `billing_subscriptions`,
 `billing_invoices`, `billing_invoice_lines`, the views `billing_invoices_view` and
@@ -267,6 +277,16 @@ the customer and billing parts show why they are unavailable.
   users of a customer. To add someone (as an existing platform admin, or as `postgres`):
   `insert into public.platform_admins (user_id) select id from public.profiles where traccar_user_id = <id>;`
   Nobody can remove themselves.
+- **Roles and overrides (SEC-08, `20261114100000_role_guard.sql`).** Triggers on `profiles` and
+  `user_permissions` refuse, for a signed-in user: changing your own role, organization or access,
+  touching another organization, making or changing an owner unless you are one, platform keys per user,
+  and anything without `users.manage`. Every such change goes to `audit_log`. Platform administrators and
+  server-side code are not limited.
+- **Billing integrity (SEC-09, `20261114110000_billing_integrity.sql`).** A bill's number always comes from
+  the sequence; once it is not a draft only its status, payment details and notes change, it never returns
+  to draft, its lines are locked and it is cancelled rather than deleted. `billing_save_invoice(invoice,
+  lines)` saves a bill and replaces its lines in one transaction. Every change to customers, their users,
+  the device registry, plans, subscriptions, bills and lines goes to `audit_log`.
 - **Drivers** reach incident parties, claims, photos and checklist answers only through incidents and
   inspections they may see. They upload files but never replace or delete them.
 - **Tests.** `supabase/tests/run.sh` applies every migration to a fresh Postgres on top of

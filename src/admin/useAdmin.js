@@ -1,8 +1,6 @@
 import { useCallback, useMemo, useReducer, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useAsyncTask, useCatch } from '../reactHelper';
-import { fleetActions } from '../store';
-import { ensureFleetSession } from '../common/fleet/session';
+import { useSelector } from 'react-redux';
+import { useAsyncTask } from '../reactHelper';
 import { getJson, loadBilling, loadDirectory } from './adminApi';
 
 const hasKey = (permissions, key) => permissions.includes(key) || permissions.includes('*');
@@ -28,22 +26,8 @@ export const useAdminAccess = () => {
   }, [admin, status, permissions]);
 };
 
-// Asks the edge function for a fresh token, so permissions granted after login
-// (for example by the super admin migration) take effect without logging out.
-export const useFleetReconnect = () => {
-  const dispatch = useDispatch();
-  const userId = useSelector((state) => state.session.user?.id);
-  return useCatch(async () => {
-    dispatch(fleetActions.loading());
-    try {
-      const session = await ensureFleetSession(userId, { force: true });
-      dispatch(fleetActions.ready({ profile: session.profile, permissions: session.permissions }));
-    } catch (error) {
-      dispatch(fleetActions.failed(error.message));
-      throw error;
-    }
-  });
-};
+// Moved to common/fleet (ADM-21); kept here for the admin screens that import it.
+export { default as useFleetReconnect } from '../common/fleet/useFleetReconnect';
 
 const emptyDirectory = { customers: [], registry: [], customerUsers: [], counts: [] };
 const emptyBilling = { plans: [], subscriptions: [] };

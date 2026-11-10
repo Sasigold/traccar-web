@@ -211,6 +211,12 @@ export const computedForSensors = (sensors, deviceId) => {
 
 export const computedPrefix = (deviceId) => `[vf:${deviceId}]`;
 
+// ADM-25: a computed attribute the sensors setup created: { deviceId, label } or null.
+export const managedComputed = (description) => {
+  const match = /^\[vf:(\d+)\]\s*(.*)$/.exec(description || '');
+  return match ? { deviceId: Number(match[1]), label: match[2] } : null;
+};
+
 // Plan to bring a device's computed attributes in line with its sensors.
 // `linked` is what Traccar returns for api/attributes/computed?deviceId=…
 export const planComputedSync = (linked, desired, deviceId) => {

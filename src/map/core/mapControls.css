@@ -74,8 +74,8 @@
   border-color: var(--map-ctrl-accent);
   border-radius: 0 0 8px 8px;
   font-weight: 600;
-  font-size: 11px;
-  letter-spacing: 0.02em;
+  /* A11-11, BRD-04: the units are Hebrew ("ק״מ"), so no letter spacing and 13px at least. */
+  font-size: 13px;
 }
 
 .maplibregl-ctrl.maplibregl-ctrl-attrib.maplibregl-compact {

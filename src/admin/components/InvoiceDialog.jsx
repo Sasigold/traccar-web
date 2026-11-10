@@ -35,8 +35,10 @@ import {
   toIsoDate,
 } from '../billing';
 import { deleteInvoice, loadInvoiceLines, saveInvoice, setInvoiceStatus } from '../adminApi';
+import { useConfirm } from '../../common/components/confirm/ConfirmProvider';
 import OfficialDocumentPanel from './OfficialDocumentPanel';
 import { DateField } from '../../common/components/pickers';
+import { keepOnBackdrop } from '../../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   content: {
@@ -164,8 +166,22 @@ const InvoiceDialog = ({ initial, customers, readonly, onClose, onSaved }) => {
     }
   });
 
+  const confirm = useConfirm();
   const save = (status) =>
     run(async () => saveInvoice({ ...invoice, ...(status ? { status } : {}) }, lines));
+  // ADM-05: issuing locks the bill (SEC-09); say so before.
+  const issue = async () => {
+    if (
+      await confirm({
+        title: t('adminIssueConfirm'),
+        message: t('adminIssueConsequence'),
+        confirmLabel: t('adminIssueBill'),
+        danger: false,
+      })
+    ) {
+      save('issued');
+    }
+  };
   const changeStatus = (changes) => run(async () => setInvoiceStatus(invoice.id, changes));
   const remove = () =>
     run(async () => {
@@ -178,7 +194,7 @@ const InvoiceDialog = ({ initial, customers, readonly, onClose, onSaved }) => {
     setLines(lines.map((line, i) => (i === index ? { ...line, ...changes } : line)));
 
   return (
-    <Dialog open onClose={close} maxWidth="md" fullWidth fullScreen={fullScreen}>
+    <Dialog open onClose={keepOnBackdrop(close)} maxWidth="md" fullWidth fullScreen={fullScreen}>
       <DialogTitle>
         <span className={classes.titleRow}>
           <span>
@@ -430,11 +446,7 @@ const InvoiceDialog = ({ initial, customers, readonly, onClose, onSaved }) => {
             <Button variant="outlined" onClick={() => save()} disabled={busy || !valid}>
               {t('adminSaveDraft')}
             </Button>
-            <Button
-              variant="contained"
-              onClick={() => save('issued')}
-              disabled={busy || !valid || !lines.length}
-            >
+            <Button variant="contained" onClick={issue} disabled={busy || !valid || !lines.length}>
               {t('adminIssueInvoice')}
             </Button>
           </>

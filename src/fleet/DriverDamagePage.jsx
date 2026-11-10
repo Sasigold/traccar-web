@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   Alert,
   Button,
+  LinearProgress,
+  Stack,
   Paper,
   Step,
   StepLabel,
@@ -22,18 +24,20 @@ import NoCrashRoundedIcon from '@mui/icons-material/NoCrashRounded';
 import BrokenImageRoundedIcon from '@mui/icons-material/BrokenImageRounded';
 import WindowRoundedIcon from '@mui/icons-material/WindowRounded';
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
+import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
+import MyLocationRoundedIcon from '@mui/icons-material/MyLocationRounded';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import { DateTimeField } from '../common/components/pickers';
 import { useCatch } from '../reactHelper';
-import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetProfile } from '../common/fleet/useFleet';
 import { fromLocalInput, toLocalInput } from '../common/fleet/incidents';
 import FleetNotice from './components/FleetNotice';
 import DriverDoneCard from './components/DriverDoneCard';
 import useDriverContext from './useDriverContext';
 import { incidentKey } from './IncidentsPage';
-import { uploadFleetFile } from './fleetData';
+import { enqueue, newId, sendItem, shrinkImage } from '../common/fleet/outbox';
+import './driverOutbox';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -210,8 +214,31 @@ const DriverDamagePage = () => {
   const [licensePhoto, setLicensePhoto] = useState([]);
   const [insurancePhoto, setInsurancePhoto] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [savedId, setSavedId] = useState(null);
+  // ADM-10: the report waits in the phone (the outbox) until it is through.
+  const [pending, setPending] = useState(null);
+  const [filesLeft, setFilesLeft] = useState(0);
   const [done, setDone] = useState(null);
+  // ADM-23: "my location now" from the phone, when the vehicle's last position is not where the
+  // driver stands (or there is none).
+  const [here, setHere] = useState(null);
+  const [locating, setLocating] = useState(false);
+  const locate = () => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setHere({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          accuracy: Math.round(coords.accuracy),
+        });
+        setLocating(false);
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: true, timeout: 15000 },
+    );
+  };
+  const photoCount = photos.length + licensePhoto.length + insurancePhoto.length;
 
   const set = (changes) => setReport((current) => ({ ...current, ...changes }));
   const setPartyField = (key) => (event) => setParty({ ...party, [key]: event.target.value });
@@ -220,14 +247,43 @@ const DriverDamagePage = () => {
   const submit = useCatch(async () => {
     setSaving(true);
     try {
-      const client = getFleetClient();
-      // The report is created once: a retry after a failed upload adds the files to it.
-      let incidentId = savedId;
-      if (!incidentId) {
-        const saved = unwrap(
-          await client
-            .from('incidents')
-            .insert({
+      // The report is put in the outbox once; pressing again only retries what is left.
+      let item = pending;
+      if (!item) {
+        const incidentId = newId();
+        const files = await Promise.all(
+          [
+            ...photos.map((file) => [file, file.name]),
+            ...licensePhoto.map((file) => [file, `party-license-${file.name}`]),
+            ...insurancePhoto.map((file) => [file, `party-insurance-${file.name}`]),
+          ].map(async ([file, label]) => {
+            const small = await shrinkImage(file);
+            return {
+              blob: small,
+              name: small.name,
+              type: small.type,
+              label,
+              lastModified: file.lastModified,
+            };
+          }),
+        );
+        // The third party's row (named apart from the form state `party` it is made from).
+        const partyRow = partyInvolved
+          ? {
+              id: newId(),
+              org_id: profile.org_id,
+              incident_id: incidentId,
+              role: 'third_party',
+              ...Object.fromEntries(
+                Object.entries(party).map(([key, value]) => [key, value.trim() || null]),
+              ),
+            }
+          : null;
+        item = await enqueue(
+          'damage',
+          {
+            incident: {
+              id: incidentId,
               org_id: profile.org_id,
               vehicle_id: assignment.vehicle_id,
               driver_id: context.driver.id,
@@ -235,48 +291,27 @@ const DriverDamagePage = () => {
               type: report.type,
               injuries: Boolean(report.injuries),
               description: report.description.trim() || null,
-              latitude: position?.latitude ?? null,
-              longitude: position?.longitude ?? null,
+              latitude: here?.latitude ?? position?.latitude ?? null,
+              longitude: here?.longitude ?? position?.longitude ?? null,
               address: place.trim() || null,
               reported_by: profile.id,
-            })
-            .select('id')
-            .single(),
+            },
+            party: partyRow,
+          },
+          files,
+          { ownerId: profile.id },
         );
-        incidentId = saved.id;
-        setSavedId(incidentId);
-        if (partyInvolved) {
-          const filled = Object.fromEntries(
-            Object.entries(party).map(([key, value]) => [key, value.trim() || null]),
-          );
-          unwrap(
-            await client.from('incident_parties').insert({
-              org_id: profile.org_id,
-              incident_id: incidentId,
-              role: 'third_party',
-              ...filled,
-            }),
-          );
-        }
+        setPending(item);
       }
-      const files = [
-        ...photos.map((file) => [file, file.name]),
-        ...licensePhoto.map((file) => [file, `party-license-${file.name}`]),
-        ...insurancePhoto.map((file) => [file, `party-insurance-${file.name}`]),
-      ];
-      for (const [file, name] of files) {
-        const path = await uploadFleetFile(profile.org_id, 'incidents', file);
-        unwrap(
-          await client.from('incident_photos').insert({
-            org_id: profile.org_id,
-            incident_id: incidentId,
-            storage_path: path,
-            file_name: name,
-            taken_at: file.lastModified ? new Date(file.lastModified).toISOString() : null,
-          }),
-        );
+      const result = await sendItem(item);
+      if (result.sent) {
+        setDone({ time: new Date(), queued: false });
+      } else if (!result.item?.saved) {
+        // No line: the report stays in the phone and goes when there is one.
+        setDone({ time: new Date(), queued: true });
+      } else {
+        setFilesLeft(result.filesLeft);
       }
-      setDone(new Date());
     } finally {
       setSaving(false);
     }
@@ -294,7 +329,13 @@ const DriverDamagePage = () => {
       );
     }
     if (done) {
-      return <DriverDoneCard titleKey="driverDamageSent" time={done} />;
+      return done.queued ? (
+        <DriverDoneCard titleKey="driverDamageQueued" time={done.time} pending>
+          <Typography color="textSecondary">{t('driverDamageQueuedText')}</Typography>
+        </DriverDoneCard>
+      ) : (
+        <DriverDoneCard titleKey="driverDamageSent" time={done.time} />
+      );
     }
 
     const stepValid = [
@@ -368,7 +409,29 @@ const DriverDamagePage = () => {
                 <ToggleButton value>{t('sharedYes')}</ToggleButton>
                 <ToggleButton value={false}>{t('sharedNo')}</ToggleButton>
               </ToggleButtonGroup>
-              {report.injuries && <Alert severity="error">{t('driverDamageCallHelp')}</Alert>}
+              {report.injuries && (
+                // ADM-23: stays on screen with the numbers to dial.
+                <Alert severity="error" role="alert">
+                  {t('driverDamageCallHelp')}
+                  <Stack direction="row" spacing={1} useFlexGap sx={{ mt: 1, flexWrap: 'wrap' }}>
+                    {[
+                      ['101', 'driverDamageCallMda'],
+                      ['100', 'driverDamageCallPolice'],
+                    ].map(([number, key]) => (
+                      <Button
+                        key={number}
+                        color="inherit"
+                        variant="outlined"
+                        startIcon={<PhoneRoundedIcon />}
+                        href={`tel:${number}`}
+                        sx={{ whiteSpace: 'nowrap' }}
+                      >
+                        {t(key)}
+                      </Button>
+                    ))}
+                  </Stack>
+                </Alert>
+              )}
               <DateTimeField
                 label={t('fleetIncidentOccurred')}
                 value={report.occurred_at}
@@ -379,9 +442,24 @@ const DriverDamagePage = () => {
               <TextField
                 label={t('positionAddress')}
                 value={place}
-                helperText={position ? t('driverDamagePlaceHelp') : undefined}
+                helperText={
+                  here
+                    ? t('driverDamageHereSet').replace('{0}', here.accuracy)
+                    : position
+                      ? t('driverDamagePlaceHelp')
+                      : undefined
+                }
                 onChange={(event) => set({ address: event.target.value })}
               />
+              <Button
+                variant="outlined"
+                startIcon={<MyLocationRoundedIcon />}
+                onClick={locate}
+                loading={locating}
+                sx={{ alignSelf: 'flex-start' }}
+              >
+                {t('driverDamageMyLocation')}
+              </Button>
               <TextField
                 label={t('driverDamageDescription')}
                 value={report.description}
@@ -451,7 +529,19 @@ const DriverDamagePage = () => {
                   />
                 </>
               )}
-              {savedId && <Alert severity="warning">{t('driverDamagePartial')}</Alert>}
+              {saving && photoCount > 0 && (
+                <div role="status">
+                  <Typography variant="body2" gutterBottom>
+                    {t('driverDamageSending').replace('{0}', filesLeft || photoCount)}
+                  </Typography>
+                  <LinearProgress />
+                </div>
+              )}
+              {filesLeft > 0 && (
+                <Alert severity="warning" role="alert">
+                  {t('driverDamagePartialCount').replace('{0}', filesLeft)}
+                </Alert>
+              )}
             </>
           )}
         </Paper>
@@ -474,7 +564,7 @@ const DriverDamagePage = () => {
             </Button>
           ) : (
             <Button variant="contained" onClick={submit} disabled={!stepValid || saving}>
-              {t('driverDamageSend')}
+              {t(filesLeft > 0 ? 'driverDamageRetry' : 'driverDamageSend')}
             </Button>
           )}
         </div>

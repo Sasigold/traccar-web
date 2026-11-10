@@ -12,7 +12,7 @@
  *   node deploy/demo-data.mjs clean    delete everything this script created
  *
  * Options (or environment variables):
- *   --url       TRACCAR_URL       web/API address, e.g. http://72.61.153.60:8082
+ *   --url       TRACCAR_URL       web/API address over HTTPS, e.g. https://traccar-staging.example.com
  *   --email     TRACCAR_EMAIL     admin user
  *   --password  TRACCAR_PASSWORD  admin password
  *   --token     TRACCAR_TOKEN     API token instead of email/password
@@ -21,6 +21,8 @@
  *   --interval  seconds between live updates (default 10)
  *   --no-osrm   do not fetch road geometry from router.project-osrm.org
  *   --allow-production   seed the production server anyway (refused by default, FND-04)
+ *   --allow-http         send the credentials over plain HTTP anyway (refused by default, SEC-11;
+ *                        http://localhost is always allowed)
  *
  * Everything created is tagged (uniqueId prefix "demo-il-", attribute demoData=true)
  * so "clean" removes exactly that and nothing else. Requires Node 18+.
@@ -40,6 +42,7 @@ const { values: args, positionals } = parseArgs({
     interval: { type: 'string', default: '10' },
     'no-osrm': { type: 'boolean', default: false },
     'allow-production': { type: 'boolean', default: false },
+    'allow-http': { type: 'boolean', default: false },
     help: { type: 'boolean', short: 'h', default: false },
   },
 });
@@ -62,13 +65,24 @@ const baseUrl = args.url.replace(/\/+$/, '');
 
 // FND-04: demo vehicles on the production server skew the admin KPIs, "devices without a customer"
 // and the billing counts. Use the staging server; production only on explicit request.
-const PRODUCTION_TRACCAR = ['traccar-ovjj.srv2122641.hstgr.cloud', '72.61.153.60:8082'];
+const PRODUCTION_TRACCAR = [
+  'traccar-ovjj.srv2122641.hstgr.cloud',
+  ...(process.env.PRODUCTION_TRACCAR_HOSTS || '').split(',').filter(Boolean),
+];
 const target = new URL(baseUrl);
 const isProduction =
   PRODUCTION_TRACCAR.includes(target.hostname) || PRODUCTION_TRACCAR.includes(target.host);
 if (isProduction && !args['allow-production']) {
   console.error(
     `${target.host} is the production server. Seed the staging server instead, or pass --allow-production.`,
+  );
+  process.exit(1);
+}
+// SEC-11: the admin password (Basic auth) or token must not cross the internet unencrypted.
+const local = ['localhost', '127.0.0.1', '::1'].includes(target.hostname);
+if (target.protocol !== 'https:' && !local && !args['allow-http']) {
+  console.error(
+    `${target.origin} is not HTTPS: the admin credentials would travel unencrypted. Use the HTTPS address, run on the server with http://localhost:8082, or pass --allow-http.`,
   );
   process.exit(1);
 }

@@ -10,16 +10,28 @@ import fetchOrThrow from '../common/util/fetchOrThrow';
 import FormSection from './components/FormSection';
 import FormPage from './components/FormPage';
 import SaveBar from './components/SaveBar';
+import { useConfirm } from '../common/components/confirm/ConfirmProvider';
 
 const AnnouncementPage = () => {
   const navigate = useNavigate();
   const t = useTranslation();
+  const confirm = useConfirm();
 
   const [users, setUsers] = useState([]);
   const [notificator, setNotificator] = useState();
   const [message, setMessage] = useState({});
 
   const handleSend = useCatchCallback(async () => {
+    if (
+      !(await confirm({
+        title: t('announcementSendConfirm').replace('{0}', users.length || t('sharedAll')),
+        message: message.subject,
+        confirmLabel: t('commandSend'),
+        danger: false,
+      }))
+    ) {
+      return;
+    }
     const query = new URLSearchParams();
     users.forEach((userId) => query.append('userId', userId));
     await fetchOrThrow(`api/notifications/send/${notificator}?${query.toString()}`, {
@@ -28,7 +40,7 @@ const AnnouncementPage = () => {
       body: JSON.stringify(message),
     });
     navigate(-1);
-  }, [users, notificator, message, navigate]);
+  }, [users, notificator, message, navigate, confirm, t]);
 
   return (
     <FormPage

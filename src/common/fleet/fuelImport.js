@@ -39,12 +39,12 @@ const normalize = (value) =>
     .trim();
 
 // { field: columnIndex } for the columns whose header matches a hint; each column used once.
-export const guessColumns = (headers) => {
+export const guessColumns = (headers, hints = HINTS) => {
   const mapping = {};
   const used = new Set();
   const names = headers.map(normalize);
   // Longer hints first, so "מחיר לליטר" wins over "מחיר" and "סוג דלק" over "דלק".
-  const pairs = Object.entries(HINTS)
+  const pairs = Object.entries(hints)
     .flatMap(([field, hints]) => hints.map((hint) => [field, normalize(hint)]))
     .sort((a, b) => b[1].length - a[1].length);
   pairs.forEach(([field, hint]) => {

@@ -1,6 +1,6 @@
 import { useMemo, useReducer, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { MenuItem, TextField, Typography } from '@mui/material';
+import { Alert, MenuItem, TextField, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded';
 import { useTranslation } from '../../common/components/LocalizationProvider';
@@ -10,6 +10,7 @@ import { getFleetClient, unwrap } from '../../common/fleet/client';
 import { useFleetPermission, useFleetProfile } from '../../common/fleet/useFleet';
 import FormSection from '../../settings/components/FormSection';
 import { ensureDriver, ensureVehicle } from '../fleetData';
+import { newDriverConflict } from '../../common/fleet/newDriver';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -158,6 +159,15 @@ const DriverAssignmentSection = ({ driver }) => {
           </TextField>
         )}
       </div>
+      {current?.traccar_device_id &&
+        newDriverConflict(driver.attributes, devices[current.traccar_device_id]?.attributes) && (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            {t('newDriverVehicleWarning').replace(
+              '{0}',
+              devices[current.traccar_device_id]?.name || '',
+            )}
+          </Alert>
+        )}
       {!current && !canAssign && (
         <Typography variant="body2" color="textSecondary">
           {t('fleetNoVehicle')}

@@ -40,6 +40,8 @@ import FormSection from './FormSection';
 import { DateField } from '../../common/components/pickers';
 import { formatTime } from '../../common/util/formatter';
 import { formatDays } from '../../common/util/plural';
+import { shrinkImage } from '../../common/fleet/outbox';
+import { isImagePath } from '../../fleet/fleetData';
 
 const useStyles = makeStyles()((theme) => ({
   table: {
@@ -189,10 +191,12 @@ const FleetDocumentsSection = ({ entity, traccarId, name, identifier }) => {
     try {
       const client = getFleetClient();
       const target = await ensureRecord();
-      const path = `${target.org_id}/${folder}/${target.id}/${crypto.randomUUID()}-${safeFileName(form.file.name)}`;
+      // SEC-17: a photo is drawn again before upload (without its GPS position).
+      const file = await shrinkImage(form.file, 2400);
+      const path = `${target.org_id}/${folder}/${target.id}/${crypto.randomUUID()}-${safeFileName(file.name)}`;
       unwrap(
-        await client.storage.from(fleetConfig.bucket).upload(path, form.file, {
-          contentType: form.file.type || 'application/octet-stream',
+        await client.storage.from(fleetConfig.bucket).upload(path, file, {
+          contentType: file.type || 'application/octet-stream',
           upsert: false,
         }),
       );
@@ -222,7 +226,13 @@ const FleetDocumentsSection = ({ entity, traccarId, name, identifier }) => {
   const handleOpen = useCatch(async (document) => {
     const client = getFleetClient();
     const { signedUrl } = unwrap(
-      await client.storage.from(fleetConfig.bucket).createSignedUrl(document.file_path, 120),
+      await client.storage
+        .from(fleetConfig.bucket)
+        .createSignedUrl(
+          document.file_path,
+          120,
+          isImagePath(document.file_path) ? undefined : { download: true },
+        ),
     );
     window.open(signedUrl, '_blank', 'noopener');
   });
@@ -336,6 +346,7 @@ const FleetDocumentsSection = ({ entity, traccarId, name, identifier }) => {
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
                 <DateField
+                  renewal
                   label={t('fleetExpiresAt')}
                   value={form.expires_at}
                   min={form.issued_at}

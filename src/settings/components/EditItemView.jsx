@@ -1,5 +1,15 @@
 import { useState } from 'react';
+import { useTranslation } from '../../common/components/LocalizationProvider';
+import { useConfirm } from '../../common/components/confirm/ConfirmProvider';
+import {
+  discardUnsavedChanges,
+  goBack,
+  useFormChanges,
+  useLeaveGuard,
+} from '../../common/components/confirm/unsavedChanges';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { messagesActions } from '../../store';
 import { Skeleton } from '@mui/material';
 import { useCatch, useAsyncTask } from '../../reactHelper';
 import fetchOrThrow from '../../common/util/fetchOrThrow';
@@ -24,6 +34,11 @@ const EditItemView = ({
 
   const { id } = useParams();
   const [saving, setSaving] = useState(false);
+  const t = useTranslation();
+  const dispatch = useDispatch();
+  const leave = useLeaveGuard(useConfirm(), t);
+  // ADM-05: anything different from the item as loaded is an unsaved change.
+  useFormChanges(item, Boolean(item));
 
   useAsyncTask(
     async ({ signal }) => {
@@ -53,10 +68,20 @@ const EditItemView = ({
         body: JSON.stringify(item),
       });
 
+      const saved = await response.json();
       if (onItemSaved) {
-        await onItemSaved(await response.json());
+        await onItemSaved(saved);
       }
-      navigate(-1);
+      // ADM-28: the save says what was saved, by name.
+      const name = item.name || item.description || saved?.name || saved?.description;
+      dispatch(
+        messagesActions.push({
+          message: name ? t('sharedSavedNamed').replace('{0}', name) : t('sharedSaved'),
+          severity: 'success',
+        }),
+      );
+      discardUnsavedChanges();
+      goBack(navigate);
     } finally {
       setSaving(false);
     }
@@ -70,7 +95,7 @@ const EditItemView = ({
       description={description}
       footer={
         <SaveBar
-          onCancel={() => navigate(-1)}
+          onCancel={() => leave(() => goBack(navigate))}
           onSave={handleSave}
           saving={saving}
           disabled={!item || !validate()}

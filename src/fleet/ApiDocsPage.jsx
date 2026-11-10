@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Button,
-  IconButton,
   Link,
   MenuItem,
   Table,
@@ -11,7 +10,6 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Tooltip,
   Typography,
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
@@ -21,6 +19,7 @@ import FileDownloadRoundedIcon from '@mui/icons-material/FileDownloadRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded';
 import TableChartRoundedIcon from '@mui/icons-material/TableChartRounded';
+import { downloadJson } from '../common/util/downloadFile';
 import { useLocalization, useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import SettingsMenu from '../settings/components/SettingsMenu';
@@ -32,6 +31,7 @@ import { useFleetPermission } from '../common/fleet/useFleet';
 import { RESOURCES } from '../../supabase/functions/public-api/resources.js';
 import { buildOpenApi } from '../../supabase/functions/public-api/openapi.js';
 import { apiBaseUrl, apiLimits, curlExample, powerBiQuery } from './apiDocs';
+import CopyButton from '../common/components/CopyButton';
 
 const useStyles = makeStyles()((theme) => ({
   page: {
@@ -128,15 +128,7 @@ const CodeBlock = ({ code, label }) => {
   );
 };
 
-const download = (name, value) => {
-  const blob = new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = name;
-  anchor.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-};
+const download = downloadJson;
 
 // /fleet/integrations/api (INT-01): how to read the fleet data from Power BI, Excel or another
 // system with an API key, the resources, the limits and the OpenAPI document.
@@ -207,15 +199,7 @@ const ApiDocsPage = () => {
               <Typography className={classes.inline} dir="ltr">
                 {base}
               </Typography>
-              <Tooltip title={t('sharedCopy')}>
-                <IconButton
-                  size="small"
-                  aria-label={t('sharedCopy')}
-                  onClick={() => navigator.clipboard?.writeText(base)}
-                >
-                  <ContentCopyRoundedIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
+              <CopyButton icon text={base} />
             </div>
           </div>
           <CodeBlock label={t('apiDocsExample')} code={curlExample(base, resource)} />

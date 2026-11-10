@@ -6,7 +6,8 @@
 # The database container is found by its image (supabase/postgres).
 set -eu
 
-HOST="${DEPLOY_HOST:-root@72.61.153.60}"
+# SEC-21: no address in the repository; set DEPLOY_HOST=user@address (or use ~/.ssh/config).
+HOST="${DEPLOY_HOST:?Set DEPLOY_HOST=user@address of the VPS}"
 
 cd "$(dirname "$0")/.."
 . deploy/lib.sh

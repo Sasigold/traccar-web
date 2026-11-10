@@ -1,8 +1,16 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
-import { IconButton, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import {
+  FormControlLabel,
+  IconButton,
+  Switch,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from '@mui/material';
 import GpsFixedIcon from '@mui/icons-material/GpsFixedRounded';
 import LocationSearchingIcon from '@mui/icons-material/LocationSearchingRounded';
 import {
@@ -14,6 +22,8 @@ import {
 } from '../common/util/formatter';
 import ReportFilter from './components/ReportFilter';
 import { useAttributePreference, usePreference } from '../common/util/preferences';
+import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
+import { stopReplayLink } from './components/reportLinks';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import ReportsMenu from './components/ReportsMenu';
@@ -28,7 +38,7 @@ import useReportStyles from './common/useReportStyles';
 import MapMarkers from '../map/MapMarkers';
 import MapView from '../map/core/MapView';
 import MapCamera from '../map/MapCamera';
-import AddressValue from '../common/components/AddressValue';
+import AddressValue, { AllAddressesButton } from '../common/components/AddressValue';
 import TableShimmer from '../common/components/TableShimmer';
 import {
   ReportEmptyRow,
@@ -47,6 +57,11 @@ import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import exportExcel from '../common/util/exportExcel';
 import { deviceEquality } from '../common/util/deviceEquality';
+import VehicleCell from './components/VehicleCell';
+import { vehicleName, vehicleTitle } from './common/vehicle';
+import useSelectedRow from './common/useSelectedRow';
+import { STOP_MINIMUMS, filterStops } from './common/reportRules';
+import SelectField from '../common/components/SelectField';
 
 const columnsArray = [
   ['startTime', 'reportStartTime'],
@@ -80,10 +95,18 @@ const StopReportPage = () => {
     'startOdometer',
     'address',
   ]);
-  const [items, setItems] = useState([]);
+  const [allItems, setAllItems] = useState([]);
+  // REP-14: short stops at lights drown the idling; a minimum and "idling only" filter them.
+  const [minMinutes, setMinMinutes] = usePersistedState('stopMinMinutes', 0);
+  const [idleOnly, setIdleOnly] = usePersistedState('stopIdleOnly', false);
+  const items = useMemo(
+    () => filterStops(allItems, { minMinutes, idleOnly }),
+    [allItems, minMinutes, idleOnly],
+  );
   const [loading, setLoading] = useState(false);
   const [queried, setQueried] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const selectedRowRef = useSelectedRow(selectedItem);
   const [hiddenRows, setHiddenRows] = useState(0);
 
   const onShow = useCatchCallback(async ({ deviceIds, groupIds, from, to }) => {
@@ -102,7 +125,7 @@ const StopReportPage = () => {
         from,
         to,
       });
-      setItems(result.rows);
+      setAllItems(result.rows);
       setHiddenRows(result.hidden);
     } finally {
       setLoading(false);
@@ -115,7 +138,7 @@ const StopReportPage = () => {
     items.forEach((item) => {
       // One sheet per vehicle, keyed by id: two vehicles with the same name stay apart.
       if (!sheets.has(item.deviceId)) {
-        sheets.set(item.deviceId, { title: devices[item.deviceId].name, rows: [] });
+        sheets.set(item.deviceId, { title: vehicleTitle(devices, item.deviceId), rows: [] });
       }
       const row = {};
       columns.forEach((key) => {
@@ -165,7 +188,7 @@ const StopReportPage = () => {
     sort,
     toggle: toggleSort,
   } = useReportSort('stops', items, (item, sortKey) =>
-    sortKey === 'deviceId' ? devices[item.deviceId]?.name : item[sortKey],
+    sortKey === 'deviceId' ? vehicleName(devices, item.deviceId) : item[sortKey],
   );
 
   const formatValue = (item, key) => {
@@ -175,7 +198,7 @@ const StopReportPage = () => {
     const value = item[key];
     switch (key) {
       case 'deviceId':
-        return devices[value].name;
+        return vehicleName(devices, value);
       case 'startTime':
       case 'endTime':
         return formatTime(value, 'minutes');
@@ -233,7 +256,31 @@ const StopReportPage = () => {
               loading={loading}
               formats={['xlsx']}
             >
+              <div className={classes.filterItem}>
+                <SelectField
+                  fullWidth
+                  label={t('reportStopMinimum')}
+                  value={minMinutes}
+                  data={STOP_MINIMUMS.map((value) => ({
+                    id: value,
+                    name: value ? t('reportStopAtLeast').replace('{0}', value) : t('sharedAll'),
+                  }))}
+                  onChange={(event) => setMinMinutes(Number(event.target.value))}
+                />
+              </div>
+              <div className={classes.filterItem}>
+                <FormControlLabel
+                  control={
+                    <Switch checked={idleOnly} onChange={(e) => setIdleOnly(e.target.checked)} />
+                  }
+                  label={t('reportIdleOnly')}
+                />
+              </div>
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
+              <AllAddressesButton
+                className={classes.filterItem}
+                points={columns.includes('address') ? items : []}
+              />
             </ReportFilter>
           </div>
           {!loading && <ReportKpis items={kpis} />}
@@ -249,15 +296,20 @@ const StopReportPage = () => {
                     {t(columnsMap.get(key))}
                   </SortCell>
                 ))}
+                <TableCell className={classes.columnAction} />
               </TableRow>
             </TableHead>
             <TableBody>
               {!loading && queried && !items.length && (
-                <ReportEmptyRow colSpan={columns.length + 2} />
+                <ReportEmptyRow colSpan={columns.length + 3} />
               )}
               {!loading ? (
                 sortedItems.map((item) => (
-                  <TableRow key={item.positionId}>
+                  <TableRow
+                    key={item.positionId}
+                    ref={selectedItem === item ? selectedRowRef : undefined}
+                    className={selectedItem === item ? classes.selectedRow : undefined}
+                  >
                     <TableCell className={classes.columnAction} padding="none">
                       {selectedItem === item ? (
                         <IconButton
@@ -278,19 +330,34 @@ const StopReportPage = () => {
                         </IconButton>
                       )}
                     </TableCell>
-                    <TableCell>{devices[item.deviceId].name}</TableCell>
+                    <TableCell>
+                      <VehicleCell deviceId={item.deviceId} />
+                    </TableCell>
                     {columns.map((key) => (
                       <TableCell key={key}>{formatValue(item, key)}</TableCell>
                     ))}
+                    <TableCell className={classes.columnAction} padding="none">
+                      {/* REP-07: replay from ten minutes before the stop to ten after. */}
+                      <IconButton
+                        size="small"
+                        component={RouterLink}
+                        to={stopReplayLink(item)}
+                        aria-label={t('reportReplayStop')}
+                        disabled={Boolean(item.privacy)}
+                      >
+                        <ReplayRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
-                <TableShimmer columns={columns.length + 2} startAction />
+                <TableShimmer columns={columns.length + 3} startAction endAction />
               )}
             </TableBody>
             {!loading && (
               <ReportTotalsRow
                 leading={2}
+                trailing={1}
                 columns={columns}
                 spec={TOTALS}
                 items={items}

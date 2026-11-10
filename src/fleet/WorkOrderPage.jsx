@@ -17,6 +17,8 @@ import {
   Typography,
 } from '@mui/material';
 import ResponsiveTable from '../common/components/table/ResponsiveTable';
+import ScanDocumentButton from './components/ScanDocumentButton';
+import { invoiceValues } from '../common/fleet/documentScan';
 import { makeStyles } from 'tss-react/mui';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
@@ -44,11 +46,27 @@ import {
 import { maintenanceStatus } from '../common/fleet/maintenanceStatus';
 import { garageLicenseIssue } from '../common/fleet/safetyOfficer';
 import FleetNotice from './components/FleetNotice';
+import { useConfirm } from '../common/components/confirm/ConfirmProvider';
+import {
+  discardUnsavedChanges,
+  goBack,
+  useFormChanges,
+  useLeaveGuard,
+} from '../common/components/confirm/unsavedChanges';
 import { VendorDialog } from './VendorsPage';
 import { workOrderStatusKey, workOrderTypeKey } from './WorkOrdersPage';
-import { ensureVehicle, money, openFleetFile, uploadFleetFile, useVendors } from './fleetData';
+import {
+  ensureVehicle,
+  FILES_BUCKET,
+  money,
+  openFleetFile,
+  uploadFleetFile,
+  useVendors,
+} from './fleetData';
+import { fleetSave, withUploadedFile } from '../common/fleet/fleetSave';
 import { loadMaintenanceLinks, markMaintenanceDone } from './maintenance';
 import { DateField } from '../common/components/pickers';
+import WazeButton from '../common/components/WazeButton';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -110,7 +128,8 @@ const WorkOrderPage = () => {
 
   const [order, setOrder] = useState(null);
   // Only licensed garages (regulation 585): warn when the chosen one is not known to be.
-  const garageIssue = garageLicenseIssue(vendors.find((vendor) => vendor.id === order?.vendor_id));
+  const selectedVendor = vendors.find((vendor) => vendor.id === order?.vendor_id);
+  const garageIssue = garageLicenseIssue(selectedVendor);
   const [items, setItems] = useState([]);
   const [deviceId, setDeviceId] = useState(searchParams.get('deviceId') || '');
   const [invoice, setInvoice] = useState(null);
@@ -123,7 +142,13 @@ const WorkOrderPage = () => {
       return;
     }
     if (!id) {
-      setOrder({ title: '', type: 'service', status: 'open', notes: '' });
+      // AI-03: a fault card opens a repair order with its title and notes filled in.
+      setOrder({
+        title: searchParams.get('title') || '',
+        type: searchParams.get('type') === 'repair' ? 'repair' : 'service',
+        status: 'open',
+        notes: searchParams.get('notes') || '',
+      });
       setItems([emptyItem()]);
       return;
     }
@@ -141,6 +166,7 @@ const WorkOrderPage = () => {
     setOrder(row);
     setDeviceId(String(row.vehicles?.traccar_device_id || ''));
     setItems((lines || []).map((line) => ({ ...line, key: line.id })));
+    // eslint-disable-next-line @eslint-react/exhaustive-deps -- the address fills a new order once
   }, [id, canRead]);
 
   // Traccar maintenance linked to the chosen vehicle, offered for reset when closing.
@@ -186,57 +212,51 @@ const WorkOrderPage = () => {
 
   const closing = order && order.status === 'done' && order.closed_at == null;
 
+  // ADM-05: unsaved changes are asked about before leaving.
+  const leave = useLeaveGuard(useConfirm(), t);
+  useFormChanges({ order, items, deviceId, invoice: invoice?.name, resetIds }, Boolean(order));
+
   const handleSave = useCatch(async () => {
     setSaving(true);
     try {
-      const client = getFleetClient();
       const vehicleId = await ensureVehicle(devices[deviceId], profile);
-      let invoicePath = order.invoice_path || null;
-      if (invoice) {
-        invoicePath = await uploadFleetFile(profile.org_id, 'work-orders', invoice);
-      }
       const original = id ? order : {};
-      const payload = {
-        vehicle_id: vehicleId,
-        vendor_id: order.vendor_id || null,
-        title: order.title.trim(),
-        type: order.type,
-        scheduled_at: order.scheduled_at || null,
-        odometer_km: order.odometer_km === '' ? null : (order.odometer_km ?? null),
-        engine_hours: order.engine_hours === '' ? null : (order.engine_hours ?? null),
-        invoice_number: order.invoice_number || null,
-        invoice_path: invoicePath,
-        notes: order.notes || null,
-        ...statusChange(original, order.status),
-        ...(resetIds.length && { traccar_maintenance_id: resetIds[0] }),
-      };
-      const saved = id
-        ? unwrap(
-            await client.from('work_orders').update(payload).eq('id', id).select('id').single(),
-          )
-        : unwrap(
-            await client
-              .from('work_orders')
-              .insert({ ...payload, org_id: profile.org_id, created_by: profile.id })
-              .select('id')
-              .single(),
-          );
-      // Lines are replaced as a whole; the database recomputes the total.
-      unwrap(await client.from('work_order_items').delete().eq('work_order_id', saved.id));
       const lines = items
         .filter((item) => item.description.trim())
-        .map((item, index) => ({
-          org_id: profile.org_id,
-          work_order_id: saved.id,
+        .map((item) => ({
           kind: item.kind,
           description: item.description.trim(),
           quantity: Number(item.quantity) || 0,
           unit_price: Number(item.unit_price) || 0,
-          sort_order: index,
         }));
-      if (lines.length) {
-        unwrap(await client.from('work_order_items').insert(lines));
-      }
+      // ARC-05: the order and its lines in one transaction; a new invoice file is removed again
+      // if the save fails.
+      await withUploadedFile(
+        async () => (invoice ? uploadFleetFile(profile.org_id, 'work-orders', invoice) : null),
+        (path) => getFleetClient().storage.from(FILES_BUCKET).remove([path]),
+        async (uploaded) => {
+          const payload = {
+            vehicle_id: vehicleId,
+            vendor_id: order.vendor_id || null,
+            title: order.title.trim(),
+            type: order.type,
+            scheduled_at: order.scheduled_at || null,
+            odometer_km: order.odometer_km === '' ? null : (order.odometer_km ?? null),
+            engine_hours: order.engine_hours === '' ? null : (order.engine_hours ?? null),
+            invoice_number: order.invoice_number || null,
+            invoice_path: uploaded || order.invoice_path || null,
+            notes: order.notes || null,
+            ...statusChange(original, order.status),
+            ...(resetIds.length && { traccar_maintenance_id: resetIds[0] }),
+          };
+          return fleetSave(
+            'work_order',
+            id,
+            id ? payload : { ...payload, org_id: profile.org_id, created_by: profile.id },
+            lines,
+          );
+        },
+      );
       for (const maintenanceId of resetIds) {
         const target = maintenance.find((it) => it.id === maintenanceId);
         const state = maintenanceStatus(target, positions[deviceId]);
@@ -244,6 +264,7 @@ const WorkOrderPage = () => {
           await markMaintenanceDone(target, state.current);
         }
       }
+      discardUnsavedChanges();
       navigate('/fleet/work-orders');
     } finally {
       setSaving(false);
@@ -260,7 +281,7 @@ const WorkOrderPage = () => {
       footer={
         canWrite && (
           <SaveBar
-            onCancel={() => navigate(-1)}
+            onCancel={() => leave(() => goBack(navigate))}
             onSave={handleSave}
             saving={saving}
             disabled={!valid}
@@ -329,6 +350,13 @@ const WorkOrderPage = () => {
                     </MenuItem>
                   ))}
                 </TextField>
+                {selectedVendor?.address && (
+                  <WazeButton
+                    size="medium"
+                    place={{ address: selectedVendor.address }}
+                    label={selectedVendor.name}
+                  />
+                )}
                 {canWrite && (
                   <Tooltip title={t('fleetVendorAdd')}>
                     <IconButton
@@ -474,6 +502,23 @@ const WorkOrderPage = () => {
               {t('fleetWorkOrderTotal')}: {money(itemsTotal(items))}
             </Typography>
             <div className={classes.grid}>
+              {canWrite && (
+                <ScanDocumentButton
+                  kind="garage_invoice"
+                  label={t('scanGarageInvoice')}
+                  onApply={({ fields }, file) => {
+                    // AI-04: the invoice's lines replace empty lines; the photo becomes the
+                    // order's invoice file. Saved only with the order.
+                    const scanned = invoiceValues(fields);
+                    setItems((current) => [
+                      ...current.filter((line) => line.description.trim()),
+                      ...scanned.lines,
+                    ]);
+                    if (scanned.invoiceNumber) set({ invoice_number: scanned.invoiceNumber });
+                    setInvoice(file);
+                  }}
+                />
+              )}
               <TextField
                 label={t('fleetInvoiceNumber')}
                 value={order.invoice_number || ''}

@@ -6,6 +6,9 @@ import {
   OutlinedInput,
   InputAdornment,
   Popover,
+  Popper,
+  Paper,
+  ClickAwayListener,
   FormControl,
   InputLabel,
   Select,
@@ -31,6 +34,7 @@ import { useTranslation } from '../common/components/LocalizationProvider';
 import { useDeviceReadonly } from '../common/util/permissions';
 import DeviceRow from './DeviceRow';
 import { tokenizeSearch } from '../common/util/deviceSearch';
+import SavedViews from './components/SavedViews';
 
 const useStyles = makeStyles()((theme) => ({
   toolbar: {
@@ -108,6 +112,9 @@ const useStyles = makeStyles()((theme) => ({
   filterTitle: {
     fontWeight: 700,
   },
+  quickResults: {
+    zIndex: theme.zIndex.modal,
+  },
   more: {
     justifyContent: 'center',
     borderRadius: theme.tokens.radius.md,
@@ -142,6 +149,7 @@ const MainToolbar = ({
 
   const toolbarRef = useRef();
   const inputRef = useRef();
+  const quickRef = useRef(null);
   const [filterAnchorEl, setFilterAnchorEl] = useState(null);
   const [devicesAnchorEl, setDevicesAnchorEl] = useState(null);
   const tokens = useMemo(() => tokenizeSearch(keyword), [keyword]);
@@ -173,7 +181,16 @@ const MainToolbar = ({
         value={keyword}
         onChange={(e) => setKeyword(e.target.value)}
         onFocus={() => setDevicesAnchorEl(toolbarRef.current)}
-        onBlur={() => setDevicesAnchorEl(null)}
+        // LIV-30: a tap on a result must not close the list first. Leaving by keyboard closes it
+        // here; a press outside closes it in the ClickAwayListener below.
+        onBlur={(event) => {
+          if (event.relatedTarget && !quickRef.current?.contains(event.relatedTarget)) {
+            setDevicesAnchorEl(null);
+          }
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') setDevicesAnchorEl(null);
+        }}
         startAdornment={
           <InputAdornment position="start">
             <SearchRoundedIcon fontSize="small" className={classes.searchIcon} />
@@ -197,42 +214,55 @@ const MainToolbar = ({
         size="small"
         fullWidth
       />
-      <Popover
-        open={!!devicesAnchorEl && !devicesOpen}
+      <Popper
+        open={!!devicesAnchorEl && !devicesOpen && filteredDevices.length > 0}
         anchorEl={devicesAnchorEl}
-        onClose={() => setDevicesAnchorEl(null)}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: Number(theme.spacing(2).slice(0, -2)),
-        }}
-        marginThreshold={0}
-        slotProps={{
-          paper: {
-            className: classes.popover,
-            style: { width: `calc(${toolbarRef.current?.clientWidth}px - ${theme.spacing(4)})` },
-          },
-        }}
-        elevation={1}
-        disableAutoFocus
-        disableEnforceFocus
+        placement="bottom"
+        className={classes.quickResults}
+        modifiers={[{ name: 'offset', options: { offset: [0, 4] } }]}
       >
-        {filteredDevices.slice(0, 3).map((_, index) => (
-          <DeviceRow
-            key={filteredDevices[index].id}
-            devices={filteredDevices}
-            tokens={tokens}
-            index={index}
-          />
-        ))}
-        {filteredDevices.length > 3 && (
-          <ListItemButton className={classes.more} onClick={() => setDevicesOpen(true)}>
-            <ListItemText
-              primary={t('notificationAlways')}
-              slotProps={{ primary: { align: 'center', fontWeight: 600 } }}
-            />
-          </ListItemButton>
-        )}
-      </Popover>
+        <ClickAwayListener
+          mouseEvent="onPointerDown"
+          touchEvent={false}
+          onClickAway={(event) => {
+            if (!toolbarRef.current?.contains(event.target)) setDevicesAnchorEl(null);
+          }}
+        >
+          <Paper
+            ref={quickRef}
+            elevation={1}
+            className={classes.popover}
+            style={{ width: `calc(${toolbarRef.current?.clientWidth}px - ${theme.spacing(4)})` }}
+            // Picking a vehicle closes the list.
+            onClick={(event) => {
+              if (event.target.closest('[data-row]')) setDevicesAnchorEl(null);
+            }}
+          >
+            {filteredDevices.slice(0, 3).map((_, index) => (
+              <DeviceRow
+                key={filteredDevices[index].id}
+                devices={filteredDevices}
+                tokens={tokens}
+                index={index}
+              />
+            ))}
+            {filteredDevices.length > 3 && (
+              <ListItemButton
+                className={classes.more}
+                onClick={() => {
+                  setDevicesAnchorEl(null);
+                  setDevicesOpen(true);
+                }}
+              >
+                <ListItemText
+                  primary={t('deviceShowAllResults').replace('{0}', filteredDevices.length)}
+                  slotProps={{ primary: { align: 'center', fontWeight: 600 } }}
+                />
+              </ListItemButton>
+            )}
+          </Paper>
+        </ClickAwayListener>
+      </Popper>
       <Popover
         open={!!filterAnchorEl}
         anchorEl={filterAnchorEl}
@@ -302,11 +332,14 @@ const MainToolbar = ({
             </Select>
           </FormControl>
           <FormControl>
-            <InputLabel id="main-toolbar-shared-sort-by-label">{t('sharedSortBy')}</InputLabel>
+            <InputLabel id="main-toolbar-shared-sort-by-label" shrink>
+              {t('sharedSortBy')}
+            </InputLabel>
             <Select
               labelId="main-toolbar-shared-sort-by-label"
               label={t('sharedSortBy')}
               value={filterSort}
+              displayEmpty
               onChange={(e) => setFilterSort(e.target.value)}
             >
               <MenuItem value="">{' '}</MenuItem>
@@ -322,6 +355,14 @@ const MainToolbar = ({
               label={t('sharedFilterMap')}
             />
           </FormGroup>
+          <SavedViews
+            filter={filter}
+            setFilter={setFilter}
+            filterSort={filterSort}
+            setFilterSort={setFilterSort}
+            filterMap={filterMap}
+            setFilterMap={setFilterMap}
+          />
         </div>
       </Popover>
       <Tooltip

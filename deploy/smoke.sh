@@ -32,4 +32,13 @@ case "$status" in
   *) echo "$script answers HTTP ${status%% *}."; exit 1 ;;
 esac
 
+# SEC-10: the security headers come from the reverse proxy (deploy/SECURITY-HEADERS.md). Missing
+# ones are reported, not fatal, until the proxy is configured.
+headers=$(curl -sSI --max-time 30 "$SITE/" | tr -d '\r' | tr 'A-Z' 'a-z')
+missing=""
+for name in content-security-policy strict-transport-security x-content-type-options x-frame-options referrer-policy; do
+  printf '%s' "$headers" | grep -q "^$name:" || missing="$missing $name"
+done
+[ -z "$missing" ] || echo "Warning: security headers missing:$missing (see deploy/SECURITY-HEADERS.md)."
+
 echo "Serving $served; $script loads (${status#* } bytes)."

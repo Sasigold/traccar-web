@@ -1,25 +1,24 @@
-import { useState } from 'react';
-import { getFleetClient, unwrap } from '../common/fleet/client';
-import { useAsyncTask } from '../reactHelper';
+import { useFleetQuery } from '../common/data/fleetQuery';
 
-// Rows of a fleet database table, reloaded when reloadKey changes; null while loading.
+// Rows of a fleet database table through the shared cache (ARC-06): two screens asking for the
+// same rows share one request. Reloaded when reloadKey changes; null while loading.
 export const useFleetRows = (
   table,
   { select = '*', order, ascending = true, enabled, reloadKey = 0 },
 ) => {
-  const [rows, setRows] = useState(null);
-  useAsyncTask(async () => {
-    void reloadKey;
-    if (!enabled) {
-      return;
-    }
-    let query = getFleetClient().from(table).select(select);
-    if (order) {
-      query = query.order(order, { ascending });
-    }
-    setRows(unwrap(await query.limit(1000)) || []);
-  }, [table, select, order, ascending, enabled, reloadKey]);
-  return rows;
+  const { data } = useFleetQuery(
+    table,
+    [select, order ?? null, ascending],
+    (client) => {
+      let query = client.from(table).select(select);
+      if (order) {
+        query = query.order(order, { ascending });
+      }
+      return query;
+    },
+    { enabled, reloadKey, paged: true },
+  );
+  return enabled && data ? data : null;
 };
 
 // Fleet vehicles (with trailers and equipment) and drivers for pickers.

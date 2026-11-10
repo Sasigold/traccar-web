@@ -24,6 +24,7 @@ import { useCatch } from '../../reactHelper';
 import { saveInvoice } from '../adminApi';
 import { buildInvoiceDraft, formatMoney, invoiceTotals, periodFor, toIsoDate } from '../billing';
 import { invoiceLabels } from '../customer/CustomerBilling';
+import { keepOnBackdrop } from '../../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   content: {
@@ -63,7 +64,8 @@ const GenerateBillsDialog = ({ directory, invoices, onClose, onDone }) => {
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [month, setMonth] = useState(() => monthValue(new Date()));
-  const [issue, setIssue] = useState(true);
+  // ADM-08: drafts by default; issuing locks the bills (SEC-09).
+  const [issue, setIssue] = useState(false);
   const [excluded, setExcluded] = useState([]);
   const [busy, setBusy] = useState(false);
 
@@ -128,7 +130,7 @@ const GenerateBillsDialog = ({ directory, invoices, onClose, onDone }) => {
     );
 
   return (
-    <Dialog open onClose={onClose} maxWidth="md" fullWidth fullScreen={fullScreen}>
+    <Dialog open onClose={keepOnBackdrop(onClose)} maxWidth="md" fullWidth fullScreen={fullScreen}>
       <DialogTitle>{t('adminGenerateBills')}</DialogTitle>
       <DialogContent className={classes.content}>
         <Typography variant="body2" color="textSecondary">

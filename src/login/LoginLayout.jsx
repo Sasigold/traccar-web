@@ -126,7 +126,8 @@ const useStyles = makeStyles()((theme) => ({
     borderRadius: '50%',
     backgroundColor: theme.palette.brand.aqua,
     color: alpha(theme.palette.brand.aqua, 0.55),
-    animation: `${pulse} 1.8s ease-out infinite`,
+    // BRD-03: one beat as the screen opens.
+    animation: `${pulse} 1.8s ease-out 600ms 1`,
   },
   brandContent: {
     position: 'relative',
@@ -276,17 +277,6 @@ const useStyles = makeStyles()((theme) => ({
       animation: `${rise} 640ms ${theme.tokens.motion.easing.emphasized} 120ms both`,
     },
   },
-  grabber: {
-    display: 'none',
-    [theme.breakpoints.down('md')]: {
-      display: 'block',
-      width: 40,
-      height: 4,
-      borderRadius: theme.tokens.radius.pill,
-      backgroundColor: theme.palette.surface.borderStrong,
-      marginTop: theme.spacing(0.5),
-    },
-  },
   card: {
     position: 'relative',
     width: '100%',
@@ -414,7 +404,6 @@ const LoginLayout = ({ children, options }) => {
       </section>
 
       <div className={classes.formSide}>
-        <span className={classes.grabber} />
         <Paper className={classes.card} elevation={0}>
           <form>{children}</form>
         </Paper>

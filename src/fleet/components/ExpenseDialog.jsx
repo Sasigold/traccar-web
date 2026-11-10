@@ -17,6 +17,8 @@ import { getFleetClient, unwrap } from '../../common/fleet/client';
 import { useFleetProfile } from '../../common/fleet/useFleet';
 import { ensureVehicle, uploadFleetFile } from '../fleetData';
 import { DateField } from '../../common/components/pickers';
+import { keepOnBackdrop } from '../../common/util/formDialog';
+import MoneyField from '../../common/components/MoneyField';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -96,7 +98,7 @@ const ExpenseDialog = ({ onClose, onSaved }) => {
   const set = (key) => (event) => setForm({ ...form, [key]: event.target.value });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="xs">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="xs">
       <DialogTitle>{t('fleetExpenseAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>
@@ -131,12 +133,10 @@ const ExpenseDialog = ({ onClose, onSaved }) => {
             onChange={set('occurred_at')}
             slotProps={{ inputLabel: { shrink: true } }}
           />
-          <TextField
-            type="number"
+          <MoneyField
             label={t('fleetExpenseAmount')}
             value={form.amount}
             onChange={set('amount')}
-            slotProps={{ htmlInput: { dir: 'ltr', step: 'any' } }}
           />
           <TextField
             label={t('fleetExpenseReference')}

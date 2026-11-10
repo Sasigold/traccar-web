@@ -31,7 +31,8 @@ import PageLayout from '../common/components/PageLayout';
 import DataTable from '../common/components/table/DataTable';
 import TableToolbar from '../common/components/table/TableToolbar';
 import SettingsMenu from '../settings/components/SettingsMenu';
-import { useCatch } from '../reactHelper';
+import { useAsyncTask, useCatch } from '../reactHelper';
+import { fleetConfig } from '../common/fleet/config';
 import { formatTime } from '../common/util/formatter';
 import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
@@ -39,14 +40,15 @@ import {
   API_SCOPES,
   WEBHOOK_ACTIONS,
   WEBHOOK_SOURCES,
-  generateApiKey,
   isValidWebhookUrl,
   keyState,
-  sha256Hex,
   webhookEventKey,
 } from '../common/fleet/integrations';
 import FleetNotice from './components/FleetNotice';
 import { camel, useFleetRows } from './stage5Data';
+import { useConfirm } from '../common/components/confirm/ConfirmProvider';
+import { keepOnBackdrop } from '../common/util/formDialog';
+import CopyButton from '../common/components/CopyButton';
 
 const useStyles = makeStyles()((theme) => ({
   stack: {
@@ -78,31 +80,35 @@ const useStyles = makeStyles()((theme) => ({
 const KeyDialog = ({ onClose, onSaved }) => {
   const { classes } = useStyles();
   const t = useTranslation();
-  const profile = useFleetProfile();
   const [name, setName] = useState('');
   const [scope, setScope] = useState('read');
+  const [months, setMonths] = useState(12);
   const [created, setCreated] = useState(null);
+  const [keptKey, setKeptKey] = useState(false);
 
+  // SEC-22: the key is made on the server (random bytes, stored as a peppered HMAC) and comes
+  // back once; it expires after the chosen months.
   const save = useCatch(async () => {
-    const { key, prefix } = generateApiKey();
-    unwrap(
-      await getFleetClient()
-        .from('api_keys')
-        .insert({
-          org_id: profile.org_id,
-          name: name.trim(),
-          prefix,
-          key_hash: await sha256Hex(key),
-          scopes: scope === 'write' ? ['read', 'write'] : ['read'],
-          created_by: profile.id,
-        }),
+    const expires = new Date();
+    expires.setMonth(expires.getMonth() + months);
+    const result = unwrap(
+      await getFleetClient().rpc('create_api_key', {
+        p_name: name.trim(),
+        p_scopes: scope === 'write' ? ['read', 'write'] : ['read'],
+        p_expires_at: expires.toISOString(),
+      }),
     );
-    setCreated(key);
+    setCreated(result.key);
     onSaved();
   });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog
+      open
+      onClose={created && !keptKey ? undefined : keepOnBackdrop(onClose)}
+      fullWidth
+      maxWidth="sm"
+    >
       <DialogTitle>{t('fleetApiKeyAdd')}</DialogTitle>
       <DialogContent>
         {created ? (
@@ -111,6 +117,15 @@ const KeyDialog = ({ onClose, onSaved }) => {
             <Typography className={classes.code} dir="ltr">
               {created}
             </Typography>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={keptKey}
+                  onChange={(event) => setKeptKey(event.target.checked)}
+                />
+              }
+              label={t('fleetApiKeyKept')}
+            />
           </div>
         ) : (
           <div className={classes.stack}>
@@ -132,16 +147,27 @@ const KeyDialog = ({ onClose, onSaved }) => {
                 </MenuItem>
               ))}
             </TextField>
+            <TextField
+              select
+              label={t('fleetApiKeyExpiry')}
+              value={months}
+              onChange={(event) => setMonths(Number(event.target.value))}
+            >
+              {[3, 6, 12, 24].map((value) => (
+                <MenuItem key={value} value={value}>
+                  {t('fleetApiKeyMonths').replace('{0}', value)}
+                </MenuItem>
+              ))}
+            </TextField>
           </div>
         )}
       </DialogContent>
       <DialogActions>
         {created ? (
           <>
-            <Button onClick={() => navigator.clipboard?.writeText(created)}>
-              {t('sharedCopy')}
-            </Button>
-            <Button variant="contained" onClick={onClose}>
+            <CopyButton text={created} size="medium" />
+            {/* ADM-28: the key is shown once, so closing waits for "I saved it". */}
+            <Button variant="contained" onClick={onClose} disabled={!keptKey}>
               {t('fleetDone')}
             </Button>
           </>
@@ -195,7 +221,7 @@ const WebhookDialog = ({ webhook, onClose, onSaved }) => {
   });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="sm">
       <DialogTitle>{t(form.id ? 'fleetWebhookEdit' : 'fleetWebhookAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.stack}>
@@ -282,6 +308,7 @@ const deliveryColor = { queued: 'default', sending: 'info', sent: 'success', fai
 const IntegrationsPage = () => {
   const { classes } = useStyles();
   const t = useTranslation();
+  const confirm = useConfirm();
   const canManage = useFleetPermission('integrations.manage');
   const [view, setView] = useState('keys');
   const [dialog, setDialog] = useState(null);
@@ -307,12 +334,39 @@ const IntegrationsPage = () => {
     enabled: canManage && view === 'deliveries',
     reloadKey,
   });
+  // ADM-08: keys only work once the public-api gateway (edge function) is installed; its OpenAPI
+  // document needs no key, so it says whether it answers.
+  const [gateway, setGateway] = useState(null);
+  useAsyncTask(
+    async ({ signal }) => {
+      if (!canManage || view !== 'keys') return;
+      try {
+        const response = await fetch(`${fleetConfig.url}/functions/v1/public-api/v1/openapi.json`, {
+          signal,
+        });
+        setGateway(response.ok);
+      } catch {
+        if (!signal.aborted) setGateway(false);
+      }
+    },
+    [canManage, view],
+  );
+
   const webhookName = useMemo(
     () => Object.fromEntries((webhooks || []).map((hook) => [hook.id, hook.name])),
     [webhooks],
   );
 
   const revoke = useCatch(async (key) => {
+    if (
+      !(await confirm({
+        title: t('integrationsRevokeConfirm').replace('{0}', key.name),
+        message: t('integrationsRevokeConsequence'),
+        confirmLabel: t('integrationsRevoke'),
+      }))
+    ) {
+      return;
+    }
     unwrap(
       await getFleetClient()
         .from('api_keys')
@@ -331,6 +385,11 @@ const IntegrationsPage = () => {
       description={t('fleetIntegrationsPageDescription')}
     >
       <FleetNotice permission="integrations.manage" />
+      {view === 'keys' && gateway === false && (
+        <Alert severity="warning" sx={{ mx: 3, mb: 2 }}>
+          {t('fleetApiGatewayMissing')}
+        </Alert>
+      )}
       <DataTable
         toolbar={
           <TableToolbar

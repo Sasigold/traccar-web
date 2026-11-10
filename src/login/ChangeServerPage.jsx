@@ -143,7 +143,7 @@ const ChangeServerPage = () => {
           <span className={classes.iconTile}>
             <VpnLockIcon />
           </span>
-          <Typography variant="h5" className={classes.title}>
+          <Typography variant="h5" component="h1" className={classes.title}>
             {t('settingsServer')}
           </Typography>
           <Autocomplete
@@ -151,7 +151,16 @@ const ChangeServerPage = () => {
             className={classes.field}
             options={officialServers}
             renderInput={(params) => (
-              <TextField {...params} label={t('settingsServer')} error={invalid} />
+              <TextField
+                {...params}
+                label={t('settingsServer')}
+                error={invalid}
+                slotProps={{
+                  ...params.slotProps,
+                  // LIV-20: an address reads left to right.
+                  htmlInput: { ...params.slotProps?.htmlInput, dir: 'ltr', inputMode: 'url' },
+                }}
+              />
             )}
             value={currentServer}
             onChange={(_, value) =>

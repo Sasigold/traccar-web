@@ -1,9 +1,12 @@
+import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { beat } from '../common/theme/motion';
 import { makeStyles } from 'tss-react/mui';
 import { keyframes } from 'tss-react';
 import { alpha } from '@mui/material/styles';
 import {
   Tooltip,
+  Chip,
   Avatar,
   ListItemAvatar,
   ListItemText,
@@ -11,6 +14,7 @@ import {
   Typography,
 } from '@mui/material';
 import BatteryFullIcon from '@mui/icons-material/BatteryFullRounded';
+import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFullRounded';
 import Battery60Icon from '@mui/icons-material/Battery60Rounded';
 import BatteryCharging60Icon from '@mui/icons-material/BatteryCharging60Rounded';
@@ -90,6 +94,12 @@ const useStyles = makeStyles()((theme) => ({
     borderRadius: '50%',
     border: `2px solid ${theme.palette.background.paper}`,
   },
+  favorite: {
+    fontSize: 16,
+    verticalAlign: 'text-bottom',
+    marginInlineEnd: theme.spacing(0.5),
+    color: theme.palette.primary.main,
+  },
   primaryText: {
     fontWeight: 600,
     fontSize: '0.9375rem',
@@ -125,6 +135,21 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     gap: 4,
     flexShrink: 0,
+  },
+  // LIV-30: the battery level is also written, not only drawn.
+  batteryText: {
+    fontSize: '0.6875rem',
+    fontWeight: 600,
+    paddingInlineEnd: 4,
+    fontVariantNumeric: 'tabular-nums',
+  },
+  batteryIndicator: {
+    width: 'auto',
+    minWidth: 30,
+  },
+  disabledChip: {
+    height: 22,
+    fontSize: '0.6875rem',
   },
   indicator: {
     display: 'inline-flex',
@@ -215,7 +240,7 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const DeviceRow = ({ devices, tokens = [], index, style }) => {
+const DeviceRow = ({ devices, tokens = [], favorites = [], index, style, focusIndex }) => {
   const { classes, cx, theme } = useStyles();
   const dispatch = useDispatch();
   const t = useTranslation();
@@ -311,6 +336,41 @@ const DeviceRow = ({ devices, tokens = [], index, style }) => {
     );
   };
 
+  // LIV-30: one spoken label for the row's indicators (tooltips only help a mouse).
+  const alarmLabel =
+    position?.attributes.hasOwnProperty('alarm') &&
+    `${t('eventAlarm')}: ${formatAlarm(position.attributes.alarm, t)}`;
+  const ignitionLabel =
+    position?.attributes.hasOwnProperty('ignition') &&
+    `${t('positionIgnition')}: ${formatBoolean(position.attributes.ignition, t)}`;
+  const batteryLabel =
+    position?.attributes.hasOwnProperty('batteryLevel') &&
+    `${t('positionBatteryLevel')}: ${formatPercentage(Math.round(position.attributes.batteryLevel))}`;
+  const indicatorLabels = [
+    item.disabled && t('deviceDisabledChip'),
+    alarmLabel,
+    ignitionLabel,
+    batteryLabel,
+  ].filter(Boolean);
+
+  // BRD-03: when the status changes (online, offline...), the row lights up once and fades
+  // (600ms), so the change is noticed without a loop.
+  const rowRef = useRef(null);
+  const statusRef = useRef(item.status);
+  useEffect(() => {
+    if (statusRef.current !== item.status) {
+      beat(
+        rowRef.current,
+        [
+          { backgroundColor: alpha(theme.palette.brand.aqua, 0.28) },
+          { backgroundColor: 'transparent' },
+        ],
+        600,
+      );
+    }
+    statusRef.current = item.status;
+  }, [item.status, theme]);
+
   const avatarClass = cx(classes.avatar, item.status !== 'online' && classes.avatarIdle);
   const iconKey = mapIconKey(item.category);
   const iconUrl = `url("${mapIcons[iconKey]}")`;
@@ -320,9 +380,13 @@ const DeviceRow = ({ devices, tokens = [], index, style }) => {
   return (
     <div style={style} role="listitem">
       <ListItemButton
+        ref={rowRef}
         key={item.id}
         onClick={() => dispatch(devicesActions.selectId(item.id))}
         disabled={!admin && item.disabled}
+        // LIV-30: one tab stop for the whole list; the arrows move between rows (DeviceList).
+        tabIndex={focusIndex == null || focusIndex === index ? 0 : -1}
+        data-row={index}
         selected={selectedDeviceId === item.id}
         aria-pressed={selectedDeviceId === item.id}
         className={cx(classes.row, selectedDeviceId === item.id && classes.selected)}
@@ -376,7 +440,16 @@ const DeviceRow = ({ devices, tokens = [], index, style }) => {
           </span>
         </ListItemAvatar>
         <ListItemText
-          primary={primaryValue}
+          primary={
+            favorites.includes(item.id) ? (
+              <>
+                <StarRoundedIcon className={classes.favorite} titleAccess={t('deviceFavorite')} />
+                {primaryValue}
+              </>
+            ) : (
+              primaryValue
+            )
+          }
           secondary={secondaryText()}
           slots={{
             primary: Typography,
@@ -387,20 +460,30 @@ const DeviceRow = ({ devices, tokens = [], index, style }) => {
             secondary: { component: 'span', className: classes.secondaryText },
           }}
         />
-        {position && (
-          <span className={classes.indicators}>
-            {position.attributes.hasOwnProperty('alarm') && (
-              <Tooltip title={`${t('eventAlarm')}: ${formatAlarm(position.attributes.alarm, t)}`}>
-                <span role="img" className={classes.indicator}>
+        {(item.disabled || position) && (
+          <span
+            className={classes.indicators}
+            role={indicatorLabels.length ? 'img' : undefined}
+            aria-label={indicatorLabels.length ? indicatorLabels.join(', ') : undefined}
+          >
+            {item.disabled && (
+              <Chip
+                size="small"
+                label={t('deviceDisabledChip')}
+                className={classes.disabledChip}
+                aria-hidden
+              />
+            )}
+            {position?.attributes.hasOwnProperty('alarm') && (
+              <Tooltip title={alarmLabel}>
+                <span className={classes.indicator} aria-hidden>
                   <ErrorRoundedIcon fontSize="small" className={classes.error} />
                 </span>
               </Tooltip>
             )}
-            {position.attributes.hasOwnProperty('ignition') && (
-              <Tooltip
-                title={`${t('positionIgnition')}: ${formatBoolean(position.attributes.ignition, t)}`}
-              >
-                <span role="img" className={classes.indicator}>
+            {position?.attributes.hasOwnProperty('ignition') && (
+              <Tooltip title={ignitionLabel}>
+                <span className={classes.indicator} aria-hidden>
                   {position.attributes.ignition ? (
                     <EngineIcon width={18} height={18} className={classes.success} />
                   ) : (
@@ -409,11 +492,9 @@ const DeviceRow = ({ devices, tokens = [], index, style }) => {
                 </span>
               </Tooltip>
             )}
-            {position.attributes.hasOwnProperty('batteryLevel') && (
-              <Tooltip
-                title={`${t('positionBatteryLevel')}: ${formatPercentage(position.attributes.batteryLevel)}`}
-              >
-                <span role="img" className={classes.indicator}>
+            {position?.attributes.hasOwnProperty('batteryLevel') && (
+              <Tooltip title={batteryLabel}>
+                <span className={cx(classes.indicator, classes.batteryIndicator)} aria-hidden>
                   {(position.attributes.batteryLevel > 70 &&
                     (position.attributes.charge ? (
                       <BatteryChargingFullIcon fontSize="small" className={classes.success} />
@@ -431,6 +512,9 @@ const DeviceRow = ({ devices, tokens = [], index, style }) => {
                     ) : (
                       <Battery20Icon fontSize="small" className={classes.error} />
                     ))}
+                  <bdi className={classes.batteryText} dir="ltr">
+                    {formatPercentage(Math.round(position.attributes.batteryLevel))}
+                  </bdi>
                 </span>
               </Tooltip>
             )}

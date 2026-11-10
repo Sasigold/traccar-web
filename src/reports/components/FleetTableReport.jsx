@@ -23,7 +23,20 @@ export const devicesInScope = (devices, deviceIds, groupIds) =>
 // A per-vehicle table report (REP-23): the filter, sortable columns, a totals row and the Excel
 // export, around `load({ devices, deviceIds, groupIds, from, to })` → rows with deviceId and name.
 // columns: [{ key, labelKey, format(value, row) , exportValue? }]; totals: { key: 'sum' | ... }.
-const FleetTableReport = ({ reportKey, titleKey, columns, totals = {}, load, filterChildren }) => {
+const FleetTableReport = ({
+  reportKey,
+  titleKey,
+  columns,
+  totals = {},
+  load,
+  filterChildren,
+  // Rows are vehicles unless a report says otherwise (OPS-05: drivers).
+  rowKey = (item) => item.deviceId,
+  rowLink = (item) => `/fleet/vehicle/${item.deviceId}`,
+  nameLabelKey = 'sharedDevice',
+  // A note above the table drawn from the results (OPS-04: the fleet-size recommendation).
+  summary,
+}) => {
   const { classes } = useReportStyles();
   const t = useTranslation();
   const theme = useTheme();
@@ -58,7 +71,7 @@ const FleetTableReport = ({ reportKey, titleKey, columns, totals = {}, load, fil
 
   const onExport = useCatch(async () => {
     const rows = sorted.map((item) => ({
-      [t('sharedDevice')]: item.name,
+      [t(nameLabelKey)]: item.name,
       ...Object.fromEntries(
         columns.map((column) => [
           t(column.labelKey),
@@ -73,6 +86,11 @@ const FleetTableReport = ({ reportKey, titleKey, columns, totals = {}, load, fil
   });
 
   const keys = columns.map((column) => column.key);
+  // BRD-04: number columns are aligned to the end (MUI's "right" turns to the left in RTL).
+  const numeric = new Set(
+    keys.filter((key) => items.some((item) => typeof item[key] === 'number')),
+  );
+  const align = (key) => (numeric.has(key) ? 'right' : undefined);
   const format = (item, key) => {
     const column = columns.find((it) => it.key === key);
     return column.format ? column.format(item[key], item) : item[key];
@@ -93,14 +111,21 @@ const FleetTableReport = ({ reportKey, titleKey, columns, totals = {}, load, fil
               {filterChildren}
             </ReportFilter>
           </div>
+          {!loading && summary?.(items)}
           <DataTable variant="flush">
             <TableHead>
               <TableRow>
                 <SortCell sortKey="name" sort={sort} onSort={toggle}>
-                  {t('sharedDevice')}
+                  {t(nameLabelKey)}
                 </SortCell>
                 {columns.map((column) => (
-                  <SortCell key={column.key} sortKey={column.key} sort={sort} onSort={toggle}>
+                  <SortCell
+                    key={column.key}
+                    sortKey={column.key}
+                    sort={sort}
+                    onSort={toggle}
+                    align={align(column.key)}
+                  >
                     {t(column.labelKey)}
                   </SortCell>
                 ))}
@@ -110,14 +135,20 @@ const FleetTableReport = ({ reportKey, titleKey, columns, totals = {}, load, fil
               {!loading && queried && !items.length && <ReportEmptyRow colSpan={keys.length + 1} />}
               {!loading ? (
                 sorted.map((item) => (
-                  <TableRow key={item.deviceId} hover>
-                    <TableCell>
-                      <Link component={RouterLink} to={`/fleet/vehicle/${item.deviceId}`}>
-                        {item.name}
-                      </Link>
+                  <TableRow key={rowKey(item)} hover>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                      {rowLink(item) ? (
+                        <Link component={RouterLink} to={rowLink(item)}>
+                          {item.name}
+                        </Link>
+                      ) : (
+                        item.name
+                      )}
                     </TableCell>
                     {keys.map((key) => (
-                      <TableCell key={key}>{format(item, key)}</TableCell>
+                      <TableCell key={key} align={align(key)}>
+                        {format(item, key)}
+                      </TableCell>
                     ))}
                   </TableRow>
                 ))
@@ -132,6 +163,7 @@ const FleetTableReport = ({ reportKey, titleKey, columns, totals = {}, load, fil
                 spec={totals}
                 items={sorted}
                 format={format}
+                numeric={numeric}
               />
             )}
           </DataTable>

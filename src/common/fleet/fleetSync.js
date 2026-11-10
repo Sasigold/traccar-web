@@ -61,6 +61,7 @@ export const driverRow = (driver) => {
     license_classes: classes,
     license_class: classes[0] || null,
     license_expiry: date(a.licenseExpiry),
+    license_issued: date(a.licenseIssued),
     notes: text(a.fleetNotes),
   };
 };
@@ -128,6 +129,7 @@ export const driverAttributes = (attributes, row, documents = []) => {
           : null,
     );
     put(result, 'licenseExpiry', row.license_expiry);
+    put(result, 'licenseIssued', row.license_issued);
     put(result, 'fleetNotes', row.notes);
   }
   const expiries = latestExpiries(documents);

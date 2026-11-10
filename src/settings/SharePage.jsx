@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import dayjs from 'dayjs';
-import { TextField, Button } from '@mui/material';
+import { TextField, Button, Stack } from '@mui/material';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import { messagesActions } from '../store';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import SettingsMenu from './components/SettingsMenu';
 import { useCatchCallback } from '../reactHelper';
@@ -14,6 +16,7 @@ import { DateTimeField } from '../common/components/pickers';
 
 const SharePage = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const t = useTranslation();
 
   const { type, id } = useParams();
@@ -37,6 +40,20 @@ const SharePage = () => {
     setLink(`${document.baseURI}?token=${token}`);
   }, [id, expiration, type, setLink]);
 
+  const copy = useCatchCallback(async () => {
+    await navigator.clipboard?.writeText(link);
+    dispatch(messagesActions.push({ message: t('sharedCopied'), severity: 'success' }));
+  }, [link, dispatch, t]);
+
+  // ADM-25: first make the link (the one main action), then copy it or send it on WhatsApp.
+  const whatsapp = link
+    ? `https://wa.me/?text=${encodeURIComponent(
+        t('shareWhatsappText')
+          .replace('{0}', item?.name || '')
+          .replace('{1}', link),
+      )}`
+    : null;
+
   return (
     <FormPage
       menu={<SettingsMenu />}
@@ -45,9 +62,8 @@ const SharePage = () => {
       footer={
         <SaveBar
           onCancel={() => navigate(-1)}
-          onSave={() => navigator.clipboard?.writeText(link)}
-          disabled={!link}
-          saveLabel={t('sharedCopy')}
+          onSave={link ? copy : handleShare}
+          saveLabel={t(link ? 'sharedCopy' : 'shareCreateLink')}
         />
       }
     >
@@ -58,21 +74,36 @@ const SharePage = () => {
           disabled
         />
         <DateTimeField
-          label={t('userExpirationTime')}
+          label={t('shareValidUntil')}
           value={expiration}
           onChange={(e) => setExpiration(e.target.value)}
           helperText={t('shareExpirationHelp')}
         />
-        <Button variant="outlined" color="primary" onClick={handleShare}>
-          {t('shareCreateLink')}
-        </Button>
-        <TextField
-          value={link || ''}
-          onChange={(e) => setLink(e.target.value)}
-          label={t('sharedLink')}
-          helperText={t('shareLinkHelp')}
-          slotProps={{ input: { readOnly: true } }}
-        />
+        {link && (
+          <>
+            <TextField
+              value={link}
+              label={t('sharedLink')}
+              helperText={t('shareLinkHelp')}
+              slotProps={{ input: { readOnly: true }, htmlInput: { dir: 'ltr' } }}
+            />
+            <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
+              <Button
+                variant="outlined"
+                startIcon={<WhatsAppIcon />}
+                sx={{ whiteSpace: 'nowrap' }}
+                href={whatsapp}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t('shareSendWhatsapp')}
+              </Button>
+              <Button onClick={handleShare} sx={{ whiteSpace: 'nowrap' }}>
+                {t('shareNewLink')}
+              </Button>
+            </Stack>
+          </>
+        )}
       </FormSection>
     </FormPage>
   );

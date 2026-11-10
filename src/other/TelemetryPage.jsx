@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, IconButton, Tooltip, Typography, useMediaQuery } from '@mui/material';
@@ -10,8 +11,10 @@ import { useTranslation } from '../common/components/LocalizationProvider';
 import PageHeader from '../common/components/shell/PageHeader';
 import BrandLoader from '../common/components/brand/BrandLoader';
 import TelemetryDashboard from '../common/components/telemetry/TelemetryDashboard';
+import BatteryWarning from '../common/components/telemetry/BatteryWarning';
 import { useVehicleSettings } from '../common/components/telemetry/VehicleSettingsDialog';
-import { formatStatus, formatTime } from '../common/util/formatter';
+import { formatStatus } from '../common/util/formatter';
+import { formatUpdated, isLive } from '../common/util/freshness';
 import { statusColor } from '../common/theme/surfaces';
 import { devicesActions } from '../store';
 
@@ -89,6 +92,14 @@ const TelemetryPage = () => {
   const settings = useVehicleSettings(device, position);
   const phone = useMediaQuery(theme.breakpoints.down('sm'));
 
+  // LIV-18: "live" fades once the last position is older than a minute, so the clock ticks.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 5000);
+    return () => clearInterval(timer);
+  }, []);
+  const live = device?.status === 'online' && isLive(position?.fixTime, now);
+
   const showOnMap = () => {
     dispatch(devicesActions.selectId(Number(deviceId)));
     navigate('/');
@@ -110,7 +121,7 @@ const TelemetryPage = () => {
                 t('telemetryTitle'),
                 formatStatus(device.status, t),
                 position?.fixTime &&
-                  `${t('telemetryUpdated')} ${formatTime(position.fixTime, 'time')}`,
+                  `${t('telemetryUpdated')} ${formatUpdated(position.fixTime, now)}`,
               ]
                 .filter(Boolean)
                 .join(' · ')}
@@ -120,8 +131,8 @@ const TelemetryPage = () => {
         actions={
           device && (
             <>
-              {device.status === 'online' && (
-                <span className={classes.live} dir="ltr">
+              {live && (
+                <span className={classes.live} role="status">
                   <span className={classes.liveDot} />
                   {t('mapLive')}
                 </span>
@@ -154,6 +165,7 @@ const TelemetryPage = () => {
       />
       <div className={classes.content}>
         <div className={classes.inner}>
+          {position && <BatteryWarning deviceId={deviceId} />}
           {position ? (
             <TelemetryDashboard
               position={position}

@@ -1,4 +1,6 @@
+import { Buffer } from 'node:buffer';
 import { test, expect, gotoReady, FLEET } from './fixtures';
+import { fakeFleet, writeMode } from './fakeFleet';
 
 const MINUTE = 60 * 1000;
 
@@ -166,4 +168,52 @@ test('the positions report refuses a file download that would include hidden loc
   await page.getByRole('menuitem', { name: 'ייצוא (CSV)' }).click();
   await expect(page.getByText(/אי אפשר להוריד אותם כקובץ/)).toBeVisible();
   expect(downloads).toEqual([]);
+});
+
+// SEC-12: an employee's data, exported and erased from the privacy page.
+test('an employee’s data is exported, then erased after typing the name', async ({ page }) => {
+  await writeMode(page);
+  const driver = { id: 'd1', full_name: 'יוסי כהן', status: 'active', erased_at: null };
+  const fleet = await fakeFleet(page, {
+    users: {
+      1: { profile: { id: 'p1', org_id: 'o1', role: 'admin' }, permissions: ['privacy.manage'] },
+    },
+    tables: { drivers: [driver], organizations: [{ id: 'o1', name: 'הובלות הצפון' }] },
+    rpc: {
+      privacy_subject_export: (body) => ({ driver: { id: body.p_driver, full_name: 'יוסי כהן' } }),
+      privacy_erase_driver: () => ({
+        files: [{ bucket: 'documents', path: 'o1/drivers/licence.pdf' }],
+        tables: { documents: 1 },
+      }),
+    },
+  });
+  fleet.files.set('o1/drivers/licence.pdf', { type: 'application/pdf', body: Buffer.from('x') });
+
+  await gotoReady(page, '/fleet/privacy');
+  await page.getByLabel('עובד').click();
+  await page.getByRole('option', { name: 'יוסי כהן' }).click();
+
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'ייצוא הנתונים של העובד' }).click();
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(
+    /^viper-fleet_employee-data_d1_\d{4}-\d{2}-\d{2}\.json$/,
+  );
+
+  await page.getByRole('button', { name: 'מחיקת הפרטים האישיים' }).click();
+  const dialog = page.getByRole('dialog');
+  const confirm = dialog.getByRole('button', { name: 'מחיקה סופית' });
+  await expect(confirm).toBeDisabled();
+  await dialog.getByRole('textbox').fill('יוסי');
+  await expect(confirm).toBeDisabled();
+  await dialog.getByRole('textbox').fill('יוסי כהן');
+  await confirm.click();
+  await expect(page.getByText('הפרטים האישיים נמחקו, יחד עם 1 קבצים.')).toBeVisible();
+  // The database erased the rows; the app removed the file from storage.
+  expect(fleet.removedFiles).toEqual(['o1/drivers/licence.pdf']);
+  const rpcs = fleet.requests.filter((request) => request.path.includes('/rpc/privacy_'));
+  expect(rpcs.map((request) => request.path.split('/').pop())).toEqual([
+    'privacy_subject_export',
+    'privacy_erase_driver',
+  ]);
 });

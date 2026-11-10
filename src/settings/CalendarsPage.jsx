@@ -18,6 +18,7 @@ const CalendarsPage = () => {
 
   const [reloadKey, reload] = useReducer((k) => k + 1, 0);
   const [items, setItems] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [hasMore, setHasMore] = useState(true);
 
@@ -40,8 +41,13 @@ const CalendarsPage = () => {
   useAsyncTask(
     async ({ signal }) => {
       void reloadKey;
-      setItems([]);
-      await loadItems(0, signal);
+      // ADM-28: the rows stay (dimmed) while the list reloads, instead of flashing empty.
+      setRefreshing(true);
+      try {
+        await loadItems(0, signal);
+      } finally {
+        setRefreshing(false);
+      }
     },
     [reloadKey, loadItems],
   );
@@ -49,6 +55,7 @@ const CalendarsPage = () => {
   return (
     <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'sharedCalendars']}>
       <DataTable
+        refreshing={refreshing && items.length > 0}
         toolbar={
           <TableToolbar
             search={{ value: searchKeyword, onChange: setSearchKeyword }}
@@ -74,6 +81,7 @@ const CalendarsPage = () => {
               <TableCell className={classes.columnAction} padding="none">
                 <CollectionActions
                   itemId={item.id}
+                  itemName={item.name}
                   editPath="/settings/calendar"
                   endpoint="calendars"
                   onReload={reload}

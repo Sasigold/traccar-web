@@ -119,3 +119,16 @@ export const deviceHealth = (devices, positions, events, now = Date.now()) =>
     .sort(
       (a, b) => b.issues - a.issues || (b.silentHours ?? Infinity) - (a.silentHours ?? Infinity),
     );
+
+// OPS-04: vehicles used on fewer than `threshold` percent of the days, and what returning one
+// (the least used) would save a month, when the monthly cost of a vehicle is known.
+export const underusedVehicles = (rows, { threshold = 20, monthlyCost } = {}) => {
+  const under = rows
+    .filter((row) => row.utilization != null && row.utilization < threshold)
+    .sort((a, b) => a.utilization - b.utilization);
+  const cost = Number(monthlyCost);
+  return {
+    vehicles: under,
+    savings: under.length && cost > 0 ? cost : null,
+  };
+};

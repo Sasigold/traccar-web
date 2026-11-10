@@ -18,7 +18,9 @@ import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import OpenInFullRoundedIcon from '@mui/icons-material/OpenInFullRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { useTranslation } from '../../common/components/LocalizationProvider';
-import BrandLoader from '../../common/components/brand/BrandLoader';
+import WidgetSkeleton from './WidgetSkeleton';
+import { useDashboardData } from '../data/DashboardDataContext';
+import { formatNumber } from '../../common/util/formatter';
 import useElementSize from '../layout/useElementSize';
 import { sizeClass } from '../charts/chartTheme';
 
@@ -143,6 +145,9 @@ const useStyles = makeStyles()((theme) => ({
   fill: {
     position: 'absolute',
     inset: 0,
+  },
+  detail: {
+    fontVariantNumeric: 'tabular-nums',
   },
   center: {
     position: 'absolute',
@@ -297,24 +302,49 @@ const WidgetFrame = ({
   );
 };
 
-export const WidgetState = ({ state, onRetry, notice, loadingLabel }) => {
+export const WidgetState = ({ state, onRetry, notice, loadingLabel, error, shape }) => {
   const { classes } = useStyles();
   const t = useTranslation();
+  // REP-17: a retry goes around the cache; too much data says how much, with the fixes.
+  const data = useDashboardData();
+  const retry = onRetry || data?.refreshNow;
   if (state === 'loading') {
-    return (
-      <div className={classes.center}>
-        <BrandLoader size={44} label={loadingLabel ?? t('sharedLoading')} />
-      </div>
-    );
+    // REP-21: skeletons in widgets; the brand loader stays for a page's first load.
+    return <WidgetSkeleton shape={shape} label={loadingLabel} />;
   }
   if (state === 'notice') {
     return <div className={classes.center}>{notice}</div>;
   }
   if (state === 'tooLarge') {
+    const setFilters = data?.setFilters;
     return (
       <div className={classes.center}>
         <ErrorOutlineRoundedIcon color="disabled" />
         {t('dashboardTooLarge')}
+        {error?.limit && (
+          <span className={classes.detail}>
+            {t('dashboardTooLargeDetail')
+              .replace('{0}', formatNumber(error.devices))
+              .replace('{1}', formatNumber(error.days))
+              .replace('{2}', formatNumber(error.limit))}
+          </span>
+        )}
+        {setFilters && data.filters.period !== 'last7' && (
+          <Button
+            size="small"
+            onClick={() =>
+              setFilters({
+                ...data.filters,
+                period: 'last7',
+                offset: 0,
+                from: undefined,
+                to: undefined,
+              })
+            }
+          >
+            {t('dashboardLast7')}
+          </Button>
+        )}
       </div>
     );
   }
@@ -322,8 +352,8 @@ export const WidgetState = ({ state, onRetry, notice, loadingLabel }) => {
     <div className={classes.center}>
       <ErrorOutlineRoundedIcon color="disabled" />
       {t('dashboardLoadError')}
-      {onRetry && (
-        <Button size="small" onClick={onRetry}>
+      {retry && (
+        <Button size="small" onClick={retry}>
           {t('dashboardRetry')}
         </Button>
       )}

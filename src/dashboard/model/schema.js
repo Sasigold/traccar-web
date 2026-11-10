@@ -27,6 +27,11 @@ export const normalizeFilters = (filters) => {
       ? [...new Set(filters.groupIds.map(Number).filter((id) => Number.isInteger(id) && id > 0))]
       : [],
   };
+  // REP-17: a preset moved back on the calendar (0 = the current one, never ahead).
+  const offset = Math.trunc(Number(filters?.offset));
+  if (period !== 'custom' && Number.isFinite(offset) && offset < 0 && offset >= -120) {
+    result.offset = offset;
+  }
   if (period === 'custom') {
     if (validCustom(filters.from, filters.to)) {
       result.from = filters.from;
@@ -104,6 +109,10 @@ export const normalizeWidget = (config) => {
   }
   if (typeof config.title === 'string' && config.title.trim()) {
     widget.title = config.title.trim().slice(0, TITLE_MAX);
+  }
+  // REP-18: a target for the figure (a positive number).
+  if (typeof config.target === 'number' && Number.isFinite(config.target) && config.target > 0) {
+    widget.target = config.target;
   }
   return widget;
 };

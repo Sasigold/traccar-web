@@ -16,9 +16,10 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import { useCatch } from '../../reactHelper';
-import { getFleetClient, unwrap } from '../../common/fleet/client';
+import { fleetSave } from '../../common/fleet/fleetSave';
 import { useFleetProfile } from '../../common/fleet/useFleet';
 import { DEFAULT_CHECKLIST, FREQUENCIES, ITEM_TYPES } from '../../common/fleet/inspections';
+import { keepOnBackdrop } from '../../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -69,31 +70,10 @@ const InspectionTemplateDialog = ({ template, onClose, onSaved }) => {
     );
 
   const save = useCatch(async () => {
-    const client = getFleetClient();
     const payload = { name: form.name.trim(), frequency: form.frequency, active: form.active };
-    const saved = template.id
-      ? unwrap(
-          await client
-            .from('inspection_templates')
-            .update(payload)
-            .eq('id', template.id)
-            .select('id')
-            .single(),
-        )
-      : unwrap(
-          await client
-            .from('inspection_templates')
-            .insert({ ...payload, org_id: profile.org_id })
-            .select('id')
-            .single(),
-        );
-    // Items are replaced; filled inspections keep their own copy of each label.
-    unwrap(await client.from('inspection_template_items').delete().eq('template_id', saved.id));
     const rows = items
       .filter((item) => item.label?.trim())
-      .map((item, index) => ({
-        org_id: profile.org_id,
-        template_id: saved.id,
+      .map((item) => ({
         label: item.label.trim(),
         type: item.type,
         critical: Boolean(item.critical),
@@ -101,16 +81,20 @@ const InspectionTemplateDialog = ({ template, onClose, onSaved }) => {
           item.type === 'number_range' && item.min_value !== '' ? (item.min_value ?? null) : null,
         max_value:
           item.type === 'number_range' && item.max_value !== '' ? (item.max_value ?? null) : null,
-        sort_order: index,
       }));
-    if (rows.length) {
-      unwrap(await client.from('inspection_template_items').insert(rows));
-    }
+    // ARC-05: the template and its items in one transaction. Filled inspections keep their own
+    // copy of each label.
+    await fleetSave(
+      'inspection_template',
+      template.id,
+      template.id ? payload : { ...payload, org_id: profile.org_id },
+      rows,
+    );
     onSaved();
   });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="md">
+    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="md">
       <DialogTitle>
         {t(template.id ? 'fleetInspectionTemplateEdit' : 'fleetInspectionTemplateAdd')}
       </DialogTitle>

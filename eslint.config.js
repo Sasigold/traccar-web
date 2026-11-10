@@ -15,6 +15,8 @@ export default [
   {
     ignores: [
       'build/**',
+      'build-demo/**',
+      'sourcemaps/**',
       'switcher.js',
       'theme.js',
       'vite.config.js',

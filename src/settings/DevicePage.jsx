@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 import { TextField, Button, Typography } from '@mui/material';
 import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded';
@@ -24,6 +24,9 @@ import { saveFleetRecord, useFleetAccess, useFleetOverlay } from '../fleet/fleet
 import FleetDocumentsSection from './components/FleetDocumentsSection';
 import HistorySection from '../fleet/components/HistorySection';
 import FleetFieldsSection from '../fleet/components/FleetFieldsSection';
+import ScanDocumentButton from '../fleet/components/ScanDocumentButton';
+import { vehicleValues } from '../common/fleet/documentScan';
+import { looksLikeBadImei, samePlate } from '../common/util/israeliFields';
 import MaintenanceStatusSection from '../fleet/components/MaintenanceStatusSection';
 import {
   mergeAttributes,
@@ -32,9 +35,14 @@ import {
   vehicleExpiryFields,
   vehicleFieldKeys,
   vehicleFields,
+  fleetFieldsValid,
 } from '../common/fleet/fleetFields';
 import { DateField } from '../common/components/pickers';
 import GovRegistryButton from '../fleet/components/GovRegistryButton';
+
+// A far-future date (the old placeholder) reads as no limit.
+const serviceExpiry = (value) =>
+  value && Number(value.slice(0, 4)) < 2099 ? value.split('T')[0] : '';
 
 const DevicePage = () => {
   const t = useTranslation();
@@ -69,6 +77,22 @@ const DevicePage = () => {
 
   const setAttributes = (attributes) => setItem({ ...item, attributes });
 
+  // AI-04: a scanned vehicle license or policy fills the vehicle's fields (not saved yet). A
+  // document of another vehicle is said and not applied.
+  const applyScan = (kind, fields) => {
+    const { values, otherVehicle } = vehicleValues(kind, fields, item.attributes || {});
+    if (otherVehicle) {
+      dispatch(
+        messagesActions.push({
+          message: t('scanOtherVehicle').replace('{0}', fields.plate_number),
+          severity: 'warning',
+        }),
+      );
+      return;
+    }
+    setAttributes({ ...item.attributes, ...values });
+  };
+
   const fleet = useFleetAccess('vehicle');
   useFleetOverlay('vehicle', item, setItem);
 
@@ -85,7 +109,29 @@ const DevicePage = () => {
     }
   };
 
-  const validate = () => item && item.name && item.uniqueId;
+  // ADM-06: another vehicle with the same plate or identifier, by name.
+  const devices = useSelector((state) => state.devices.items);
+  const otherDevice = (test) =>
+    Object.values(devices).find((device) => device.id !== item?.id && test(device))?.name;
+  const plateTakenBy = (key, value) =>
+    key === 'plateNumber'
+      ? otherDevice((device) => samePlate(device.attributes?.plateNumber, value))
+      : null;
+  const identifierTakenBy = item?.uniqueId
+    ? otherDevice((device) => device.uniqueId === item.uniqueId.trim())
+    : null;
+  const identifierMessage = identifierTakenBy
+    ? t('validationDuplicate').replace('{0}', identifierTakenBy)
+    : looksLikeBadImei(item?.uniqueId)
+      ? t('validationImei')
+      : null;
+
+  const validate = () =>
+    item &&
+    item.name &&
+    item.uniqueId &&
+    !identifierTakenBy &&
+    fleetFieldsValid(vehicleFields, item.attributes);
 
   return (
     <EditItemView
@@ -111,7 +157,9 @@ const DevicePage = () => {
               value={item.uniqueId || ''}
               onChange={(event) => setItem({ ...item, uniqueId: event.target.value })}
               label={t('deviceIdentifier')}
-              helperText={t('deviceIdentifierHelp')}
+              helperText={identifierMessage || t('deviceIdentifierHelp')}
+              error={Boolean(identifierMessage)}
+              slotProps={{ htmlInput: { dir: 'ltr', inputMode: 'numeric' } }}
               disabled={Boolean(uniqueId)}
             />
           </FormSection>
@@ -121,8 +169,16 @@ const DevicePage = () => {
             fields={[...vehicleFields, notesField]}
             attributes={item.attributes}
             setAttributes={setAttributes}
+            duplicateOf={plateTakenBy}
             actions={
-              <GovRegistryButton attributes={item.attributes} setAttributes={setAttributes} />
+              <>
+                <ScanDocumentButton
+                  kind="vehicle_license"
+                  label={t('scanVehicleLicense')}
+                  onApply={({ fields }) => applyScan('vehicle_license', fields)}
+                />
+                <GovRegistryButton attributes={item.attributes} setAttributes={setAttributes} />
+              </>
             }
           />
           <FleetFieldsSection
@@ -133,6 +189,13 @@ const DevicePage = () => {
             attributes={item.attributes}
             setAttributes={setAttributes}
             showExpiry
+            actions={
+              <ScanDocumentButton
+                kind="insurance"
+                label={t('scanInsurance')}
+                onApply={({ fields }) => applyScan('insurance', fields)}
+              />
+            }
           />
           {item.id && <MaintenanceStatusSection deviceId={item.id} />}
           <FormSection title={t('formSectionMore')}>
@@ -181,15 +244,16 @@ const DevicePage = () => {
               helperText={t('deviceCalendarHelp')}
             />
             <DateField
-              label={t('userExpirationTime')}
-              value={item.expirationTime ? item.expirationTime.split('T')[0] : '2099-01-01'}
-              onChange={(e) => {
-                if (e.target.value) {
-                  setItem({ ...item, expirationTime: new Date(e.target.value).toISOString() });
-                }
-              }}
-              helperText={t('deviceExpirationHelp')}
-              clearable={false}
+              // ADM-25: empty means no limit (not a made-up 2099 date).
+              label={t('deviceServiceExpiry')}
+              value={serviceExpiry(item.expirationTime)}
+              onChange={(e) =>
+                setItem({
+                  ...item,
+                  expirationTime: e.target.value ? new Date(e.target.value).toISOString() : null,
+                })
+              }
+              helperText={t('deviceServiceExpiryHelp')}
               disabled={!manager}
             />
             <CheckboxField

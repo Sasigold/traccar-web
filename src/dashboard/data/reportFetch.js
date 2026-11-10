@@ -1,3 +1,4 @@
+import { runLimited as runLimitedBase } from '../../common/util/runLimited';
 // Traccar report requests for many vehicles: ids are sent in chunks (Traccar needs
 // explicit deviceId/groupId), at most a few requests run at once, and results are
 // merged. A size guard refuses requests that would return too many rows. Pure: the
@@ -16,10 +17,14 @@ export const LIMITS = {
 };
 
 export class TooLargeError extends Error {
-  constructor(source) {
+  constructor(source, detail = {}) {
     super(`too large: ${source}`);
     this.name = 'TooLargeError';
     this.source = source;
+    // REP-17: how much was asked for, so the widget can say it ("120 vehicles × 30 days").
+    this.devices = detail.devices;
+    this.days = detail.days;
+    this.limit = detail.limit;
   }
 }
 
@@ -43,24 +48,12 @@ export const reportUrl = (endpoint, { from, to, deviceIds, params = {} }) => {
 export const checkSize = (sourceKey, deviceCount, dayCount) => {
   const limit = LIMITS[sourceKey];
   if (limit && deviceCount * dayCount > limit) {
-    throw new TooLargeError(sourceKey);
+    throw new TooLargeError(sourceKey, { devices: deviceCount, days: dayCount, limit });
   }
 };
 
-// Runs `tasks` (functions returning promises) with limited concurrency, keeping order.
-export const runLimited = async (tasks, limit = CONCURRENCY) => {
-  const results = new Array(tasks.length);
-  let next = 0;
-  const worker = async () => {
-    while (next < tasks.length) {
-      const index = next;
-      next += 1;
-      results[index] = await tasks[index]();
-    }
-  };
-  await Promise.all(Array.from({ length: Math.min(limit, tasks.length) }, worker));
-  return results;
-};
+// Limited concurrency, shared with the admin area (src/common/util/runLimited.js).
+export const runLimited = (tasks, limit = CONCURRENCY) => runLimitedBase(tasks, limit);
 
 export const fetchReport = async ({ endpoint, from, to, deviceIds, params, signal, fetchJson }) => {
   if (!deviceIds.length) {

@@ -1,4 +1,5 @@
 import { useReducer, useState } from 'react';
+import MaskedValue from '../common/components/MaskedValue';
 import { useParams } from 'react-router-dom';
 import {
   Button,
@@ -160,7 +161,7 @@ const DriverFilePage = () => {
     value ? (
       <div key={labelKey}>
         <div className={classes.label}>{t(labelKey)}</div>
-        <Typography variant="body2" dir={ltr ? 'ltr' : undefined}>
+        <Typography variant="body2" component="div" dir={ltr ? 'ltr' : undefined}>
           {value}
         </Typography>
       </div>
@@ -219,7 +220,12 @@ const DriverFilePage = () => {
 
           <Section title={t('fleetDriverDetails')}>
             <div className={classes.details}>
-              {detail('fleetNationalId', file.row?.national_id || attributes.nationalId, true)}
+              {detail(
+                'fleetNationalId',
+                (file.row?.national_id || attributes.nationalId) && (
+                  <MaskedValue value={file.row?.national_id || attributes.nationalId} />
+                ),
+              )}
               {detail('sharedPhone', file.row?.phone || attributes.phone, true)}
               {detail(
                 'fleetHireDate',
@@ -227,7 +233,9 @@ const DriverFilePage = () => {
               )}
               {detail(
                 'fleetLicenseNumber',
-                file.row?.license_number || attributes.licenseNumber,
+                (file.row?.license_number || attributes.licenseNumber) && (
+                  <MaskedValue value={file.row?.license_number || attributes.licenseNumber} />
+                ),
                 true,
               )}
               {detail(

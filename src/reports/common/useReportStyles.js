@@ -7,6 +7,15 @@ export default makeStyles()((theme) => ({
     flexDirection: 'column',
   },
   containerMap: {
+    // REP-11: the map opens smoothly instead of jumping in.
+    animation: `vf-report-map-in 220ms ${theme.tokens.motion.easing.standard}`,
+    '@media (prefers-reduced-motion: reduce)': {
+      animation: 'none',
+    },
+    '@keyframes vf-report-map-in': {
+      from: { opacity: 0, transform: 'translateY(-8px)' },
+      to: { opacity: 1, transform: 'none' },
+    },
     flexBasis: 'var(--report-map-height, 40%)',
     flexShrink: 0,
     margin: theme.spacing(0.5, 3, 0),
@@ -37,7 +46,50 @@ export default makeStyles()((theme) => ({
       },
     },
   },
+  // REP-11: the row shown on the map: an ice row with a 3px bar at the start.
+  selectedRow: {
+    backgroundColor: `${theme.palette.surface.tint} !important`,
+    '& > td:first-of-type': {
+      boxShadow: 'none',
+      borderInlineStart: `3px solid ${theme.palette.primary.main}`,
+    },
+  },
+  // OPS-04: the note above a fleet report's table.
+  recommendation: {
+    margin: theme.spacing(0, 3, 2),
+    [theme.breakpoints.down('md')]: {
+      margin: theme.spacing(0, 2, 2),
+    },
+  },
+  // REP-09: the change from the previous period, under the value (text only).
+  delta: {
+    display: 'block',
+    fontSize: '0.75rem',
+    color: theme.palette.text.secondary,
+  },
+  // REP-10: results made for another filter are dimmed until updated.
+  staleBar: {
+    flexBasis: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(1, 2),
+    borderRadius: theme.tokens.radius.md,
+    backgroundColor: theme.palette.surface.tint,
+    color: theme.palette.text.primary,
+    '& .MuiButton-root': {
+      whiteSpace: 'nowrap',
+      flexShrink: 0,
+    },
+  },
   header: {
+    '& ~ *': {
+      transition: 'opacity 160ms ease',
+    },
+    '&[data-stale="true"] ~ *': {
+      opacity: 0.55,
+    },
     position: 'sticky',
     top: 0,
     left: 0,
@@ -51,7 +103,7 @@ export default makeStyles()((theme) => ({
       position: 'static',
     },
     '@media print': {
-      display: 'none',
+      position: 'static',
     },
   },
   columnAction: {
@@ -78,8 +130,16 @@ export default makeStyles()((theme) => ({
     [theme.breakpoints.down('md')]: {
       margin: theme.spacing(1.5, 2),
     },
+    // REP-16: on paper only the print header of the filter remains.
     '@media print': {
-      display: 'none !important',
+      display: 'block !important',
+      margin: 0,
+      padding: 0,
+      border: 'none',
+      boxShadow: 'none',
+      '& > *:not(.vf-print-header)': {
+        display: 'none !important',
+      },
     },
   },
   filterItem: {
@@ -93,6 +153,41 @@ export default makeStyles()((theme) => ({
   },
   filterButton: {
     flexGrow: 1,
+  },
+  // REP-15: the charts of the chart report, one per value, sharing the time axis.
+  chartStack: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1.5),
+    margin: theme.spacing(0, 3, 3),
+    [theme.breakpoints.down('md')]: {
+      margin: theme.spacing(0, 1, 2),
+    },
+  },
+  chartPanel: {
+    padding: theme.spacing(1.5, 1, 1),
+    borderRadius: theme.tokens.radius.xl,
+    border: `1px solid ${theme.palette.surface.border}`,
+    backgroundColor: theme.palette.background.paper,
+  },
+  chartTitle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    paddingInline: theme.spacing(1.5),
+  },
+  chartSwatch: {
+    width: 12,
+    height: 3,
+    borderRadius: 2,
+  },
+  chartBody: {
+    height: 200,
+  },
+  chartLoading: {
+    display: 'flex',
+    justifyContent: 'center',
+    padding: theme.spacing(6),
   },
   chart: {
     flexGrow: 1,

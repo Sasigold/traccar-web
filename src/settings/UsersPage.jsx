@@ -1,4 +1,5 @@
 import { useCallback, useReducer, useState } from 'react';
+import ImpersonateDialog from '../common/components/ImpersonateDialog';
 import { useNavigate } from 'react-router-dom';
 import {
   TableRow,
@@ -12,7 +13,7 @@ import {
 import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
 import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
 import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
-import { useCatch, useAsyncTask, useScrollToLoad, pageSize } from '../reactHelper';
+import { useAsyncTask, useScrollToLoad, pageSize } from '../reactHelper';
 import { formatTime } from '../common/util/formatter';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
@@ -36,14 +37,17 @@ const UsersPage = () => {
 
   const [reloadKey, reload] = useReducer((k) => k + 1, 0);
   const [items, setItems] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [hasMore, setHasMore] = useState(true);
   const [temporary, setTemporary] = useState(false);
 
-  const handleLogin = useCatch(async (userId) => {
-    await fetchOrThrow(`api/session/${userId}`);
-    window.location.replace(document.baseURI);
-  });
+  // SEC-13: "log in as" asks for a reason and records it.
+  const [impersonating, setImpersonating] = useState(null);
+  const handleLogin = (userId) =>
+    setImpersonating(
+      items.find((item) => item.id === userId) || { id: userId, name: String(userId) },
+    );
 
   const actionLogin = {
     key: 'login',
@@ -78,8 +82,13 @@ const UsersPage = () => {
   useAsyncTask(
     async ({ signal }) => {
       void reloadKey;
-      setItems([]);
-      await loadItems(0, signal);
+      // ADM-28: the rows stay (dimmed) while the list reloads, instead of flashing empty.
+      setRefreshing(true);
+      try {
+        await loadItems(0, signal);
+      } finally {
+        setRefreshing(false);
+      }
     },
     [reloadKey, loadItems],
   );
@@ -93,6 +102,7 @@ const UsersPage = () => {
       description={t('settingsUsersDescription')}
     >
       <DataTable
+        refreshing={refreshing && items.length > 0}
         toolbar={
           <TableToolbar
             search={{ value: searchKeyword, onChange: setSearchKeyword }}
@@ -149,6 +159,7 @@ const UsersPage = () => {
               <TableCell className={classes.columnAction} padding="none">
                 <CollectionActions
                   itemId={item.id}
+                  itemName={item.name}
                   editPath="/settings/user"
                   endpoint="users"
                   onReload={reload}
@@ -163,6 +174,9 @@ const UsersPage = () => {
         </TableBody>
       </DataTable>
       <AddFab editPath="/settings/user" />
+      {impersonating && (
+        <ImpersonateDialog user={impersonating} onClose={() => setImpersonating(null)} />
+      )}
     </PageLayout>
   );
 };

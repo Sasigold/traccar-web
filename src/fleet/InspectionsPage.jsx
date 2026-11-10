@@ -27,6 +27,7 @@ import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetPermission } from '../common/fleet/useFleet';
 import FleetNotice from './components/FleetNotice';
 import InspectionTemplateDialog, { frequencyKey } from './components/InspectionTemplateDialog';
+import { readAllRows } from '../common/data/fleetQuery';
 
 const useStyles = makeStyles()(() => ({
   row: {
@@ -71,14 +72,14 @@ const InspectionsPage = () => {
     }
     const client = getFleetClient();
     if (view === 'inspections') {
+      // ARC-08: every page, not the first 500.
       setRows(
-        unwrap(
-          await client
+        await readAllRows('inspections', () =>
+          client
             .from('inspections')
             .select('*, vehicles(plate_number), drivers(full_name)')
-            .order('started_at', { ascending: false })
-            .limit(500),
-        ) || [],
+            .order('started_at', { ascending: false }),
+        ),
       );
     } else if (view === 'templates') {
       setRows(

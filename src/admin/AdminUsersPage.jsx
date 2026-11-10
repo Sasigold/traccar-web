@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import ImpersonateDialog from '../common/components/ImpersonateDialog';
 import { useNavigate } from 'react-router-dom';
 import {
   Chip,
@@ -95,10 +96,12 @@ const AdminUsersPage = () => {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [users, search, customerFilter, directory.userCustomer]);
 
-  const handleLogin = useCatch(async (userId) => {
-    await fetchOrThrow(`api/session/${userId}`);
-    window.location.replace(document.baseURI);
-  });
+  // SEC-13: "log in as" asks for a reason and records it.
+  const [impersonating, setImpersonating] = useState(null);
+  const handleLogin = (userId) =>
+    setImpersonating(
+      users.find((item) => item.id === userId) || { id: userId, name: String(userId) },
+    );
 
   const handleToggleDisabled = useCatch(async (user) => {
     const full = await (await fetchOrThrow(`api/users/${user.id}`)).json();
@@ -282,6 +285,9 @@ const AdminUsersPage = () => {
           onClose={() => setAssigning(null)}
           onAssign={handleAssign}
         />
+      )}
+      {impersonating && (
+        <ImpersonateDialog user={impersonating} onClose={() => setImpersonating(null)} />
       )}
     </PageLayout>
   );
