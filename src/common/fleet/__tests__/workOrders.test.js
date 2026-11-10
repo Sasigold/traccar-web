@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { itemTotal, itemsTotal, odometerKm, statusChange } from '../workOrders';
+import { itemTotal, itemsTotal, odometerKm, statusChange, vatBreakdown } from '../workOrders';
 
 describe('work orders', () => {
   it('totals lines to the agora', () => {
@@ -27,5 +27,19 @@ describe('work orders', () => {
   it('reads the odometer in km', () => {
     expect(odometerKm({ attributes: { totalDistance: 123456789 } })).toBe(123457);
     expect(odometerKm({ attributes: {} })).toBeNull();
+  });
+});
+
+describe('vatBreakdown (ADM-19)', () => {
+  it('takes the VAT out of prices that include it', () => {
+    expect(vatBreakdown(1180, true)).toEqual({ subtotal: 1000, vat: 180, total: 1180 });
+  });
+
+  it('adds it to prices that do not', () => {
+    expect(vatBreakdown(1000, false)).toEqual({ subtotal: 1000, vat: 180, total: 1180 });
+  });
+
+  it('keeps agorot', () => {
+    expect(vatBreakdown(99.99, true)).toEqual({ subtotal: 84.74, vat: 15.25, total: 99.99 });
   });
 });

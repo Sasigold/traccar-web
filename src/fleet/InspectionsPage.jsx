@@ -309,7 +309,7 @@ const InspectionsPage = () => {
                       <Button
                         size="small"
                         component={RouterLink}
-                        to={`/fleet/work-order?deviceId=${row.vehicles?.traccar_device_id || ''}`}
+                        to={`/fleet/work-order?issue=${row.id}`}
                       >
                         {t('fleetWorkOrderAdd')}
                       </Button>

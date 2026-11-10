@@ -3175,6 +3175,7 @@ export type Database = {
           created_by: string | null;
           created_at: string;
           updated_at: string;
+          prices_include_vat: boolean;
         };
         Insert: {
           id?: string;
@@ -3199,6 +3200,7 @@ export type Database = {
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
+          prices_include_vat?: boolean;
         };
         Update: {
           id?: string;
@@ -3223,6 +3225,7 @@ export type Database = {
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
+          prices_include_vat?: boolean;
         };
         Relationships: [];
       };
