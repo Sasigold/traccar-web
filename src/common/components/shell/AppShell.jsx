@@ -123,7 +123,11 @@ const AppShell = ({ children }) => {
   );
   const paletteMounted = useOpenedOnce(paletteOpen) || idle;
   const eventsMounted = useOpenedOnce(eventsOpen);
-  const [railCollapsed, setRailCollapsed] = usePersistedState('navRailCollapsed', false);
+  // LIV-09: until the user folds or opens it, the rail is folded below a wide screen (a tablet
+  // on its side keeps the room for the map, the list and the card).
+  const wide = useMediaQuery(theme.breakpoints.up('lg'));
+  const [railChoice, setRailChoice] = usePersistedState('navRailCollapsed', null);
+  const railCollapsed = railChoice ?? !wide;
   const aiAvailable = useAiAvailable();
   const t = useTranslation();
 
@@ -157,7 +161,10 @@ const AppShell = ({ children }) => {
   const closePalette = useCallback(() => setPaletteOpen(false), []);
   const openEvents = useCallback(() => setEventsOpen(true), []);
   const closeEvents = useCallback(() => setEventsOpen(false), []);
-  const toggleRail = useCallback(() => setRailCollapsed((value) => !value), [setRailCollapsed]);
+  const toggleRail = useCallback(
+    () => setRailChoice(!railCollapsed),
+    [setRailChoice, railCollapsed],
+  );
 
   useEffect(() => {
     const handleKeyDown = (event) => {
