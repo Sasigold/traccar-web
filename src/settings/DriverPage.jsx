@@ -33,6 +33,12 @@ import {
   splitAttributes,
 } from '../common/fleet/fleetFields';
 
+// A unique identifier for a driver without a tag: "drv-" and 8 random characters.
+export const generatedDriverId = () =>
+  `drv-${Array.from(crypto.getRandomValues(new Uint8Array(8)), (byte) =>
+    'abcdefghjkmnpqrstuvwxyz23456789'.charAt(byte % 31),
+  ).join('')}`;
+
 const DriverPage = () => {
   const t = useTranslation();
 
@@ -73,8 +79,11 @@ const DriverPage = () => {
         )?.name
       : null;
 
-  const validate = () =>
-    item && item.name && item.uniqueId && fleetFieldsValid(driverFields, item.attributes);
+  // ADM-17: the identifier is the driver's tag or card number, and not every driver has one;
+  // Traccar needs a unique value, so one is made up when it is left empty.
+  const validate = () => item && item.name && fleetFieldsValid(driverFields, item.attributes);
+  const prepare = (value) =>
+    value.uniqueId?.trim() ? value : { ...value, uniqueId: generatedDriverId() };
 
   return (
     <EditItemView
@@ -82,6 +91,7 @@ const DriverPage = () => {
       item={item}
       setItem={setItem}
       validate={validate}
+      prepare={prepare}
       onItemSaved={onItemSaved}
       menu={<SettingsMenu />}
       breadcrumbs={['fleetTitle', 'sharedDriver']}
@@ -98,7 +108,8 @@ const DriverPage = () => {
             <TextField
               value={item.uniqueId || ''}
               onChange={(event) => setItem({ ...item, uniqueId: event.target.value })}
-              label={t('deviceIdentifier')}
+              label={t('driverTagNumber')}
+              helperText={t('driverTagNumberHelp')}
             />
           </FormSection>
           <FleetFieldsSection

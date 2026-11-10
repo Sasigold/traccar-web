@@ -28,6 +28,7 @@ import ScanDocumentButton from '../fleet/components/ScanDocumentButton';
 import { vehicleValues } from '../common/fleet/documentScan';
 import { looksLikeBadImei, samePlate } from '../common/util/israeliFields';
 import MaintenanceStatusSection from '../fleet/components/MaintenanceStatusSection';
+import VehicleDriverSection from '../fleet/components/VehicleDriverSection';
 import {
   mergeAttributes,
   notesField,
@@ -199,6 +200,7 @@ const DevicePage = () => {
             }
           />
           {item.id && <MaintenanceStatusSection deviceId={item.id} />}
+          {item.id && <VehicleDriverSection device={item} />}
           <FormSection title={t('formSectionMore')}>
             <SelectField
               value={item.groupId}

@@ -10,6 +10,8 @@ import { getFleetClient, unwrap } from '../../common/fleet/client';
 import { useFleetPermission, useFleetProfile } from '../../common/fleet/useFleet';
 import FormSection from '../../settings/components/FormSection';
 import { ensureDriver, ensureVehicle } from '../fleetData';
+import { assignDriver, grantMapAccess, vehicleHolder } from '../api/assignments';
+import { useConfirm } from '../../common/components/confirm/ConfirmProvider';
 import { newDriverConflict } from '../../common/fleet/newDriver';
 
 const useStyles = makeStyles()((theme) => ({
@@ -28,6 +30,7 @@ const useStyles = makeStyles()((theme) => ({
 const DriverAssignmentSection = ({ driver }) => {
   const { classes } = useStyles();
   const t = useTranslation();
+  const confirm = useConfirm();
   const profile = useFleetProfile();
   const canRead = useFleetPermission('vehicles.read');
   const canAssign = useFleetPermission('assignments.write');
@@ -63,8 +66,12 @@ const DriverAssignmentSection = ({ driver }) => {
     setRow(unwrap(driverRow));
     if (canLink) {
       setUsers(
-        unwrap(await client.from('profiles').select('id, full_name, email').order('full_name')) ||
-          [],
+        unwrap(
+          await client
+            .from('profiles')
+            .select('id, full_name, email, traccar_user_id')
+            .order('full_name'),
+        ) || [],
       );
     }
   }, [canRead, canLink, driver?.id, reloadKey]);
@@ -74,30 +81,33 @@ const DriverAssignmentSection = ({ driver }) => {
     [devices],
   );
 
+  const traccarUserOf = (profileId) => users.find((user) => user.id === profileId)?.traccar_user_id;
+
+  // ADM-17: a vehicle another driver has is passed on only when that is confirmed; the
+  // driver's own user then sees it on the map.
   const assign = useCatch(async (deviceId) => {
     const client = getFleetClient();
     const driverId = await ensureDriver(driver, profile);
-    const now = new Date().toISOString();
-    unwrap(
-      await client
-        .from('vehicle_driver_assignments')
-        .update({ ends_at: now })
-        .eq('driver_id', driverId)
-        .or(`ends_at.is.null,ends_at.gt.${now}`),
-    );
+    let vehicleId = null;
     if (deviceId) {
-      const vehicleId = await ensureVehicle(devices[deviceId], profile);
-      unwrap(
-        await client.from('vehicle_driver_assignments').insert({
-          org_id: profile.org_id,
-          vehicle_id: vehicleId,
-          driver_id: driverId,
-          starts_at: now,
-          is_primary: true,
-          created_by: profile.id,
-        }),
-      );
+      const holder = await vehicleHolder(client, Number(deviceId));
+      if (
+        holder &&
+        holder.driver_id !== driverId &&
+        !(await confirm({
+          title: t('fleetAssignTransferTitle'),
+          message: t('fleetAssignTransfer')
+            .replace('{0}', devices[deviceId]?.name || '')
+            .replace('{1}', holder.driver?.full_name || ''),
+          confirmLabel: t('fleetAssignTransferConfirm'),
+        }))
+      ) {
+        return;
+      }
+      vehicleId = await ensureVehicle(devices[deviceId], profile);
     }
+    await assignDriver({ client, profile, driverId, vehicleId });
+    if (deviceId) await grantMapAccess(traccarUserOf(row?.profile_id), deviceId);
     reload();
   });
 
@@ -109,6 +119,9 @@ const DriverAssignmentSection = ({ driver }) => {
         .update({ profile_id: profileId || null })
         .eq('id', driverId),
     );
+    if (current?.traccar_device_id) {
+      await grantMapAccess(traccarUserOf(profileId), current.traccar_device_id);
+    }
     reload();
   });
 
@@ -168,6 +181,11 @@ const DriverAssignmentSection = ({ driver }) => {
             )}
           </Alert>
         )}
+      {current?.traccar_device_id && row?.profile_id && (
+        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+          {t('fleetAssignSeesOnMap')}
+        </Typography>
+      )}
       {!current && !canAssign && (
         <Typography variant="body2" color="textSecondary">
           {t('fleetNoVehicle')}
