@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import {
   Button,
@@ -10,12 +11,15 @@ import {
   DialogTitle,
   FormControlLabel,
   MenuItem,
+  Paper,
   Stack,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import EventSeatRoundedIcon from '@mui/icons-material/EventSeatRounded';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -31,6 +35,7 @@ import { useInvalidateFleet } from '../common/data/fleetQuery';
 import { keepOnBackdrop } from '../common/util/formDialog';
 import FleetNotice from './components/FleetNotice';
 import { useFleetRows } from './fleetRows';
+import PoolWeekCalendar from './components/PoolWeekCalendar';
 
 const STATUS_COLOR = {
   requested: 'warning',
@@ -200,6 +205,43 @@ const ReturnDialog = ({ booking, onClose, onSaved }) => {
   );
 };
 
+// The actions a booking allows, in the list's row and in the calendar's dialog.
+const BookingActions = ({ row, manage, mine, deviceId, decide, onReturn }) => {
+  const t = useTranslation();
+  return (
+    <Stack direction="row" spacing={1} sx={{ whiteSpace: 'nowrap', flexWrap: 'wrap' }}>
+      {manage && row.status === 'requested' && (
+        <>
+          <Button size="small" onClick={() => decide(row, 'approved')}>
+            {t('poolApprove')}
+          </Button>
+          <Button size="small" onClick={() => decide(row, 'rejected')}>
+            {t('poolReject')}
+          </Button>
+        </>
+      )}
+      {/* OPS-06: the morning check before the keys are handed over, on the booked vehicle. */}
+      {row.status === 'approved' && (manage || mine) && deviceId && (
+        <Button size="small" component={RouterLink} to={`/fleet/inspection?deviceId=${deviceId}`}>
+          {t('poolHandoverCheck')}
+        </Button>
+      )}
+      {row.status === 'approved' && (manage || mine) && (
+        <Button size="small" onClick={() => onReturn(row)}>
+          {t('poolReturn')}
+        </Button>
+      )}
+      {['requested', 'approved'].includes(row.status) && mine && (
+        <Button size="small" onClick={() => decide(row, 'cancelled')}>
+          {t('sharedCancel')}
+        </Button>
+      )}
+    </Stack>
+  );
+};
+
+const statusLabel = (t, status) => t(`poolStatus${status[0].toUpperCase()}${status.slice(1)}`);
+
 // OPS-06: pool vehicles: ask for one, a manager approves, and it comes back with its odometer.
 const PoolPage = () => {
   const t = useTranslation();
@@ -210,9 +252,19 @@ const PoolPage = () => {
   const [booking, setBooking] = useState(false);
   const [returning, setReturning] = useState(null);
   const [problem, setProblem] = useState(null);
+  const [picked, setPicked] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = searchParams.get('view') === 'calendar' ? 'calendar' : 'list';
+  const setView = (value) => {
+    if (!value) return;
+    const next = new URLSearchParams(searchParams);
+    if (value === 'calendar') next.set('view', 'calendar');
+    else next.delete('view');
+    setSearchParams(next, { replace: true });
+  };
 
   const vehicles = useFleetRows('vehicles', {
-    select: 'id, plate_number, pool',
+    select: 'id, plate_number, pool, traccar_device_id',
     order: 'plate_number',
     enabled: canRead,
   });
@@ -230,6 +282,24 @@ const PoolPage = () => {
   const plateOf = (id) =>
     (vehicles || []).find((vehicle) => vehicle.id === id)?.plate_number || '—';
   const nameOf = (id) => (people || []).find((person) => person.id === id)?.full_name || '—';
+  const deviceOf = (id) =>
+    (vehicles || []).find((vehicle) => vehicle.id === id)?.traccar_device_id || null;
+  const actionsOf = (row) => (
+    <BookingActions
+      row={row}
+      manage={manage}
+      mine={row.requested_by === profile?.id}
+      deviceId={deviceOf(row.vehicle_id)}
+      decide={async (target, status) => {
+        setPicked(null);
+        await decide(target, status);
+      }}
+      onReturn={(target) => {
+        setPicked(null);
+        setReturning(target);
+      }}
+    />
+  );
 
   const decide = useCatch(async (row, status) => {
     setProblem(null);
@@ -261,6 +331,34 @@ const PoolPage = () => {
     invalidate('pool_bookings');
   };
 
+  const toolbar = (
+    <TableToolbar
+      count={bookings?.length || 0}
+      actions={
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={view}
+            onChange={(_, value) => setView(value)}
+            aria-label={t('poolView')}
+          >
+            <ToggleButton value="list">{t('poolList')}</ToggleButton>
+            <ToggleButton value="calendar">{t('poolCalendar')}</ToggleButton>
+          </ToggleButtonGroup>
+          <Button
+            variant="contained"
+            size="small"
+            disabled={!poolVehicles.length}
+            onClick={() => setBooking(true)}
+          >
+            {t('poolBook')}
+          </Button>
+        </Stack>
+      }
+    />
+  );
+
   return (
     <PageLayout
       menu={<SettingsMenu />}
@@ -289,82 +387,96 @@ const PoolPage = () => {
         </Stack>
       )}
       {problem && <Chip color="warning" label={problem} sx={{ mx: 3, mb: 2 }} />}
-      <DataTable
-        toolbar={
-          <TableToolbar
-            count={bookings?.length || 0}
-            actions={
-              <Button
-                variant="contained"
-                size="small"
-                disabled={!poolVehicles.length}
-                onClick={() => setBooking(true)}
-              >
-                {t('poolBook')}
-              </Button>
-            }
-          />
-        }
-        empty={Boolean(bookings) && bookings.length === 0}
-        emptyState={{ icon: <EventSeatRoundedIcon />, title: t('poolNone') }}
-      >
-        <TableHead>
-          <TableRow>
-            <TableCell>{t('sharedDevice')}</TableCell>
-            <TableCell>{t('poolWho')}</TableCell>
-            <TableCell>{t('reportFrom')}</TableCell>
-            <TableCell>{t('reportTo')}</TableCell>
-            <TableCell>{t('poolDestination')}</TableCell>
-            <TableCell>{t('deviceStatus')}</TableCell>
-            <TableCell />
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {(bookings || []).map((row) => (
-            <TableRow key={row.id} hover>
-              <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                <span dir="ltr">{plateOf(row.vehicle_id)}</span>
-              </TableCell>
-              <TableCell>{nameOf(row.requested_by)}</TableCell>
-              <TableCell>{formatTime(row.starts_at, 'minutes')}</TableCell>
-              <TableCell>{formatTime(row.ends_at, 'minutes')}</TableCell>
-              <TableCell>{row.destination || '—'}</TableCell>
-              <TableCell>
-                <Chip
-                  size="small"
-                  color={STATUS_COLOR[row.status]}
-                  label={t(`poolStatus${row.status[0].toUpperCase()}${row.status.slice(1)}`)}
-                />
-              </TableCell>
-              <TableCell>
-                <Stack direction="row" spacing={1} sx={{ whiteSpace: 'nowrap' }}>
-                  {manage && row.status === 'requested' && (
-                    <>
-                      <Button size="small" onClick={() => decide(row, 'approved')}>
-                        {t('poolApprove')}
-                      </Button>
-                      <Button size="small" onClick={() => decide(row, 'rejected')}>
-                        {t('poolReject')}
-                      </Button>
-                    </>
-                  )}
-                  {row.status === 'approved' && (manage || row.requested_by === profile?.id) && (
-                    <Button size="small" onClick={() => setReturning(row)}>
-                      {t('poolReturn')}
-                    </Button>
-                  )}
-                  {['requested', 'approved'].includes(row.status) &&
-                    row.requested_by === profile?.id && (
-                      <Button size="small" onClick={() => decide(row, 'cancelled')}>
-                        {t('sharedCancel')}
-                      </Button>
-                    )}
-                </Stack>
-              </TableCell>
+      {view === 'list' ? (
+        <DataTable
+          toolbar={toolbar}
+          empty={Boolean(bookings) && bookings.length === 0}
+          emptyState={{ icon: <EventSeatRoundedIcon />, title: t('poolNone') }}
+        >
+          <TableHead>
+            <TableRow>
+              <TableCell>{t('sharedDevice')}</TableCell>
+              <TableCell>{t('poolWho')}</TableCell>
+              <TableCell>{t('reportFrom')}</TableCell>
+              <TableCell>{t('reportTo')}</TableCell>
+              <TableCell>{t('poolDestination')}</TableCell>
+              <TableCell>{t('deviceStatus')}</TableCell>
+              <TableCell />
             </TableRow>
-          ))}
-        </TableBody>
-      </DataTable>
+          </TableHead>
+          <TableBody>
+            {(bookings || []).map((row) => (
+              <TableRow key={row.id} hover>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                  <span dir="ltr">{plateOf(row.vehicle_id)}</span>
+                </TableCell>
+                <TableCell>{nameOf(row.requested_by)}</TableCell>
+                <TableCell>{formatTime(row.starts_at, 'minutes')}</TableCell>
+                <TableCell>{formatTime(row.ends_at, 'minutes')}</TableCell>
+                <TableCell>{row.destination || '—'}</TableCell>
+                <TableCell>
+                  <Chip
+                    size="small"
+                    color={STATUS_COLOR[row.status]}
+                    label={statusLabel(t, row.status)}
+                  />
+                </TableCell>
+                <TableCell>{actionsOf(row)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </DataTable>
+      ) : (
+        // The same card as the list's.
+        <Paper
+          elevation={0}
+          sx={(theme) => ({
+            borderRadius: `${theme.tokens.radius.xl}px`,
+            overflow: 'hidden',
+            margin: theme.spacing(0.5, 3, 3),
+            [theme.breakpoints.down('md')]: {
+              margin: theme.spacing(0, 0, 2),
+              borderRadius: 0,
+              borderInline: 'none',
+            },
+          })}
+        >
+          {toolbar}
+          {bookings && (
+            <PoolWeekCalendar
+              vehicles={poolVehicles}
+              bookings={bookings}
+              nameOf={nameOf}
+              onPick={setPicked}
+            />
+          )}
+        </Paper>
+      )}
+      {picked && (
+        <Dialog open onClose={() => setPicked(null)} maxWidth="xs" fullWidth>
+          <DialogTitle>
+            <span dir="ltr">{plateOf(picked.vehicle_id)}</span> · {nameOf(picked.requested_by)}
+          </DialogTitle>
+          <DialogContent>
+            <Stack spacing={1.5}>
+              <span>
+                {formatTime(picked.starts_at, 'minutes')} – {formatTime(picked.ends_at, 'minutes')}
+              </span>
+              {picked.destination && <span>{picked.destination}</span>}
+              <Chip
+                size="small"
+                color={STATUS_COLOR[picked.status]}
+                label={statusLabel(t, picked.status)}
+                sx={{ alignSelf: 'flex-start' }}
+              />
+              {actionsOf(picked)}
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setPicked(null)}>{t('sharedClose')}</Button>
+          </DialogActions>
+        </Dialog>
+      )}
       {booking && (
         <BookingDialog
           vehicles={poolVehicles}
