@@ -14,6 +14,7 @@ import ErrorBoundary from './ErrorBoundary';
 import AppThemeProvider from './AppThemeProvider';
 import { installStaleBuildRecovery } from './common/util/staleBuild';
 import { installTelemetry } from './common/telemetry/install';
+import { installNumberInputGuards } from './common/util/numberInputs';
 import TelemetryRoute from './common/telemetry/TelemetryRoute';
 import { ConfirmProvider } from './common/components/confirm/ConfirmProvider';
 import UnsavedChangesGuard from './common/components/confirm/UnsavedChangesGuard';
@@ -22,6 +23,7 @@ import UnsavedChangesGuard from './common/components/confirm/UnsavedChangesGuard
 installStaleBuildRecovery();
 // FND-06: error reports, web vitals, counters and analytics, each off unless the build sets it.
 installTelemetry();
+installNumberInputGuards();
 
 const root = createRoot(document.getElementById('root'));
 root.render(

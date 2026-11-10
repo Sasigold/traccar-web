@@ -411,7 +411,7 @@ const DriverDamagePage = () => {
                 // ADM-23: stays on screen with the numbers to dial.
                 <Alert severity="error" role="alert">
                   {t('driverDamageCallHelp')}
-                  <Stack direction="row" spacing={1} sx={{ mt: 1 }} flexWrap="wrap" useFlexGap>
+                  <Stack direction="row" spacing={1} useFlexGap sx={{ mt: 1, flexWrap: 'wrap' }}>
                     {[
                       ['101', 'driverDamageCallMda'],
                       ['100', 'driverDamageCallPolice'],

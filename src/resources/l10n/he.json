@@ -3657,5 +3657,12 @@
     "fleetAreaPrivacy": "פרטיות",
     "fleetAreaSafety": "בטיחות",
     "fleetAreaUsers": "משתמשים והרשאות",
-    "fleetAreaVehicles": "רכבים"
+    "fleetAreaVehicles": "רכבים",
+    "pickerOpenCalendar": "פתיחת לוח שנה",
+    "pickerInvalidDate": "התאריך לא תקין. מקלידים כך: 15/03/2027",
+    "pickerPlusYear": "+שנה",
+    "pickerPlusHalfYear": "+6 חודשים",
+    "logsAutoScroll": "גלילה אוטומטית לסוף",
+    "moneyVatIncluded": "כולל מע\"מ",
+    "moneyVatExcluded": "לפני מע\"מ"
 }

@@ -87,7 +87,7 @@ const SharePage = () => {
               helperText={t('shareLinkHelp')}
               slotProps={{ input: { readOnly: true }, htmlInput: { dir: 'ltr' } }}
             />
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
               <Button
                 variant="outlined"
                 startIcon={<WhatsAppIcon />}

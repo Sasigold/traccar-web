@@ -7,6 +7,7 @@ import PickerSurface from './PickerSurface';
 import CalendarPanel from './CalendarPanel';
 import PickerFooter from './PickerFooter';
 import usePickerState from './usePickerState';
+import { addToDate, dateOrder, maskDate, parseTypedDate } from './dateTyping';
 import {
   DATE_FORMAT,
   changeEvent,
@@ -26,6 +27,10 @@ const DateField = ({
   max,
   required,
   clearable = !required,
+  // ADM-24: "+1 year" and "+6 months" in the picker, for renewing a validity date.
+  renewal = false,
+  error,
+  helperText,
   // eslint-disable-next-line no-unused-vars
   type,
   ...props
@@ -38,6 +43,31 @@ const DateField = ({
   const [month, setMonth] = useState(() => (selected || dayjs()).startOf('month'));
 
   const emit = (date) => onChange?.(changeEvent(formatValue(date, DATE_FORMAT), name));
+
+  // ADM-24: typed as DD/MM/YYYY (the locale's order); kept as a draft until it is a whole date.
+  const localeFormat =
+    dayjs.Ls[dayjs.locale()]?.formats?.L || (dayjs.locale() === 'en' ? 'MM/DD/YYYY' : 'DD/MM/YYYY');
+  const order = dateOrder(localeFormat);
+  const [draft, setDraft] = useState(null);
+  const [invalid, setInvalid] = useState(false);
+  const commit = () => {
+    if (draft === null) return;
+    if (draft === '') {
+      if (clearable) emit(null);
+      setDraft(null);
+      setInvalid(false);
+      return;
+    }
+    const parsed = parseTypedDate(draft, order);
+    const date = parsed ? dayjs(parsed) : null;
+    if (date && !isOutside(date, minDate, maxDate)) {
+      emit(date);
+      setDraft(null);
+      setInvalid(false);
+    } else {
+      setInvalid(true);
+    }
+  };
 
   const open = (element) => {
     setMonth((selected || dayjs()).startOf('month'));
@@ -52,6 +82,17 @@ const DateField = ({
         {...props}
         name={name}
         required={required}
+        error={error || invalid}
+        helperText={invalid ? t('pickerInvalidDate') : helperText}
+        typing={{
+          value: draft ?? displayDate(selected),
+          placeholder: localeFormat,
+          onChange: (text) => {
+            setDraft(maskDate(text));
+            setInvalid(false);
+          },
+          onCommit: commit,
+        }}
         display={displayDate(selected)}
         icon={<EventRoundedIcon fontSize="small" />}
         onOpen={open}
@@ -79,6 +120,20 @@ const DateField = ({
                 picker.close();
               },
               disabled: !selected,
+            },
+            renewal && {
+              label: t('pickerPlusYear'),
+              onClick: () => {
+                emit(dayjs(addToDate(value, 1, 'year')));
+                picker.close();
+              },
+            },
+            renewal && {
+              label: t('pickerPlusHalfYear'),
+              onClick: () => {
+                emit(dayjs(addToDate(value, 6, 'month')));
+                picker.close();
+              },
             },
             {
               label: t('reportToday'),

@@ -5,6 +5,7 @@ import { useTranslation } from '../../common/components/LocalizationProvider';
 import FormSection from '../../settings/components/FormSection';
 import ExpiryBadge from './ExpiryBadge';
 import NewDriverChip from './NewDriverChip';
+import MoneyField from '../../common/components/MoneyField';
 import { DateField } from '../../common/components/pickers';
 import { FIELD_KINDS, fieldError } from '../../common/util/israeliFields';
 
@@ -145,6 +146,7 @@ const FleetFieldsSection = ({
           <div key={field.key} className={classes.dateRow}>
             <DateField
               label={label}
+              renewal={showExpiry && !field.newDriver}
               value={value || ''}
               onChange={(event) => update(field.key, event.target.value)}
               slotProps={{ inputLabel: { shrink: true } }}
@@ -154,6 +156,20 @@ const FleetFieldsSection = ({
           </div>
         );
       case 'number':
+        if (field.money) {
+          return (
+            <MoneyField
+              key={field.key}
+              label={label}
+              value={value ?? ''}
+              onChange={(event) => {
+                const text = event.target.value;
+                // "12." stays text while the decimals are typed.
+                update(field.key, text === '' || text.endsWith('.') ? text : Number(text));
+              }}
+            />
+          );
+        }
         return (
           <TextField
             key={field.key}

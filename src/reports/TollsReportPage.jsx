@@ -138,8 +138,7 @@ const TollsReportPage = () => {
         {totals.length > 0 && (
           <Stack
             direction="row"
-            flexWrap="wrap"
-            gap={1}
+            sx={{ flexWrap: 'wrap', gap: 1 }}
             role="status"
             aria-label={t('tollsByDriver')}
           >

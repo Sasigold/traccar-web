@@ -3657,5 +3657,12 @@
     "fleetAreaPrivacy": "privacy",
     "fleetAreaSafety": "safety",
     "fleetAreaUsers": "users and permissions",
-    "fleetAreaVehicles": "vehicles"
+    "fleetAreaVehicles": "vehicles",
+    "pickerOpenCalendar": "Open the calendar",
+    "pickerInvalidDate": "Not a valid date. Type it like 03/15/2027",
+    "pickerPlusYear": "+1 year",
+    "pickerPlusHalfYear": "+6 months",
+    "logsAutoScroll": "Scroll to the end automatically",
+    "moneyVatIncluded": "Including VAT",
+    "moneyVatExcluded": "Before VAT"
 }

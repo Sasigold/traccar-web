@@ -141,6 +141,7 @@ const BulkVehicleBar = ({ devices, onDone, onClear, onExport }) => {
                     ))}
                   </TextField>
                   <DateField
+                    renewal
                     label={t('bulkExpiryDate')}
                     value={expiryDate}
                     onChange={(event) => setExpiryDate(event.target.value)}

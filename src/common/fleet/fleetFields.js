@@ -51,7 +51,7 @@ export const vehicleFields = [
     optionPrefix: 'fleetOwnership',
   },
   // ISR-05: the list price ("מחיר מחירון"), for the taxable benefit of a company car.
-  { key: 'listPrice', labelKey: 'fleetListPrice', type: 'number', ltr: true },
+  { key: 'listPrice', labelKey: 'fleetListPrice', type: 'number', ltr: true, money: true },
   // ISR-12: a vehicle new drivers should not get (a truck, a passenger van).
   { key: 'noNewDrivers', labelKey: 'fleetNoNewDrivers', type: 'boolean' },
 ];

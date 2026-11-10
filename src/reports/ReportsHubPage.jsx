@@ -97,7 +97,7 @@ const ReportsHubPage = () => {
             >
               {t('reportSavedViews')}
             </Typography>
-            <Stack direction="row" flexWrap="wrap" gap={1} component="ul" sx={{ m: 0, p: 0 }}>
+            <Stack direction="row" component="ul" sx={{ m: 0, p: 0, gap: 1, flexWrap: 'wrap' }}>
               {savedReports.map((view) => (
                 <li key={view.id} style={{ listStyle: 'none' }}>
                   <Chip

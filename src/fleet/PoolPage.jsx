@@ -271,9 +271,7 @@ const PoolPage = () => {
       {manage && vehicles && (
         <Stack
           direction="row"
-          flexWrap="wrap"
-          gap={1}
-          sx={{ mx: 3, mb: 2 }}
+          sx={{ mx: 3, mb: 2, flexWrap: 'wrap', gap: 1 }}
           role="group"
           aria-label={t('poolVehicles')}
         >

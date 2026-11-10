@@ -346,6 +346,7 @@ const FleetDocumentsSection = ({ entity, traccarId, name, identifier }) => {
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
                 <DateField
+                  renewal
                   label={t('fleetExpiresAt')}
                   value={form.expires_at}
                   min={form.issued_at}

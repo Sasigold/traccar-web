@@ -94,6 +94,7 @@ const LogsPage = () => {
       <BaseFab
         color={autoScroll ? 'primary' : 'default'}
         onClick={() => setAutoScroll(!autoScroll)}
+        label={t('logsAutoScroll')}
       >
         <VerticalAlignBottomIcon />
       </BaseFab>
