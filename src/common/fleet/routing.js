@@ -13,7 +13,13 @@ const minutesBetween = (from, to, speedKmh) =>
   ((distanceKm(from, to) * ROAD_FACTOR) / speedKmh) * 60;
 
 // Arrival times and lateness of stops visited in this order.
-export const walkRoute = (start, stops, { speedKmh = DEFAULT_SPEED_KMH, startTime } = {}) => {
+/**
+ * @param {{ latitude: number, longitude: number }} start
+ * @param {any[]} stops
+ * @param {{ speedKmh?: number, startTime?: number }} [options]
+ */
+export const walkRoute = (start, stops, options = {}) => {
+  const { speedKmh = DEFAULT_SPEED_KMH, startTime = Date.now() } = options;
   let clock = startTime;
   let at = start;
   let km = 0;
