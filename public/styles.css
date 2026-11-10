@@ -187,8 +187,17 @@ html.dark body {
   }
 
   * {
-    height: auto !important;
     overflow: visible !important;
+  }
+
+  /* Map buttons are for the screen (the attribution stays). */
+  .maplibregl-ctrl-group {
+    display: none !important;
+  }
+
+  /* Pages flow on paper; a dashboard's widgets keep their sizes (REP-16), their charts need them. */
+  *:not(.vf-dashboard-canvas *) {
+    height: auto !important;
   }
 
   thead {

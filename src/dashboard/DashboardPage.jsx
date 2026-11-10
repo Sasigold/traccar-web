@@ -70,6 +70,8 @@ import { templateCoverage } from './model/templates';
 import useDashboards from './model/useDashboards';
 import { presetAvailable, presetOf } from './widgets/catalog';
 import DashboardTabs, { NameDialog, dashboardName } from './components/DashboardTabs';
+import DashboardPrintHeader from './components/DashboardPrintHeader';
+import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import DashboardFilterBar from './components/DashboardFilterBar';
 import CatalogDrawer from './components/CatalogDrawer';
 import WidgetSettingsDialog from './components/WidgetSettingsDialog';
@@ -111,6 +113,10 @@ const useStyles = makeStyles()((theme) => ({
     '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
   },
   top: {
+    // REP-16: tabs, filters and editing are for the screen; paper gets the print header.
+    '@media print': {
+      display: 'none !important',
+    },
     position: 'sticky',
     top: 0,
     zIndex: 5,
@@ -125,6 +131,9 @@ const useStyles = makeStyles()((theme) => ({
     },
   },
   body: {
+    '@media print': {
+      padding: 0,
+    },
     padding: theme.spacing(0.5, 3, 4),
     [theme.breakpoints.down('md')]: {
       padding: theme.spacing(0.5, 1.5, 3),
@@ -609,6 +618,19 @@ const DashboardPage = () => {
             <ListItemText>{t('dashboardPublish')}</ListItemText>
           </MenuItem>
         )}
+        {/* REP-16: the dashboard on paper or as a PDF, with the shared document header. */}
+        <MenuItem
+          onClick={() => {
+            setMenuAnchor(null);
+            // The menu closes before the print dialog freezes the page.
+            setTimeout(() => window.print(), 50);
+          }}
+        >
+          <ListItemIcon>
+            <PrintRoundedIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>{t('dashboardPrint')}</ListItemText>
+        </MenuItem>
         <MenuItem
           onClick={async () => {
             setMenuAnchor(null);
@@ -656,6 +678,7 @@ const DashboardPage = () => {
           tv ? `${classes.root} ${classes.tv} ${kiosk ? classes.kiosk : ''}` : classes.root
         }
       >
+        {!tv && <DashboardPrintHeader title={dashboardName(dashboard, t)} />}
         {!tv && (
           <div className={classes.top}>
             <DashboardTabs
