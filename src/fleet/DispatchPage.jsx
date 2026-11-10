@@ -52,6 +52,7 @@ import {
 } from '../common/fleet/dispatch';
 import FleetNotice from './components/FleetNotice';
 import RoutePlanDialog from './components/RoutePlanDialog';
+import AddressField from '../common/components/AddressField';
 import {
   camel,
   cleanPayload,
@@ -292,7 +293,20 @@ const JobDialog = ({ job, pois, vehicles, drivers, onClose, onSaved }) => {
           </TextField>
           {field('customer_name', 'fleetJobCustomer')}
           {field('customer_phone', 'sharedPhone', ltr)}
-          {field('address', 'positionAddress', { className: classes.wide })}
+          <AddressField
+            className={classes.wide}
+            label={t('positionAddress')}
+            value={form.address}
+            onChange={(address) => setForm((current) => ({ ...current, address }))}
+            onPick={(picked) =>
+              setForm((current) => ({
+                ...current,
+                address: picked.address,
+                latitude: picked.latitude ?? current.latitude,
+                longitude: picked.longitude ?? current.longitude,
+              }))
+            }
+          />
           {field('latitude', 'positionLatitude', { type: 'number', ...ltr })}
           {field('longitude', 'positionLongitude', { type: 'number', ...ltr })}
           {select(

@@ -320,6 +320,8 @@
     "positionSpeed": "מהירות",
     "positionCourse": "כיוון",
     "positionAddress": "כתובת",
+    "addressHelp": "מתחילים להקליד רחוב ועיר. בחירה מהרשימה ממלאת גם את המיקום.",
+    "addressLocating": "מאתרים את הכתובת במפה…",
     "positionProtocol": "פרוטוקול",
     "positionDistance": "מרחק",
     "positionRpm": "סל״ד",

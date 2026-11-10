@@ -320,6 +320,8 @@
     "positionSpeed": "Speed",
     "positionCourse": "Course",
     "positionAddress": "Address",
+    "addressHelp": "Start typing a street and a city. Choosing from the list fills in the location too.",
+    "addressLocating": "Finding the address on the map…",
     "positionProtocol": "Protocol",
     "positionDistance": "Distance",
     "positionRpm": "RPM",

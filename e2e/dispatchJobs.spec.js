@@ -92,3 +92,32 @@ test('a route is planned for a vehicle and its order saved', async ({ page, isMo
     )
     .toEqual({ a: 1, b: 2, c: 3 });
 });
+
+// ISR-10: an address from the official street list, with its coordinates filled in.
+test('a Hebrew address is completed and located', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the same field on a phone');
+  await writeMode(page);
+  await fakeFleet(page, {
+    users: { 1: dispatcher },
+    rpc: { fleet_features: ['dispatch'] },
+    tables: { dispatch_jobs: [], pois: [], vehicles: [], drivers: [] },
+  });
+  await page.route('https://data.gov.il/**', (route) =>
+    route.fulfill({
+      json: { result: { records: [{ שם_רחוב: 'הרצל', שם_ישוב: 'רמת גן' }] } },
+    }),
+  );
+  const geocoded = [];
+  await page.route('https://nominatim.openstreetmap.org/**', (route) => {
+    geocoded.push(new URL(route.request().url()).searchParams.get('q'));
+    return route.fulfill({ json: [{ lat: '32.0823', lon: '34.8106' }] });
+  });
+  await gotoReady(page, '/fleet/dispatch');
+  await page.getByRole('button', { name: 'משימה חדשה' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('combobox', { name: 'כתובת' }).fill('הרצל 12');
+  await page.getByRole('option', { name: 'הרצל 12, רמת גן' }).click();
+  await expect(dialog.getByLabel('קו רוחב')).toHaveValue('32.0823');
+  await expect(dialog.getByLabel('קו אורך')).toHaveValue('34.8106');
+  expect(geocoded).toEqual(['הרצל 12, רמת גן']);
+});
