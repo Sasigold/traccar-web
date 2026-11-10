@@ -11,9 +11,20 @@ export const SPEED_RAMP = {
 
 export const overspeedColor = (dark) => (dark ? status.dark.error : status.light.error);
 
+// SAF-06: a little over the limit (up to 10 km/h) is a warning, more is an error.
+const KNOTS_PER_10_KMH = 10 / 1.852;
+export const bandColor = (speed, limit, dark) =>
+  speed - limit > KNOTS_PER_10_KMH
+    ? overspeedColor(dark)
+    : dark
+      ? status.dark.warning
+      : status.light.warning;
+
+// speed and limit in knots. `limit` is the road's at that point when Traccar knows it (SAF-06),
+// else the vehicle's.
 const getSpeedColor = (speed, minSpeed, maxSpeed, { dark = false, limit } = {}) => {
   if (limit > 0 && speed > limit) {
-    return overspeedColor(dark);
+    return bandColor(speed, limit, dark);
   }
   const ramp = dark ? SPEED_RAMP.dark : SPEED_RAMP.light;
   const range = maxSpeed - minSpeed;

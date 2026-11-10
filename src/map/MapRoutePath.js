@@ -48,7 +48,11 @@ const MapRoutePath = ({ positions }) => {
       properties: {
         color:
           reportColor ||
-          getSpeedColor(positions[i + 1].speed, minSpeed, maxSpeed, { dark, limit: speedLimit }),
+          getSpeedColor(positions[i + 1].speed, minSpeed, maxSpeed, {
+            dark,
+            // SAF-06: the road's limit where Traccar knows it, else the vehicle's.
+            limit: Number(positions[i + 1].attributes?.speedLimit) || speedLimit,
+          }),
         width: mapLineWidth,
         opacity: mapLineOpacity,
       },
