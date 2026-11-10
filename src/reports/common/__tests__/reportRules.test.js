@@ -47,3 +47,16 @@ describe('geofence visits', () => {
     ).toEqual({ open: false, duration: 1800000 });
   });
 });
+
+describe('speeding against the road limit (SAF-06)', () => {
+  it('grades the excess in km/h', async () => {
+    const { speedingBand, overspeedBand } = await import('../reportRules');
+    expect(speedingBand(95, 90)).toBe('minor');
+    expect(speedingBand(105, 90)).toBe('medium');
+    expect(speedingBand(112, 90)).toBe('severe');
+    expect(speedingBand(80, 90)).toBeNull();
+    expect(speedingBand(80, null)).toBeNull();
+    expect(overspeedBand({ speed: 60.48, speedLimit: 48.6 })).toBe('severe');
+    expect(overspeedBand({ speed: 60.48 })).toBeNull();
+  });
+});

@@ -30,3 +30,23 @@ export const visitDuration = (visit, now = Date.now()) => {
   if (!Number.isFinite(end)) return { open: true, duration: now - start };
   return { open: false, duration: end - start };
 };
+// SAF-06: speeding judged against the road's own limit (Traccar's speedLimit), in bands.
+export const SPEED_BANDS = [
+  { key: 'minor', over: 0 },
+  { key: 'medium', over: 10 },
+  { key: 'severe', over: 20 },
+];
+
+// speed and limit in km/h; null when there is no limit or no speeding.
+export const speedingBand = (speedKmh, limitKmh) => {
+  if (!(limitKmh > 0) || !(speedKmh > limitKmh)) return null;
+  const over = speedKmh - limitKmh;
+  return over > 20 ? 'severe' : over > 10 ? 'medium' : 'minor';
+};
+
+// From an overspeed event's attributes (knots): the band, or null.
+export const overspeedBand = (attributes) =>
+  speedingBand(
+    (Number(attributes?.speed) || 0) * 1.852,
+    (Number(attributes?.speedLimit) || 0) * 1.852,
+  );

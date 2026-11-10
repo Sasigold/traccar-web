@@ -59,3 +59,22 @@ test('events are timed by the event, and a geofence visit can still be going on'
   await expect(row).toContainText('עד עכשיו');
   await expect(row).not.toContainText('NaN');
 });
+
+test('an overspeed is graded against the road limit (SAF-06)', async ({ page }) => {
+  await page.route('**/api/reports/events?*', (route) =>
+    route.fulfill({
+      json: [
+        {
+          id: 1,
+          deviceId: 1,
+          type: 'deviceOverspeed',
+          eventTime: new Date().toISOString(),
+          positionId: 0,
+          attributes: { speed: 60.48, speedLimit: 48.6 },
+        },
+      ],
+    }),
+  );
+  await gotoReady(page, `/reports/events?deviceId=1&${day()}`);
+  await expect(page.getByText(/מותר .* · חריגה חמורה \(מעל 20\)/).first()).toBeAttached();
+});
