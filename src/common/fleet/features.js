@@ -16,6 +16,7 @@ export const FEATURE_TABLES = {
   alerts: 'document_alerts',
   integrations: 'api_keys',
   privacy: 'privacy_policies',
+  alertCases: 'alert_cases',
 };
 
 // PostgREST: a missing function is PGRST202, a missing table PGRST205 or 42P01.

@@ -23,6 +23,7 @@ import RouterRoundedIcon from '@mui/icons-material/RouterRounded';
 import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
+import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
 import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
 import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
 import HandymanRoundedIcon from '@mui/icons-material/HandymanRounded';
@@ -411,8 +412,19 @@ const useSectionCatalog = () => {
             descriptionKey: 'fleetAlertsPageDescription',
             icon: NotificationsActiveRoundedIcon,
             path: '/fleet/alerts',
-            match: (pathname) => pathname.startsWith('/fleet/alerts'),
+            match: (pathname) =>
+              pathname.startsWith('/fleet/alerts') &&
+              !pathname.startsWith('/fleet/alerts/response'),
             visible: fleetAlerts && has('alerts'),
+          },
+          {
+            id: 'alertResponse',
+            titleKey: 'alertResponseTitle',
+            descriptionKey: 'alertResponseMenuDescription',
+            icon: TimerRoundedIcon,
+            path: '/fleet/alerts/response',
+            match: (pathname) => pathname.startsWith('/fleet/alerts/response'),
+            visible: fleetAlerts && has('alertCases'),
           },
           {
             id: 'fleetDocuments',
