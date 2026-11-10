@@ -58,6 +58,8 @@ import { whatsappLink } from '../fleet/dispatch';
 import CommandDialog from './commands/CommandDialog';
 import CommandStatus from './commands/CommandStatus';
 import FocusedEventBanner from './FocusedEventBanner';
+import DirectionsRoundedIcon from '@mui/icons-material/DirectionsRounded';
+import { wazeUrl } from '../util/waze';
 
 const useStyles = makeStyles()((theme, { desktopPadding }) => ({
   card: {
@@ -635,6 +637,20 @@ const StatusCard = ({
           </MenuItem>
         )}
         {position && <Divider />}
+        {position && (
+          <MenuItem
+            component="a"
+            target="_blank"
+            rel="noopener noreferrer"
+            href={wazeUrl(position)}
+            onClick={() => setAnchorEl(null)}
+          >
+            <ListItemIcon>
+              <DirectionsRoundedIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{t('cardNavigateToVehicle')}</ListItemText>
+          </MenuItem>
+        )}
         {position && (
           <MenuItem
             component="a"

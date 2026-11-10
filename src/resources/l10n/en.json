@@ -3595,5 +3595,7 @@
     "fleetRecipientBadEmail": "Not a valid email address.",
     "fleetRecipientTest": "Send a test message",
     "fleetRecipientTestNotReady": "Sending on this channel is not connected yet. The service manager connects it in the sending channels screen.",
-    "fleetRecipientTestSent": "A test message was sent to {0}"
+    "fleetRecipientTestSent": "A test message was sent to {0}",
+    "sharedNavigateWaze": "Navigate with Waze",
+    "cardNavigateToVehicle": "Navigate to the vehicle (Waze)"
 }

@@ -66,6 +66,7 @@ import {
 import { fleetSave, withUploadedFile } from '../common/fleet/fleetSave';
 import { loadMaintenanceLinks, markMaintenanceDone } from './maintenance';
 import { DateField } from '../common/components/pickers';
+import WazeButton from '../common/components/WazeButton';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -127,7 +128,8 @@ const WorkOrderPage = () => {
 
   const [order, setOrder] = useState(null);
   // Only licensed garages (regulation 585): warn when the chosen one is not known to be.
-  const garageIssue = garageLicenseIssue(vendors.find((vendor) => vendor.id === order?.vendor_id));
+  const selectedVendor = vendors.find((vendor) => vendor.id === order?.vendor_id);
+  const garageIssue = garageLicenseIssue(selectedVendor);
   const [items, setItems] = useState([]);
   const [deviceId, setDeviceId] = useState(searchParams.get('deviceId') || '');
   const [invoice, setInvoice] = useState(null);
@@ -348,6 +350,13 @@ const WorkOrderPage = () => {
                     </MenuItem>
                   ))}
                 </TextField>
+                {selectedVendor?.address && (
+                  <WazeButton
+                    size="medium"
+                    place={{ address: selectedVendor.address }}
+                    label={selectedVendor.name}
+                  />
+                )}
                 {canWrite && (
                   <Tooltip title={t('fleetVendorAdd')}>
                     <IconButton

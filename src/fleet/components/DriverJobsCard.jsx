@@ -21,6 +21,7 @@ import { useFleetPermission, useFleetProfile } from '../../common/fleet/useFleet
 import { driverNextStatuses } from '../../common/fleet/dispatch';
 import { uploadFleetFile } from '../fleetData';
 import { JobStatusChip, jobKey } from '../DispatchPage';
+import { wazeUrl } from '../../common/util/waze';
 
 const useStyles = makeStyles()((theme) => ({
   card: {
@@ -65,12 +66,7 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const navigationLink = (job) =>
-  job.latitude != null && job.longitude != null
-    ? `https://waze.com/ul?ll=${job.latitude},${job.longitude}&navigate=yes`
-    : job.address
-      ? `https://waze.com/ul?q=${encodeURIComponent(job.address)}&navigate=yes`
-      : null;
+const navigationLink = (job) => wazeUrl(job);
 
 // Proof of delivery: who received it, and an optional photo.
 const ProofDialog = ({ job, status, onClose, onSaved }) => {

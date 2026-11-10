@@ -3595,5 +3595,7 @@
     "fleetRecipientBadEmail": "כתובת אימייל לא תקינה.",
     "fleetRecipientTest": "שליחת הודעת בדיקה",
     "fleetRecipientTestNotReady": "השליחה בערוץ הזה עוד לא מחוברת. מנהל השירות מחבר אותה במסך ערוצי השליחה.",
-    "fleetRecipientTestSent": "הודעת בדיקה נשלחה אל {0}"
+    "fleetRecipientTestSent": "הודעת בדיקה נשלחה אל {0}",
+    "sharedNavigateWaze": "ניווט ב-Waze",
+    "cardNavigateToVehicle": "ניווט אל הרכב (Waze)"
 }

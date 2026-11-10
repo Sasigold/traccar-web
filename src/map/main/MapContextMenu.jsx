@@ -27,6 +27,7 @@ import { useFleetPermission } from '../../common/fleet/useFleet';
 import { useFleetFeature } from '../../common/fleet/features';
 import { nearbyVehicles } from '../../common/fleet/dispatch';
 import { devicesActions, messagesActions } from '../../store';
+import { wazeUrl } from '../../common/util/waze';
 
 const LONG_PRESS = 600;
 
@@ -149,9 +150,7 @@ const MapContextMenu = () => {
         </MenuItem>
         <MenuItem
           component="a"
-          href={
-            menu ? `https://waze.com/ul?ll=${menu.latitude},${menu.longitude}&navigate=yes` : '#'
-          }
+          href={(menu && wazeUrl(menu)) || '#'}
           target="_blank"
           rel="noopener noreferrer"
           onClick={close}

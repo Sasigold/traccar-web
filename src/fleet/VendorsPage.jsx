@@ -30,6 +30,7 @@ import FleetNotice from './components/FleetNotice';
 import { useVendors } from './fleetData';
 import ValidatedField from '../common/components/ValidatedField';
 import { keepOnBackdrop } from '../common/util/formDialog';
+import WazeButton from '../common/components/WazeButton';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -242,7 +243,10 @@ const VendorsPage = () => {
               <TableCell>
                 <span dir="ltr">{vendor.phone}</span>
               </TableCell>
-              <TableCell>{vendor.address}</TableCell>
+              <TableCell>
+                {vendor.address}
+                <WazeButton place={{ address: vendor.address }} label={vendor.name} />
+              </TableCell>
               {canWrite && (
                 <TableCell className={classes.action}>
                   <Tooltip title={t('sharedEdit')}>

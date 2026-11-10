@@ -44,6 +44,7 @@ import { keepOnBackdrop } from '../common/util/formDialog';
 import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
 import ImportDialog from './components/ImportDialog';
 import { importEntity } from '../common/fleet/bulkImport';
+import WazeButton from '../common/components/WazeButton';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -467,7 +468,10 @@ const PoiPage = () => {
                   <TableRow key={poi.id} hover>
                     <TableCell>{poi.name}</TableCell>
                     <TableCell>{t(poiCategoryKey(poi.category))}</TableCell>
-                    <TableCell>{poi.address}</TableCell>
+                    <TableCell>
+                      {poi.address}
+                      <WazeButton place={poi} label={poi.name} />
+                    </TableCell>
                     <TableCell>
                       {poi.contact_name}
                       {poi.phone && (
