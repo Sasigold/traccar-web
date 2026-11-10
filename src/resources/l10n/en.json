@@ -3863,6 +3863,7 @@
     "reportSavedViews": "Saved views",
     "reportComparePrevious": "Compare with the previous period",
     "reportChangeFromPrevious": "Change from the previous period: {0}",
+    "reportChangeShort": "{0} from the previous period",
     "reportShowAllAddresses": "Show all addresses",
     "reportStopMinimum": "Stops of at least",
     "reportStopAtLeast": "{0} minutes",

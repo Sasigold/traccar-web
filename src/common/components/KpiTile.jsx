@@ -115,6 +115,11 @@ const KpiTile = ({
           <span className={classes.text}>
             <span className={classes.value}>{shown}</span>
             {labelText}
+            {hint && (
+              <Typography variant="caption" className={classes.hint} noWrap={!wrapHint}>
+                {hint}
+              </Typography>
+            )}
           </span>
         </>
       ) : (

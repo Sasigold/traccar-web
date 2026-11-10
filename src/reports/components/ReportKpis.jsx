@@ -17,7 +17,7 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-// Row of summary tiles above a report table (ADM-29: the shared KpiTile). items: [{ key, label, value, icon }]
+// Row of summary tiles above a report table (ADM-29: the shared KpiTile). items: [{ key, label, value, icon, hint }]
 const ReportKpis = ({ items }) => {
   const { classes } = useStyles();
   const visible = items.filter((item) => item.value != null && item.value !== '');
@@ -34,6 +34,7 @@ const ReportKpis = ({ items }) => {
           icon={item.icon}
           label={item.label}
           value={item.value}
+          hint={item.hint}
         />
       ))}
     </div>

@@ -3863,6 +3863,7 @@
     "reportSavedViews": "תצוגות שמורות",
     "reportComparePrevious": "השוואה לתקופה הקודמת",
     "reportChangeFromPrevious": "שינוי מהתקופה הקודמת: {0}",
+    "reportChangeShort": "{0} מהתקופה הקודמת",
     "reportShowAllAddresses": "הצגת כל הכתובות",
     "reportStopMinimum": "עצירות של לפחות",
     "reportStopAtLeast": "{0} דקות",

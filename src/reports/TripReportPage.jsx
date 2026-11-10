@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
 import {
+  FormControlLabel,
   IconButton,
+  Switch,
   TableBody,
   TableCell,
   TableHead,
@@ -34,6 +36,7 @@ import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
 import PlayCircleRoundedIcon from '@mui/icons-material/PlayCircleRounded';
 import ResizeHandle from './components/ResizeHandle';
 import usePersistedState from '../common/util/usePersistedState';
+import { delta, formatDelta, previousRange } from './common/compare';
 import { useCatch, useAsyncTask, useRunCallback } from '../reactHelper';
 import { useFleetReady } from '../common/fleet/useFleet';
 import { assignmentResolver, loadAssignments } from '../fleet/safetyData';
@@ -161,18 +164,16 @@ const TripReportPage = () => {
   // A driver who is not in a new result stops filtering it.
   const activeDriver = driverOptions.some((option) => option.id === driver) ? driver : null;
 
-  const filteredItems = useMemo(
-    () =>
-      items.filter(
-        (item) =>
-          (!tripType || item.business === (tripType === 'business')) &&
-          (!activeDriver ||
-            (activeDriver === NO_DRIVER
-              ? !tripDriverKey(item, resolve)
-              : item.driverUniqueId === activeDriver)),
-      ),
-    [items, tripType, activeDriver, resolve],
+  const keep = useCallback(
+    (item) =>
+      (!tripType || item.business === (tripType === 'business')) &&
+      (!activeDriver ||
+        (activeDriver === NO_DRIVER
+          ? !tripDriverKey(item, resolve)
+          : item.driverUniqueId === activeDriver)),
+    [tripType, activeDriver, resolve],
   );
+  const filteredItems = useMemo(() => items.filter(keep), [items, keep]);
 
   // REP-11: on a desktop, with results and no trip chosen, the map shows where each trip started
   // (grouped when close); a point chooses its trip, and its row scrolls into view.
@@ -223,31 +224,50 @@ const TripReportPage = () => {
     [selectedItem],
   );
 
-  const onShow = useRunCallback(async ({ deviceIds, groupIds, from, to, signal }) => {
-    const query = new URLSearchParams({ from, to });
-    deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
-    groupIds.forEach((groupId) => query.append('groupId', groupId));
-    setLoading(true);
-    try {
-      const response = await fetchOrThrow(`api/reports/trips?${query.toString()}`, {
-        signal,
-        headers: { Accept: 'application/json' },
-      });
-      // Places in hidden time (outside working hours, private periods) are taken out.
-      const policy = (await loadPrivacy(from, to).catch(() => null))?.policy;
-      const rows = (await response.json()).map((row) => ({ ...row, ...tripTiming(row, policy) }));
-      const result = await privateRows(rows, {
-        deviceIds: [...deviceIds, ...rows.map((row) => row.deviceId)],
-        from,
-        to,
-      });
-      setItems(result.rows);
-      setHiddenRows(result.hidden);
-    } finally {
-      setLoading(false);
-      setQueried(true);
-    }
-  }, []);
+  // REP-09: the trips of the period right before, for the change in the tiles.
+  const [compare, setCompare] = usePersistedState('tripsCompare', false);
+  const [previous, setPrevious] = useState(null);
+
+  const onShow = useRunCallback(
+    async ({ deviceIds, groupIds, from, to, signal }) => {
+      const query = new URLSearchParams({ from, to });
+      deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
+      groupIds.forEach((groupId) => query.append('groupId', groupId));
+      setLoading(true);
+      try {
+        const response = await fetchOrThrow(`api/reports/trips?${query.toString()}`, {
+          signal,
+          headers: { Accept: 'application/json' },
+        });
+        // Places in hidden time (outside working hours, private periods) are taken out.
+        const policy = (await loadPrivacy(from, to).catch(() => null))?.policy;
+        const rows = (await response.json()).map((row) => ({ ...row, ...tripTiming(row, policy) }));
+        const result = await privateRows(rows, {
+          deviceIds: [...deviceIds, ...rows.map((row) => row.deviceId)],
+          from,
+          to,
+        });
+        setItems(result.rows);
+        setHiddenRows(result.hidden);
+        if (compare) {
+          const before = previousRange(from, to);
+          query.set('from', before.from);
+          query.set('to', before.to);
+          const earlier = await fetchOrThrow(`api/reports/trips?${query.toString()}`, {
+            signal,
+            headers: { Accept: 'application/json' },
+          });
+          setPrevious(await earlier.json());
+        } else {
+          setPrevious(null);
+        }
+      } finally {
+        setLoading(false);
+        setQueried(true);
+      }
+    },
+    [compare],
+  );
 
   const onExport = useCatch(async () => {
     const sheets = new Map();
@@ -311,25 +331,36 @@ const TripReportPage = () => {
     if (!filteredItems.length) {
       return [];
     }
-    const sum = (key) => filteredItems.reduce((total, item) => total + (item[key] || 0), 0);
+    const sumOf = (rows, key) => rows.reduce((total, item) => total + (item[key] || 0), 0);
+    const sum = (key) => sumOf(filteredItems, key);
     const maxSpeed = Math.max(0, ...filteredItems.map((item) => item.maxSpeed || 0));
+    // REP-09: the change from the period before, under the tile.
+    const before = previous ? previous.filter(keep) : null;
+    const change = (current, earlier) => {
+      const value = before ? formatDelta(delta(current, earlier)) : '';
+      // The figure first: on a narrow tile the words are what gets cut.
+      return value ? t('reportChangeShort').replace('{0}', value) : undefined;
+    };
     return [
       {
         key: 'count',
         label: t('reportTrips'),
         value: filteredItems.length,
+        hint: change(filteredItems.length, before?.length),
         icon: <PlayCircleRoundedIcon />,
       },
       {
         key: 'distance',
         label: `${t('sharedTotal')} · ${t('sharedDistance')}`,
         value: formatDistance(sum('distance'), distanceUnit, t),
+        hint: change(sum('distance'), before && sumOf(before, 'distance')),
         icon: <RouteIcon />,
       },
       {
         key: 'duration',
         label: `${t('sharedTotal')} · ${t('reportDuration')}`,
         value: formatNumericHours(sum('duration'), t),
+        hint: change(sum('duration'), before && sumOf(before, 'duration')),
         icon: <TimerRoundedIcon />,
       },
       {
@@ -339,7 +370,7 @@ const TripReportPage = () => {
         icon: <SpeedRoundedIcon />,
       },
     ];
-  }, [filteredItems, distanceUnit, speedUnit, t]);
+  }, [filteredItems, previous, keep, distanceUnit, speedUnit, t]);
 
   const {
     sorted: sortedItems,
@@ -470,6 +501,14 @@ const TripReportPage = () => {
                 </div>
               )}
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
+              <div className={classes.filterItem}>
+                <FormControlLabel
+                  control={
+                    <Switch checked={compare} onChange={(e) => setCompare(e.target.checked)} />
+                  }
+                  label={t('reportComparePrevious')}
+                />
+              </div>
               <AllAddressesButton
                 className={classes.filterItem}
                 points={[
