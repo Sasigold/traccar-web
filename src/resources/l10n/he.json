@@ -42,6 +42,8 @@
     "sharedGeofences": "גדרות וירטואליות",
     "geofenceInside": "בתוך: {0} רכבים",
     "geofenceInsideNone": "אין רכבים בתוך האזור עכשיו",
+    "geofenceDwell": "בפנים {0}",
+    "geofenceDwellAverage": "שהייה ממוצעת {0}",
     "sharedGeofenceHint": "בחרו צורה כדי להתחיל לצייר גדר וירטואלית.",
     "sharedCreateGeofence": "יצירת גדר וירטואלית",
     "sharedNotifications": "התראות",

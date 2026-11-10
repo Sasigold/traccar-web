@@ -84,6 +84,8 @@ const MapPositionMarkers = ({
         image: `${iconKey}-${color}`,
         // LIV-29: counted by the clusters (their ring shows the state of most of their vehicles).
         status: device.status || 'unknown',
+        // LIV-29: a vehicle whose latest position carries an alarm marks its cluster.
+        alert: position.attributes?.alarm ? 1 : 0,
         title,
         fixTime: position.fixTime,
         rotation: position.course,

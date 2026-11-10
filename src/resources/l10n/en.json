@@ -42,6 +42,8 @@
     "sharedGeofences": "Geofences",
     "geofenceInside": "Inside: {0} vehicles",
     "geofenceInsideNone": "No vehicles inside right now",
+    "geofenceDwell": "inside {0}",
+    "geofenceDwellAverage": "average stay {0}",
     "sharedGeofenceHint": "Choose a shape to start drawing a geofence.",
     "sharedCreateGeofence": "Create Geofence",
     "sharedNotifications": "Notifications",

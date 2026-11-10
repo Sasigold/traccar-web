@@ -223,6 +223,19 @@ const MapMarkers = ({
       },
       on: { mouseenter: onMouseEnter, mouseleave: onMouseLeave, click: onClusterClick },
     });
+    // LIV-29: a red dot on a cluster with a vehicle in alarm.
+    layers.push({
+      key: 'clusterAlert',
+      type: 'circle',
+      filter: ['all', ['has', 'point_count'], ['>', ['get', 'alerts'], 0]],
+      paint: {
+        'circle-radius': 5 * iconScale,
+        'circle-color': theme.palette.error.main,
+        'circle-stroke-color': theme.palette.brand.paper,
+        'circle-stroke-width': 2,
+        'circle-translate': [ringRadius * 0.7, -ringRadius * 0.7],
+      },
+    });
   }
 
   // Glide state, kept outside React: one track per device (see motion.js).
@@ -238,6 +251,7 @@ const MapMarkers = ({
           clusterProperties: {
             online: ['+', ['case', ['==', ['get', 'status'], 'online'], 1, 0]],
             offline: ['+', ['case', ['==', ['get', 'status'], 'offline'], 1, 0]],
+            alerts: ['+', ['coalesce', ['get', 'alert'], 0]],
           },
         }
       : undefined,
