@@ -148,9 +148,9 @@ P2 · שיפור · שיפור · השפעה בינונית · מאמץ בינו
 - **מה ראינו:** כעשרה עמודי רשימה חוזרים על אותו מבנה (הרשאה, `FleetNotice`, state, חיפוש, צ'יפים, מיפוי Excel, `DataTable`, `reloadKey`). אותו regex של snake_case ל-camelCase מועתק 11 פעמים. 30 קבצים מעל 400 שורות, והבעיה העיקרית היא ערבוב של גישה לנתונים, כתיבה לשתי מערכות ו-UI באותה קומפוננטה.
 - **מה לעשות:** שלד `FleetListPage` ו-hook בשם `useFleetRecord`, עזרים משותפים ב-`common/util`, וגישה לנתונים במודולים לפי תחום (`adminApi` עם `useAdmin` הוא הדוגמה הטובה).
 
-### ⬜ ARC-11: אין חוזה מוקלד מול המסד
+### 🟡 ARC-11: אין חוזה מוקלד מול המסד
 
-P2 · שיפור · שיפור · השפעה בינונית · מאמץ בינוני · עד שבוע
+P2 · שיפור · שיפור · השפעה בינונית · מאמץ בינוני · עד שבוע · **בוצע:** `3b8a0bf` (103 files still start with // @ts-nocheck, strict mode is off, and the server-only tables are typed from the stand-in until the real baseline schema is in the repository)
 
 - **מה ראינו:** 50 שמות של טבלאות ותצוגות, וכל העמודות, כתובים כמחרוזות ב-41 קבצים. אין טיפוסים, אין `checkJs`, ו-TypeScript מותקן רק כתלות של ESLint.
 - **מה לעשות:** ליצור טיפוסי Supabase ב-CI ולעבוד עם `createClient<Database>` (דרך JSDoc), להוסיף `jsconfig` עם `checkJs` בקבצי הלוגיקה, להריץ `tsc --noEmit` ב-CI, ולכתוב קוד חדש ב-TypeScript.
