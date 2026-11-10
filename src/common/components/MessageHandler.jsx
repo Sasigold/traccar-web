@@ -9,9 +9,9 @@ import {
   DialogActions,
   Typography,
   useMediaQuery,
+  Slide,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { usePrevious } from '../../reactHelper';
@@ -41,25 +41,24 @@ const MessageHandler = () => {
 
   const [expanded, setExpanded] = useState(false);
 
-  // LIV-09: on a phone's map screens the vehicle card and the player sit at the bottom, so
-  // messages come from the top, under the bar.
+  // LIV-09, BRD-03: messages come from the top, under the bar, on every screen (on a phone's
+  // map the vehicle card and the player sit at the bottom), and slide down into place.
   const theme = useTheme();
   const phone = useMediaQuery(theme.breakpoints.down('md'));
-  const { pathname } = useLocation();
-  const onTop = phone && (pathname === '/' || pathname.startsWith('/replay'));
+  const barHeight = phone ? theme.dimensions.topBarHeightMobile : theme.dimensions.topBarHeight;
 
   return (
     <>
       <Snackbar
         key={`${severity}:${message}`}
         open={hasMessage && !expanded}
-        {...(onTop && {
-          anchorOrigin: { vertical: 'top', horizontal: 'center' },
-          sx: {
-            top: `calc(${theme.dimensions.topBarHeightMobile + 8}px + env(safe-area-inset-top, 0px)) !important`,
-            bottom: 'auto !important',
-          },
-        })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        slots={{ transition: Slide }}
+        slotProps={{ transition: { direction: 'down' } }}
+        sx={{
+          top: `calc(${barHeight + 8}px + env(safe-area-inset-top, 0px)) !important`,
+          bottom: 'auto !important',
+        }}
         autoHideDuration={duration}
         onClose={(_, reason) => {
           if (duration !== null && reason !== 'clickaway') {

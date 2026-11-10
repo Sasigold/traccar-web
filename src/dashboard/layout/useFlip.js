@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
+import { motion } from '../../common/theme/tokens';
 
 const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -7,7 +8,7 @@ const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').ma
 const useFlip = (
   containerRef,
   signature,
-  { enabled = true, duration = 260, easing = 'ease' } = {},
+  { enabled = true, duration = motion.duration.slow, easing = motion.easing.standard } = {},
 ) => {
   const rectsRef = useRef(new Map());
   const widthRef = useRef(0);

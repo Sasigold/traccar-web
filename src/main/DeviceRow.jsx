@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { beat } from '../common/theme/motion';
 import { makeStyles } from 'tss-react/mui';
 import { keyframes } from 'tss-react';
 import { alpha } from '@mui/material/styles';
@@ -351,6 +353,24 @@ const DeviceRow = ({ devices, tokens = [], favorites = [], index, style, focusIn
     batteryLabel,
   ].filter(Boolean);
 
+  // BRD-03: when the status changes (online, offline...), the row lights up once and fades
+  // (600ms), so the change is noticed without a loop.
+  const rowRef = useRef(null);
+  const statusRef = useRef(item.status);
+  useEffect(() => {
+    if (statusRef.current !== item.status) {
+      beat(
+        rowRef.current,
+        [
+          { backgroundColor: alpha(theme.palette.brand.aqua, 0.28) },
+          { backgroundColor: 'transparent' },
+        ],
+        600,
+      );
+    }
+    statusRef.current = item.status;
+  }, [item.status, theme]);
+
   const avatarClass = cx(classes.avatar, item.status !== 'online' && classes.avatarIdle);
   const iconKey = mapIconKey(item.category);
   const iconUrl = `url("${mapIcons[iconKey]}")`;
@@ -360,6 +380,7 @@ const DeviceRow = ({ devices, tokens = [], favorites = [], index, style, focusIn
   return (
     <div style={style} role="listitem">
       <ListItemButton
+        ref={rowRef}
         key={item.id}
         onClick={() => dispatch(devicesActions.selectId(item.id))}
         disabled={!admin && item.disabled}

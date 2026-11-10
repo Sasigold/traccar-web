@@ -1,3 +1,5 @@
+import { PAGE_FADE, beat } from '../../theme/motion';
+import { motion } from '../../theme/tokens';
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from '../LocalizationProvider';
@@ -101,6 +103,8 @@ const AppShell = ({ children }) => {
       firstRouteRef.current = false;
       return undefined;
     }
+    // BRD-03: a short fade between pages (180ms), without remounting the page.
+    beat(document.getElementById('main-content'), PAGE_FADE, motion.duration.base);
     const frame = requestAnimationFrame(() => {
       const heading = document.querySelector('#main-content h1');
       if (heading) {

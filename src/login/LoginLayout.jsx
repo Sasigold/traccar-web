@@ -126,7 +126,8 @@ const useStyles = makeStyles()((theme) => ({
     borderRadius: '50%',
     backgroundColor: theme.palette.brand.aqua,
     color: alpha(theme.palette.brand.aqua, 0.55),
-    animation: `${pulse} 1.8s ease-out infinite`,
+    // BRD-03: one beat as the screen opens.
+    animation: `${pulse} 1.8s ease-out 600ms 1`,
   },
   brandContent: {
     position: 'relative',

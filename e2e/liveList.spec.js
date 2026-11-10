@@ -1,4 +1,5 @@
 import { test, expect, gotoReady } from './fixtures';
+import { writeMode } from './fakeFleet';
 
 // LIV-30: small fixes in the live list.
 test('the list is one tab stop, and the arrows move between rows', async ({ page, isMobile }) => {
@@ -19,12 +20,16 @@ test('the list is one tab stop, and the arrows move between rows', async ({ page
 });
 
 test('a disabled vehicle says so, and the battery is written', async ({ page, isMobile }) => {
-  await page.route(/\/api\/devices(\?.*)?$/, async (route) => {
-    if (route.request().method() !== 'GET') return route.fallback();
-    const response = await route.fetch();
-    const devices = await response.json();
-    devices[0].disabled = true;
-    return route.fulfill({ response, json: devices });
+  // The vehicle is disabled in this test's own demo sandbox, so the live updates agree.
+  await writeMode(page);
+  await gotoReady(page, '/');
+  await page.evaluate(async () => {
+    const device = await (await fetch('/api/devices/2')).json();
+    await fetch('/api/devices/2', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...device, disabled: true }),
+    });
   });
   await gotoReady(page, '/');
   if (isMobile) await page.getByRole('button', { name: 'רשימת רכבים' }).click();

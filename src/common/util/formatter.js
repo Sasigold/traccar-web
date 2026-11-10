@@ -105,7 +105,8 @@ export const formatLongDate = (value) =>
     ? cached('date', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value))
     : '';
 
-export const formatStatus = (value, t) => t(prefixString('deviceStatus', value));
+// A device just created has no status yet: it reads as unknown, not as a crash.
+export const formatStatus = (value, t) => t(prefixString('deviceStatus', value || 'unknown'));
 
 export const formatAlarm = (value, t) => {
   if (value) {
