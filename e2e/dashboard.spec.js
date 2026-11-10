@@ -173,3 +173,16 @@ test.describe('dashboard', () => {
 test.afterEach(({ pageErrors }) => {
   expect(pageErrors, 'uncaught errors in the page').toEqual([]);
 });
+
+// REP-21: widgets load as still shapes, not a pulsing logo each.
+test('loading widgets show their shape, not the brand loader', async ({ page }) => {
+  await page.route('**/api/reports/**', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await route.fallback();
+  });
+  await gotoReady(page, '/dashboard');
+  await page.getByRole('button', { name: 'דשבורד חדש' }).click();
+  await page.getByRole('menuitem', { name: /פעילות/ }).click();
+  await expect(page.locator('[data-widget-id] [role="status"]').first()).toBeVisible();
+  await expect(page.locator('[data-widget-id] .vf-loader')).toHaveCount(0);
+});

@@ -18,7 +18,7 @@ import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import OpenInFullRoundedIcon from '@mui/icons-material/OpenInFullRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { useTranslation } from '../../common/components/LocalizationProvider';
-import BrandLoader from '../../common/components/brand/BrandLoader';
+import WidgetSkeleton from './WidgetSkeleton';
 import { useDashboardData } from '../data/DashboardDataContext';
 import { formatNumber } from '../../common/util/formatter';
 import useElementSize from '../layout/useElementSize';
@@ -302,18 +302,15 @@ const WidgetFrame = ({
   );
 };
 
-export const WidgetState = ({ state, onRetry, notice, loadingLabel, error }) => {
+export const WidgetState = ({ state, onRetry, notice, loadingLabel, error, shape }) => {
   const { classes } = useStyles();
   const t = useTranslation();
   // REP-17: a retry goes around the cache; too much data says how much, with the fixes.
   const data = useDashboardData();
   const retry = onRetry || data?.refreshNow;
   if (state === 'loading') {
-    return (
-      <div className={classes.center}>
-        <BrandLoader size={44} label={loadingLabel ?? t('sharedLoading')} />
-      </div>
-    );
+    // REP-21: skeletons in widgets; the brand loader stays for a page's first load.
+    return <WidgetSkeleton shape={shape} label={loadingLabel} />;
   }
   if (state === 'notice') {
     return <div className={classes.center}>{notice}</div>;

@@ -13,6 +13,7 @@ import StatTile from '../charts/StatTile';
 import Meter from '../charts/Meter';
 import TableView from '../charts/TableView';
 import { WidgetState } from './WidgetFrame';
+import { shapeOf } from './WidgetSkeleton';
 import { allowedViz, effectiveTopN, pickViz } from './vizRules';
 import { useWidgetData } from './useWidgetModel';
 import { useView } from './present';
@@ -130,7 +131,7 @@ const ChartWidget = ({
     return <WidgetState state={data.status} error={data.error} />;
   }
   if (!view) {
-    return <WidgetState state="loading" loadingLabel={title} />;
+    return <WidgetState state="loading" loadingLabel={title} shape={shapeOf(viz)} />;
   }
   if (isEmpty(view) && view.kind !== 'scalar') {
     return (
