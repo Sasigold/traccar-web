@@ -45,6 +45,7 @@ import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
 import ImportDialog from './components/ImportDialog';
 import { importEntity } from '../common/fleet/bulkImport';
 import WazeButton from '../common/components/WazeButton';
+import AddressField from '../common/components/AddressField';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -182,7 +183,21 @@ const PoiDialog = ({ poi, onClose, onSaved }) => {
               </MenuItem>
             ))}
           </TextField>
-          {field('address', 'positionAddress', { className: classes.wide })}
+          {/* ISR-10: the address is looked up as typed, and picking one fills its coordinates. */}
+          <AddressField
+            className={classes.wide}
+            label={t('positionAddress')}
+            value={form.address ?? ''}
+            onChange={(address) => setForm((current) => ({ ...current, address }))}
+            onPick={(picked) =>
+              setForm((current) => ({
+                ...current,
+                address: picked.address,
+                latitude: picked.latitude ?? current.latitude,
+                longitude: picked.longitude ?? current.longitude,
+              }))
+            }
+          />
           {field('latitude', 'positionLatitude', { type: 'number', ...ltr })}
           {field('longitude', 'positionLongitude', { type: 'number', ...ltr })}
           {field('radius_m', 'fleetPoiRadius', { type: 'number', ...ltr })}
