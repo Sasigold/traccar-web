@@ -4037,6 +4037,7 @@
     "sharedCopiedCheck": "הועתק ✓",
     "sharedSavedNamed": "{0} נשמר",
     "sharedSaveAndContinue": "שמירה והמשך",
+    "fleetSavedNamed": "שמרנו את {0}",
     "sharedSaveNeedsRequired": "כדי לשמור יש למלא את שדות החובה",
     "fleetApiKeyKept": "שמרתי את המפתח במקום בטוח (הוא לא יוצג שוב)",
     "dashboardComparedTo": "לעומת {0}",

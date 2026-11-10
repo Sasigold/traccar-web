@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Alert,
@@ -81,6 +81,7 @@ import DocumentPrintHeader from '../common/components/print/DocumentPrintHeader'
 import { formatTime } from '../common/util/formatter';
 import VehicleSelect from '../common/components/VehicleSelect';
 import InvoiceCheckPanel from './components/InvoiceCheckPanel';
+import { messagesActions } from '../store';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -139,6 +140,7 @@ const WorkOrderPage = () => {
   const canRead = useFleetPermission('maintenance.read');
   const canWrite = useFleetPermission('maintenance.write');
 
+  const dispatch = useDispatch();
   const devices = useSelector((state) => state.devices.items);
   const positions = useSelector((state) => state.session.positions);
 
@@ -231,7 +233,8 @@ const WorkOrderPage = () => {
   const leave = useLeaveGuard(useConfirm(), t);
   useFormChanges({ order, items, deviceId, invoice: invoice?.name, resetIds }, Boolean(order));
 
-  const handleSave = useCatch(async () => {
+  // ADM-14: a new order can be saved and kept open (the address becomes its own).
+  const handleSave = useCatch(async (stay = false) => {
     setSaving(true);
     try {
       const vehicleId = await ensureVehicle(devices[deviceId], profile);
@@ -246,7 +249,7 @@ const WorkOrderPage = () => {
         }));
       // ARC-05: the order and its lines in one transaction; a new invoice file is removed again
       // if the save fails.
-      await withUploadedFile(
+      const savedId = await withUploadedFile(
         async () => (invoice ? uploadFleetFile(profile.org_id, 'work-orders', invoice) : null),
         (path) => getFleetClient().storage.from(FILES_BUCKET).remove([path]),
         async (uploaded) => {
@@ -283,7 +286,17 @@ const WorkOrderPage = () => {
         }
       }
       discardUnsavedChanges();
-      navigate('/fleet/work-orders');
+      dispatch(
+        messagesActions.push({
+          message: t('fleetSavedNamed').replace('{0}', order.title.trim()),
+          severity: 'success',
+        }),
+      );
+      if (stay === true && !id) {
+        navigate(`/fleet/work-order/${savedId}`, { replace: true });
+      } else {
+        navigate('/fleet/work-orders');
+      }
     } finally {
       setSaving(false);
     }
@@ -333,9 +346,11 @@ const WorkOrderPage = () => {
         canWrite && (
           <SaveBar
             onCancel={() => leave(() => goBack(navigate, '/fleet/work-orders'))}
-            onSave={handleSave}
+            onSave={() => handleSave(false)}
+            onSaveAndContinue={id ? undefined : () => handleSave(true)}
             saving={saving}
             disabled={!valid}
+            disabledHint={order ? t('sharedSaveNeedsRequired') : undefined}
           >
             {id && (
               <Button
@@ -372,8 +387,14 @@ const WorkOrderPage = () => {
           />
           <FormSection title={t('fleetWorkOrderDetails')} icon={<HandymanRoundedIcon />}>
             <div className={classes.grid}>
-              <VehicleSelect value={deviceId} onChange={chooseDevice} disabled={Boolean(id)} />
+              <VehicleSelect
+                required
+                value={deviceId}
+                onChange={chooseDevice}
+                disabled={Boolean(id)}
+              />
               <TextField
+                required
                 label={t('fleetWorkOrderTitle')}
                 value={order.title || ''}
                 onChange={(event) => set({ title: event.target.value })}

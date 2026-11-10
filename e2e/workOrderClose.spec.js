@@ -50,3 +50,21 @@ test('a fault becomes an order, and the order is closed from its dialog', async 
     traccar_maintenance_id: 1,
   });
 });
+
+// ADM-14: a new order can be saved and kept open; its fields marked required say so.
+test('a new order is saved and stays open at its own address', async ({ page }) => {
+  await writeMode(page);
+  const fleet = await fakeFleet(page, {
+    users: { 1: admin },
+    tables: { vehicles: [{ id: 'veh1', org_id: ORG, traccar_device_id: 1 }], issues: [] },
+  });
+  await gotoReady(page, '/fleet/work-order?deviceId=1');
+  await expect(page.getByText('כדי לשמור יש למלא את שדות החובה')).toBeVisible();
+  const title = page.getByLabel('מה עושים');
+  await expect(title).toHaveAttribute('required', '');
+  await title.fill('טיפול 30,000');
+  await page.getByRole('button', { name: 'שמירה והמשך' }).click();
+  await expect(page).toHaveURL(/\/fleet\/work-order\/[^/?]+$/);
+  await expect(page.getByText('שמרנו את טיפול 30,000')).toBeVisible();
+  expect(fleet.tables.work_orders).toHaveLength(1);
+});

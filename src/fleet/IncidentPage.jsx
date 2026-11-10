@@ -248,7 +248,8 @@ const IncidentPage = () => {
     Boolean(incident),
   );
 
-  const handleSave = useCatch(async () => {
+  // ADM-14: a new incident can be saved and kept open (the address becomes its own).
+  const handleSave = useCatch(async (stay = false) => {
     setSaving(true);
     try {
       const client = getFleetClient();
@@ -323,7 +324,20 @@ const IncidentPage = () => {
         );
       }
       discardUnsavedChanges();
-      navigate('/fleet/incidents');
+      dispatch(
+        messagesActions.push({
+          message: t('fleetSavedNamed').replace(
+            '{0}',
+            `${t('fleetIncident')} ${incident.number || ''}`.trim(),
+          ),
+          severity: 'success',
+        }),
+      );
+      if (stay === true && !id) {
+        navigate(`/fleet/incident/${savedId}`, { replace: true });
+      } else {
+        navigate('/fleet/incidents');
+      }
     } finally {
       setSaving(false);
     }
@@ -374,9 +388,11 @@ const IncidentPage = () => {
         canWrite && (
           <SaveBar
             onCancel={() => leave(() => goBack(navigate))}
-            onSave={handleSave}
+            onSave={() => handleSave(false)}
+            onSaveAndContinue={id ? undefined : () => handleSave(true)}
             saving={saving}
             disabled={!valid}
+            disabledHint={incident ? t('sharedSaveNeedsRequired') : undefined}
           />
         )
       }
@@ -386,8 +402,9 @@ const IncidentPage = () => {
         <>
           <FormSection title={t('fleetIncidentEvent')} icon={<CarCrashRoundedIcon />}>
             <div className={classes.grid}>
-              <VehicleSelect value={deviceId} onChange={setDeviceId} />
+              <VehicleSelect required value={deviceId} onChange={setDeviceId} />
               <DateTimeField
+                required
                 label={t('fleetIncidentOccurred')}
                 value={incident.occurred_at}
                 onChange={(event) => set({ occurred_at: event.target.value })}

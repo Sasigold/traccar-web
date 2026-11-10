@@ -4037,6 +4037,7 @@
     "sharedCopiedCheck": "Copied ✓",
     "sharedSavedNamed": "{0} saved",
     "sharedSaveAndContinue": "Save and continue",
+    "fleetSavedNamed": "{0} saved",
     "sharedSaveNeedsRequired": "Fill in the required fields to save",
     "fleetApiKeyKept": "I saved the key somewhere safe (it will not be shown again)",
     "dashboardComparedTo": "vs. {0}",

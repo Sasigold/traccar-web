@@ -61,10 +61,12 @@ const SaveBar = ({
 }) => {
   const { classes } = useStyles();
   const t = useTranslation();
+  // Extra buttons that all render nothing (`{id && ...}` on a new item) are no extra.
+  const extra = Array.isArray(children) ? children.some(Boolean) : Boolean(children);
   return (
     <div className={classes.root}>
-      {children && <div className={classes.extra}>{children}</div>}
-      {disabled && disabledHint && !children && (
+      {extra && <div className={classes.extra}>{children}</div>}
+      {disabled && disabledHint && !extra && (
         <Typography variant="body2" className={classes.hint} role="status">
           {disabledHint}
         </Typography>
