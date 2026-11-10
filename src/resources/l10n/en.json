@@ -2062,7 +2062,7 @@
     "dashboardPublished": "Published as the organization default",
     "dashboardConfirm": "Confirm",
     "dashboardTvMode": "Full screen (TV)",
-    "dashboardExitTv": "Exit full screen",
+    "dashboardExitTv": "Leave TV mode",
     "dashboardUndo": "Undo",
     "dashboardRedo": "Redo",
     "dashboardAddWidget": "Add widget",
@@ -3672,5 +3672,8 @@
     "dashboardTargetOf": "Target {0}",
     "dashboardAgainstTarget": "Against target {0} ({1}%)",
     "dashboardTarget": "Target",
-    "dashboardTargetHelp": "A dashed line on a chart, a mark on a meter, and \"against target\" on a figure. Empty = no target."
+    "dashboardTargetHelp": "A dashed line on a chart, a mark on a meter, and \"against target\" on a figure. Empty = no target.",
+    "dashboardTvUpdated": "Updated {0}",
+    "dashboardTvRotation": "Next board every",
+    "dashboardTvSeconds": "{0} seconds"
 }

@@ -2062,7 +2062,7 @@
     "dashboardPublished": "פורסם כברירת המחדל של הארגון",
     "dashboardConfirm": "אישור",
     "dashboardTvMode": "מסך מלא (TV)",
-    "dashboardExitTv": "יציאה ממסך מלא",
+    "dashboardExitTv": "יציאה ממצב טלוויזיה",
     "dashboardUndo": "ביטול פעולה",
     "dashboardRedo": "ביצוע מחדש",
     "dashboardAddWidget": "הוספת רכיב",
@@ -3672,5 +3672,8 @@
     "dashboardTargetOf": "יעד {0}",
     "dashboardAgainstTarget": "מול יעד {0} ({1}%)",
     "dashboardTarget": "יעד",
-    "dashboardTargetHelp": "קו מקווקו בגרף, סימון במד, ו\"מול יעד\" במספר. ריק = בלי יעד."
+    "dashboardTargetHelp": "קו מקווקו בגרף, סימון במד, ו\"מול יעד\" במספר. ריק = בלי יעד.",
+    "dashboardTvUpdated": "עודכן {0}",
+    "dashboardTvRotation": "מעבר לוח כל",
+    "dashboardTvSeconds": "{0} שניות"
 }

@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { keyframes } from 'tss-react';
+import usePersistedState from '../common/util/usePersistedState';
+import TvHeader from './components/TvHeader';
 import {
   Button,
   Dialog,
@@ -68,7 +71,11 @@ import WidgetSettingsDialog from './components/WidgetSettingsDialog';
 import FocusDialog from './components/FocusDialog';
 import DrillDialog from './components/DrillDialog';
 
-const TV_ROTATION = 60000;
+// REP-20: a fade between boards on the control-room screen.
+const boardIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
 
 const useStyles = makeStyles()((theme) => ({
   setup: {
@@ -87,6 +94,16 @@ const useStyles = makeStyles()((theme) => ({
     padding: theme.spacing(2, 3),
     overflowY: 'auto',
     height: '100%',
+  },
+  // A kiosk (?tv=1) covers the app around it, as full screen would.
+  kiosk: {
+    position: 'fixed',
+    inset: 0,
+    zIndex: theme.zIndex.modal - 1,
+  },
+  board: {
+    animation: `${boardIn} ${theme.tokens.motion.duration.enter}ms ${theme.tokens.motion.easing.standard}`,
+    '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
   },
   top: {
     position: 'sticky',
@@ -170,12 +187,18 @@ const DashboardPage = () => {
   const { doc, editing } = store;
 
   // ─── TV mode ─────────────────────────────────────────────────────────────
+  // REP-20: full screen where the browser can, or ?tv=1 for a kiosk (and for an iPhone, which
+  // has no full screen for pages).
   const rootRef = useRef(null);
-  const [tv, setTv] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const kiosk = searchParams.get('tv') === '1';
+  const [fullscreen, setFullscreen] = useState(false);
+  const tv = fullscreen || kiosk;
   const [tvIndex, setTvIndex] = useState(0);
+  const [tvRotation, setTvRotation] = usePersistedState('dashboardTvRotation', 60);
   useEffect(() => {
     const onChange = () =>
-      setTv(document.fullscreenElement === rootRef.current && Boolean(rootRef.current));
+      setFullscreen(document.fullscreenElement === rootRef.current && Boolean(rootRef.current));
     document.addEventListener('fullscreenchange', onChange);
     return () => document.removeEventListener('fullscreenchange', onChange);
   }, []);
@@ -185,10 +208,33 @@ const DashboardPage = () => {
     }
     const interval = setInterval(
       () => setTvIndex((index) => (index + 1) % doc.dashboards.length),
-      TV_ROTATION,
+      tvRotation * 1000,
     );
     return () => clearInterval(interval);
-  }, [tv, doc.dashboards.length]);
+  }, [tv, doc.dashboards.length, tvRotation]);
+  // The screen of a control room should not go dark while it shows the board.
+  useEffect(() => {
+    if (!tv || !navigator.wakeLock?.request) return undefined;
+    let lock = null;
+    let released = false;
+    const acquire = async () => {
+      try {
+        lock = await navigator.wakeLock.request('screen');
+      } catch {
+        lock = null;
+      }
+    };
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && !released) acquire();
+    };
+    acquire();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      released = true;
+      document.removeEventListener('visibilitychange', onVisible);
+      lock?.release?.().catch(() => {});
+    };
+  }, [tv]);
 
   const dashboard = tv ? (doc.dashboards[tvIndex] ?? store.active) : store.active;
   const minOf = useMemo(() => minOfFor(dashboard.widgets), [dashboard.widgets]);
@@ -412,7 +458,15 @@ const DashboardPage = () => {
         doc.dashboards.findIndex((item) => item.id === doc.activeId),
       ),
     );
-    rootRef.current?.requestFullscreen?.();
+    if (document.fullscreenEnabled && rootRef.current?.requestFullscreen) {
+      rootRef.current.requestFullscreen();
+    } else {
+      setSearchParams({ tv: '1' });
+    }
+  };
+  const exitTv = () => {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    if (kiosk) setSearchParams({});
   };
 
   // ─── header ──────────────────────────────────────────────────────────────
@@ -553,7 +607,12 @@ const DashboardPage = () => {
       onFilters={tv ? undefined : setFilters}
       refresh={tv ? dashboard.refresh || 300 : dashboard.refresh}
     >
-      <div ref={rootRef} className={tv ? `${classes.root} ${classes.tv}` : classes.root}>
+      <div
+        ref={rootRef}
+        className={
+          tv ? `${classes.root} ${classes.tv} ${kiosk ? classes.kiosk : ''}` : classes.root
+        }
+      >
         {!tv && (
           <div className={classes.top}>
             <DashboardTabs
@@ -584,7 +643,15 @@ const DashboardPage = () => {
             )}
           </div>
         )}
-        <div className={tv ? undefined : classes.body}>
+        {tv && (
+          <TvHeader
+            dashboard={dashboard}
+            rotation={tvRotation}
+            onRotation={setTvRotation}
+            rotating={doc.dashboards.length > 1}
+          />
+        )}
+        <div key={tv ? dashboard.id : 'board'} className={tv ? classes.board : classes.body}>
           {rows.length ? (
             <DashboardCanvas
               rows={rows}
@@ -617,11 +684,7 @@ const DashboardPage = () => {
           )}
         </div>
         {tv && (
-          <IconButton
-            className={classes.tvExit}
-            aria-label={t('dashboardExitTv')}
-            onClick={() => document.exitFullscreen?.()}
-          >
+          <IconButton className={classes.tvExit} aria-label={t('dashboardExitTv')} onClick={exitTv}>
             <FullscreenExitRoundedIcon />
           </IconButton>
         )}
@@ -654,6 +717,11 @@ const DashboardPage = () => {
       <VehiclePeriodDialog vehicle={vehiclePeriod} onClose={() => setVehiclePeriod(null)} />
     </DashboardDataProvider>
   );
+
+  // REP-20: a kiosk shows only the board, without the page around it.
+  if (kiosk) {
+    return content;
+  }
 
   return (
     <PageLayout
