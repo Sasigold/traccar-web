@@ -2898,6 +2898,8 @@ export type Database = {
           notes: string | null;
           created_at: string;
           updated_at: string;
+          limit_liters_day: number | null;
+          limit_amount_month: number | null;
         };
         Insert: {
           id?: string;
@@ -2910,6 +2912,8 @@ export type Database = {
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
+          limit_liters_day?: number | null;
+          limit_amount_month?: number | null;
         };
         Update: {
           id?: string;
@@ -2922,6 +2926,8 @@ export type Database = {
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
+          limit_liters_day?: number | null;
+          limit_amount_month?: number | null;
         };
         Relationships: [];
       };

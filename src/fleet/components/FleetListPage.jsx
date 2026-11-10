@@ -60,6 +60,7 @@ const FleetListPage = ({
   searchOf = () => [],
   columns,
   rowLink,
+  onRowClick,
   actions,
   emptyState,
   exportFile,
@@ -174,7 +175,8 @@ const FleetListPage = ({
     </>
   );
 
-  const open = (row) => rowLink && navigate(rowLink(row));
+  const open = (row) => (onRowClick ? onRowClick(row) : rowLink && navigate(rowLink(row)));
+  const clickable = Boolean(onRowClick || rowLink);
 
   return (
     <PageLayout
@@ -240,8 +242,8 @@ const FleetListPage = ({
             <TableRow
               key={row.id}
               hover
-              tabIndex={rowLink ? 0 : undefined}
-              className={rowLink ? classes.row : undefined}
+              tabIndex={clickable ? 0 : undefined}
+              className={clickable ? classes.row : undefined}
               onClick={() => open(row)}
               onKeyDown={(event) => event.key === 'Enter' && open(row)}
             >

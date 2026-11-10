@@ -52,6 +52,11 @@ import {
 } from '../../util/deviceSearch';
 import { recentDeviceIds } from '../../util/recentDevices';
 import { activityOf } from '../../util/activity';
+import HandymanRoundedIcon from '@mui/icons-material/HandymanRounded';
+import CarCrashRoundedIcon from '@mui/icons-material/CarCrashRounded';
+import { useFleetPermission, useFleetReady } from '../../fleet/useFleet';
+import { getFleetClient } from '../../fleet/client';
+import { searchFleet } from '../../../fleet/api/search';
 
 const useStyles = makeStyles()((theme) => ({
   paper: {
@@ -179,6 +184,32 @@ const CommandPalette = ({ open, onClose }) => {
   const admin = useAdministrator();
 
   const [query, setQuery] = useState('');
+  // ADM-31: work orders and incidents from the fleet database, looked up as the query settles.
+  const fleetReady = useFleetReady();
+  const canMaintenance = useFleetPermission('maintenance.read');
+  const canIncidents = useFleetPermission('incidents.read');
+  const [fleetResults, setFleetResults] = useState([]);
+  useEffect(() => {
+    if (!open || !fleetReady || (!canMaintenance && !canIncidents) || query.trim().length < 2) {
+      setFleetResults([]);
+      return undefined;
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      searchFleet(
+        getFleetClient(),
+        query,
+        { maintenance: canMaintenance, incidents: canIncidents },
+        controller.signal,
+      )
+        .then(setFleetResults)
+        .catch(() => setFleetResults([]));
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [open, fleetReady, canMaintenance, canIncidents, query]);
   const [highlighted, setHighlighted] = useState(0);
   const listRef = useRef(null);
 
@@ -456,9 +487,20 @@ const CommandPalette = ({ open, onClose }) => {
             ]
           : [];
 
+    const fleetEntries = fleetResults.map((item) => ({
+      id: `fleet-${item.kind}-${item.id}`,
+      title: `${t(item.kind === 'workOrder' ? 'fleetWorkOrder' : 'fleetIncident')} ${item.number}${
+        item.title ? ` · ${item.title}` : ''
+      }`,
+      subtitle: item.plate,
+      icon: item.kind === 'workOrder' ? HandymanRoundedIcon : CarCrashRoundedIcon,
+      onSelect: () => navigate(item.path),
+    }));
+
     // Last, so Enter still opens the vehicle or the screen that was searched for.
     return [
       ...deviceSections,
+      { key: 'fleet', title: t('fleetTitle'), entries: fleetEntries },
       { key: 'navigation', title: t('shellNavigation'), entries: navigationEntries },
       { key: 'actions', title: t('shellActions'), entries: actionEntries },
       { key: 'assistant', title: t('assistantSection'), entries: askEntries },
@@ -487,6 +529,7 @@ const CommandPalette = ({ open, onClose }) => {
     openEvents,
     logout,
     openAssistant,
+    fleetResults,
   ]);
 
   const flat = useMemo(() => groups.flatMap((group) => group.entries), [groups]);

@@ -27,6 +27,7 @@ const AlertsPage = lazy(() => import('./fleet/AlertsPage'));
 const WorkOrdersPage = lazy(() => import('./fleet/WorkOrdersPage'));
 const WorkOrderPage = lazy(() => import('./fleet/WorkOrderPage'));
 const VendorsPage = lazy(() => import('./fleet/VendorsPage'));
+const FuelCardsPage = lazy(() => import('./fleet/FuelCardsPage'));
 const IncidentsPage = lazy(() => import('./fleet/IncidentsPage'));
 const IncidentPage = lazy(() => import('./fleet/IncidentPage'));
 const CostsPage = lazy(() => import('./fleet/CostsPage'));
@@ -232,6 +233,7 @@ const Navigation = () => {
             <Route path="work-order/:id" element={<WorkOrderPage />} />
             <Route path="work-order" element={<WorkOrderPage />} />
             <Route path="vendors" element={<VendorsPage />} />
+            <Route path="fuel-cards" element={<FuelCardsPage />} />
             <Route path="incidents" element={<IncidentsPage />} />
             <Route path="incident/:id" element={<IncidentPage />} />
             <Route path="incident" element={<IncidentPage />} />
