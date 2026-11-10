@@ -79,6 +79,11 @@ export default (t) =>
         name: t('mapOpenWeatherKey'),
         type: 'string',
       },
+      // SAF-07: weather alerts on the map's vehicle list.
+      weatherAlerts: {
+        name: t('attributeWeatherAlerts'),
+        type: 'boolean',
+      },
       ordnanceSurveyKey: {
         name: t('mapOrdnanceSurveyKey'),
         type: 'string',

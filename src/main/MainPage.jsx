@@ -30,6 +30,7 @@ import ExpiryTiles from '../fleet/components/ExpiryTiles';
 import { decodeView } from './savedViews';
 import { fitView } from './components/SavedViews';
 import PickedBar from './PickedBar';
+import WeatherBanner from './WeatherBanner';
 
 // PRF-06: the vehicle card (with react-rnd and the telemetry gauges) loads when a vehicle is
 // first selected, not with the map.
@@ -396,6 +397,7 @@ const MainPage = () => {
                     />
                   ) : (
                     <>
+                      <WeatherBanner />
                       <PickedBar shown={filteredDevices} />
                       <DeviceList
                         devices={filteredDevices}
