@@ -52,6 +52,7 @@ import { monthlyBenefit, propulsionOf } from '../common/fleet/benefit';
 import { workOrderStatusKey } from './WorkOrdersPage';
 import { incidentKey } from './IncidentsPage';
 import { capitalize } from '../common/util/stringUtils';
+import EvCard from './components/EvCard';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -478,6 +479,8 @@ const VehiclePage = () => {
             </div>
           </Paper>
         )}
+
+        {tab === 'overview' && <EvCard device={device} position={position} />}
 
         {tab === 'maintenance' && (
           <>
