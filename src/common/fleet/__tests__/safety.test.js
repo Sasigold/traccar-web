@@ -116,7 +116,8 @@ describe('regulation 168, the rest of it (ISR-07)', () => {
   it('needs 25 hours of continuous rest in every 8 days', async () => {
     const { weeklyRestViolations } = await import('../safety');
     const found = weeklyRestViolations(everyDay, undefined, Date.parse(day(11, 0)));
-    expect(found.length).toBeGreaterThan(0);
+    // Ten days without a day off are one problem, not one per day.
+    expect(found).toHaveLength(1);
     expect(found[0].type).toBe('weeklyRest');
     const withDayOff = everyDay.filter((_, i) => i !== 4 && i !== 5);
     expect(weeklyRestViolations(withDayOff, undefined, Date.parse(day(11, 0)))).toEqual([]);

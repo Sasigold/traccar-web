@@ -204,10 +204,18 @@ export const weeklyRestViolations = (trips, rules = DEFAULT_HOURS_RULES, now = D
       });
     }
   });
-  // One finding per day.
-  return violations
-    .filter((item, index) => violations.findIndex((other) => other.day === item.day) === index)
-    .filter((item) => Date.parse(`${item.day}T00:00:00`) <= now);
+  // One finding per day, then one per run of consecutive days (a long stretch without a day off
+  // is one problem, not one for each day of it).
+  const days = [...new Map(violations.map((item) => [item.day, item])).values()].filter(
+    (item) => Date.parse(`${item.day}T00:00:00`) <= now,
+  );
+  return days.filter((item, index) => {
+    const previous = days[index - 1];
+    return (
+      !previous ||
+      Date.parse(`${item.day}T00:00:00`) - Date.parse(`${previous.day}T00:00:00`) > 86400000
+    );
+  });
 };
 
 // Before it happens: how much driving is left today and in the rolling week, and the warning
