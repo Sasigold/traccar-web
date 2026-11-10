@@ -687,6 +687,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      course_completions: {
+        Row: {
+          id: string;
+          org_id: string;
+          course_id: string;
+          driver_id: string;
+          answers: number[];
+          score: number;
+          passed: boolean;
+          completed_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          course_id: string;
+          driver_id: string;
+          answers?: number[];
+          score: number;
+          passed: boolean;
+          completed_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          course_id?: string;
+          driver_id?: string;
+          answers?: number[];
+          score?: number;
+          passed?: boolean;
+          completed_at?: string;
+        };
+        Relationships: [];
+      };
       customer_users: {
         Row: {
           traccar_user_id: number;
@@ -1691,6 +1724,7 @@ export type Database = {
           min_value: number | null;
           max_value: number | null;
           sort_order: number;
+          measure: string | null;
         };
         Insert: {
           id?: string;
@@ -1702,6 +1736,7 @@ export type Database = {
           min_value?: number | null;
           max_value?: number | null;
           sort_order?: number;
+          measure?: string | null;
         };
         Update: {
           id?: string;
@@ -1713,6 +1748,7 @@ export type Database = {
           min_value?: number | null;
           max_value?: number | null;
           sort_order?: number;
+          measure?: string | null;
         };
         Relationships: [];
       };
@@ -2143,6 +2179,7 @@ export type Database = {
           plan_trial_until: string | null;
           dispatch_name: string | null;
           dispatch_phone: string | null;
+          benchmark_opt_in: boolean;
         };
         Insert: {
           id?: string;
@@ -2153,6 +2190,7 @@ export type Database = {
           plan_trial_until?: string | null;
           dispatch_name?: string | null;
           dispatch_phone?: string | null;
+          benchmark_opt_in?: boolean;
         };
         Update: {
           id?: string;
@@ -2163,6 +2201,7 @@ export type Database = {
           plan_trial_until?: string | null;
           dispatch_name?: string | null;
           dispatch_phone?: string | null;
+          benchmark_opt_in?: boolean;
         };
         Relationships: [];
       };
@@ -2793,6 +2832,90 @@ export type Database = {
         };
         Relationships: [];
       };
+      tire_tread_readings: {
+        Row: {
+          id: string;
+          org_id: string;
+          vehicle_id: string;
+          tire_id: string | null;
+          depth_mm: number;
+          measured_at: string;
+          source: string;
+          inspection_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          vehicle_id: string;
+          tire_id?: string | null;
+          depth_mm: number;
+          measured_at?: string;
+          source?: string;
+          inspection_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          vehicle_id?: string;
+          tire_id?: string | null;
+          depth_mm?: number;
+          measured_at?: string;
+          source?: string;
+          inspection_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      training_courses: {
+        Row: {
+          id: string;
+          org_id: string;
+          title: string;
+          summary: string | null;
+          sections: Json;
+          quiz: Json;
+          pass_score: number;
+          valid_months: number | null;
+          status: string;
+          source_path: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          title: string;
+          summary?: string | null;
+          sections?: Json;
+          quiz?: Json;
+          pass_score?: number;
+          valid_months?: number | null;
+          status?: string;
+          source_path?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          title?: string;
+          summary?: string | null;
+          sections?: Json;
+          quiz?: Json;
+          pass_score?: number;
+          valid_months?: number | null;
+          status?: string;
+          source_path?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       user_permissions: {
         Row: {
           user_id: string;
@@ -2985,6 +3108,69 @@ export type Database = {
         };
         Relationships: [];
       };
+      vehicle_tires: {
+        Row: {
+          id: string;
+          org_id: string;
+          vehicle_id: string;
+          position: string;
+          brand: string | null;
+          model: string | null;
+          size: string | null;
+          dot_code: string | null;
+          installed_at: string;
+          installed_odometer: number | null;
+          cost: number | null;
+          removed_at: string | null;
+          removed_odometer: number | null;
+          removed_reason: string | null;
+          notes: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          vehicle_id: string;
+          position: string;
+          brand?: string | null;
+          model?: string | null;
+          size?: string | null;
+          dot_code?: string | null;
+          installed_at?: string;
+          installed_odometer?: number | null;
+          cost?: number | null;
+          removed_at?: string | null;
+          removed_odometer?: number | null;
+          removed_reason?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          vehicle_id?: string;
+          position?: string;
+          brand?: string | null;
+          model?: string | null;
+          size?: string | null;
+          dot_code?: string | null;
+          installed_at?: string;
+          installed_odometer?: number | null;
+          cost?: number | null;
+          removed_at?: string | null;
+          removed_odometer?: number | null;
+          removed_reason?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       vehicles: {
         Row: {
           id: string;
@@ -3014,6 +3200,8 @@ export type Database = {
           archived_at: string | null;
           checkin_code: string | null;
           pool: boolean;
+          ble_tag: string | null;
+          report_interval_hours: number | null;
         };
         Insert: {
           id?: string;
@@ -3043,6 +3231,8 @@ export type Database = {
           archived_at?: string | null;
           checkin_code?: string | null;
           pool?: boolean;
+          ble_tag?: string | null;
+          report_interval_hours?: number | null;
         };
         Update: {
           id?: string;
@@ -3072,6 +3262,56 @@ export type Database = {
           archived_at?: string | null;
           checkin_code?: string | null;
           pool?: boolean;
+          ble_tag?: string | null;
+          report_interval_hours?: number | null;
+        };
+        Relationships: [];
+      };
+      vendor_prices: {
+        Row: {
+          id: string;
+          org_id: string;
+          vendor_id: string | null;
+          description: string;
+          kind: string | null;
+          unit_price: number;
+          tolerance_pct: number;
+          valid_from: string | null;
+          valid_to: string | null;
+          notes: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          vendor_id?: string | null;
+          description: string;
+          kind?: string | null;
+          unit_price: number;
+          tolerance_pct?: number;
+          valid_from?: string | null;
+          valid_to?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          vendor_id?: string | null;
+          description?: string;
+          kind?: string | null;
+          unit_price?: number;
+          tolerance_pct?: number;
+          valid_from?: string | null;
+          valid_to?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -3540,6 +3780,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      benchmark_metrics: {
+        Args: {
+          p_since?: string;
+        };
+        Returns: Json[];
+      };
       billing_document_claim: {
         Args: {
           p_invoice: string;
@@ -3617,6 +3863,12 @@ export type Database = {
           p_code: string;
         };
         Returns: Json;
+      };
+      fleet_benchmarks: {
+        Args: {
+          p_min_fleets?: number;
+        };
+        Returns: Json[];
       };
       fleet_features: {
         Args: Record<PropertyKey, never>;
@@ -3699,6 +3951,13 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
       };
+      market_prices: {
+        Args: {
+          p_descriptions: string[];
+          p_min_fleets?: number;
+        };
+        Returns: Json[];
+      };
       messaging_address: {
         Args: {
           p_channel: string;
@@ -3774,6 +4033,10 @@ export type Database = {
         };
         Returns: string;
       };
+      my_courses: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json[];
+      };
       my_driver_id: {
         Args: Record<PropertyKey, never>;
         Returns: string;
@@ -3781,6 +4044,12 @@ export type Database = {
       my_vehicle_ids: {
         Args: Record<PropertyKey, never>;
         Returns: string[];
+      };
+      normalize_item: {
+        Args: {
+          p_text: string;
+        };
+        Returns: string;
       };
       org_contact: {
         Args: Record<PropertyKey, never>;
@@ -3888,6 +4157,12 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: number;
       };
+      set_benchmark_opt_in: {
+        Args: {
+          p_opt_in: boolean;
+        };
+        Returns: undefined;
+      };
       set_org_contact: {
         Args: {
           p_name: string;
@@ -3904,6 +4179,13 @@ export type Database = {
         };
         Returns: undefined;
       };
+      submit_course: {
+        Args: {
+          p_course: string;
+          p_answers: number[];
+        };
+        Returns: Json;
+      };
       touch_last_seen: {
         Args: Record<PropertyKey, never>;
         Returns: undefined;
@@ -3919,6 +4201,12 @@ export type Database = {
           p_vehicle: string;
         };
         Returns: string;
+      };
+      vendor_in_my_org: {
+        Args: {
+          p_vendor: string;
+        };
+        Returns: boolean;
       };
       webhook_cleanup: {
         Args: Record<PropertyKey, never>;

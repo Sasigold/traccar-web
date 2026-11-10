@@ -6,17 +6,25 @@ import { useAsyncTask } from '../../reactHelper';
 import { getFleetClient, unwrap } from '../../common/fleet/client';
 import { checkInvoice, overchargeTotal } from '../../common/fleet/invoiceCheck';
 import { money } from '../fleetData';
+import { formatTime } from '../../common/util/formatter';
 
 // ISR-13: the work order's lines against the supplier's agreed prices, and its invoice number
 // against the other orders. Shown under the lines while they are edited; says nothing when there
 // is no price list and nothing to report.
-const InvoiceCheckPanel = ({ order, items }) => {
+// AI-08: also against what other fleets pay (the market median) and the vehicle's warranty.
+const InvoiceCheckPanel = ({ order, items, device }) => {
   const t = useTranslation();
   const [context, setContext] = useState(null);
 
+  // The lines' descriptions, as one value the task follows.
+  const lineKey = [...new Set(items.map((item) => item.description?.trim()).filter(Boolean))].join(
+    '\n',
+  );
+
   useAsyncTask(async () => {
     const client = getFleetClient();
-    const [prices, others] = await Promise.all([
+    const descriptions = lineKey ? lineKey.split('\n') : [];
+    const [prices, others, market] = await Promise.all([
       client.from('vendor_prices').select('*').then(unwrap),
       order.invoice_number
         ? client
@@ -25,15 +33,30 @@ const InvoiceCheckPanel = ({ order, items }) => {
             .eq('invoice_number', order.invoice_number)
             .then(unwrap)
         : [],
+      // AI-08: what other fleets pay; nothing when this fleet has not joined the comparison.
+      descriptions.length
+        ? client
+            .rpc('market_prices', { p_descriptions: descriptions })
+            .then(unwrap)
+            .catch(() => [])
+        : [],
     ]);
-    setContext({ prices: prices || [], others: others || [] });
-  }, [order.invoice_number]);
+    setContext({
+      prices: prices || [],
+      others: others || [],
+      market: Object.fromEntries((market || []).map((row) => [row.description, row])),
+    });
+  }, [order.invoice_number, lineKey]);
 
   if (!context) return null;
   const lines = items.filter((item) => item.description?.trim());
-  const findings = checkInvoice({ order, items: lines, ...context });
+  const attributes = device?.attributes || {};
+  const warranty = attributes.warrantyUntil
+    ? { until: attributes.warrantyUntil, km: attributes.warrantyKm }
+    : null;
+  const findings = checkInvoice({ order, items: lines, ...context, warranty });
   if (!findings.length) {
-    return context.prices.length && lines.length ? (
+    return (context.prices.length || Object.keys(context.market).length) && lines.length ? (
       <Alert severity="success">{t('invoiceCheckOk')}</Alert>
     ) : null;
   }
@@ -57,6 +80,14 @@ const InvoiceCheckPanel = ({ order, items }) => {
                 .replace('{2}', money(finding.agreed.unit_price))}
             {finding.type === 'duplicateLine' &&
               t('invoiceCheckDuplicateLine').replace('{0}', finding.item.description)}
+            {finding.type === 'aboveMarket' &&
+              t('invoiceCheckAboveMarket')
+                .replace('{0}', finding.item.description)
+                .replace('{1}', money(finding.item.unit_price))
+                .replace('{2}', money(finding.median))
+                .replace('{3}', String(finding.fleets))}
+            {finding.type === 'warranty' &&
+              t('invoiceCheckWarranty').replace('{0}', formatTime(finding.until, 'date'))}
             {finding.type === 'noAgreement' &&
               t('invoiceCheckNoAgreement').replace('{0}', finding.item.description)}
             {finding.type === 'duplicateInvoice' && (

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { agreedPrice, checkInvoice, normalizeItem, overchargeTotal } from '../invoiceCheck';
+import {
+  agreedPrice,
+  checkInvoice,
+  normalizeItem,
+  overchargeTotal,
+  underWarranty,
+} from '../invoiceCheck';
 
 const prices = [
   { vendor_id: 'g1', description: 'החלפת שמן', kind: 'labor', unit_price: 200, tolerance_pct: 0 },
@@ -78,5 +84,22 @@ describe('invoice check (ISR-13)', () => {
       items: [{ description: 'משהו', unit_price: 10 }],
     });
     expect(findings).toEqual([]);
+  });
+
+  it('compares with the market and the warranty (AI-08)', () => {
+    const findings = checkInvoice({
+      order: { id: 'w4', opened_at: '2026-11-01', odometer_km: 40000 },
+      items: [
+        { description: 'החלפת רצועת טיימינג', kind: 'labor', quantity: 1, unit_price: 2600 },
+        { description: 'שטיפה', kind: 'fee', quantity: 1, unit_price: 50 },
+      ],
+      market: { 'החלפת רצועת טיימינג': { median: 1800, fleets: 7 } },
+      warranty: { until: '2027-03-01', km: 100000 },
+    });
+    expect(findings.map((f) => f.type)).toEqual(['warranty', 'aboveMarket']);
+    expect(findings[1]).toMatchObject({ median: 1800, fleets: 7 });
+    expect(underWarranty({ until: '2026-01-01' }, '2026-11-01')).toBe(false);
+    expect(underWarranty({ until: '2027-01-01', km: 30000 }, '2026-11-01', 40000)).toBe(false);
+    expect(underWarranty(null, '2026-11-01')).toBe(false);
   });
 });

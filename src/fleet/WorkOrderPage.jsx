@@ -587,7 +587,7 @@ const WorkOrderPage = () => {
             <Typography className={classes.total}>
               {t('fleetWorkOrderTotal')}: {money(vat.total)}
             </Typography>
-            <InvoiceCheckPanel order={order} items={items} />
+            <InvoiceCheckPanel order={order} items={items} device={devices[deviceId]} />
             <div className={classes.grid}>
               {canWrite && (
                 <ScanDocumentButton

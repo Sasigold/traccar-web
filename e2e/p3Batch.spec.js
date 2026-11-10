@@ -406,3 +406,53 @@ test('picked vehicles are followed side by side', async ({ page, isMobile }) => 
   await expect(tiles).toHaveCount(2);
   await expect(tiles.first().locator('canvas')).toBeVisible();
 });
+
+// AI-08: against what other fleets pay, and the vehicle's warranty.
+test('a work order compares with the market and flags the warranty', async ({ page }) => {
+  await writeMode(page);
+  // The vehicle's warranty, saved in this test's own sandbox.
+  const device = await (await page.request.get('http://localhost:3000/api/devices/1')).json();
+  await page.request.put('http://localhost:3000/api/devices/1', {
+    data: { ...device, attributes: { ...device.attributes, warrantyUntil: '2099-01-01' } },
+  });
+  await fakeFleet(page, {
+    users: admin(['maintenance.read', 'maintenance.write']),
+    tables: {
+      vehicles: [{ id: 'v1', org_id: 'o1', traccar_device_id: 1, plate_number: '12-345-67' }],
+      vendors: [],
+      vendor_prices: [],
+      work_orders: [
+        {
+          id: 'w1',
+          org_id: 'o1',
+          number: 8,
+          vehicle_id: 'v1',
+          title: 'תיקון',
+          status: 'open',
+          opened_at: '2026-11-01',
+        },
+      ],
+      work_order_items: [
+        {
+          id: 'i1',
+          org_id: 'o1',
+          work_order_id: 'w1',
+          kind: 'labor',
+          description: 'החלפת רצועת טיימינג',
+          quantity: 1,
+          unit_price: 2600,
+          sort_order: 0,
+        },
+      ],
+      issues: [],
+      maintenance_links: [],
+    },
+    rpc: {
+      market_prices: () => [{ description: 'החלפת רצועת טיימינג', median: 1800, fleets: 7 }],
+    },
+  });
+  await gotoReady(page, '/fleet/work-order/w1');
+  const check = page.getByRole('status').filter({ hasText: 'ציים אחרים משלמים' });
+  await expect(check).toContainText('חציון של 7 ציים');
+  await expect(check).toContainText('באחריות יצרן עד 01.01.2099');
+});

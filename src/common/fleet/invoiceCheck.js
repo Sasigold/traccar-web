@@ -46,14 +46,50 @@ export const agreedPrice = (item, prices, options = {}) => {
   );
 };
 
-// Findings: [{ type, item?, agreed?, over?, overAmount?, orderId? }]. type is overPrice,
-// duplicateLine, duplicateInvoice or noAgreement. others: the organization's other work orders
-// ({ id, vendor_id, invoice_number }).
-export const checkInvoice = ({ order, items, prices = [], others = [] }) => {
+// AI-08: a line well above what other fleets pay for it (the market median, from at least five
+// fleets; market: { description: { median, fleets } }).
+export const MARKET_FACTOR = 1.25;
+
+// AI-08: whether the repair may be covered by the manufacturer's warranty: before its end date
+// and, when a km limit is set, below it.
+export const underWarranty = (warranty, date, odometerKm) => {
+  if (!warranty?.until) return false;
+  const day = String(date || new Date().toISOString()).slice(0, 10);
+  if (day > String(warranty.until).slice(0, 10)) return false;
+  return !(Number(warranty.km) > 0 && Number(odometerKm) > Number(warranty.km));
+};
+
+// Findings: [{ type, item?, agreed?, over?, overAmount?, orderId?, median? }]. type is overPrice,
+// duplicateLine, duplicateInvoice, noAgreement, aboveMarket or warranty. others: the
+// organization's other work orders ({ id, vendor_id, invoice_number }).
+export const checkInvoice = ({
+  order,
+  items,
+  prices = [],
+  others = [],
+  market = {},
+  warranty = null,
+}) => {
   const findings = [];
+  if (
+    warranty &&
+    items.some((item) => item.kind !== 'fee' && normalizeItem(item.description)) &&
+    underWarranty(warranty, order?.opened_at, order?.odometer_km)
+  ) {
+    findings.push({ type: 'warranty', until: warranty.until });
+  }
   const date = order?.closed_at || order?.opened_at;
   items.forEach((item) => {
     if (!normalizeItem(item.description)) return;
+    const known = market[item.description];
+    if (known && Number(item.unit_price) > Number(known.median) * MARKET_FACTOR) {
+      findings.push({
+        type: 'aboveMarket',
+        item,
+        median: Number(known.median),
+        fleets: known.fleets,
+      });
+    }
     const agreed = agreedPrice(item, prices, { vendorId: order?.vendor_id, date });
     if (!agreed) {
       if (prices.length) findings.push({ type: 'noAgreement', item });

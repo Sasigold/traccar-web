@@ -55,6 +55,9 @@ export const vehicleFields = [
   { key: 'listPrice', labelKey: 'fleetListPrice', type: 'number', ltr: true, money: true },
   // ISR-12: a vehicle new drivers should not get (a truck, a passenger van).
   { key: 'noNewDrivers', labelKey: 'fleetNoNewDrivers', type: 'boolean' },
+  // AI-08: the manufacturer's warranty, so a repair it may cover is flagged on the work order.
+  { key: 'warrantyUntil', labelKey: 'fleetWarrantyUntil', type: 'date' },
+  { key: 'warrantyKm', labelKey: 'fleetWarrantyKm', type: 'number', ltr: true },
 ];
 
 export const vehicleExpiryFields = [
