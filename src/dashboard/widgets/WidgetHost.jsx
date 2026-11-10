@@ -115,6 +115,28 @@ export const WidgetBody = ({ config, width, height, size, table, onSelect, expor
   }
 };
 
+// The table behind a chart widget as an Excel file. Shared with the focus view (REP-22).
+export const exportWidget = async (exportRef, title, theme) => {
+  const data = exportRef.current?.();
+  if (data?.rows.length) {
+    const rows = data.rows.map((row) =>
+      Object.fromEntries(data.columns.map((column) => [column.label, row.cells[column.key]])),
+    );
+    await exportExcel(
+      title,
+      `${title.replace(/[\\/:*?"<>|]+/g, ' ')}.xlsx`,
+      new Map([[title.slice(0, 30), rows]]),
+      theme,
+    );
+  }
+};
+
+// A click on a chart item opens its details when the chart is per vehicle (or live).
+export const selectHandler = (chart, onSelectItem, id) =>
+  chart && onSelectItem && (chart.query.ds === 'live' || chart.query.d === 'vehicle')
+    ? (item, query) => onSelectItem(id, item, query)
+    : undefined;
+
 // Caption under a widget title: what period (or "live") and which vehicles it covers.
 export const useWidgetCaption = (config) => {
   const t = useTranslation();
@@ -163,22 +185,8 @@ const WidgetHost = ({ id, config, editing, highlight, dragging, api }) => {
   const chart = preset.kind === 'chart' ? resolveChart(config, preset) : null;
   const tableable =
     preset.kind === 'chart' || preset.kind === 'expiries' || preset.kind === 'maintenance';
-  const live = chart ? chart.query.ds === 'live' : false;
 
-  const exportData = async () => {
-    const data = exportRef.current?.();
-    if (data?.rows.length) {
-      const rows = data.rows.map((row) =>
-        Object.fromEntries(data.columns.map((column) => [column.label, row.cells[column.key]])),
-      );
-      await exportExcel(
-        title,
-        `${title.replace(/[\\/:*?"<>|]+/g, ' ')}.xlsx`,
-        new Map([[title.slice(0, 30), rows]]),
-        theme,
-      );
-    }
-  };
+  const exportData = () => exportWidget(exportRef, title, theme);
 
   const menu = [
     {
@@ -321,10 +329,7 @@ const WidgetHost = ({ id, config, editing, highlight, dragging, api }) => {
     </>
   );
 
-  const onSelect =
-    chart && api.onSelectItem && (live || chart.query.d === 'vehicle')
-      ? (item, query) => api.onSelectItem(id, item, query)
-      : undefined;
+  const onSelect = selectHandler(chart, api.onSelectItem, id);
 
   return (
     <WidgetFrame

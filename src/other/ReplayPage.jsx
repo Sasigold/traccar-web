@@ -27,7 +27,8 @@ import { formatNumericHours, formatTime } from '../common/util/formatter';
 
 import ReportFilter from '../reports/components/ReportFilter';
 import { useTranslation } from '../common/components/LocalizationProvider';
-import { useCatchCallback } from '../reactHelper';
+import { useCatch, useCatchCallback } from '../reactHelper';
+import { downloadUrl } from '../common/util/downloadFile';
 import MapCamera from '../map/MapCamera';
 import MapGeofence from '../map/MapGeofence';
 import StatusCard from '../common/components/StatusCard';
@@ -330,11 +331,11 @@ const ReplayPage = () => {
     }
   }, []);
 
-  const handleDownload = () => {
+  const handleDownload = useCatch(async () => {
     logPrivacyView([selectedDeviceId], 'export', from, to);
     const query = new URLSearchParams({ deviceId: selectedDeviceId, from, to });
-    window.location.assign(`api/positions/kml?${query.toString()}`);
-  };
+    await downloadUrl(`api/positions/kml?${query.toString()}`, 'replay.kml');
+  });
 
   return (
     <div className={classes.root}>

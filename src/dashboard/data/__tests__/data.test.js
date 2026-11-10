@@ -284,6 +284,23 @@ describe('query cache', () => {
     expect(aborted).toBe(true);
     expect(cache.get('k').status).toBe('idle');
   });
+
+  it('dates the screen by its oldest data, ignoring what is no longer shown (REP-22)', async () => {
+    let time = 1000;
+    const cache = createQueryCache({ now: () => time });
+    const stopA = cache.subscribe('a', () => {});
+    cache.ensure('a', async () => 1);
+    await vi.waitFor(() => expect(cache.get('a').status).toBe('success'));
+    time = 5000;
+    const stopB = cache.subscribe('b', () => {});
+    cache.ensure('b', async () => 2);
+    await vi.waitFor(() => expect(cache.get('b').status).toBe('success'));
+    expect(cache.latestUpdate()).toBe(1000);
+    stopA();
+    expect(cache.latestUpdate()).toBe(5000);
+    stopB();
+    expect(cache.latestUpdate()).toBe(5000);
+  });
 });
 
 describe('period arrows keep calendar periods whole', () => {

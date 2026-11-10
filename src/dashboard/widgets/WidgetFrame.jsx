@@ -120,7 +120,8 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     alignItems: 'center',
     gap: 2,
-    opacity: 0,
+    // REP-22: faint at rest so they can be found without hovering.
+    opacity: 0.4,
     transition: `opacity ${theme.tokens.motion.duration.fast}ms`,
   },
   actionsVisible: {

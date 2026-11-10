@@ -54,7 +54,7 @@ import { DashboardDataProvider } from './data/DashboardDataContext';
 import VehiclePeriodDialog from './components/VehiclePeriodDialog';
 import { periodRange } from './data/periods';
 import DashboardCanvas from './layout/DashboardCanvas';
-import { HEIGHT_PRESETS, locate, uid } from './layout/model';
+import { HEIGHT_PRESETS, locate, uid, widgetIds } from './layout/model';
 import {
   duplicateWidget,
   insertWidget,
@@ -537,7 +537,7 @@ const DashboardPage = () => {
     </div>
   ) : (
     <div className={classes.actions}>
-      <Button variant="contained" startIcon={<TuneRoundedIcon />} onClick={store.startEdit}>
+      <Button variant="outlined" startIcon={<TuneRoundedIcon />} onClick={store.startEdit}>
         {t('dashboardCustomize')}
       </Button>
       <IconButton
@@ -759,7 +759,13 @@ const DashboardPage = () => {
         }}
       />
       <FocusDialog
+        id={focusId}
         config={focusId ? dashboard.widgets[focusId] : null}
+        order={widgetIds(rows).filter(
+          (id) => presetOf(dashboard.widgets[id]?.preset)?.kind !== 'map',
+        )}
+        onMove={setFocusId}
+        onSelectItem={api.onSelectItem}
         onClose={() => setFocusId(null)}
       />
       <DrillDialog drill={drill} onClose={() => setDrill(null)} />

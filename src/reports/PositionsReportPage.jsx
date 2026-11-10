@@ -11,6 +11,7 @@ import PositionValue from '../common/components/PositionValue';
 import ColumnSelect from './components/ColumnSelect';
 import ResizeHandle from './components/ResizeHandle';
 import usePositionAttributes from '../common/attributes/usePositionAttributes';
+import { downloadUrl } from '../common/util/downloadFile';
 import { useCatch, useCatchCallback } from '../reactHelper';
 import MapView from '../map/core/MapView';
 import MapRoutePath from '../map/MapRoutePath';
@@ -131,7 +132,7 @@ const PositionsReportPage = () => {
       query.append('geofenceId', geofenceId);
     }
     deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
-    window.location.assign(`api/positions/${format}?${query.toString()}`);
+    await downloadUrl(`api/positions/${format}?${query.toString()}`, `positions.${format}`);
   });
 
   const onSchedule = useCatch(async (deviceIds, groupIds, report) => {

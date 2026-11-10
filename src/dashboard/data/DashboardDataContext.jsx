@@ -238,7 +238,7 @@ export const useLastSynced = () => {
   const { cache: store, liveTime, token } = useDashboardData();
   const [time, setTime] = useState(0);
   useEffect(() => {
-    const update = () => setTime(Math.max(store.latestUpdate(), liveTime));
+    const update = () => setTime(store.latestUpdate() || liveTime);
     update();
     const interval = setInterval(update, 5000);
     return () => clearInterval(interval);
