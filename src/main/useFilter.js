@@ -74,13 +74,17 @@ export default (
       case 'name':
         filtered.sort((device1, device2) => device1.name.localeCompare(device2.name));
         break;
-      case 'lastUpdate':
-        filtered.sort((device1, device2) => {
-          const time1 = device1.lastUpdate ? dayjs(device1.lastUpdate).valueOf() : 0;
-          const time2 = device2.lastUpdate ? dayjs(device2.lastUpdate).valueOf() : 0;
-          return time2 - time1;
-        });
+      case 'lastUpdate': {
+        // PRF-04: each date parsed once, not twice per comparison.
+        const times = new Map(
+          filtered.map((device) => [
+            device.id,
+            device.lastUpdate ? dayjs(device.lastUpdate).valueOf() : 0,
+          ]),
+        );
+        filtered.sort((device1, device2) => times.get(device2.id) - times.get(device1.id));
         break;
+      }
       default:
         // Without a chosen order: the best match first when searching, otherwise what needs
         // attention first (LIV-11).

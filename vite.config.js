@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
-import react from '@vitejs/plugin-react-swc';
+import react, { reactCompilerPreset } from '@vitejs/plugin-react';
+import babel from '@rolldown/plugin-babel';
 import svgr from 'vite-plugin-svgr';
 import { VitePWA } from 'vite-plugin-pwa';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
@@ -93,6 +94,8 @@ export default defineConfig(({ command, mode }) => {
       // scripts; the deploy moves them out of build/ (they are uploaded to the error service, not
       // served), so stack traces are readable there and the source stays private.
       sourcemap: viteEnv.VITE_ERROR_DSN ? 'hidden' : false,
+      // PRF-06: chunks load on demand (maplibre is the biggest); the first load has its own
+      // budget, checked in CI (tools/size-budget.mjs).
       chunkSizeWarningLimit: 1100,
       rolldownOptions: {
         output: {
@@ -128,6 +131,11 @@ export default defineConfig(({ command, mode }) => {
       },
       svgr(),
       react(),
+      // PRF-04: React Compiler, for the components that opt in with 'use memo' (the live
+      // screen's rows, toolbar and cards), so a live update re-renders only what it changes.
+      // Not the whole app: the compiler reads the property paths a closure uses (menu.latitude)
+      // while rendering, to compare them, and code that is fine without it fails on null.
+      babel({ presets: [reactCompilerPreset({ compilationMode: 'annotation' })] }),
       {
         // SEC-10: the Content-Security-Policy, with the hashes of the inline scripts of the
         // final index.html, as a <meta> tag (no server change needed), and security-headers.json

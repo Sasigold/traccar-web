@@ -4,7 +4,7 @@ import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 import { prefixer } from 'stylis';
 import rtlPlugin from 'stylis-plugin-rtl';
-import theme from './common/theme';
+import useAppTheme from './common/theme';
 import useThemeMode from './common/theme/useThemeMode';
 import { useLocalization } from './common/components/LocalizationProvider';
 
@@ -24,7 +24,7 @@ const AppThemeProvider = ({ children }) => {
   const { direction, language } = useLocalization();
   const { dark } = useThemeMode();
 
-  const themeInstance = theme(server, dark, direction, language);
+  const themeInstance = useAppTheme(server, dark, direction, language);
 
   return (
     <CacheProvider value={cache[direction]}>

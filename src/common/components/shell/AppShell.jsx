@@ -12,15 +12,26 @@ import ShellContext from './ShellContext';
 import NavRail from './NavRail';
 import TopBar from './TopBar';
 import MobileTabs from './MobileTabs';
-import CommandPalette from './CommandPalette';
 import ShortcutsDialog from './ShortcutsDialog';
-import EventsDrawer from './EventsDrawer';
 import AlertBanner from './AlertBanner';
 import ImpersonationBanner from './ImpersonationBanner';
 import { useAiAvailable } from '../../fleet/useAi';
 
 // AI-01: loaded the first time it is opened.
 const AssistantPanel = lazy(() => import('../assistant/AssistantPanel'));
+// PRF-04: the search window and the alerts list are loaded, and listen to the store, only
+// from the first time they are opened.
+const CommandPalette = lazy(() => import('./CommandPalette'));
+const EventsDrawer = lazy(() => import('./EventsDrawer'));
+
+// True from the first time `open` is true (kept mounted afterwards, for the closing motion).
+const useOpenedOnce = (open) => {
+  const [opened, setOpened] = useState(open);
+  if (open && !opened) {
+    setOpened(true);
+  }
+  return opened || open;
+};
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -91,6 +102,8 @@ const AppShell = ({ children }) => {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [eventsOpen, setEventsOpen] = useState(false);
+  const paletteMounted = useOpenedOnce(paletteOpen);
+  const eventsMounted = useOpenedOnce(eventsOpen);
   const [railCollapsed, setRailCollapsed] = usePersistedState('navRailCollapsed', false);
   const aiAvailable = useAiAvailable();
   const t = useTranslation();
@@ -213,7 +226,11 @@ const AppShell = ({ children }) => {
           {children}
         </main>
         {showTabs && <MobileTabs />}
-        {!features.disableEvents && <EventsDrawer open={eventsOpen} onClose={closeEvents} />}
+        {!features.disableEvents && eventsMounted && (
+          <Suspense fallback={null}>
+            <EventsDrawer open={eventsOpen} onClose={closeEvents} />
+          </Suspense>
+        )}
         {!features.disableEvents && (
           <AlertBanner
             // Clear of the alerts side panel while it is open on desktop.
@@ -224,7 +241,11 @@ const AppShell = ({ children }) => {
             }
           />
         )}
-        <CommandPalette open={paletteOpen} onClose={closePalette} />
+        {paletteMounted && (
+          <Suspense fallback={null}>
+            <CommandPalette open={paletteOpen} onClose={closePalette} />
+          </Suspense>
+        )}
         <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
         {assistant && aiAvailable && (
           <Suspense fallback={null}>

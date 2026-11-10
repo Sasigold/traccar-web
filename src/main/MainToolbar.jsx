@@ -135,6 +135,7 @@ const MainToolbar = ({
   filterMap,
   setFilterMap,
 }) => {
+  'use memo'; // PRF-04
   const { classes, cx } = useStyles();
   const theme = useTheme();
   const navigate = useNavigate();

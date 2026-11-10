@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { beat } from '../common/theme/motion';
 import { makeStyles } from 'tss-react/mui';
@@ -240,7 +240,10 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
+// PRF-04: compiled by React Compiler, and memoized, so a live update re-renders only the rows
+// of the vehicles that changed.
 const DeviceRow = ({ devices, tokens = [], favorites = [], index, style, focusIndex }) => {
+  'use memo';
   const { classes, cx, theme } = useStyles();
   const dispatch = useDispatch();
   const t = useTranslation();
@@ -525,4 +528,4 @@ const DeviceRow = ({ devices, tokens = [], favorites = [], index, style, focusIn
   );
 };
 
-export default DeviceRow;
+export default memo(DeviceRow);

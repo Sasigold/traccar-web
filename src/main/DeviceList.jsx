@@ -19,6 +19,7 @@ const useStyles = makeStyles()((theme) => ({
 }));
 
 const DeviceList = ({ devices, keyword = '', favorites }) => {
+  'use memo'; // PRF-04
   const { classes } = useStyles();
   const dispatch = useDispatch();
 
