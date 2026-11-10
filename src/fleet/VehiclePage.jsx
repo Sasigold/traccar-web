@@ -26,6 +26,7 @@ import PageLayout from '../common/components/PageLayout';
 import SettingsMenu from '../settings/components/SettingsMenu';
 import FleetDocumentsSection from '../settings/components/FleetDocumentsSection';
 import HistorySection from './components/HistorySection';
+import TiresSection from './components/TiresSection';
 import useActivityText, { toneColor } from '../common/components/useActivityText';
 import { useAsyncTask } from '../reactHelper';
 import fetchOrThrow from '../common/util/fetchOrThrow';
@@ -513,6 +514,7 @@ const VehiclePage = () => {
                 </TableRow>
               ))}
             />
+            <TiresSection device={device} position={position} />
           </>
         )}
 

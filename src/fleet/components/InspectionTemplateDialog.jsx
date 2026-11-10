@@ -81,6 +81,9 @@ const InspectionTemplateDialog = ({ template, onClose, onSaved }) => {
           item.type === 'number_range' && item.min_value !== '' ? (item.min_value ?? null) : null,
         max_value:
           item.type === 'number_range' && item.max_value !== '' ? (item.max_value ?? null) : null,
+        // OPS-07: a number item can be the tread depth, copied to the vehicle's tire history.
+        measure:
+          item.type === 'number_range' && item.measure === 'tread_depth' ? 'tread_depth' : null,
       }));
     // ARC-05: the template and its items in one transaction. Filled inspections keep their own
     // copy of each label.
@@ -169,6 +172,23 @@ const InspectionTemplateDialog = ({ template, onClose, onSaved }) => {
                     label={t('fleetInspectionMax')}
                     value={item.max_value ?? ''}
                     onChange={(event) => setItem(item.key, { max_value: event.target.value })}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        size="small"
+                        checked={item.measure === 'tread_depth'}
+                        onChange={(event) =>
+                          setItem(item.key, {
+                            measure: event.target.checked ? 'tread_depth' : null,
+                            ...(event.target.checked && item.min_value == null
+                              ? { min_value: 1.6 }
+                              : {}),
+                          })
+                        }
+                      />
+                    }
+                    label={t('tireTreadMeasure')}
                   />
                 </div>
               )}
