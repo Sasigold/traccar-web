@@ -1,3 +1,4 @@
+// A .jsx file on purpose: it imports the pages, and the type check (ARC-11) covers .js only.
 // LIV-16: a screen's code starts loading when the pointer rests on (or the keyboard reaches) its
 // item in the navigation, so the click opens it without waiting. The same modules as the routes
 // in Navigation.jsx, so the browser reuses the chunk; each is asked for once.

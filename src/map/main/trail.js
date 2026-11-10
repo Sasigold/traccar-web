@@ -8,7 +8,7 @@ export const trailPoints = (positions, now = Date.now(), minutes = TRAIL_MINUTES
   const points = [];
   [...positions]
     .filter((position) => new Date(position.fixTime).getTime() >= since)
-    .sort((a, b) => new Date(a.fixTime) - new Date(b.fixTime))
+    .sort((a, b) => new Date(a.fixTime).getTime() - new Date(b.fixTime).getTime())
     .forEach((position) => {
       const last = points.at(-1);
       if (!last || last.longitude !== position.longitude || last.latitude !== position.latitude) {

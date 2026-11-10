@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet (the store and theme are untyped); remove this line when fixing the file.
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';

@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet (the store and theme are untyped); remove this line when fixing the file.
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useTranslation } from '../common/components/LocalizationProvider';

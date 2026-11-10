@@ -19,5 +19,5 @@ export const bookingsOnDay = (bookings, vehicleId, day) => {
         dayjs(booking.starts_at).isBefore(to) &&
         dayjs(booking.ends_at).isAfter(from),
     )
-    .sort((a, b) => dayjs(a.starts_at) - dayjs(b.starts_at));
+    .sort((a, b) => dayjs(a.starts_at).valueOf() - dayjs(b.starts_at).valueOf());
 };

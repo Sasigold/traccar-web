@@ -25,11 +25,11 @@ export const parseRing = (name) => {
   const offline = Math.min(STEPS - online, Number(match[3]));
   const parts = [];
   let at = 0;
-  [
+  /** @type {Array<[string, number]>} */ ([
     ['online', online],
     ['offline', offline],
     ['other', STEPS - online - offline],
-  ].forEach(([status, steps]) => {
+  ]).forEach(([status, steps]) => {
     if (!steps) return;
     parts.push({ status, from: at / STEPS, to: (at + steps) / STEPS });
     at += steps;
