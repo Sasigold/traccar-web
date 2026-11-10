@@ -479,6 +479,8 @@ export default {
       root: ({ theme }) => ({
         borderBottomColor: theme.palette.surface.border,
         fontSize: '0.875rem',
+        // BRD-04: figures line up in columns.
+        fontVariantNumeric: 'tabular-nums',
         '@media print': {
           color: theme.palette.alwaysDark.main,
         },

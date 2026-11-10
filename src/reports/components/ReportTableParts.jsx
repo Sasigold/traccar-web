@@ -78,10 +78,10 @@ export const useReportSort = (reportKey, items, valueOf = (item, key) => item[ke
 };
 
 // A header cell that sorts its column (aria-sort comes from sortDirection).
-export const SortCell = ({ sortKey, sort, onSort, children, className }) => {
+export const SortCell = ({ sortKey, sort, onSort, children, className, align }) => {
   const active = sort?.key === sortKey;
   return (
-    <TableCell className={className} sortDirection={active ? sort.direction : false}>
+    <TableCell className={className} align={align} sortDirection={active ? sort.direction : false}>
       <TableSortLabel
         active={active}
         direction={active ? sort.direction : 'asc'}
@@ -122,7 +122,15 @@ export const totalsOf = (items, spec) => {
 };
 
 // The totals row. `leading` cells come before the columns (actions, vehicle).
-export const ReportTotalsRow = ({ leading = 1, trailing = 0, columns, spec, items, format }) => {
+export const ReportTotalsRow = ({
+  leading = 1,
+  trailing = 0,
+  columns,
+  spec,
+  items,
+  format,
+  numeric = new Set(),
+}) => {
   const { classes } = useStyles();
   const t = useTranslation();
   const totals = useMemo(() => totalsOf(items, spec), [items, spec]);
@@ -134,7 +142,7 @@ export const ReportTotalsRow = ({ leading = 1, trailing = 0, columns, spec, item
       <TableRow className={classes.totals}>
         <TableCell colSpan={leading}>{t('exportTotal')}</TableCell>
         {columns.map((key) => (
-          <TableCell key={key}>
+          <TableCell key={key} align={numeric.has(key) ? 'right' : undefined}>
             {key in spec && totals[key] != null ? format({ ...totals }, key) : null}
           </TableCell>
         ))}

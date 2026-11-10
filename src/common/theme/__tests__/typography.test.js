@@ -27,3 +27,14 @@ describe('section labels', () => {
     );
   });
 });
+
+// BRD-04: no Hebrew text under 13px.
+describe('smallest sizes', () => {
+  const px = (rem) => parseFloat(rem) * 16;
+  it('keep captions and labels at 13px or more in Hebrew', () => {
+    const rtl = typographyFor('rtl');
+    ['body2', 'caption', 'sectionLabel', 'overline'].forEach((variant) =>
+      expect(px(rtl[variant].fontSize)).toBeGreaterThanOrEqual(13),
+    );
+  });
+});

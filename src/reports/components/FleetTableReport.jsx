@@ -86,6 +86,11 @@ const FleetTableReport = ({
   });
 
   const keys = columns.map((column) => column.key);
+  // BRD-04: number columns are aligned to the end (MUI's "right" turns to the left in RTL).
+  const numeric = new Set(
+    keys.filter((key) => items.some((item) => typeof item[key] === 'number')),
+  );
+  const align = (key) => (numeric.has(key) ? 'right' : undefined);
   const format = (item, key) => {
     const column = columns.find((it) => it.key === key);
     return column.format ? column.format(item[key], item) : item[key];
@@ -114,7 +119,13 @@ const FleetTableReport = ({
                   {t(nameLabelKey)}
                 </SortCell>
                 {columns.map((column) => (
-                  <SortCell key={column.key} sortKey={column.key} sort={sort} onSort={toggle}>
+                  <SortCell
+                    key={column.key}
+                    sortKey={column.key}
+                    sort={sort}
+                    onSort={toggle}
+                    align={align(column.key)}
+                  >
                     {t(column.labelKey)}
                   </SortCell>
                 ))}
@@ -125,7 +136,7 @@ const FleetTableReport = ({
               {!loading ? (
                 sorted.map((item) => (
                   <TableRow key={rowKey(item)} hover>
-                    <TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
                       {rowLink(item) ? (
                         <Link component={RouterLink} to={rowLink(item)}>
                           {item.name}
@@ -135,7 +146,9 @@ const FleetTableReport = ({
                       )}
                     </TableCell>
                     {keys.map((key) => (
-                      <TableCell key={key}>{format(item, key)}</TableCell>
+                      <TableCell key={key} align={align(key)}>
+                        {format(item, key)}
+                      </TableCell>
                     ))}
                   </TableRow>
                 ))
@@ -150,6 +163,7 @@ const FleetTableReport = ({
                 spec={totals}
                 items={sorted}
                 format={format}
+                numeric={numeric}
               />
             )}
           </DataTable>

@@ -223,10 +223,11 @@ export const type = {
     subtitle2: ['0.8125rem', 600, 1.5],
     body1: ['0.9375rem', 400, 1.6],
     body2: ['0.8125rem', 400, 1.55],
-    caption: ['0.75rem', 500, 1.5],
+    // BRD-04: 13px is the smallest Hebrew text (Assistant is hard to read below it).
+    caption: ['0.8125rem', 500, 1.5],
     overline: ['0.6875rem', 600, 1.5],
     // A11-11: a small section label that reads well in Hebrew (no capitals, no letter spacing).
-    sectionLabel: ['0.75rem', 600, 1.5],
+    sectionLabel: ['0.8125rem', 600, 1.5],
     button: ['0.875rem', 600, 1.5],
     // Dashboard figures: stat tile values and the one hero number per dashboard.
     kpi: ['1.75rem', 600, 1.15],

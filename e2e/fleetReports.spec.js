@@ -49,3 +49,26 @@ test('the usage report suggests a smaller fleet', async ({ page }) => {
   await expect(note).toContainText('2 רכבים');
   await expect(note).toContainText(/3,200/);
 });
+
+// BRD-04: figures line up: tabular digits, and number columns aligned to the end of the row.
+test('number columns line up at the end', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'a phone shows the rows as cards');
+  await gotoReady(page, `/reports/usage?${ids}&period=today`);
+  await page.getByRole('button', { name: 'הצג', exact: true }).click();
+  const row = page.getByRole('main').getByRole('row', { name: /Delivery Van/ });
+  await expect(row).toBeVisible();
+  const cells = await row.locator('td').evaluateAll((nodes) =>
+    nodes.map((node) => ({
+      text: node.textContent,
+      align: getComputedStyle(node).textAlign,
+      numeric: getComputedStyle(node).fontVariantNumeric,
+    })),
+  );
+  expect(cells[0].align).not.toBe('left');
+  const figures = cells.slice(1).filter((cell) => /^[\d.,\s:%₪-]+$/.test(cell.text.trim()));
+  expect(figures.length).toBeGreaterThan(0);
+  figures.forEach((cell) => {
+    expect(cell.align).toBe('left');
+    expect(cell.numeric).toContain('tabular-nums');
+  });
+});

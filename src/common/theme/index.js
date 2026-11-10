@@ -22,7 +22,7 @@ export const typographyFor = (direction) =>
         ...(variant.startsWith('h') && { letterSpacing: '-0.01em' }),
         ...(variant === 'overline' &&
           (direction === 'rtl'
-            ? { letterSpacing: 0, textTransform: 'none' }
+            ? { letterSpacing: 0, textTransform: 'none', fontSize: '0.8125rem' }
             : { letterSpacing: '0.06em', textTransform: 'uppercase' })),
         ...(variant === 'sectionLabel' && { letterSpacing: 0, textTransform: 'none' }),
         ...(variant === 'button' && { textTransform: 'none' }),
