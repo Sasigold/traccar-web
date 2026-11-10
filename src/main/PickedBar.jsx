@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -13,6 +13,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { makeStyles } from 'tss-react/mui';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import { devicesActions, messagesActions } from '../store';
@@ -22,6 +23,9 @@ import exportExcel from '../common/util/exportExcel';
 import { formatTime } from '../common/util/formatter';
 import { useRestriction } from '../common/util/permissions';
 import { capitalize } from '../common/util/stringUtils';
+
+// Loaded when it is used, like on the vehicle card.
+const CommandDialog = lazy(() => import('../common/components/commands/CommandDialog'));
 
 const useStyles = makeStyles()((theme) => ({
   bar: {
@@ -46,6 +50,7 @@ const useStyles = makeStyles()((theme) => ({
 const PickedBar = ({ shown }) => {
   const { classes } = useStyles();
   const theme = useTheme();
+  const desktop = useMediaQuery(theme.breakpoints.up('md'));
   const t = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -55,6 +60,8 @@ const PickedBar = ({ shown }) => {
   const positions = useSelector((state) => state.session.positions);
   const groups = useSelector((state) => state.groups.items);
   const [grouping, setGrouping] = useState(false);
+  const [commanding, setCommanding] = useState(false);
+  const readonly = useRestriction('readonly');
   const [groupId, setGroupId] = useState('');
 
   const chosen = (picked || []).map((id) => devices[id]).filter(Boolean);
@@ -99,6 +106,11 @@ const PickedBar = ({ shown }) => {
       <Typography variant="body2" className={classes.count} role="status">
         {t('pickedCount').replace('{0}', String(chosen.length))}
       </Typography>
+      {desktop && (
+        <Typography variant="caption" color="textSecondary" sx={{ flexBasis: '100%' }}>
+          {t('pickedAreaHint')}
+        </Typography>
+      )}
       <Button
         size="small"
         onClick={() =>
@@ -110,6 +122,16 @@ const PickedBar = ({ shown }) => {
       <Button size="small" variant="outlined" onClick={handleExport} disabled={!chosen.length}>
         {t('reportExport')}
       </Button>
+      {!readonly && (
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={() => setCommanding(true)}
+          disabled={!chosen.length}
+        >
+          {t('pickedCommand')}
+        </Button>
+      )}
       {!deviceReadonly && (
         <Button
           size="small"
@@ -139,6 +161,14 @@ const PickedBar = ({ shown }) => {
       <Button size="small" onClick={() => dispatch(devicesActions.stopPicking())}>
         {t('pickedDone')}
       </Button>
+      {commanding && (
+        <Suspense fallback={null}>
+          <CommandDialog
+            deviceIds={chosen.map((device) => device.id)}
+            onClose={() => setCommanding(false)}
+          />
+        </Suspense>
+      )}
       {grouping && (
         <Dialog open onClose={() => setGrouping(false)} fullWidth maxWidth="xs">
           <DialogTitle>{t('pickedToGroup')}</DialogTitle>

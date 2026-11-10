@@ -21,6 +21,7 @@ import MapFitFleet from '../map/control/MapFitFleet';
 import MapFocusedEvent from '../map/main/MapFocusedEvent';
 import MapContextMenu from '../map/main/MapContextMenu';
 import GeofenceInside from '../map/main/GeofenceInside';
+import MapAreaSelect from '../map/main/MapAreaSelect';
 import useFeatures from '../common/util/useFeatures';
 import { useStableArray } from '../common/util/stableArray';
 import RewindToggle from './RewindToggle';
@@ -93,6 +94,7 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
         <MapFocusedEvent />
         <MapRuler positions={filteredPositions} onActiveChange={setRulerActive} />
         <MapFitFleet positions={rewound || filteredPositions} />
+        <MapAreaSelect positions={rewound || filteredPositions} />
       </MapView>
       <MapScale />
       <MapCurrentLocation />
