@@ -30,7 +30,7 @@ import useReportStyles from './common/useReportStyles';
 import MapMarkers from '../map/MapMarkers';
 import MapView from '../map/core/MapView';
 import MapCamera from '../map/MapCamera';
-import AddressValue from '../common/components/AddressValue';
+import AddressValue, { AllAddressesButton } from '../common/components/AddressValue';
 import TableShimmer from '../common/components/TableShimmer';
 import {
   ReportEmptyRow,
@@ -240,6 +240,10 @@ const StopReportPage = () => {
               formats={['xlsx']}
             >
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
+              <AllAddressesButton
+                className={classes.filterItem}
+                points={columns.includes('address') ? items : []}
+              />
             </ReportFilter>
           </div>
           {!loading && <ReportKpis items={kpis} />}

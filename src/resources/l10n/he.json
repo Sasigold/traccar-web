@@ -3461,5 +3461,6 @@
     "reportViewSaved": "התצוגה נשמרה בעמוד הדוחות",
     "reportSavedViews": "תצוגות שמורות",
     "reportComparePrevious": "השוואה לתקופה הקודמת",
-    "reportChangeFromPrevious": "שינוי מהתקופה הקודמת: {0}"
+    "reportChangeFromPrevious": "שינוי מהתקופה הקודמת: {0}",
+    "reportShowAllAddresses": "הצגת כל הכתובות"
 }

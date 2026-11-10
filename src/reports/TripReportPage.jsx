@@ -34,7 +34,7 @@ import { tripDriverKey } from '../common/fleet/checkin';
 import useReportStyles from './common/useReportStyles';
 import MapView from '../map/core/MapView';
 import MapRoutePath from '../map/MapRoutePath';
-import AddressValue from '../common/components/AddressValue';
+import AddressValue, { AllAddressesButton } from '../common/components/AddressValue';
 import TableShimmer from '../common/components/TableShimmer';
 import {
   ReportEmptyRow,
@@ -413,6 +413,29 @@ const TripReportPage = () => {
                 </div>
               )}
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
+              <AllAddressesButton
+                className={classes.filterItem}
+                points={[
+                  ...(columns.includes('startAddress')
+                    ? filteredItems
+                        .filter((item) => !item.privacy)
+                        .map((item) => ({
+                          latitude: item.startLat,
+                          longitude: item.startLon,
+                          address: item.startAddress,
+                        }))
+                    : []),
+                  ...(columns.includes('endAddress')
+                    ? filteredItems
+                        .filter((item) => !item.privacy)
+                        .map((item) => ({
+                          latitude: item.endLat,
+                          longitude: item.endLon,
+                          address: item.endAddress,
+                        }))
+                    : []),
+                ]}
+              />
             </ReportFilter>
           </div>
           {!loading && <ReportKpis items={kpis} />}

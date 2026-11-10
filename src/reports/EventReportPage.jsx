@@ -31,7 +31,7 @@ import { privateRows } from '../common/fleet/privacyData';
 import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import exportExcel from '../common/util/exportExcel';
-import AddressValue from '../common/components/AddressValue';
+import AddressValue, { AllAddressesButton } from '../common/components/AddressValue';
 import formatEventData from './common/formatEventData';
 import { eventIconKey } from '../map/core/preloadImages';
 import { deviceEquality } from '../common/util/deviceEquality';
@@ -340,6 +340,14 @@ const EventReportPage = () => {
                 </div>
               )}
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
+              <AllAddressesButton
+                className={classes.filterItem}
+                points={
+                  columns.includes('address')
+                    ? items.map((item) => positions[item.positionId]).filter(Boolean)
+                    : []
+                }
+              />
             </ReportFilter>
           </div>
           <DataTable variant="flush">
