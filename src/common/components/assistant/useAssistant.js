@@ -3,12 +3,14 @@ import { useCallback, useRef, useState } from 'react';
 import { useStore } from 'react-redux';
 import { aiRequest } from '../../fleet/ai';
 import { reportLinkOf, runToolCalls, SCREEN_TOOLS } from '../../fleet/assistantTools';
+import { ruleFromAnswer } from '../../fleet/alertLinks';
 
 const MAX_ROUNDS = 6;
 
 // What one answer shows: the text, the tables and follow-up questions the model drew with its
-// screen tools, and a link to the report behind the last data it fetched.
-export const answerOf = (assistantTurns) => {
+// screen tools, a link to the report behind the last data it fetched, and the rule it could
+// become (AI-01, "turn into an alert").
+export const answerOf = (assistantTurns, question = '') => {
   const blocks = assistantTurns.flatMap((turn) => turn.content || []);
   const text = blocks
     .filter((block) => block.type === 'text')
@@ -26,7 +28,14 @@ export const answerOf = (assistantTurns) => {
     .slice(0, 3);
   const dataCalls = uses.filter((block) => !SCREEN_TOOLS.includes(block.name));
   const link = [...dataCalls].reverse().map(reportLinkOf).find(Boolean) || null;
-  return { text, tables, followups, link, steps: dataCalls.map((block) => block.name) };
+  return {
+    text,
+    tables,
+    followups,
+    link,
+    rule: ruleFromAnswer(dataCalls, question),
+    steps: dataCalls.map((block) => block.name),
+  };
 };
 
 // AI-01: a conversation about the fleet. Each question runs model turns until the model stops
@@ -74,7 +83,7 @@ const useAssistant = () => {
           messages[messages.length - 1].role === 'user' ? messages.slice(0, -1) : messages;
         setTurns((current) =>
           current.map((item, i) =>
-            i === index ? { ...item, ...answerOf(replies), pending: false } : item,
+            i === index ? { ...item, ...answerOf(replies, text), pending: false } : item,
           ),
         );
       } catch (error) {
