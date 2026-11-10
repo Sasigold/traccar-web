@@ -57,3 +57,36 @@ test('copying the coordinates of a point', async ({ page, context }) => {
   const text = await page.evaluate(() => navigator.clipboard.readText());
   expect(text).toMatch(/^-?\d+\.\d{6}, -?\d+\.\d{6}$/);
 });
+
+// LIV-21: "measure from here" starts the ruler; a search result asks who is closest to it.
+test('the map menu measures from a point, and a found address shows nearby vehicles', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'right click and the address search are desktop controls here');
+  await page.route('https://nominatim.openstreetmap.org/**', (route) =>
+    route.fulfill({
+      json: {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            bbox: [-0.13, 51.5, -0.11, 51.51],
+            geometry: { type: 'Point', coordinates: [-0.12, 51.505] },
+            properties: { place_id: 1, display_name: 'Waterloo, London' },
+          },
+        ],
+      },
+    }),
+  );
+  await gotoReady(page, '/');
+  await page.locator('.maplibregl-canvas').click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'מדידה מכאן' }).click();
+  await expect(page.getByRole('button', { name: 'מרחק' })).toHaveAttribute('aria-pressed', 'true');
+
+  await page.locator('.maplibregl-ctrl').getByRole('button', { name: 'חיפוש' }).click();
+  await page.getByRole('presentation').getByPlaceholder('חיפוש').fill('Waterloo');
+  await page.getByRole('button', { name: 'רכבים קרובים: Waterloo, London' }).click();
+  const dialog = page.getByRole('dialog', { name: 'רכבים קרובים' });
+  await expect(dialog).toContainText('Waterloo, London');
+});

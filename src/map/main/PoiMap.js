@@ -95,6 +95,20 @@ const PoiMap = () => {
     [poiLayer],
   );
 
+  // LIV-21: a point of interest opens "nearby vehicles" for it (MapContextMenu listens).
+  const openNearby = (event) => {
+    const feature = event.features?.[0];
+    if (!feature || feature.geometry?.type !== 'Point') return;
+    const [longitude, latitude] = feature.geometry.coordinates;
+    map.fire('vf-nearby', { latitude, longitude, name: feature.properties?.name });
+  };
+  const pointer = () => {
+    map.getCanvas().style.cursor = 'pointer';
+  };
+  const unpointer = () => {
+    map.getCanvas().style.cursor = '';
+  };
+
   useMapLayer({
     layers: [
       {
@@ -116,6 +130,7 @@ const PoiMap = () => {
           'circle-radius': 5,
           'circle-color': ['coalesce', ['get', 'icon-color'], theme.palette.geometry.main],
         },
+        on: { click: openNearby, mouseenter: pointer, mouseleave: unpointer },
       },
       {
         key: 'line',
@@ -137,6 +152,7 @@ const PoiMap = () => {
           'icon-size': ['coalesce', ['get', 'icon-scale'], 1],
           'icon-allow-overlap': true,
         },
+        on: { click: openNearby, mouseenter: pointer, mouseleave: unpointer },
       },
       {
         key: 'title',

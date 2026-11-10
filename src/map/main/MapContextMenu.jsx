@@ -17,6 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import NearMeRoundedIcon from '@mui/icons-material/NearMeRounded';
+import StraightenRoundedIcon from '@mui/icons-material/StraightenRounded';
 import HexagonRoundedIcon from '@mui/icons-material/HexagonRounded';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import DirectionsRoundedIcon from '@mui/icons-material/DirectionsRounded';
@@ -71,6 +72,10 @@ const MapContextMenu = () => {
       if (event.originalEvent.touches?.length !== 1) return;
       timer = setTimeout(() => open(event), LONG_PRESS);
     };
+    // LIV-21: a point of interest or a search result asks for the vehicles near it.
+    const onNearby = (event) =>
+      setNearby({ latitude: event.latitude, longitude: event.longitude, name: event.name });
+    map.on('vf-nearby', onNearby);
     map.on('contextmenu', onContextMenu);
     map.on('touchstart', onTouchStart);
     map.on('touchend', cancel);
@@ -78,6 +83,7 @@ const MapContextMenu = () => {
     map.on('movestart', cancel);
     return () => {
       cancel();
+      map.off('vf-nearby', onNearby);
       map.off('contextmenu', onContextMenu);
       map.off('touchstart', onTouchStart);
       map.off('touchend', cancel);
@@ -142,6 +148,18 @@ const MapContextMenu = () => {
             {t('mapGeofenceHere')}
           </MenuItem>
         )}
+        {/* LIV-21: the ruler, starting at this point. */}
+        <MenuItem
+          onClick={() => {
+            map.fire('vf-measure-from', { latitude: menu.latitude, longitude: menu.longitude });
+            close();
+          }}
+        >
+          <ListItemIcon>
+            <StraightenRoundedIcon fontSize="small" />
+          </ListItemIcon>
+          {t('mapMeasureFromHere')}
+        </MenuItem>
         <MenuItem onClick={copy}>
           <ListItemIcon>
             <ContentCopyRoundedIcon fontSize="small" />
@@ -166,6 +184,7 @@ const MapContextMenu = () => {
         <DialogContent dividers sx={{ p: 0 }}>
           {nearby && (
             <Typography variant="body2" color="textSecondary" sx={{ px: 3, pt: 1.5 }}>
+              {nearby.name && <>{`${nearby.name} · `}</>}
               <span dir="ltr">{coordinates(nearby)}</span>
             </Typography>
           )}

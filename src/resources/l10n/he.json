@@ -3764,6 +3764,7 @@
     "geofenceFileUnsupported": "אפשר לייבא קובצי GPX, KML או GeoJSON בלבד",
     "loginResetByAdmin": "איפוס סיסמה במייל לא מופעל בשרת הזה. פנו למנהל החשבון בארגון כדי לקבל סיסמה חדשה.",
     "mapNearbyVehicles": "רכבים קרובים",
+    "mapMeasureFromHere": "מדידה מכאן",
     "mapGeofenceHere": "יצירת גדר כאן",
     "mapCopyCoordinates": "העתקת קואורדינטות",
     "mapNavigateHere": "ניווט לכאן (Waze)",

@@ -5,7 +5,10 @@ import {
   Popover,
   TextField,
   List,
+  ListItem,
   ListItemButton,
+  IconButton,
+  Tooltip,
   ListItemText,
   Skeleton,
   Box,
@@ -15,6 +18,7 @@ import { makeStyles } from 'tss-react/mui';
 import { createRoot } from 'react-dom/client';
 import TravelExploreIcon from '@mui/icons-material/TravelExploreRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import NearMeRoundedIcon from '@mui/icons-material/NearMeRounded';
 import { glass } from '../../common/theme/surfaces';
 import { map } from '../core/MapView';
 import { toMapCoordinates } from '../core/mapUtil';
@@ -173,9 +177,35 @@ const MapGeocoder = () => {
                 </ListItemButton>
               ))
             : results.map((feature) => (
-                <ListItemButton key={feature.properties.place_id} onClick={() => onSelect(feature)}>
-                  <ListItemText primary={feature.properties.display_name} />
-                </ListItemButton>
+                <ListItem
+                  key={feature.properties.place_id}
+                  disablePadding
+                  secondaryAction={
+                    // LIV-21: who is closest to this address.
+                    <Tooltip title={t('mapNearbyVehicles')}>
+                      <IconButton
+                        edge="end"
+                        size="small"
+                        aria-label={`${t('mapNearbyVehicles')}: ${feature.properties.display_name}`}
+                        onClick={() => {
+                          const [longitude, latitude] = feature.geometry.coordinates;
+                          onSelect(feature);
+                          map.fire('vf-nearby', {
+                            latitude,
+                            longitude,
+                            name: feature.properties.display_name,
+                          });
+                        }}
+                      >
+                        <NearMeRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  }
+                >
+                  <ListItemButton onClick={() => onSelect(feature)}>
+                    <ListItemText primary={feature.properties.display_name} />
+                  </ListItemButton>
+                </ListItem>
               ))}
           {/* LIV-12: a search that found nothing says so. */}
           {!loading && query.trim().length > 2 && searched === query && !results.length && (
