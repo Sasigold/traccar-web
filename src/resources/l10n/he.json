@@ -3605,5 +3605,7 @@
     "newDriverUntil": "נהג חדש עד {0}",
     "newDriverEscortDay": "חובת ליווי ביום ובלילה",
     "newDriverEscortNight": "חובת ליווי בלילה",
-    "newDriverVehicleWarning": "הרכב {0} סומן כלא מתאים לנהגים חדשים, והנהג שמשויך אליו עדיין נהג חדש."
+    "newDriverVehicleWarning": "הרכב {0} סומן כלא מתאים לנהגים חדשים, והנהג שמשויך אליו עדיין נהג חדש.",
+    "deviceDisabledChip": "מושבת",
+    "deviceShowAllResults": "הצגת כל {0} התוצאות"
 }

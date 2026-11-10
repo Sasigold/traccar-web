@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState, useEffect } from 'react';
 import { makeStyles } from 'tss-react/mui';
+import { keyframes } from 'tss-react';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useDispatch, useSelector } from 'react-redux';
@@ -31,6 +32,18 @@ import { decodeView } from './savedViews';
 import { fitView } from './components/SavedViews';
 
 const MainMap = lazy(() => import('./MainMap'));
+
+// LIV-30: the list folds and unfolds over 220ms instead of jumping.
+const PANEL_MS = 220;
+const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+const unfold = keyframes`
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+`;
+const fold = keyframes`
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-8px); }
+`;
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -97,6 +110,18 @@ const useStyles = makeStyles()((theme) => ({
     [theme.breakpoints.up('md')]: {
       display: 'none',
     },
+  },
+  middleIn: {
+    [theme.breakpoints.up('md')]: {
+      animation: `${unfold} ${PANEL_MS}ms ${theme.tokens.motion.easing.emphasized} both`,
+    },
+    '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
+  },
+  middleOut: {
+    [theme.breakpoints.up('md')]: {
+      animation: `${fold} ${PANEL_MS}ms ${theme.tokens.motion.easing.exit} both`,
+    },
+    '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
   },
   contentMap: {
     pointerEvents: 'auto',
@@ -190,11 +215,31 @@ const MainPage = () => {
     setSearchParams({}, { replace: true });
   }, [searchParams, setSearchParams, setFilter, setFilterSort, setFilterMap]);
 
-  const [devicesOpen, setDevicesOpen] = useState(desktop);
+  const [devicesShown, setDevicesShown] = useState(desktop);
+  const devicesOpen = devicesShown;
+  const [folding, setFolding] = useState(false);
+  const [unfolded, setUnfolded] = useState(false);
+  // On a desktop the list plays its fold before it is hidden; on a phone the switch is a page.
+  const setDevicesOpen = (open) => {
+    if (!open && desktop && devicesOpen && !reducedMotion()) {
+      setFolding(true);
+    } else {
+      setUnfolded(open && desktop);
+      setDevicesShown(open);
+    }
+  };
+  useEffect(() => {
+    if (!folding) return undefined;
+    const timer = setTimeout(() => {
+      setFolding(false);
+      setDevicesShown(false);
+    }, PANEL_MS);
+    return () => clearTimeout(timer);
+  }, [folding]);
 
   useEffect(() => {
     if (!desktop && mapOnSelect && selectedDeviceId) {
-      setDevicesOpen(false);
+      setDevicesShown(false);
     }
   }, [desktop, mapOnSelect, selectedDeviceId]);
 
@@ -278,7 +323,14 @@ const MainPage = () => {
                 {devicesOpen && desktop && <div className={classes.divider} />}
               </div>
             )}
-            <div className={cx(classes.middle, !devicesOpen && classes.middleHidden)}>
+            <div
+              className={cx(
+                classes.middle,
+                !devicesOpen && classes.middleHidden,
+                unfolded && !folding && classes.middleIn,
+                folding && classes.middleOut,
+              )}
+            >
               {!desktop && (
                 <div className={classes.contentMap}>
                   <Suspense fallback={null}>

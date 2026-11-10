@@ -314,7 +314,9 @@ const MapMarkers = ({
       if (!map.getLayer(layerId)) {
         return;
       }
-      const progress = Math.min((now - start) / RING_PULSE_MS, 1);
+      // LIV-30: the first frame's timestamp can be earlier than `start`; a negative progress
+      // made the stroke opacity negative (an invalid paint value).
+      const progress = Math.max(0, Math.min((now - start) / RING_PULSE_MS, 1));
       const eased = 1 - (1 - progress) ** 3;
       map.setPaintProperty(layerId, 'circle-radius', ringRadius + 14 * (1 - eased));
       map.setPaintProperty(layerId, 'circle-stroke-opacity', 0.35 + 0.65 * eased);

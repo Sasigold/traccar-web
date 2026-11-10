@@ -3605,5 +3605,7 @@
     "newDriverUntil": "New driver until {0}",
     "newDriverEscortDay": "Escort required day and night",
     "newDriverEscortNight": "Escort required at night",
-    "newDriverVehicleWarning": "{0} is marked as not for new drivers, and the driver assigned to it is still a new driver."
+    "newDriverVehicleWarning": "{0} is marked as not for new drivers, and the driver assigned to it is still a new driver.",
+    "deviceDisabledChip": "Disabled",
+    "deviceShowAllResults": "Show all {0} results"
 }
