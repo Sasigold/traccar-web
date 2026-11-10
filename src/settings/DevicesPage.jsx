@@ -45,6 +45,10 @@ import { statusColor } from '../common/theme/surfaces';
 import DeviceTile from '../common/components/brand/DeviceTile';
 import { entityExpiryStatus, vehicleExpiryFields } from '../common/fleet/fleetFields';
 import ExpiryBadge from '../fleet/components/ExpiryBadge';
+import ColumnsMenu from '../common/components/table/ColumnsMenu';
+
+// ADM-25: the vehicle (name and plate), status, group and validity by default; the rest on demand.
+const DEFAULT_COLUMNS = ['group', 'validity'];
 
 const useStyles = makeStyles()((theme) => ({
   name: {
@@ -73,11 +77,20 @@ const useStyles = makeStyles()((theme) => ({
     fontSize: '0.8125rem',
     whiteSpace: 'nowrap',
   },
+  plate: {
+    display: 'block',
+    fontFamily: theme.tokens.font.mono,
+    fontSize: '0.75rem',
+    fontWeight: 400,
+    whiteSpace: 'nowrap',
+    color: theme.palette.text.secondary,
+  },
 }));
 
 const DevicesPage = () => {
   const { classes: settingsClasses } = useSettingsStyles();
   const { classes } = useStyles();
+  const [columns, setColumns] = usePersistedState('deviceColumns', DEFAULT_COLUMNS);
   const theme = useTheme();
   const navigate = useNavigate();
   const t = useTranslation();
@@ -168,7 +181,7 @@ const DevicesPage = () => {
       [t('sharedPhone')]: item.phone,
       [t('deviceModel')]: item.model,
       [t('deviceContact')]: item.contact,
-      [t('userExpirationTime')]: formatTime(item.expirationTime, 'date'),
+      [t('deviceServiceExpiry')]: formatTime(item.expirationTime, 'date'),
       [t('deviceStatus')]: formatStatus(item.status, t),
       [t('deviceLastUpdate')]: formatTime(item.lastUpdate, 'minutes'),
       [t('positionAddress')]: positions[item.id]
@@ -187,7 +200,20 @@ const DevicesPage = () => {
     handler: (deviceId) => navigate(`/settings/device/${deviceId}/connections`),
   };
 
-  const columnCount = (manager ? 12 : 11) + (deviceReadonly ? 0 : 1);
+  const optionalColumns = [
+    { key: 'group', label: t('groupParent') },
+    { key: 'validity', label: t('fleetValidity') },
+    { key: 'identifier', label: t('deviceIdentifier') },
+    { key: 'phone', label: t('sharedPhone') },
+    { key: 'model', label: t('deviceModel') },
+    { key: 'contact', label: t('deviceContact') },
+    { key: 'serviceExpiry', label: t('deviceServiceExpiry') },
+    { key: 'address', label: t('positionAddress') },
+    ...(manager ? [{ key: 'users', label: t('settingsUsers') }] : []),
+  ];
+  const on = (key) => columns.includes(key) && optionalColumns.some((c) => c.key === key);
+  const columnCount =
+    3 + optionalColumns.filter((column) => on(column.key)).length + (deviceReadonly ? 0 : 1);
 
   return (
     <PageLayout
@@ -216,6 +242,7 @@ const DevicesPage = () => {
                       {t('importFromExcel')}
                     </Button>
                   )}
+                  <ColumnsMenu columns={optionalColumns} shown={columns} onChange={setColumns} />
                   {manager && (
                     <FormControlLabel
                       control={
@@ -268,18 +295,13 @@ const DevicesPage = () => {
                 />
               </TableCell>
             )}
-            <TableCell>{t('sharedName')}</TableCell>
+            <TableCell>{t('sharedDevice')}</TableCell>
             <TableCell>{t('deviceStatus')}</TableCell>
-            <TableCell>{t('fleetPlateNumber')}</TableCell>
-            <TableCell>{t('fleetValidity')}</TableCell>
-            <TableCell>{t('deviceIdentifier')}</TableCell>
-            <TableCell>{t('groupParent')}</TableCell>
-            <TableCell>{t('sharedPhone')}</TableCell>
-            <TableCell>{t('deviceModel')}</TableCell>
-            <TableCell>{t('deviceContact')}</TableCell>
-            <TableCell>{t('userExpirationTime')}</TableCell>
-            <TableCell>{t('positionAddress')}</TableCell>
-            {manager && <TableCell>{t('settingsUsers')}</TableCell>}
+            {optionalColumns
+              .filter((column) => on(column.key))
+              .map((column) => (
+                <TableCell key={column.key}>{column.label}</TableCell>
+              ))}
             <TableCell className={settingsClasses.columnAction} />
           </TableRow>
         </TableHead>
@@ -304,9 +326,16 @@ const DevicesPage = () => {
                 <TableCell>
                   <span className={classes.name}>
                     <DeviceTile category={item.category} status={item.status} size={32} />
-                    <Link component={RouterLink} to={`/fleet/vehicle/${item.id}`}>
-                      {item.name}
-                    </Link>
+                    <span>
+                      <Link component={RouterLink} to={`/fleet/vehicle/${item.id}`}>
+                        {item.name}
+                      </Link>
+                      {item.attributes?.plateNumber && (
+                        <bdi className={classes.plate} dir="ltr">
+                          {item.attributes.plateNumber}
+                        </bdi>
+                      )}
+                    </span>
                   </span>
                 </TableCell>
                 <TableCell>
@@ -320,28 +349,39 @@ const DevicesPage = () => {
                     )}
                   </span>
                 </TableCell>
-                <TableCell className={classes.mono}>
-                  <span dir="ltr">{item.attributes?.plateNumber}</span>
-                </TableCell>
-                <TableCell>{validity !== 'none' && <ExpiryBadge status={validity} />}</TableCell>
-                <TableCell className={classes.mono}>
-                  <bdi dir="ltr">{item.uniqueId}</bdi>
-                </TableCell>
-                <TableCell>{item.groupId ? groups[item.groupId]?.name : null}</TableCell>
-                <TableCell>{item.phone}</TableCell>
-                <TableCell>{item.model}</TableCell>
-                <TableCell>{item.contact}</TableCell>
-                <TableCell>{formatTime(item.expirationTime, 'date')}</TableCell>
-                <TableCell>
-                  {positions[item.id] && (
-                    <AddressValue
-                      latitude={positions[item.id].latitude}
-                      longitude={positions[item.id].longitude}
-                      originalAddress={positions[item.id]?.address}
-                    />
-                  )}
-                </TableCell>
-                {manager && (
+                {on('group') && (
+                  <TableCell>{item.groupId ? groups[item.groupId]?.name : null}</TableCell>
+                )}
+                {on('validity') && (
+                  <TableCell>{validity !== 'none' && <ExpiryBadge status={validity} />}</TableCell>
+                )}
+                {on('identifier') && (
+                  <TableCell className={classes.mono}>
+                    <bdi dir="ltr">{item.uniqueId}</bdi>
+                  </TableCell>
+                )}
+                {on('phone') && (
+                  <TableCell>
+                    <bdi dir="ltr">{item.phone}</bdi>
+                  </TableCell>
+                )}
+                {on('model') && <TableCell>{item.model}</TableCell>}
+                {on('contact') && <TableCell>{item.contact}</TableCell>}
+                {on('serviceExpiry') && (
+                  <TableCell>{formatTime(item.expirationTime, 'date')}</TableCell>
+                )}
+                {on('address') && (
+                  <TableCell>
+                    {positions[item.id] && (
+                      <AddressValue
+                        latitude={positions[item.id].latitude}
+                        longitude={positions[item.id].longitude}
+                        originalAddress={positions[item.id]?.address}
+                      />
+                    )}
+                  </TableCell>
+                )}
+                {on('users') && (
                   <TableCell>
                     <DeviceUsersValue deviceId={item.id} />
                   </TableCell>

@@ -17,7 +17,6 @@ const NewDriverChip = ({ issued, size = 'small' }) => {
       <Chip
         size={size}
         color="warning"
-        variant="outlined"
         icon={<SchoolRoundedIcon />}
         label={status.escortDay || status.escortNight ? t('newDriverEscort') : t('newDriver')}
         aria-label={`${t('newDriver')}: ${details.join(', ')}`}

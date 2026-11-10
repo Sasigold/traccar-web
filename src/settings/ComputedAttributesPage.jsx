@@ -1,5 +1,7 @@
 import { useCallback, useReducer, useState } from 'react';
-import { TableRow, TableCell, TableHead, TableBody } from '@mui/material';
+import { useSelector } from 'react-redux';
+import { Chip, TableRow, TableCell, TableHead, TableBody, Tooltip } from '@mui/material';
+import LockRoundedIcon from '@mui/icons-material/LockRounded';
 import { useAsyncTask, useScrollToLoad, pageSize } from '../reactHelper';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import { useAdministrator } from '../common/util/permissions';
@@ -12,6 +14,7 @@ import DataTable from '../common/components/table/DataTable';
 import TableToolbar from '../common/components/table/TableToolbar';
 import useSettingsStyles from './common/useSettingsStyles';
 import fetchOrThrow from '../common/util/fetchOrThrow';
+import { managedComputed } from '../admin/sensors';
 
 const ComputedAttributesPage = () => {
   const { classes } = useSettingsStyles();
@@ -22,6 +25,7 @@ const ComputedAttributesPage = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [hasMore, setHasMore] = useState(true);
   const administrator = useAdministrator();
+  const devices = useSelector((state) => state.devices.items);
 
   const loadItems = useCallback(
     async (offset, signal) => {
@@ -76,25 +80,49 @@ const ComputedAttributesPage = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {items.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell>{item.description}</TableCell>
-              <TableCell>{item.attribute}</TableCell>
-              <TableCell>{item.expression}</TableCell>
-              <TableCell>{item.type}</TableCell>
-              {administrator && (
-                <TableCell className={classes.columnAction} padding="none">
-                  <CollectionActions
-                    itemId={item.id}
-                    itemName={item.description}
-                    editPath="/settings/attribute"
-                    endpoint="attributes/computed"
-                    onReload={reload}
-                  />
+          {items.map((item) => {
+            // ADM-25: rows the sensors setup made are read here and changed only there;
+            // deleting one would quietly break the vehicle's ignition or inputs.
+            const managed = managedComputed(item.description);
+            return (
+              <TableRow key={item.id}>
+                <TableCell>
+                  {managed ? managed.label : item.description}
+                  {managed && (
+                    <Tooltip title={t('computedManagedHint')}>
+                      <Chip
+                        size="small"
+                        icon={<LockRoundedIcon />}
+                        label={t('computedManaged').replace(
+                          '{0}',
+                          devices[managed.deviceId]?.name || `#${managed.deviceId}`,
+                        )}
+                        sx={{ marginInlineStart: 1 }}
+                      />
+                    </Tooltip>
+                  )}
                 </TableCell>
-              )}
-            </TableRow>
-          ))}
+                <TableCell>{item.attribute}</TableCell>
+                <TableCell>
+                  <bdi dir="ltr">{item.expression}</bdi>
+                </TableCell>
+                <TableCell>{item.type}</TableCell>
+                {administrator && (
+                  <TableCell className={classes.columnAction} padding="none">
+                    {!managed && (
+                      <CollectionActions
+                        itemId={item.id}
+                        itemName={item.description}
+                        editPath="/settings/attribute"
+                        endpoint="attributes/computed"
+                        onReload={reload}
+                      />
+                    )}
+                  </TableCell>
+                )}
+              </TableRow>
+            );
+          })}
           {hasMore && (
             <TableShimmer
               ref={items.length > 0 ? sentinelRef : null}

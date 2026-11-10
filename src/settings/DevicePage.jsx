@@ -40,6 +40,10 @@ import {
 import { DateField } from '../common/components/pickers';
 import GovRegistryButton from '../fleet/components/GovRegistryButton';
 
+// A far-future date (the old placeholder) reads as no limit.
+const serviceExpiry = (value) =>
+  value && Number(value.slice(0, 4)) < 2099 ? value.split('T')[0] : '';
+
 const DevicePage = () => {
   const t = useTranslation();
 
@@ -240,15 +244,16 @@ const DevicePage = () => {
               helperText={t('deviceCalendarHelp')}
             />
             <DateField
-              label={t('userExpirationTime')}
-              value={item.expirationTime ? item.expirationTime.split('T')[0] : '2099-01-01'}
-              onChange={(e) => {
-                if (e.target.value) {
-                  setItem({ ...item, expirationTime: new Date(e.target.value).toISOString() });
-                }
-              }}
-              helperText={t('deviceExpirationHelp')}
-              clearable={false}
+              // ADM-25: empty means no limit (not a made-up 2099 date).
+              label={t('deviceServiceExpiry')}
+              value={serviceExpiry(item.expirationTime)}
+              onChange={(e) =>
+                setItem({
+                  ...item,
+                  expirationTime: e.target.value ? new Date(e.target.value).toISOString() : null,
+                })
+              }
+              helperText={t('deviceServiceExpiryHelp')}
               disabled={!manager}
             />
             <CheckboxField
