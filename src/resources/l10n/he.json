@@ -3473,5 +3473,7 @@
     "reportLitersPer100": "ליטר ל-100 ק\"מ",
     "reportPrintedBy": "הופק על ידי {0} · {1}",
     "reportAllVehicles": "כל הרכבים",
-    "dashboardTooLargeDetail": "{0} רכבים × {1} ימים, המגבלה {2}"
+    "dashboardTooLargeDetail": "{0} רכבים × {1} ימים, המגבלה {2}",
+    "fleetApiKeyExpiry": "תוקף המפתח",
+    "fleetApiKeyMonths": "{0} חודשים"
 }

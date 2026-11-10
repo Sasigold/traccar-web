@@ -40,10 +40,8 @@ import {
   API_SCOPES,
   WEBHOOK_ACTIONS,
   WEBHOOK_SOURCES,
-  generateApiKey,
   isValidWebhookUrl,
   keyState,
-  sha256Hex,
   webhookEventKey,
 } from '../common/fleet/integrations';
 import FleetNotice from './components/FleetNotice';
@@ -81,26 +79,24 @@ const useStyles = makeStyles()((theme) => ({
 const KeyDialog = ({ onClose, onSaved }) => {
   const { classes } = useStyles();
   const t = useTranslation();
-  const profile = useFleetProfile();
   const [name, setName] = useState('');
   const [scope, setScope] = useState('read');
+  const [months, setMonths] = useState(12);
   const [created, setCreated] = useState(null);
 
+  // SEC-22: the key is made on the server (random bytes, stored as a peppered HMAC) and comes
+  // back once; it expires after the chosen months.
   const save = useCatch(async () => {
-    const { key, prefix } = generateApiKey();
-    unwrap(
-      await getFleetClient()
-        .from('api_keys')
-        .insert({
-          org_id: profile.org_id,
-          name: name.trim(),
-          prefix,
-          key_hash: await sha256Hex(key),
-          scopes: scope === 'write' ? ['read', 'write'] : ['read'],
-          created_by: profile.id,
-        }),
+    const expires = new Date();
+    expires.setMonth(expires.getMonth() + months);
+    const result = unwrap(
+      await getFleetClient().rpc('create_api_key', {
+        p_name: name.trim(),
+        p_scopes: scope === 'write' ? ['read', 'write'] : ['read'],
+        p_expires_at: expires.toISOString(),
+      }),
     );
-    setCreated(key);
+    setCreated(result.key);
     onSaved();
   });
 
@@ -132,6 +128,18 @@ const KeyDialog = ({ onClose, onSaved }) => {
               {API_SCOPES.map((value) => (
                 <MenuItem key={value} value={value}>
                   {t(`fleetApiScope${camel(value)}`)}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              select
+              label={t('fleetApiKeyExpiry')}
+              value={months}
+              onChange={(event) => setMonths(Number(event.target.value))}
+            >
+              {[3, 6, 12, 24].map((value) => (
+                <MenuItem key={value} value={value}>
+                  {t('fleetApiKeyMonths').replace('{0}', value)}
                 </MenuItem>
               ))}
             </TextField>
