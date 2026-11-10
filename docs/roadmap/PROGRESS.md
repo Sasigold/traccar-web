@@ -155,6 +155,7 @@
    - `20261116120000_work_order_close.sql`: מחירים כוללים מע"מ, ותקלות שנסגרות עם ההזמנה (ADM-19).
    - `20261116130000_dispatch_failures.sql`: סיבת כשל של משימת שיגור, שגם הנהג רשאי לכתוב (ADM-20).
    - `20261116140000_dispatch_route_order.sql`: סדר העצירות של מסלול מתוכנן (OPS-03).
+   - `20261116150000_automation_rest_day.sql`: אוטומציה לנסיעה בשבת או בחג (ISR-09).
 
 **פריסה ושרת:**
 3. פריסה לייצור: ידנית, Actions ← "Promote to production" (מקלידים `production`). דחיפה ל-`main` מעלה ל-staging
