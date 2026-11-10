@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Alert,
   Autocomplete,
@@ -30,6 +30,7 @@ import {
   parseProfile,
 } from '../common/components/telemetry/vehicleProfile';
 import AdminMenu from './components/AdminMenu';
+import InstallCheck from './components/InstallCheck';
 import AdminGate from './components/AdminGate';
 import CustomerSelect from './components/CustomerSelect';
 import SensorsEditor, { sensorTitleKey } from './components/SensorsEditor';
@@ -120,6 +121,8 @@ const DeviceSetupPage = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const checking = searchParams.get('check') === '1';
   const deviceId = id ? Number(id) : null;
 
   const access = useAdminAccess();
@@ -222,7 +225,10 @@ const DeviceSetupPage = () => {
         row.billable = registry.billable !== false;
         await saveRegistry(row);
       }
-      navigate('/admin/devices');
+      // ADM-26: a new device opens again with the installation check.
+      navigate(deviceId ? '/admin/devices' : `/admin/device/${saved.id}?check=1`, {
+        replace: !deviceId,
+      });
     } finally {
       setSaving(false);
     }
@@ -250,6 +256,7 @@ const DeviceSetupPage = () => {
         />
       }
     >
+      {checking && deviceId && <InstallCheck deviceId={deviceId} />}
       {!device ? (
         <FormSection title={<Skeleton width="10em" />}>
           {[...Array(3)].map((_, i) => (

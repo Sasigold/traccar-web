@@ -43,3 +43,13 @@ test('a suspended customer can have its users disabled in the same step', async 
   await dialog.getByRole('button', { name: 'השבתת המשתמשים' }).click();
   await expect.poll(() => disabled).toEqual([true]);
 });
+
+test('a device opened after setup shows its first report', async ({ page }) => {
+  await writeMode(page);
+  await fakeFleet(page, {
+    users: { 1: platformAdmin },
+    tables: { customers: [], customer_users: [], device_registry: [], customer_device_counts: [] },
+  });
+  await gotoReady(page, '/admin/device/1?check=1');
+  await expect(page.getByRole('status').filter({ hasText: 'התקבל דיווח ב-' })).toBeVisible();
+});
