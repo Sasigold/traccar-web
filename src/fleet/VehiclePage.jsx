@@ -196,7 +196,7 @@ const useFleetFacts = (deviceId) => {
       return;
     }
     const rows = (result) => result.data || [];
-    const [assignment, workOrders, incidents, inspections, costs] = await Promise.all([
+    const [assignment, workOrders, incidents, inspections, costs, handovers] = await Promise.all([
       client.from('current_assignments').select('*').eq('vehicle_id', vehicle.id).limit(1),
       client
         .from('work_orders')
@@ -221,6 +221,13 @@ const useFleetFacts = (deviceId) => {
         .select('month, category, amount')
         .eq('vehicle_id', vehicle.id)
         .gte('month', periodStart(6)),
+      // ISR-11: the handovers and returns, signed.
+      client
+        .from('vehicle_handovers')
+        .select('id, kind, created_at, odometer_km, drivers(full_name)')
+        .eq('vehicle_id', vehicle.id)
+        .order('created_at', { ascending: false })
+        .limit(20),
     ]);
     const current = rows(assignment)[0] || null;
     const driver = current?.driver_id
@@ -234,6 +241,7 @@ const useFleetFacts = (deviceId) => {
       incidents: rows(incidents),
       inspections: rows(inspections),
       costs: rows(costs),
+      handovers: rows(handovers),
     });
   }, [ready, deviceId]);
   return facts;
@@ -570,6 +578,26 @@ const VehiclePage = () => {
                     )}
                   />
                 </TableCell>
+              </TableRow>
+            ))}
+          />
+        )}
+        {tab === 'inspections' && (fleet?.handovers || []).length > 0 && (
+          <RowsTable
+            head={['fleetExpenseDate', 'driverHandover', 'sharedDriver', 'driverHandoverKm']}
+            empty="vehicleNoInspections"
+            rows={fleet.handovers.map((handover) => (
+              <TableRow key={handover.id} hover>
+                <TableCell>
+                  <Link component={RouterLink} to={`/fleet/handover/${handover.id}`}>
+                    {formatTime(handover.created_at, 'minutes')}
+                  </Link>
+                </TableCell>
+                <TableCell>
+                  {t(handover.kind === 'return' ? 'driverHandoverReturn' : 'driverHandoverTake')}
+                </TableCell>
+                <TableCell>{handover.drivers?.full_name || '—'}</TableCell>
+                <TableCell>{handover.odometer_km ?? '—'}</TableCell>
               </TableRow>
             ))}
           />
