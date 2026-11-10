@@ -60,8 +60,10 @@ test("the trips report shows one driver's trips", async ({ page }) => {
     page,
     `/reports/trips?deviceId=1&deviceId=2&deviceId=3&deviceId=4&deviceId=5&deviceId=6&from=${encodeURIComponent(new Date(from.getTime() - 6 * 86400000).toISOString())}&to=${encodeURIComponent(new Date().toISOString())}`,
   );
-  const rows = page.locator('tbody tr');
+  // Rows with a vehicle in them (not the loading shimmer), once the report has arrived.
+  const rows = page.locator('tbody tr').filter({ hasText: /\d{2}-\d{3}-\d{2}/ });
   await expect(rows.first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'הצג' }).first()).toBeEnabled();
   const before = await rows.count();
   const field = page.getByRole('combobox', { name: 'נהג' });
   await field.click();
