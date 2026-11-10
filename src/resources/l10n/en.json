@@ -3538,5 +3538,11 @@
     "batteryWatch": "Keep an eye on the battery: the voltage at start is falling ({0}V).",
     "speedBandMinor": "minor (up to 10)",
     "speedBandMedium": "medium (10-20)",
-    "speedBandSevere": "severe (over 20)"
+    "speedBandSevere": "severe (over 20)",
+    "fleetSafetyViewLeaders": "This week's leaders",
+    "fleetSafetyRank": "Rank",
+    "fleetSafetyStreak": "Clean streak",
+    "fleetSafetyStreakDays": "{0} without an event",
+    "fleetSafetyAllVehicles": "All vehicles",
+    "fleetSafetyNoneLeaders": "Not enough driving this week for the table yet."
 }

@@ -3538,5 +3538,11 @@
     "batteryWatch": "כדאי לעקוב אחרי המצבר: בהתנעות האחרונות המתח יורד ({0}V).",
     "speedBandMinor": "חריגה קלה (עד 10)",
     "speedBandMedium": "חריגה בינונית (10-20)",
-    "speedBandSevere": "חריגה חמורה (מעל 20)"
+    "speedBandSevere": "חריגה חמורה (מעל 20)",
+    "fleetSafetyViewLeaders": "מובילי השבוע",
+    "fleetSafetyRank": "מקום",
+    "fleetSafetyStreak": "רצף נקי",
+    "fleetSafetyStreakDays": "{0} בלי אירוע",
+    "fleetSafetyAllVehicles": "כל הרכבים",
+    "fleetSafetyNoneLeaders": "עוד אין מספיק נסיעות השבוע לטבלה."
 }
