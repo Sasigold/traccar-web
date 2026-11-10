@@ -2,7 +2,14 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
-import { IconButton, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import {
+  IconButton,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  useMediaQuery,
+} from '@mui/material';
 import GpsFixedIcon from '@mui/icons-material/GpsFixedRounded';
 import LocationSearchingIcon from '@mui/icons-material/LocationSearchingRounded';
 import RouteIcon from '@mui/icons-material/RouteRounded';
@@ -99,6 +106,7 @@ const TripReportPage = () => {
   const { classes } = useReportStyles();
   const t = useTranslation();
   const theme = useTheme();
+  const desktop = useMediaQuery(theme.breakpoints.up('md'));
 
   const devices = useSelector((state) => state.devices.items, deviceEquality(['id', 'name']));
 
@@ -134,7 +142,6 @@ const TripReportPage = () => {
     const assignments = await loadAssignments().catch(() => []);
     setResolve(() => assignmentResolver(assignments, byId));
   }, [fleetReady, traccarDrivers]);
-  const unassigned = (item) => !tripDriverKey(item, resolve);
 
   // REP-05: the drivers who drove in the result, to show one driver's trips.
   const driverOptions = useMemo(() => {
@@ -154,11 +161,33 @@ const TripReportPage = () => {
   // A driver who is not in a new result stops filtering it.
   const activeDriver = driverOptions.some((option) => option.id === driver) ? driver : null;
 
-  const filteredItems = items.filter(
-    (item) =>
-      (!tripType || item.business === (tripType === 'business')) &&
-      (!activeDriver ||
-        (activeDriver === NO_DRIVER ? unassigned(item) : item.driverUniqueId === activeDriver)),
+  const filteredItems = useMemo(
+    () =>
+      items.filter(
+        (item) =>
+          (!tripType || item.business === (tripType === 'business')) &&
+          (!activeDriver ||
+            (activeDriver === NO_DRIVER
+              ? !tripDriverKey(item, resolve)
+              : item.driverUniqueId === activeDriver)),
+      ),
+    [items, tripType, activeDriver, resolve],
+  );
+
+  // REP-11: on a desktop, with results and no trip chosen, the map shows where each trip started
+  // (grouped when close); a point chooses its trip, and its row scrolls into view.
+  const overview = useMemo(
+    () =>
+      filteredItems
+        .map((item, index) => ({ item, index }))
+        .filter(({ item }) => item.startLat != null && item.startLon != null && !item.privacy)
+        .map(({ item, index }) => ({
+          latitude: item.startLat,
+          longitude: item.startLon,
+          image: 'start-success',
+          index,
+        })),
+    [filteredItems],
   );
 
   const markers = selectedItem && [
@@ -373,16 +402,26 @@ const TripReportPage = () => {
   return (
     <PageLayout menu={<ReportsMenu />} breadcrumbs={['reportTitle', 'reportTrips']}>
       <div className={classes.container}>
-        {selectedItem && (
+        {(selectedItem || (desktop && overview.length > 0)) && (
           <>
             <div className={classes.containerMap}>
               <MapView>
                 <MapGeofence />
-                {route && (
+                {selectedItem && route && (
                   <>
                     <MapRoutePath positions={route} />
                     <MapMarkers markers={markers} />
                     <MapCamera positions={route} />
+                  </>
+                )}
+                {!selectedItem && (
+                  <>
+                    <MapMarkers
+                      markers={overview}
+                      cluster
+                      onClick={(properties) => setSelectedItem(filteredItems[properties.index])}
+                    />
+                    <MapCamera positions={overview} />
                   </>
                 )}
               </MapView>
