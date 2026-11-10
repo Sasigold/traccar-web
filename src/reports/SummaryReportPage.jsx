@@ -36,7 +36,7 @@ import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
 import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded';
 import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
 import LocalGasStationRoundedIcon from '@mui/icons-material/LocalGasStationRounded';
-import { useCatch, useCatchCallback } from '../reactHelper';
+import { useCatch, useRunCallback } from '../reactHelper';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
 import {
@@ -105,14 +105,15 @@ const SummaryReportPage = () => {
   const [loading, setLoading] = useState(false);
   const [queried, setQueried] = useState(false);
 
-  const onShow = useCatchCallback(
-    async ({ deviceIds, groupIds, from, to }) => {
+  const onShow = useRunCallback(
+    async ({ deviceIds, groupIds, from, to, signal }) => {
       const query = new URLSearchParams({ from, to, daily });
       deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
       groupIds.forEach((groupId) => query.append('groupId', groupId));
       setLoading(true);
       try {
         const response = await fetchOrThrow(`api/reports/summary?${query.toString()}`, {
+          signal,
           headers: { Accept: 'application/json' },
         });
         setItems(await response.json());
@@ -121,6 +122,7 @@ const SummaryReportPage = () => {
           query.set('from', before.from);
           query.set('to', before.to);
           const previousResponse = await fetchOrThrow(`api/reports/summary?${query.toString()}`, {
+            signal,
             headers: { Accept: 'application/json' },
           });
           const rows = await previousResponse.json();

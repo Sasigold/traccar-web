@@ -34,18 +34,45 @@ export const useAsyncTask = (effect, deps) => {
   }, [...deps, dispatch]);
 };
 
+// A cancelled request (the page was left, or a newer run replaced it) is not an error to show.
+const isAbort = (error) => error?.name === 'AbortError';
+
 export const useCatch = (method) => {
   const dispatch = useDispatch();
   return (...parameters) => {
-    method(...parameters).catch((error) => dispatch(messagesActions.push(error.message)));
+    method(...parameters).catch(
+      (error) => isAbort(error) || dispatch(messagesActions.push(error.message)),
+    );
   };
+};
+
+// PRF-05: a report run. `method` gets the parameters plus a `signal`; a new run cancels the one
+// before it, and leaving the page cancels the last one.
+export const useRunCallback = (method, deps) => {
+  const dispatch = useDispatch();
+  const controllerRef = useRef(null);
+  useEffect(() => () => controllerRef.current?.abort(), []);
+  return useCallback(
+    (parameters) => {
+      controllerRef.current?.abort();
+      const controller = new AbortController();
+      controllerRef.current = controller;
+      return method({ ...parameters, signal: controller.signal }).catch(
+        (error) => isAbort(error) || dispatch(messagesActions.push(error.message)),
+      );
+    },
+    // eslint-disable-next-line @eslint-react/exhaustive-deps
+    deps,
+  );
 };
 
 export const useCatchCallback = (method, deps) => {
   const dispatch = useDispatch();
   return useCallback(
     (...parameters) => {
-      method(...parameters).catch((error) => dispatch(messagesActions.push(error.message)));
+      method(...parameters).catch(
+        (error) => isAbort(error) || dispatch(messagesActions.push(error.message)),
+      );
     },
     // eslint-disable-next-line @eslint-react/exhaustive-deps
     deps,

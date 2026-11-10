@@ -14,7 +14,7 @@ import ReportsMenu from './components/ReportsMenu';
 import usePersistedState from '../common/util/usePersistedState';
 import ColumnSelect from './components/ColumnSelect';
 import ResizeHandle from './components/ResizeHandle';
-import { useCatch, useCatchCallback, useAsyncTask } from '../reactHelper';
+import { useCatch, useAsyncTask, useRunCallback } from '../reactHelper';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
 import { ReportEmptyRow, SortCell, useReportSort } from './components/ReportTableParts';
@@ -118,8 +118,8 @@ const EventReportPage = () => {
     ]);
   }, []);
 
-  const onShow = useCatchCallback(
-    async ({ deviceIds, groupIds, from, to }) => {
+  const onShow = useRunCallback(
+    async ({ deviceIds, groupIds, from, to, signal }) => {
       const query = new URLSearchParams({ from, to });
       deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
       groupIds.forEach((groupId) => query.append('groupId', groupId));
@@ -132,6 +132,7 @@ const EventReportPage = () => {
       setLoading(true);
       try {
         const response = await fetchOrThrow(`api/reports/events?${query.toString()}`, {
+          signal,
           headers: { Accept: 'application/json' },
         });
         // Events in hidden time keep their time and type but lose their place.

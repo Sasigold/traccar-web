@@ -33,7 +33,7 @@ import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
 import PauseCircleRoundedIcon from '@mui/icons-material/PauseCircleRounded';
 import ResizeHandle from './components/ResizeHandle';
 import usePersistedState from '../common/util/usePersistedState';
-import { useCatch, useCatchCallback } from '../reactHelper';
+import { useCatch, useRunCallback } from '../reactHelper';
 import useReportStyles from './common/useReportStyles';
 import MapMarkers from '../map/MapMarkers';
 import MapView from '../map/core/MapView';
@@ -109,13 +109,14 @@ const StopReportPage = () => {
   const selectedRowRef = useSelectedRow(selectedItem);
   const [hiddenRows, setHiddenRows] = useState(0);
 
-  const onShow = useCatchCallback(async ({ deviceIds, groupIds, from, to }) => {
+  const onShow = useRunCallback(async ({ deviceIds, groupIds, from, to, signal }) => {
     const query = new URLSearchParams({ from, to });
     deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
     groupIds.forEach((groupId) => query.append('groupId', groupId));
     setLoading(true);
     try {
       const response = await fetchOrThrow(`api/reports/stops?${query.toString()}`, {
+        signal,
         headers: { Accept: 'application/json' },
       });
       // Places in hidden time (outside working hours, private periods) are taken out.

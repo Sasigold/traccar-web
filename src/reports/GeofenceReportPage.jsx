@@ -10,7 +10,7 @@ import PageLayout from '../common/components/PageLayout';
 import ReportsMenu from './components/ReportsMenu';
 import ColumnSelect from './components/ColumnSelect';
 import usePersistedState from '../common/util/usePersistedState';
-import { useCatch, useCatchCallback } from '../reactHelper';
+import { useCatch, useRunCallback } from '../reactHelper';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
 import DataTable from '../common/components/table/DataTable';
@@ -54,8 +54,8 @@ const GeofenceReportPage = () => {
   const [hiddenRows, setHiddenRows] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const onShow = useCatchCallback(
-    async ({ deviceIds, groupIds, from, to }) => {
+  const onShow = useRunCallback(
+    async ({ deviceIds, groupIds, from, to, signal }) => {
       const query = new URLSearchParams({ from, to });
       deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
       groupIds.forEach((groupId) => query.append('groupId', groupId));
@@ -63,6 +63,7 @@ const GeofenceReportPage = () => {
       setLoading(true);
       try {
         const response = await fetchOrThrow(`api/reports/geofences?${query.toString()}`, {
+          signal,
           headers: { Accept: 'application/json' },
         });
         // A visit in hidden time would tell where the vehicle was: it is left out.

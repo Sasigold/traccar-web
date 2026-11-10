@@ -27,7 +27,7 @@ import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
 import PlayCircleRoundedIcon from '@mui/icons-material/PlayCircleRounded';
 import ResizeHandle from './components/ResizeHandle';
 import usePersistedState from '../common/util/usePersistedState';
-import { useCatch, useCatchCallback, useAsyncTask } from '../reactHelper';
+import { useCatch, useAsyncTask, useRunCallback } from '../reactHelper';
 import { useFleetReady } from '../common/fleet/useFleet';
 import { assignmentResolver, loadAssignments } from '../fleet/safetyData';
 import { tripDriverKey } from '../common/fleet/checkin';
@@ -189,13 +189,14 @@ const TripReportPage = () => {
     [selectedItem],
   );
 
-  const onShow = useCatchCallback(async ({ deviceIds, groupIds, from, to }) => {
+  const onShow = useRunCallback(async ({ deviceIds, groupIds, from, to, signal }) => {
     const query = new URLSearchParams({ from, to });
     deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
     groupIds.forEach((groupId) => query.append('groupId', groupId));
     setLoading(true);
     try {
       const response = await fetchOrThrow(`api/reports/trips?${query.toString()}`, {
+        signal,
         headers: { Accept: 'application/json' },
       });
       // Places in hidden time (outside working hours, private periods) are taken out.

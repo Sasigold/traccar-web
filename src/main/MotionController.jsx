@@ -41,6 +41,17 @@ const buildSegments = (events, fromTimestamp, toTimestamp) => {
   return segments;
 };
 
+// PRF-05: after the first 24 hours, each refresh asks only for what happened since the last one
+// (with a minute of overlap), keeps the last 24 hours, and drops repeats. Pure, tested.
+export const OVERLAP_MS = 60000;
+export const mergeMotionEvents = (previous, incoming, fromTimestamp) => {
+  const byId = new Map();
+  [...previous, ...incoming].forEach((event) => byId.set(event.id, event));
+  return [...byId.values()]
+    .filter((event) => dayjs(event.eventTime).valueOf() >= fromTimestamp)
+    .sort((a, b) => dayjs(a.eventTime).valueOf() - dayjs(b.eventTime).valueOf());
+};
+
 const MotionController = () => {
   const dispatch = useDispatch();
 
@@ -54,12 +65,14 @@ const MotionController = () => {
       }
 
       let active = true;
+      let known = [];
+      let lastTo = null;
 
       const refreshMotion = async () => {
         const to = dayjs();
         const from = to.subtract(24, 'hour');
         const query = new URLSearchParams({
-          from: from.toISOString(),
+          from: (lastTo ? lastTo.subtract(OVERLAP_MS, 'millisecond') : from).toISOString(),
           to: to.toISOString(),
         });
         query.append('type', 'deviceMoving');
@@ -69,7 +82,9 @@ const MotionController = () => {
           headers: { Accept: 'application/json' },
           signal,
         });
-        const events = await response.json();
+        known = mergeMotionEvents(known, await response.json(), from.valueOf());
+        lastTo = to;
+        const events = known;
 
         const groupedEvents = {};
         events.forEach((event) => {
