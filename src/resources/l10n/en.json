@@ -3475,5 +3475,9 @@
     "reportAllVehicles": "All vehicles",
     "dashboardTooLargeDetail": "{0} vehicles × {1} days, the limit is {2}",
     "fleetApiKeyExpiry": "Key validity",
-    "fleetApiKeyMonths": "{0} months"
+    "fleetApiKeyMonths": "{0} months",
+    "planAvailableIn": "This area is in the {0} plan. To upgrade or try it free, contact us.",
+    "planTracking": "Tracking",
+    "planFleet": "Fleet management",
+    "planPro": "Professional"
 }

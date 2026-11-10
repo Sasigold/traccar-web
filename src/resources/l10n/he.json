@@ -3475,5 +3475,9 @@
     "reportAllVehicles": "כל הרכבים",
     "dashboardTooLargeDetail": "{0} רכבים × {1} ימים, המגבלה {2}",
     "fleetApiKeyExpiry": "תוקף המפתח",
-    "fleetApiKeyMonths": "{0} חודשים"
+    "fleetApiKeyMonths": "{0} חודשים",
+    "planAvailableIn": "האזור הזה זמין בחבילת {0}. לשדרוג או לניסיון חינם, פנו אלינו.",
+    "planTracking": "מעקב",
+    "planFleet": "ניהול צי",
+    "planPro": "מקצועית"
 }
