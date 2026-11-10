@@ -139,6 +139,41 @@ export default makeStyles()((theme) => ({
   filterButton: {
     flexGrow: 1,
   },
+  // REP-15: the charts of the chart report, one per value, sharing the time axis.
+  chartStack: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1.5),
+    margin: theme.spacing(0, 3, 3),
+    [theme.breakpoints.down('md')]: {
+      margin: theme.spacing(0, 1, 2),
+    },
+  },
+  chartPanel: {
+    padding: theme.spacing(1.5, 1, 1),
+    borderRadius: theme.tokens.radius.xl,
+    border: `1px solid ${theme.palette.surface.border}`,
+    backgroundColor: theme.palette.background.paper,
+  },
+  chartTitle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    paddingInline: theme.spacing(1.5),
+  },
+  chartSwatch: {
+    width: 12,
+    height: 3,
+    borderRadius: 2,
+  },
+  chartBody: {
+    height: 200,
+  },
+  chartLoading: {
+    display: 'flex',
+    justifyContent: 'center',
+    padding: theme.spacing(6),
+  },
   chart: {
     flexGrow: 1,
     overflow: 'hidden',
