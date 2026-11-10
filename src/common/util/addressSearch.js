@@ -26,7 +26,12 @@ export const formatAddress = ({ street, number, city }) =>
 
 const cache = new Map();
 
-export const searchStreets = async (query, { signal, fetcher = fetch } = {}) => {
+/**
+ * @param {string} query
+ * @param {{ signal?: AbortSignal, fetcher?: typeof fetch }} [options]
+ */
+export const searchStreets = async (query, options = {}) => {
+  const { signal, fetcher = fetch } = options;
   const { text, number } = splitHouseNumber(query);
   if (text.length < 2) return [];
   const key = `s:${text}`;
@@ -46,7 +51,12 @@ export const searchStreets = async (query, { signal, fetcher = fetch } = {}) => 
   return cache.get(key).map((item) => ({ ...item, number }));
 };
 
-export const geocodeAddress = async (address, { signal, url, fetcher = fetch } = {}) => {
+/**
+ * @param {string} address
+ * @param {{ signal?: AbortSignal, url?: string, fetcher?: typeof fetch }} [options]
+ */
+export const geocodeAddress = async (address, options = {}) => {
+  const { signal, url, fetcher = fetch } = options;
   const key = `g:${address}`;
   if (!cache.has(key)) {
     const params = new URLSearchParams({
