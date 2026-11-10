@@ -78,3 +78,26 @@ test('an overspeed is graded against the road limit (SAF-06)', async ({ page }) 
   await gotoReady(page, `/reports/events?deviceId=1&${day()}`);
   await expect(page.getByText(/מותר .* · חריגה חמורה \(מעל 20\)/).first()).toBeAttached();
 });
+
+test('the geofences report adds up each geofence (REP-14)', async ({ page }) => {
+  const at = (hoursAgo) => new Date(Date.now() - hoursAgo * 3600000).toISOString();
+  await page.route('**/api/reports/geofences?*', (route) =>
+    route.fulfill({
+      json: [
+        { deviceId: 1, geofenceId: 1, startTime: at(5), endTime: at(4) },
+        { deviceId: 2, geofenceId: 1, startTime: at(3), endTime: at(2) },
+        { deviceId: 1, geofenceId: 1, startTime: at(1), endTime: null },
+      ],
+    }),
+  );
+  await gotoReady(page, `/reports/geofences?deviceId=1&deviceId=2&${day()}`);
+  await page.getByRole('button', { name: 'לפי אזור' }).click();
+  await expect(page).toHaveURL(/view=geofence/);
+  // A view, not a filter: the results stay current.
+  await expect(page.getByRole('status').filter({ hasText: 'הסינון השתנה' })).toHaveCount(0);
+  const row = page.getByRole('row').filter({ hasText: '3' }).last();
+  // Three visits, two vehicles, one still inside.
+  await expect(row.getByRole('cell').nth(1)).toHaveText('3');
+  await expect(row.getByRole('cell').nth(2)).toHaveText('2');
+  await expect(row.getByRole('cell').nth(5)).toHaveText('1');
+});

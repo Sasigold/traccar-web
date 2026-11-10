@@ -2,7 +2,14 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
-import { TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import {
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  ToggleButton,
+  ToggleButtonGroup,
+} from '@mui/material';
 import { formatNumericHours, formatTime } from '../common/util/formatter';
 import ReportFilter, { updateReportParams } from './components/ReportFilter';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -22,7 +29,7 @@ import exportExcel from '../common/util/exportExcel';
 import { deviceEquality } from '../common/util/deviceEquality';
 import VehicleCell from './components/VehicleCell';
 import { vehicleTitle } from './common/vehicle';
-import { visitDuration } from './common/reportRules';
+import { byGeofence, visitDuration } from './common/reportRules';
 
 const columnsArray = [
   ['geofenceId', 'sharedGeofence'],
@@ -52,6 +59,16 @@ const GeofenceReportPage = () => {
   ]);
   const [items, setItems] = useState([]);
   const [hiddenRows, setHiddenRows] = useState(0);
+  // REP-14: the visits one by one, or one row per geofence.
+  const grouped = searchParams.get('view') === 'geofence';
+  // Only how the results are shown: the period and the results stay.
+  const setGrouped = (value) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set('view', 'geofence');
+    else next.delete('view');
+    setSearchParams(next, { replace: true });
+  };
+  const summary = useMemo(() => (grouped ? byGeofence(items) : []), [grouped, items]);
   const [loading, setLoading] = useState(false);
 
   const onShow = useRunCallback(
@@ -84,6 +101,14 @@ const GeofenceReportPage = () => {
 
   const onExport = useCatch(async () => {
     const sheets = new Map();
+    if (grouped) {
+      sheets.set(t('reportByGeofence'), {
+        title: t('reportByGeofence'),
+        rows: summary.map((row) => groupedValues(row)),
+      });
+      await exportExcel(t('sharedGeofences'), 'geofences.xlsx', sheets, theme);
+      return;
+    }
     items.forEach((item) => {
       // One sheet per vehicle, keyed by id: two vehicles with the same name stay apart.
       if (!sheets.has(item.deviceId)) {
@@ -97,6 +122,23 @@ const GeofenceReportPage = () => {
       sheets.get(item.deviceId).rows.push(row);
     });
     await exportExcel(t('sharedGeofences'), 'geofences.xlsx', sheets, theme);
+  });
+
+  const GROUPED = [
+    ['visits', 'reportVisits'],
+    ['vehicles', 'deviceTitle'],
+    ['total', 'reportTimeInside'],
+    ['average', 'reportAverageVisit'],
+    ['inside', 'reportStillInside'],
+  ];
+  const groupedValues = (row) => ({
+    [t('sharedGeofence')]: geofences[row.geofenceId]?.name || row.geofenceId,
+    ...Object.fromEntries(
+      GROUPED.map(([key, label]) => [
+        t(label),
+        key === 'total' || key === 'average' ? formatNumericHours(row[key], t) : row[key],
+      ]),
+    ),
   });
 
   const formatValue = (item, key) => {
@@ -142,37 +184,85 @@ const GeofenceReportPage = () => {
               fullWidth
             />
           </div>
-          <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
+          {!grouped && (
+            <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
+          )}
+          <div className={classes.filterItem}>
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={grouped ? 'geofence' : 'visits'}
+              onChange={(_, value) => value && setGrouped(value === 'geofence')}
+              aria-label={t('reportSummaryView')}
+            >
+              <ToggleButton value="visits">{t('reportByVisit')}</ToggleButton>
+              <ToggleButton value="geofence">{t('reportByGeofence')}</ToggleButton>
+            </ToggleButtonGroup>
+          </div>
         </ReportFilter>
       </div>
-      <DataTable variant="flush">
-        <TableHead>
-          <TableRow>
-            <TableCell>{t('sharedDevice')}</TableCell>
-            {columns.map((key) => (
-              <TableCell key={key}>{t(columnsMap.get(key))}</TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {!loading ? (
-            items.map((item) => (
-              <TableRow
-                key={`${item.deviceId}_${item.geofenceId}_${item.startTime}_${item.endTime}`}
-              >
-                <TableCell>
-                  <VehicleCell deviceId={item.deviceId} />
+      {grouped ? (
+        <DataTable variant="flush">
+          <TableHead>
+            <TableRow>
+              <TableCell>{t('sharedGeofence')}</TableCell>
+              {GROUPED.map(([key, label]) => (
+                <TableCell key={key} align="right">
+                  {t(label)}
                 </TableCell>
-                {columns.map((key) => (
-                  <TableCell key={key}>{formatValue(item, key)}</TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : (
-            <TableShimmer columns={columns.length + 1} />
-          )}
-        </TableBody>
-      </DataTable>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {!loading ? (
+              summary.map((row) => {
+                const values = groupedValues(row);
+                return (
+                  <TableRow key={row.geofenceId}>
+                    <TableCell>{values[t('sharedGeofence')]}</TableCell>
+                    {GROUPED.map(([key, label]) => (
+                      <TableCell key={key} align="right">
+                        {values[t(label)]}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })
+            ) : (
+              <TableShimmer columns={GROUPED.length + 1} />
+            )}
+          </TableBody>
+        </DataTable>
+      ) : (
+        <DataTable variant="flush">
+          <TableHead>
+            <TableRow>
+              <TableCell>{t('sharedDevice')}</TableCell>
+              {columns.map((key) => (
+                <TableCell key={key}>{t(columnsMap.get(key))}</TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {!loading ? (
+              items.map((item) => (
+                <TableRow
+                  key={`${item.deviceId}_${item.geofenceId}_${item.startTime}_${item.endTime}`}
+                >
+                  <TableCell>
+                    <VehicleCell deviceId={item.deviceId} />
+                  </TableCell>
+                  {columns.map((key) => (
+                    <TableCell key={key}>{formatValue(item, key)}</TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableShimmer columns={columns.length + 1} />
+            )}
+          </TableBody>
+        </DataTable>
+      )}
       {!loading && <PrivacyNote hidden={hiddenRows} kind="rows" padded />}
     </PageLayout>
   );
