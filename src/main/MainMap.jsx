@@ -23,6 +23,7 @@ import MapContextMenu from '../map/main/MapContextMenu';
 import GeofenceInside from '../map/main/GeofenceInside';
 import useFeatures from '../common/util/useFeatures';
 import { useStableArray } from '../common/util/stableArray';
+import FleetRewindBar from './FleetRewindBar';
 
 const MainMap = ({ filteredPositions, selectedPosition }) => {
   const theme = useTheme();
@@ -33,6 +34,8 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
   const features = useFeatures();
 
   const [rulerActive, setRulerActive] = useState(false);
+  // LIV-26: the fleet at a past moment, or null for live.
+  const [rewound, setRewound] = useState(null);
   const [geofenceTarget, setGeofenceTarget] = useState(null);
 
   const deviceIds = useStableArray(
@@ -73,10 +76,10 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
         <MapGeofence onGeofenceClick={setGeofenceTarget} />
         {/* LIV-12: the accuracy circle only for the selected vehicle. */}
         <MapAccuracy positions={selectedPosition ? [selectedPosition] : []} />
-        <MapLiveRoutes deviceIds={deviceIds} />
+        {!rewound && <MapLiveRoutes deviceIds={deviceIds} />}
         <PoiMap />
         <MapPositionMarkers
-          positions={filteredPositions}
+          positions={rewound || filteredPositions}
           onMarkerClick={onMarkerClick}
           onMapClick={onMapClick}
           selectedPosition={selectedPosition}
@@ -89,13 +92,22 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
         <MapSelectedDevice />
         <MapFocusedEvent />
         <MapRuler positions={filteredPositions} onActiveChange={setRulerActive} />
-        <MapFitFleet positions={filteredPositions} />
+        <MapFitFleet positions={rewound || filteredPositions} />
       </MapView>
       <MapScale />
       <MapCurrentLocation />
       <MapGeocoder />
       <MapContextMenu />
       <GeofenceInside target={geofenceTarget} onClose={() => setGeofenceTarget(null)} />
+      <FleetRewindBar
+        deviceIds={deviceIds}
+        onRewind={(positions) => setRewound(positions)}
+        startPadding={
+          desktop && !features.disableDeviceList
+            ? theme.dimensions.devicePanelWidth + 2 * theme.dimensions.panelGap
+            : 0
+        }
+      />
       {desktop && !features.disableDeviceList && (
         <MapPadding start={theme.dimensions.devicePanelWidth + 2 * theme.dimensions.panelGap} />
       )}
