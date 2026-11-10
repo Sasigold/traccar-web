@@ -32,6 +32,7 @@ import WidgetFrame, { WidgetState } from './WidgetFrame';
 import ErrorBoundary from '../../ErrorBoundary';
 import KpiGroupWidget from './special/KpiGroupWidget';
 import HeroWidget from './special/HeroWidget';
+import InsightsWidget from './special/InsightsWidget';
 import LiveMapWidget from './special/LiveMapWidget';
 import AttentionWidget from './special/AttentionWidget';
 import {
@@ -90,6 +91,8 @@ export const WidgetBody = ({ config, width, height, size, table, onSelect, expor
       return <AttentionWidget width={width} height={height} table={table} />;
     case 'feed':
       return <EventFeedWidget height={height} />;
+    case 'insights':
+      return <InsightsWidget />;
     case 'table':
       return <TopVehiclesWidget width={width} />;
     case 'expiries':
@@ -147,6 +150,9 @@ export const useWidgetCaption = (config) => {
   }
   if (['expiries', 'maintenance'].includes(preset.kind)) {
     return t('dashboardCurrent');
+  }
+  if (preset.kind === 'insights') {
+    return t('insightsToday');
   }
   if (['map', 'feed', 'hero'].includes(preset.kind)) {
     return t('dashboardLive');

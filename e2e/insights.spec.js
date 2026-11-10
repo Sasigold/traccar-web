@@ -43,3 +43,19 @@ test('a viewer does not get them', async ({ page }) => {
   await page.waitForTimeout(4000);
   await expect(page.getByRole('region', { name: 'תובנות הבוקר' })).toHaveCount(0);
 });
+
+// AI-02: the same findings as a dashboard widget.
+test('the morning findings can be a dashboard widget', async ({ page }) => {
+  await writeMode(page);
+  await fixedReports(page);
+  await gotoReady(page, '/dashboard');
+  await page.locator('[data-widget-id]').first().waitFor();
+  await page.getByRole('button', { name: 'התאמה אישית' }).click();
+  await page.getByRole('button', { name: 'הוספת רכיב' }).click();
+  await page.getByRole('button', { name: /תובנות הבוקר/ }).click();
+  await page.keyboard.press('Escape');
+  const insights = page.locator('section[data-widget-id]').filter({ hasText: 'תובנות הבוקר' });
+  await expect(insights.getByRole('link', { name: 'לראיות' }).first()).toBeVisible({
+    timeout: 15000,
+  });
+});

@@ -80,6 +80,17 @@ export const PRESETS = [
     singleton: true,
   },
   {
+    // AI-02: the morning findings.
+    id: 'insights',
+    category: 'live',
+    kind: 'insights',
+    titleKey: 'dashboardWInsights',
+    size: { w: 4, h: 8 },
+    min: { w: 3, h: 4 },
+    mobileH: 8,
+    singleton: true,
+  },
+  {
     id: 'eventFeed',
     category: 'live',
     kind: 'feed',
