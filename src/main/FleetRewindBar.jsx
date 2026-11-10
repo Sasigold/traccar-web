@@ -1,28 +1,15 @@
 import { useState } from 'react';
-import { Button, Chip, IconButton, Paper, Slider, Tooltip, Typography } from '@mui/material';
+import { Button, Chip, Paper, Slider, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
 import { useTranslation } from '../common/components/LocalizationProvider';
+import { useDockStyles } from './RewindToggle';
 import { useCatch } from '../reactHelper';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import { formatTime } from '../common/util/formatter';
 import { RANGE_HOURS, STEP_MINUTES, momentOf, positionsAt, rewindWindow } from './rewind';
 
 const useStyles = makeStyles()((theme) => ({
-  // Full width and centred, so it sits in the middle of the map in either direction.
-  dock: {
-    position: 'absolute',
-    insetInline: 0,
-    // Above the map's scale and attribution.
-    bottom: theme.spacing(7),
-    display: 'flex',
-    justifyContent: 'center',
-    pointerEvents: 'none',
-    zIndex: 3,
-    [theme.breakpoints.down('md')]: {
-      bottom: theme.spacing(10),
-    },
-  },
   bar: {
     pointerEvents: 'auto',
     display: 'flex',
@@ -42,12 +29,6 @@ const useStyles = makeStyles()((theme) => ({
     whiteSpace: 'nowrap',
     fontWeight: 600,
   },
-  toggle: {
-    pointerEvents: 'auto',
-    backgroundColor: theme.palette.background.paper,
-    boxShadow: theme.shadows[3],
-    '&:hover': { backgroundColor: theme.palette.background.paper },
-  },
 }));
 
 const RANGE = RANGE_HOURS * 60;
@@ -55,10 +36,10 @@ const RANGE = RANGE_HOURS * 60;
 // LIV-26: drag back along the last day and see the whole fleet as it was then ("where was
 // everyone at 10:00?"). Each release asks only for a short window before that moment; "Live"
 // brings the map back. onRewind(positions, time) or onRewind(null) for live.
-const FleetRewindBar = ({ deviceIds, onRewind, startPadding = 0 }) => {
+const FleetRewindBar = ({ deviceIds, onRewind, onClose, startPadding = 0 }) => {
   const { classes } = useStyles();
+  const { classes: dock } = useDockStyles();
   const t = useTranslation();
-  const [open, setOpen] = useState(false);
   // Minutes from the start of the range: RANGE is now.
   const [value, setValue] = useState(RANGE);
   const [moment, setMoment] = useState(null);
@@ -92,24 +73,8 @@ const FleetRewindBar = ({ deviceIds, onRewind, startPadding = 0 }) => {
     onRewind(null);
   };
 
-  if (!open) {
-    return (
-      <div className={classes.dock} style={{ paddingInlineStart: startPadding }}>
-        <Tooltip title={t('rewindOpen')}>
-          <IconButton
-            className={classes.toggle}
-            aria-label={t('rewindOpen')}
-            onClick={() => setOpen(true)}
-          >
-            <HistoryRoundedIcon />
-          </IconButton>
-        </Tooltip>
-      </div>
-    );
-  }
-
   return (
-    <div className={classes.dock} style={{ paddingInlineStart: startPadding }}>
+    <div className={dock.dock} style={{ paddingInlineStart: startPadding }}>
       <Paper className={classes.bar} role="group" aria-label={t('rewindTitle')}>
         <HistoryRoundedIcon color="primary" />
         <Slider
@@ -147,7 +112,7 @@ const FleetRewindBar = ({ deviceIds, onRewind, startPadding = 0 }) => {
           size="small"
           onClick={() => {
             live();
-            setOpen(false);
+            onClose();
           }}
         >
           {t('sharedHide')}

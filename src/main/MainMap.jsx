@@ -23,7 +23,7 @@ import MapContextMenu from '../map/main/MapContextMenu';
 import GeofenceInside from '../map/main/GeofenceInside';
 import useFeatures from '../common/util/useFeatures';
 import { useStableArray } from '../common/util/stableArray';
-import FleetRewindBar from './FleetRewindBar';
+import RewindToggle from './RewindToggle';
 
 const MainMap = ({ filteredPositions, selectedPosition }) => {
   const theme = useTheme();
@@ -99,7 +99,7 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
       <MapGeocoder />
       <MapContextMenu />
       <GeofenceInside target={geofenceTarget} onClose={() => setGeofenceTarget(null)} />
-      <FleetRewindBar
+      <RewindToggle
         deviceIds={deviceIds}
         onRewind={(positions) => setRewound(positions)}
         startPadding={
