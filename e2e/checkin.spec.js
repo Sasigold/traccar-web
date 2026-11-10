@@ -47,9 +47,18 @@ test('the trips report shows the trips with no identified driver', async ({ page
     page,
     `/reports/trips?deviceId=1&deviceId=2&deviceId=3&deviceId=4&deviceId=5&deviceId=6&from=${encodeURIComponent(new Date(from.getTime() - 6 * 86400000).toISOString())}&to=${encodeURIComponent(new Date().toISOString())}`,
   );
-  const rows = page.locator('tbody tr');
+  // Only real rows (the loading placeholders have no text), counted once they stop growing.
+  const rows = page.locator('tbody tr').filter({ hasText: /\d/ });
   await expect(rows.first()).toBeVisible();
-  const before = await rows.count();
+  let before = 0;
+  await expect
+    .poll(async () => {
+      const count = await rows.count();
+      const stable = count === before;
+      before = count;
+      return stable && count > 1;
+    })
+    .toBe(true);
   await page.getByRole('combobox', { name: 'נהג' }).click();
   await page.getByRole('option', { name: 'בלי נהג מזוהה' }).click();
   await expect.poll(() => rows.count()).toBeLessThan(before);
