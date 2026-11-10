@@ -3395,5 +3395,10 @@
     "streamUnsupported": "הדפדפן הזה לא מנגן שידור חי. נסו בדפדפן אחר.",
     "streamRetry": "נסו שוב",
     "eventNoLocation": "לאירוע הזה אין מיקום",
-    "eventNoLocationHint": "המכשיר דיווח על האירוע בלי נקודת GPS. אפשר לראות את פרטיו ברשימת ההתראות."
+    "eventNoLocationHint": "המכשיר דיווח על האירוע בלי נקודת GPS. אפשר לראות את פרטיו ברשימת ההתראות.",
+    "geofenceNew": "גדר חדשה",
+    "geofenceFromFile": "יבוא מקובץ",
+    "geofenceFileHint": "GPX, KML או GeoJSON",
+    "geofenceFileEmpty": "הקובץ לא מכיל מסלול או אזור",
+    "geofenceFileUnsupported": "אפשר לייבא קובצי GPX, KML או GeoJSON בלבד"
 }

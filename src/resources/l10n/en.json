@@ -3395,5 +3395,10 @@
     "streamUnsupported": "This browser can't play live video. Try another browser.",
     "streamRetry": "Try again",
     "eventNoLocation": "This event has no location",
-    "eventNoLocationHint": "The device reported the event without a GPS fix. Its details are in the alerts list."
+    "eventNoLocationHint": "The device reported the event without a GPS fix. Its details are in the alerts list.",
+    "geofenceNew": "New geofence",
+    "geofenceFromFile": "Import from file",
+    "geofenceFileHint": "GPX, KML or GeoJSON",
+    "geofenceFileEmpty": "The file has no route or area",
+    "geofenceFileUnsupported": "Only GPX, KML or GeoJSON files can be imported"
 }
