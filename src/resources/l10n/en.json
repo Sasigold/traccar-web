@@ -2690,7 +2690,7 @@
     "driverDamagePhoto": "Photo",
     "driverDamageWhat": "What happened?",
     "driverDamageInjuries": "Is anyone hurt?",
-    "driverDamageCallHelp": "Someone is hurt: call 101 (ambulance) and 100 (police) first. The report can wait.",
+    "driverDamageCallHelp": "Someone is hurt: call MDA and the police first. The report can wait.",
     "driverDamagePlaceHelp": "Filled in from the vehicle's location. You can correct it.",
     "driverDamageDescription": "Short description",
     "driverDamagePartyQuestion": "Was another vehicle or person involved?",
@@ -3632,5 +3632,10 @@
     "driverMorningCheckDone": "Morning check: done {0} ✓",
     "driverMorningCheckPending": "Morning check: not done yet",
     "dispatchContactTitle": "Contact for drivers",
-    "dispatchContactHint": "Drivers see this name and phone in their portal, with call and WhatsApp buttons."
+    "dispatchContactHint": "Drivers see this name and phone in their portal, with call and WhatsApp buttons.",
+    "driverDamageCallMda": "MDA 101",
+    "driverDamageCallPolice": "Police 100",
+    "driverDamageMyLocation": "My location now",
+    "driverDamageHereSet": "The location is set from the phone (about {0} m accurate). You can add an address.",
+    "driverDamageSending": "Sending {0} photos…"
 }

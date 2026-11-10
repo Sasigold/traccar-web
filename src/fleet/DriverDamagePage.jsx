@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   Alert,
   Button,
+  LinearProgress,
+  Stack,
   Paper,
   Step,
   StepLabel,
@@ -22,6 +24,8 @@ import NoCrashRoundedIcon from '@mui/icons-material/NoCrashRounded';
 import BrokenImageRoundedIcon from '@mui/icons-material/BrokenImageRounded';
 import WindowRoundedIcon from '@mui/icons-material/WindowRounded';
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
+import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
+import MyLocationRoundedIcon from '@mui/icons-material/MyLocationRounded';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import { DateTimeField } from '../common/components/pickers';
@@ -214,6 +218,27 @@ const DriverDamagePage = () => {
   const [pending, setPending] = useState(null);
   const [filesLeft, setFilesLeft] = useState(0);
   const [done, setDone] = useState(null);
+  // ADM-23: "my location now" from the phone, when the vehicle's last position is not where the
+  // driver stands (or there is none).
+  const [here, setHere] = useState(null);
+  const [locating, setLocating] = useState(false);
+  const locate = () => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setHere({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          accuracy: Math.round(coords.accuracy),
+        });
+        setLocating(false);
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: true, timeout: 15000 },
+    );
+  };
+  const photoCount = photos.length + licensePhoto.length + insurancePhoto.length;
 
   const set = (changes) => setReport((current) => ({ ...current, ...changes }));
   const setPartyField = (key) => (event) => setParty({ ...party, [key]: event.target.value });
@@ -265,8 +290,8 @@ const DriverDamagePage = () => {
               type: report.type,
               injuries: Boolean(report.injuries),
               description: report.description.trim() || null,
-              latitude: position?.latitude ?? null,
-              longitude: position?.longitude ?? null,
+              latitude: here?.latitude ?? position?.latitude ?? null,
+              longitude: here?.longitude ?? position?.longitude ?? null,
               address: place.trim() || null,
               reported_by: profile.id,
             },
@@ -382,7 +407,29 @@ const DriverDamagePage = () => {
                 <ToggleButton value>{t('sharedYes')}</ToggleButton>
                 <ToggleButton value={false}>{t('sharedNo')}</ToggleButton>
               </ToggleButtonGroup>
-              {report.injuries && <Alert severity="error">{t('driverDamageCallHelp')}</Alert>}
+              {report.injuries && (
+                // ADM-23: stays on screen with the numbers to dial.
+                <Alert severity="error" role="alert">
+                  {t('driverDamageCallHelp')}
+                  <Stack direction="row" spacing={1} sx={{ mt: 1 }} flexWrap="wrap" useFlexGap>
+                    {[
+                      ['101', 'driverDamageCallMda'],
+                      ['100', 'driverDamageCallPolice'],
+                    ].map(([number, key]) => (
+                      <Button
+                        key={number}
+                        color="inherit"
+                        variant="outlined"
+                        startIcon={<PhoneRoundedIcon />}
+                        href={`tel:${number}`}
+                        sx={{ whiteSpace: 'nowrap' }}
+                      >
+                        {t(key)}
+                      </Button>
+                    ))}
+                  </Stack>
+                </Alert>
+              )}
               <DateTimeField
                 label={t('fleetIncidentOccurred')}
                 value={report.occurred_at}
@@ -393,9 +440,24 @@ const DriverDamagePage = () => {
               <TextField
                 label={t('positionAddress')}
                 value={place}
-                helperText={position ? t('driverDamagePlaceHelp') : undefined}
+                helperText={
+                  here
+                    ? t('driverDamageHereSet').replace('{0}', here.accuracy)
+                    : position
+                      ? t('driverDamagePlaceHelp')
+                      : undefined
+                }
                 onChange={(event) => set({ address: event.target.value })}
               />
+              <Button
+                variant="outlined"
+                startIcon={<MyLocationRoundedIcon />}
+                onClick={locate}
+                loading={locating}
+                sx={{ alignSelf: 'flex-start' }}
+              >
+                {t('driverDamageMyLocation')}
+              </Button>
               <TextField
                 label={t('driverDamageDescription')}
                 value={report.description}
@@ -464,6 +526,14 @@ const DriverDamagePage = () => {
                     slotProps={{ htmlInput: { dir: 'ltr' } }}
                   />
                 </>
+              )}
+              {saving && photoCount > 0 && (
+                <div role="status">
+                  <Typography variant="body2" gutterBottom>
+                    {t('driverDamageSending').replace('{0}', filesLeft || photoCount)}
+                  </Typography>
+                  <LinearProgress />
+                </div>
               )}
               {filesLeft > 0 && (
                 <Alert severity="warning" role="alert">

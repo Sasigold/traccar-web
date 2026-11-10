@@ -294,3 +294,38 @@ test('the driver checks in to a vehicle from its QR link', async ({ page }) => {
     p_code: 'abc123',
   });
 });
+
+// ADM-23: with injuries the numbers to dial stay on screen; "my location now" sets the place.
+test('injuries show the numbers to dial, and the phone sets the place', async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(['geolocation']);
+  await context.setGeolocation({ latitude: 32.794, longitude: 34.9896, accuracy: 12 });
+  const writes = await mockFleet(page);
+  await gotoReady(page, '/driver/damage');
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'damage.jpg',
+    mimeType: 'image/jpeg',
+    buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
+  });
+  await page.getByRole('button', { name: 'המשך' }).click();
+  await page.getByRole('button', { name: 'תאונה', exact: true }).click();
+  await page.getByRole('group', { name: 'יש פצועים?' }).getByRole('button', { name: 'כן' }).click();
+  await expect(page.getByRole('link', { name: 'מד״א 101' })).toHaveAttribute('href', 'tel:101');
+  await expect(page.getByRole('link', { name: 'משטרה 100' })).toHaveAttribute('href', 'tel:100');
+  await page.getByRole('button', { name: 'המיקום שלי עכשיו' }).click();
+  await expect(page.getByText(/המיקום נקבע לפי הטלפון/)).toBeVisible();
+  await page.getByRole('button', { name: 'המשך' }).click();
+  await page
+    .getByRole('group', { name: 'היה מעורב רכב או אדם נוסף?' })
+    .getByRole('button', { name: 'לא' })
+    .click();
+  await page.getByRole('button', { name: 'שליחת הדיווח' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'הדיווח נשלח' })).toBeVisible();
+  expect(writes.find((write) => write.name === 'incidents').body).toMatchObject({
+    injuries: true,
+    latitude: 32.794,
+    longitude: 34.9896,
+  });
+});

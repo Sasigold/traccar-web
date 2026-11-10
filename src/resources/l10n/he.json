@@ -2690,7 +2690,7 @@
     "driverDamagePhoto": "תמונה",
     "driverDamageWhat": "מה קרה?",
     "driverDamageInjuries": "יש פצועים?",
-    "driverDamageCallHelp": "יש פצועים: חייגו קודם 101 (מד״א) ו־100 (משטרה). הדיווח יכול לחכות.",
+    "driverDamageCallHelp": "יש פצועים: חייגו קודם למד״א ולמשטרה. הדיווח יכול לחכות.",
     "driverDamagePlaceHelp": "מולא לפי מיקום הרכב. אפשר לתקן.",
     "driverDamageDescription": "תיאור קצר",
     "driverDamagePartyQuestion": "היה מעורב רכב או אדם נוסף?",
@@ -3632,5 +3632,10 @@
     "driverMorningCheckDone": "בדיקת בוקר: בוצעה {0} ✓",
     "driverMorningCheckPending": "בדיקת בוקר: טרם בוצעה",
     "dispatchContactTitle": "איש קשר לנהגים",
-    "dispatchContactHint": "הנהגים רואים את השם והטלפון בפורטל, עם כפתורי חיוג ו-WhatsApp."
+    "dispatchContactHint": "הנהגים רואים את השם והטלפון בפורטל, עם כפתורי חיוג ו-WhatsApp.",
+    "driverDamageCallMda": "מד״א 101",
+    "driverDamageCallPolice": "משטרה 100",
+    "driverDamageMyLocation": "המיקום שלי עכשיו",
+    "driverDamageHereSet": "המיקום נקבע לפי הטלפון (בדיוק של כ-{0} מ'). אפשר להוסיף כתובת.",
+    "driverDamageSending": "שולחים {0} תמונות…"
 }
