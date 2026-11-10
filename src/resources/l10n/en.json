@@ -772,6 +772,8 @@
     "reportFuelPer100": "L/100 km",
     "reportIdlePercent": "Idle %",
     "reportDistancePerDay": "Distance per day",
+    "reportRestDay": "Shabbat/holiday",
+    "reportHoliday": "Holiday",
     "reportStartOdometer": "Odometer Start",
     "reportEndOdometer": "Odometer End",
     "reportTimeType": "Time",

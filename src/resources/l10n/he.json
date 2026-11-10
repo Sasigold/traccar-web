@@ -772,6 +772,8 @@
     "reportFuelPer100": "ליטר ל-100 ק״מ",
     "reportIdlePercent": "אחוז סרק",
     "reportDistancePerDay": "מרחק ליום",
+    "reportRestDay": "שבת/חג",
+    "reportHoliday": "חג",
     "reportStartOdometer": "קריאת מד מרחק בתחילת התקופה",
     "reportEndOdometer": "קריאת מד מרחק בסוף התקופה",
     "reportTimeType": "זמן",

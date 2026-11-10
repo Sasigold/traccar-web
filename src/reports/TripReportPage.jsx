@@ -48,7 +48,8 @@ import MapCamera from '../map/MapCamera';
 import MapGeofence from '../map/MapGeofence';
 import scheduleReport from './common/scheduleReport';
 import MapScale from '../map/MapScale';
-import { privateRows } from '../common/fleet/privacyData';
+import { loadPrivacy, privateRows } from '../common/fleet/privacyData';
+import { tripTiming } from './common/tripTiming';
 import { isPlaceField } from '../common/fleet/privacy';
 import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
@@ -75,6 +76,9 @@ const columnsArray = [
   ['litersPer100', 'reportLitersPer100'],
   ['driverName', 'sharedDriver'],
   ['business', 'sharedType'],
+  // REP-14: trips that started outside working hours, or on Shabbat or a holiday.
+  ['outsideHours', 'usageAfterHours'],
+  ['restDay', 'reportRestDay'],
 ];
 const columnsMap = new Map(columnsArray);
 
@@ -201,7 +205,8 @@ const TripReportPage = () => {
         headers: { Accept: 'application/json' },
       });
       // Places in hidden time (outside working hours, private periods) are taken out.
-      const rows = await response.json();
+      const policy = (await loadPrivacy(from, to).catch(() => null))?.policy;
+      const rows = (await response.json()).map((row) => ({ ...row, ...tripTiming(row, policy) }));
       const result = await privateRows(rows, {
         deviceIds: [...deviceIds, ...rows.map((row) => row.deviceId)],
         from,
@@ -339,6 +344,10 @@ const TripReportPage = () => {
         return formatNumericHours(value, t);
       case 'spentFuel':
         return value > 0 ? formatVolume(value, volumeUnit, t) : null;
+      case 'outsideHours':
+        return value ? t('sharedYes') : null;
+      case 'restDay':
+        return value ? t(value === 'shabbat' ? 'calendarSaturday' : 'reportHoliday') : null;
       case 'litersPer100': {
         // REP-14: consumption, when the device reports fuel.
         const rate = litersPer100(item.spentFuel, item.distance);
