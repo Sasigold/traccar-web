@@ -3550,5 +3550,10 @@
     "fleetSafetyNoDrivingLeft": "Driving limit reached",
     "fleetListPrice": "List price (₪)",
     "fleetMonthlyBenefit": "Monthly taxable benefit",
-    "fleetMonthlyBenefitHint": "estimate by 2026 values, to confirm with an accountant"
+    "fleetMonthlyBenefitHint": "estimate by 2026 values, to confirm with an accountant",
+    "reportWorkHours": "Work hours",
+    "reportWorkHoursDescription": "Each driver's working day from the first to the last ignition, with driving time. Export for payroll.",
+    "workDaysCount": "Work days",
+    "workHoursTotal": "Hours (first to last ignition)",
+    "workHoursAverage": "Average per day"
 }

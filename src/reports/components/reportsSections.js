@@ -23,6 +23,7 @@ import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded
 import BuildRoundedIcon from '@mui/icons-material/BuildRounded';
 import { useAdministrator, useRestriction } from '../../common/util/permissions';
 import { useFleetPermission } from '../../common/fleet/useFleet';
+import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded';
 
 const singleDevicePaths = ['/reports/chart', '/reports/route', '/replay'];
 
@@ -82,6 +83,15 @@ export const useReportsSections = () => {
               icon: DonutLargeRoundedIcon,
               path: '/reports/usage',
               match: exact('/reports/usage'),
+              carry: true,
+            },
+            {
+              id: 'workHours',
+              descriptionKey: 'reportWorkHoursDescription',
+              titleKey: 'reportWorkHours',
+              icon: BadgeRoundedIcon,
+              path: '/reports/work-hours',
+              match: exact('/reports/work-hours'),
               carry: true,
             },
             {

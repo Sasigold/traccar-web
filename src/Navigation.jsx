@@ -47,6 +47,7 @@ const DriverCheckInPage = lazy(() => import('./fleet/DriverCheckInPage'));
 const FuelChecksPage = lazy(() => import('./fleet/FuelChecksPage'));
 const AlertResponsePage = lazy(() => import('./fleet/AlertResponsePage'));
 const PoolPage = lazy(() => import('./fleet/PoolPage'));
+const WorkHoursReportPage = lazy(() => import('./reports/WorkHoursReportPage'));
 const AutomationsPage = lazy(() => import('./fleet/AutomationsPage'));
 const DriverFilePage = lazy(() => import('./fleet/DriverFilePage'));
 const PoiPage = lazy(() => import('./fleet/PoiPage'));
@@ -325,6 +326,7 @@ const Navigation = () => {
             <Route path="combined" element={<CombinedReportPage />} />
             <Route path="timeline" element={<TimelineReportPage />} />
             <Route path="usage" element={<UsageReportPage />} />
+            <Route path="work-hours" element={<WorkHoursReportPage />} />
             <Route path="cost-per-km" element={<CostPerKmReportPage />} />
             <Route path="device-health" element={<DeviceHealthReportPage />} />
             <Route path="chart" element={<ChartReportPage />} />

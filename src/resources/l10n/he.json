@@ -3550,5 +3550,10 @@
     "fleetSafetyNoDrivingLeft": "הגיע למגבלת הנהיגה",
     "fleetListPrice": "מחיר מחירון (₪)",
     "fleetMonthlyBenefit": "שווי שימוש לחודש",
-    "fleetMonthlyBenefitHint": "הערכה לפי ערכי 2026, לאימות מול רו\"ח"
+    "fleetMonthlyBenefitHint": "הערכה לפי ערכי 2026, לאימות מול רו\"ח",
+    "reportWorkHours": "שעות עבודה",
+    "reportWorkHoursDescription": "יום העבודה של כל נהג מההתנעה הראשונה עד האחרונה, עם זמן הנהיגה. ייצוא לשכר (חילן, מלם).",
+    "workDaysCount": "ימי עבודה",
+    "workHoursTotal": "שעות (מהתנעה ראשונה עד אחרונה)",
+    "workHoursAverage": "ממוצע ליום"
 }

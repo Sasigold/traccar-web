@@ -23,7 +23,18 @@ export const devicesInScope = (devices, deviceIds, groupIds) =>
 // A per-vehicle table report (REP-23): the filter, sortable columns, a totals row and the Excel
 // export, around `load({ devices, deviceIds, groupIds, from, to })` → rows with deviceId and name.
 // columns: [{ key, labelKey, format(value, row) , exportValue? }]; totals: { key: 'sum' | ... }.
-const FleetTableReport = ({ reportKey, titleKey, columns, totals = {}, load, filterChildren }) => {
+const FleetTableReport = ({
+  reportKey,
+  titleKey,
+  columns,
+  totals = {},
+  load,
+  filterChildren,
+  // Rows are vehicles unless a report says otherwise (OPS-05: drivers).
+  rowKey = (item) => item.deviceId,
+  rowLink = (item) => `/fleet/vehicle/${item.deviceId}`,
+  nameLabelKey = 'sharedDevice',
+}) => {
   const { classes } = useReportStyles();
   const t = useTranslation();
   const theme = useTheme();
@@ -58,7 +69,7 @@ const FleetTableReport = ({ reportKey, titleKey, columns, totals = {}, load, fil
 
   const onExport = useCatch(async () => {
     const rows = sorted.map((item) => ({
-      [t('sharedDevice')]: item.name,
+      [t(nameLabelKey)]: item.name,
       ...Object.fromEntries(
         columns.map((column) => [
           t(column.labelKey),
@@ -97,7 +108,7 @@ const FleetTableReport = ({ reportKey, titleKey, columns, totals = {}, load, fil
             <TableHead>
               <TableRow>
                 <SortCell sortKey="name" sort={sort} onSort={toggle}>
-                  {t('sharedDevice')}
+                  {t(nameLabelKey)}
                 </SortCell>
                 {columns.map((column) => (
                   <SortCell key={column.key} sortKey={column.key} sort={sort} onSort={toggle}>
@@ -110,11 +121,15 @@ const FleetTableReport = ({ reportKey, titleKey, columns, totals = {}, load, fil
               {!loading && queried && !items.length && <ReportEmptyRow colSpan={keys.length + 1} />}
               {!loading ? (
                 sorted.map((item) => (
-                  <TableRow key={item.deviceId} hover>
+                  <TableRow key={rowKey(item)} hover>
                     <TableCell>
-                      <Link component={RouterLink} to={`/fleet/vehicle/${item.deviceId}`}>
-                        {item.name}
-                      </Link>
+                      {rowLink(item) ? (
+                        <Link component={RouterLink} to={rowLink(item)}>
+                          {item.name}
+                        </Link>
+                      ) : (
+                        item.name
+                      )}
                     </TableCell>
                     {keys.map((key) => (
                       <TableCell key={key}>{format(item, key)}</TableCell>
