@@ -4,6 +4,7 @@ import { useConfirm } from '../../common/components/confirm/ConfirmProvider';
 import {
   discardUnsavedChanges,
   goBack,
+  listPathOf,
   useFormChanges,
   useLeaveGuard,
 } from '../../common/components/confirm/unsavedChanges';
@@ -24,6 +25,7 @@ const EditItemView = ({
   setItem,
   defaultItem,
   validate,
+  prepare = (value) => value,
   onItemSaved,
   menu,
   breadcrumbs,
@@ -68,7 +70,7 @@ const EditItemView = ({
       const response = await fetchOrThrow(url, {
         method: !id ? 'POST' : 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(item),
+        body: JSON.stringify(prepare(item)),
       });
 
       const saved = await response.json();
@@ -89,7 +91,7 @@ const EditItemView = ({
           replace: true,
         });
       } else {
-        goBack(navigate);
+        goBack(navigate, listPathOf(location.pathname));
       }
     } finally {
       setSaving(false);
@@ -104,7 +106,7 @@ const EditItemView = ({
       description={description}
       footer={
         <SaveBar
-          onCancel={() => leave(() => goBack(navigate))}
+          onCancel={() => leave(() => goBack(navigate, listPathOf(location.pathname)))}
           onSave={() => handleSave(false)}
           onSaveAndContinue={id ? undefined : () => handleSave(true)}
           saving={saving}
