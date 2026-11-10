@@ -9,6 +9,7 @@ import { useCatchCallback } from '../reactHelper';
 import { findFonts, toMapCoordinates } from './core/mapUtil';
 import { createTrack, retargetTrack, trackCoordinates } from './core/motion';
 import { prefersReducedMotion } from './core/movingIcon';
+import { drawRing, parseRing, ringImageExpression } from './core/clusterRing';
 
 // Marker images are 48 px squares; the selection ring sits just outside the disc.
 const MARKER_SIZE = 48;
@@ -206,25 +207,16 @@ const MapMarkers = ({
   }
 
   if (cluster) {
-    // LIV-29: a ring under the count, in the color of most of the cluster's vehicles: aqua
-    // online, red offline, slate unknown or mixed.
-    const half = ['/', ['get', 'point_count'], 2];
+    // LIV-29: a ring under the count, split by status in proportion: aqua online, red offline,
+    // slate the rest (the image is drawn on demand, see clusterRing.js).
     layers.push({
       key: 'clusterRing',
-      type: 'circle',
+      type: 'symbol',
       filter: ['has', 'point_count'],
-      paint: {
-        'circle-radius': ringRadius + 1,
-        'circle-opacity': 0,
-        'circle-stroke-width': 3,
-        'circle-stroke-color': [
-          'case',
-          ['>', ['get', 'offline'], half],
-          theme.palette.error.main,
-          ['>', ['get', 'online'], half],
-          theme.palette.brand.aqua,
-          theme.palette.brand.slate,
-        ],
+      layout: {
+        'icon-image': ringImageExpression(theme.palette.mode),
+        'icon-allow-overlap': true,
+        'icon-ignore-placement': true,
       },
     });
     layers.push({
@@ -259,6 +251,28 @@ const MapMarkers = ({
       },
     });
   }
+
+  // LIV-29: the split rings are drawn the first time the map asks for one.
+  useEffect(() => {
+    if (!cluster) return undefined;
+    const colors = {
+      online: theme.palette.brand.aqua,
+      offline: theme.palette.error.main,
+      other: theme.palette.brand.slate,
+    };
+    const onMissing = ({ id: name }) => {
+      const ring = parseRing(name);
+      if (!ring || ring.mode !== theme.palette.mode || map.hasImage(name)) return;
+      const ratio = window.devicePixelRatio || 1;
+      map.addImage(
+        name,
+        drawRing(ring.parts, colors, { diameter: (ringRadius + 2.5) * 2, width: 3, ratio }),
+        { pixelRatio: ratio },
+      );
+    };
+    map.on('styleimagemissing', onMissing);
+    return () => map.off('styleimagemissing', onMissing);
+  }, [cluster, ringRadius, theme]);
 
   // Glide state, kept outside React: one track per device (see motion.js).
   const tracksRef = useRef(new Map());
