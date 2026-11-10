@@ -56,6 +56,8 @@ const MapMarkers = ({
   cluster,
   direction,
   onClick,
+  // LIV-12: (properties, { x, y }) after a short hover on a marker, (null) when it ends.
+  onHover,
   disabled,
   smooth = false,
   ring = false,
@@ -76,6 +78,26 @@ const MapMarkers = ({
     },
     [onClick],
   );
+
+  const onHoverRef = useRef(onHover);
+  onHoverRef.current = onHover;
+  const hoverTimerRef = useRef(null);
+  const onMarkerEnter = useCallback((event) => {
+    onMouseEnter();
+    clearTimeout(hoverTimerRef.current);
+    const properties = event.features?.[0]?.properties;
+    const { point } = event;
+    if (!onHoverRef.current || !properties) return;
+    hoverTimerRef.current = setTimeout(
+      () => onHoverRef.current?.(properties, { x: point.x, y: point.y }),
+      250,
+    );
+  }, []);
+  const onMarkerLeave = useCallback(() => {
+    onMouseLeave();
+    clearTimeout(hoverTimerRef.current);
+    onHoverRef.current?.(null);
+  }, []);
 
   const onClusterClick = useCatchCallback(async (event) => {
     if (disabledRef.current) return;
@@ -128,7 +150,7 @@ const MapMarkers = ({
         }
       : {}),
     ...(onClick
-      ? { on: { mouseenter: onMouseEnter, mouseleave: onMouseLeave, click: onMarkerClick } }
+      ? { on: { mouseenter: onMarkerEnter, mouseleave: onMarkerLeave, click: onMarkerClick } }
       : {}),
   };
 

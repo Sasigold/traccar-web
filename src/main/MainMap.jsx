@@ -22,6 +22,8 @@ import MapFocusedEvent from '../map/main/MapFocusedEvent';
 import MapContextMenu from '../map/main/MapContextMenu';
 import GeofenceInside from '../map/main/GeofenceInside';
 import MapAreaSelect from '../map/main/MapAreaSelect';
+import MapSelectedTrail from '../map/main/MapSelectedTrail';
+import MapHoverCard from './MapHoverCard';
 import useFeatures from '../common/util/useFeatures';
 import { useStableArray } from '../common/util/stableArray';
 import RewindToggle from './RewindToggle';
@@ -35,6 +37,13 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
   const features = useFeatures();
 
   const [rulerActive, setRulerActive] = useState(false);
+  // LIV-12: the vehicle under the mouse, for the hover card.
+  const [hover, setHover] = useState(null);
+  const onMarkerHover = useCallback(
+    (properties, point) =>
+      setHover(properties ? { deviceId: properties.deviceId, ...point } : null),
+    [],
+  );
   // LIV-26: the fleet at a past moment, or null for live.
   const [rewound, setRewound] = useState(null);
   const [geofenceTarget, setGeofenceTarget] = useState(null);
@@ -61,6 +70,13 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
     clickTimerRef.current = setTimeout(() => dispatch(devicesActions.selectId(null)), 300);
   }, [dispatch, rulerActive]);
 
+  // The hover card stays where the marker was; it goes when the map moves.
+  useEffect(() => {
+    const hide = () => setHover(null);
+    map.on('movestart', hide);
+    return () => map.off('movestart', hide);
+  }, []);
+
   useEffect(() => {
     const onDoubleClick = () => clearTimeout(clickTimerRef.current);
     map.on('dblclick', onDoubleClick);
@@ -78,11 +94,13 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
         {/* LIV-12: the accuracy circle only for the selected vehicle. */}
         <MapAccuracy positions={selectedPosition ? [selectedPosition] : []} />
         {!rewound && <MapLiveRoutes deviceIds={deviceIds} />}
+        {!rewound && <MapSelectedTrail />}
         <PoiMap />
         <MapPositionMarkers
           positions={rewound || filteredPositions}
           onMarkerClick={onMarkerClick}
           onMapClick={onMapClick}
+          onMarkerHover={desktop ? onMarkerHover : undefined}
           selectedPosition={selectedPosition}
           showStatus
           smooth
@@ -101,6 +119,7 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
       <MapGeocoder />
       <MapContextMenu />
       <GeofenceInside target={geofenceTarget} onClose={() => setGeofenceTarget(null)} />
+      <MapHoverCard hover={hover} />
       <RewindToggle
         deviceIds={deviceIds}
         onRewind={(positions) => setRewound(positions)}

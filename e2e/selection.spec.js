@@ -76,3 +76,29 @@ test('J and K move between vehicles, R opens the replay', async ({ page, isMobil
   await page.keyboard.press('r');
   await expect(page).toHaveURL(/\/replay\?deviceId=\d+/);
 });
+
+// LIV-12: a short hover on a vehicle shows who it is.
+test('hovering a vehicle on the map shows its card', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'hover is a desktop gesture');
+  await gotoReady(page, '/');
+  // Selecting a vehicle centers the map on it; closing the card leaves it there.
+  await page.locator('[data-row="0"]').click();
+  await page.waitForTimeout(1500);
+  await page.keyboard.press('Escape');
+  const canvas = page.locator('.maplibregl-canvas');
+  const box = await canvas.boundingBox();
+  const panel = await page.locator('[data-row="0"]').boundingBox();
+  // The middle of the map that the list does not cover.
+  const visibleWidth = panel.x > box.x + box.width / 2 ? panel.x - box.x : box.width;
+  const cx = box.x + visibleWidth / 2;
+  const cy = box.y + box.height / 2;
+  let found = false;
+  for (let dy = -60; dy <= 60 && !found; dy += 20) {
+    for (let dx = -120; dx <= 120 && !found; dx += 20) {
+      await page.mouse.move(cx + dx, cy + dy);
+      found = await canvas.evaluate((node) => node.style.cursor === 'pointer');
+    }
+  }
+  expect(found).toBe(true);
+  await expect(page.getByRole('tooltip')).toContainText(/מחובר|מנותק|לא ידוע/);
+});

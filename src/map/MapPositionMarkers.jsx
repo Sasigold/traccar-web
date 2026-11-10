@@ -15,6 +15,7 @@ const MapPositionMarkers = ({
   positions,
   onMapClick,
   onMarkerClick,
+  onMarkerHover,
   showStatus,
   selectedPosition,
   titleField,
@@ -149,6 +150,7 @@ const MapPositionMarkers = ({
         direction
         cluster={mapCluster}
         onClick={onClick}
+        onHover={onMarkerHover}
         disabled={disabled}
         smooth={glide}
       />
