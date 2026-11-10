@@ -58,3 +58,21 @@ test.describe('selecting and following a vehicle', () => {
     await expect(page.getByRole('button', { name: 'פקודה', exact: true })).toHaveCount(0);
   });
 });
+
+// LIV-15: single keys: J/K move through the list, R opens today's replay of the selected one.
+test('J and K move between vehicles, R opens the replay', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'a keyboard on the desktop');
+  await gotoReady(page, '/');
+  await page.keyboard.press('j');
+  const pressed = page.locator('[data-row][aria-pressed="true"]');
+  await expect(pressed).toHaveCount(1);
+  const first = await pressed.getAttribute('data-row');
+  await page.keyboard.press('j');
+  await expect(pressed).not.toHaveAttribute('data-row', first);
+  await page.keyboard.press('k');
+  await expect(pressed).toHaveAttribute('data-row', first);
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('j');
+  await page.keyboard.press('r');
+  await expect(page).toHaveURL(/\/replay\?deviceId=\d+/);
+});

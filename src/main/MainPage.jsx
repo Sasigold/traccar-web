@@ -32,6 +32,7 @@ import { fitView } from './components/SavedViews';
 
 // Loaded only when used: picking vehicles (LIV-25) and weather alerts (SAF-07).
 const PickedBar = lazy(() => import('./PickedBar'));
+const MainShortcuts = lazy(() => import('./MainShortcuts'));
 const WeatherBanner = lazy(() => import('./WeatherBanner'));
 
 // PRF-06: the vehicle card (with react-rnd and the telemetry gauges) loads when a vehicle is
@@ -293,6 +294,9 @@ const MainPage = () => {
 
   return (
     <div className={classes.root}>
+      <Suspense fallback={null}>
+        <MainShortcuts devices={filteredDevices} />
+      </Suspense>
       {desktop && (
         <Suspense fallback={null}>
           <MainMap filteredPositions={filteredPositions} selectedPosition={selectedPosition} />
