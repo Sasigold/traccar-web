@@ -46,7 +46,7 @@ import FleetSetupCard from '../fleet/components/FleetSetupCard';
 import PageLayout from '../common/components/PageLayout';
 import EmptyState from '../common/components/table/EmptyState';
 import { useTranslation } from '../common/components/LocalizationProvider';
-import { useAdministrator, useRestriction } from '../common/util/permissions';
+import { useRestriction } from '../common/util/permissions';
 import useFeatures from '../common/util/useFeatures';
 import { useFleetStatus } from '../common/fleet/useFleet';
 import { devicesActions, messagesActions } from '../store';
@@ -169,7 +169,6 @@ const DashboardPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
-  const admin = useAdministrator();
   const disableReports = useRestriction('disableReports');
   const features = useFeatures();
   const fleetStatus = useFleetStatus();
@@ -597,7 +596,7 @@ const DashboardPage = () => {
             {store.hasOrgDefault ? t('dashboardResetOrg') : t('dashboardReset')}
           </ListItemText>
         </MenuItem>
-        {admin && (
+        {store.canPublish && (
           <MenuItem
             onClick={() => {
               setMenuAnchor(null);

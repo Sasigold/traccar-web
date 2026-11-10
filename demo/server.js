@@ -157,7 +157,7 @@ export const demoServer = (server) => {
     const listed = (collection, items) => overlay(sandbox, collection, items);
     switch (url.pathname) {
       case '/api/server':
-        data = sandbox ? { ...settings, readonly: false } : settings;
+        data = sandbox ? { ...settings, ...sandbox.server, readonly: false } : settings;
         break;
       case '/api/session':
         data = user;
@@ -214,6 +214,21 @@ export const demoServer = (server) => {
         data = [];
         break;
       default:
+        // One user (ARC-09: a save reads the latest copy first).
+        if (/^\/api\/users\/\d+$/.test(url.pathname)) {
+          const id = Number(url.pathname.split('/').at(-1));
+          data = sandbox
+            ? overlayOne(
+                sandbox,
+                'users',
+                DEMO_USERS.find((item) => item.id === id),
+                id,
+              )
+            : id === user.id
+              ? user
+              : undefined;
+          if (data) break;
+        }
         if (/^\/api\/devices\/\d+$/.test(url.pathname)) {
           const id = Number(url.pathname.split('/').at(-1));
           data = overlayOne(
