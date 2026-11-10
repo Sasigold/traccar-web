@@ -31,6 +31,7 @@ import { useTranslation } from '../common/components/LocalizationProvider';
 import { useDeviceReadonly } from '../common/util/permissions';
 import DeviceRow from './DeviceRow';
 import { tokenizeSearch } from '../common/util/deviceSearch';
+import SavedViews from './components/SavedViews';
 
 const useStyles = makeStyles()((theme) => ({
   toolbar: {
@@ -325,6 +326,14 @@ const MainToolbar = ({
               label={t('sharedFilterMap')}
             />
           </FormGroup>
+          <SavedViews
+            filter={filter}
+            setFilter={setFilter}
+            filterSort={filterSort}
+            setFilterSort={setFilterSort}
+            filterMap={filterMap}
+            setFilterMap={setFilterMap}
+          />
         </div>
       </Popover>
       <Tooltip

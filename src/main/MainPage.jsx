@@ -5,7 +5,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@mui/material';
 import DnsRoundedIcon from '@mui/icons-material/DnsRounded';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import useVisiblePositions from '../common/fleet/usePrivacy';
 import { logPrivacyView } from '../common/fleet/privacyData';
 import DeviceList from './DeviceList';
@@ -27,6 +27,8 @@ import { glass } from '../common/theme/surfaces';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import FleetStats from './components/FleetStats';
 import ExpiryTiles from '../fleet/components/ExpiryTiles';
+import { decodeView } from './savedViews';
+import { fitView } from './components/SavedViews';
 
 const MainMap = lazy(() => import('./MainMap'));
 
@@ -171,6 +173,22 @@ const MainPage = () => {
   const [filterSort, setFilterSort] = usePersistedState('filterSort', '');
   // LIV-11: the map shows what the list shows, unless switched off.
   const [filterMap, setFilterMap] = usePersistedState('filterMap', true);
+  const [favorites] = usePersistedState('favoriteDevices', []);
+
+  // LIV-22: a shared view link (?view=…) applies the view once, then leaves a clean address.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const encoded = searchParams.get('view');
+    if (!encoded) return;
+    const view = decodeView(encoded);
+    if (view) {
+      setFilter(view.filter);
+      setFilterSort(view.sort);
+      setFilterMap(view.filterMap);
+      fitView(view);
+    }
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams, setFilter, setFilterSort, setFilterMap]);
 
   const [devicesOpen, setDevicesOpen] = useState(desktop);
 
@@ -210,6 +228,7 @@ const MainPage = () => {
     positions,
     setFilteredDevices,
     setFilteredPositions,
+    favorites,
   );
 
   const panelOffset = features.disableDeviceList
@@ -320,7 +339,7 @@ const MainPage = () => {
                       }
                     />
                   ) : (
-                    <DeviceList devices={filteredDevices} keyword={keyword} />
+                    <DeviceList devices={filteredDevices} keyword={keyword} favorites={favorites} />
                   )}
                 </div>
               )}

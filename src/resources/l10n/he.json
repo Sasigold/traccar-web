@@ -3410,5 +3410,14 @@
     "mapSendJob": "שליחת משימה",
     "mapNearbyDistance": "{0} ק\"מ · כ-{1} דק' נסיעה",
     "mapNearbyNone": "אין רכבים עם מיקום ידוע.",
-    "sharedClose": "סגירה"
+    "sharedClose": "סגירה",
+    "devicePin": "הצמדה לראש הרשימה",
+    "deviceUnpin": "ביטול ההצמדה",
+    "deviceFavorite": "מועדף",
+    "viewSaved": "תצוגות שמורות",
+    "viewName": "שם התצוגה",
+    "viewSaveCurrent": "שמירת התצוגה",
+    "viewCopyLink": "העתקת קישור",
+    "viewLinkCopied": "הקישור לתצוגה הועתק",
+    "viewShared": "תצוגה משותפת"
 }

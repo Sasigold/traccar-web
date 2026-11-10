@@ -11,6 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import BatteryFullIcon from '@mui/icons-material/BatteryFullRounded';
+import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFullRounded';
 import Battery60Icon from '@mui/icons-material/Battery60Rounded';
 import BatteryCharging60Icon from '@mui/icons-material/BatteryCharging60Rounded';
@@ -89,6 +90,12 @@ const useStyles = makeStyles()((theme) => ({
     height: 12,
     borderRadius: '50%',
     border: `2px solid ${theme.palette.background.paper}`,
+  },
+  favorite: {
+    fontSize: 16,
+    verticalAlign: 'text-bottom',
+    marginInlineEnd: theme.spacing(0.5),
+    color: theme.palette.primary.main,
   },
   primaryText: {
     fontWeight: 600,
@@ -215,7 +222,7 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const DeviceRow = ({ devices, tokens = [], index, style }) => {
+const DeviceRow = ({ devices, tokens = [], favorites = [], index, style }) => {
   const { classes, cx, theme } = useStyles();
   const dispatch = useDispatch();
   const t = useTranslation();
@@ -376,7 +383,16 @@ const DeviceRow = ({ devices, tokens = [], index, style }) => {
           </span>
         </ListItemAvatar>
         <ListItemText
-          primary={primaryValue}
+          primary={
+            favorites.includes(item.id) ? (
+              <>
+                <StarRoundedIcon className={classes.favorite} titleAccess={t('deviceFavorite')} />
+                {primaryValue}
+              </>
+            ) : (
+              primaryValue
+            )
+          }
           secondary={secondaryText()}
           slots={{
             primary: Typography,

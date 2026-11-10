@@ -37,6 +37,10 @@ import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import ChatRoundedIcon from '@mui/icons-material/ChatRounded';
+import StarRoundedIcon from '@mui/icons-material/StarRounded';
+import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
+import usePersistedState from '../util/usePersistedState';
+import { toggleFavorite } from '../../main/savedViews';
 import { glass } from '../theme/surfaces';
 import DeviceTile from './brand/DeviceTile';
 import TelemetryStrip from './telemetry/TelemetryStrip';
@@ -289,6 +293,9 @@ const StatusCard = ({
   const navigationAppTitle = useAttributePreference('navigationAppTitle');
 
   const [anchorEl, setAnchorEl] = useState(null);
+  // LIV-22: a favorite vehicle stays at the top of the list.
+  const [favorites, setFavorites] = usePersistedState('favoriteDevices', []);
+  const favorite = favorites.includes(deviceId);
   const [driverAnchor, setDriverAnchor] = useState(null);
   const [commandOpen, setCommandOpen] = useState(false);
 
@@ -570,6 +577,21 @@ const StatusCard = ({
             <ListItemText>{t('vehicleCard')}</ListItemText>
           </MenuItem>
         )}
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            setFavorites(toggleFavorite(favorites, deviceId));
+          }}
+        >
+          <ListItemIcon>
+            {favorite ? (
+              <StarRoundedIcon fontSize="small" />
+            ) : (
+              <StarOutlineRoundedIcon fontSize="small" />
+            )}
+          </ListItemIcon>
+          <ListItemText>{t(favorite ? 'deviceUnpin' : 'devicePin')}</ListItemText>
+        </MenuItem>
         <MenuItem
           onClick={() => {
             setAnchorEl(null);

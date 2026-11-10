@@ -5,6 +5,7 @@ import { activityGroup, activityOf } from '../common/util/activity';
 import { deviceSearchFields, matchDevice, tokenizeSearch } from '../common/util/deviceSearch';
 import { sameItems } from '../common/util/stableArray';
 import { byImportance } from './importance';
+import { pinFavorites } from './savedViews';
 
 export default (
   keyword,
@@ -14,6 +15,7 @@ export default (
   positions,
   setFilteredDevices,
   setFilteredPositions,
+  favorites = [],
 ) => {
   const groups = useSelector((state) => state.groups.items);
   const devices = useSelector((state) => state.devices.items);
@@ -92,9 +94,11 @@ export default (
         }
         break;
     }
-    if (!sameItems(lastDevicesRef.current, filtered)) {
-      lastDevicesRef.current = filtered;
-      setFilteredDevices(filtered);
+    // LIV-22: favorites on top, except while searching (the best match comes first then).
+    const ordered = tokens.length ? filtered : pinFavorites(filtered, favorites);
+    if (!sameItems(lastDevicesRef.current, ordered)) {
+      lastDevicesRef.current = ordered;
+      setFilteredDevices(ordered);
     }
     const shownPositions = filterMap
       ? filtered.map((device) => positions[device.id]).filter(Boolean)
@@ -114,5 +118,6 @@ export default (
     positions,
     setFilteredDevices,
     setFilteredPositions,
+    favorites,
   ]);
 };

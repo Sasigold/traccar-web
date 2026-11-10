@@ -103,7 +103,7 @@ const MapContextMenu = () => {
     close();
     try {
       await navigator.clipboard.writeText(coordinates(menu));
-      dispatch(messagesActions.push(t('mapCoordinatesCopied')));
+      dispatch(messagesActions.push({ message: t('mapCoordinatesCopied'), severity: 'success' }));
     } catch {
       dispatch(messagesActions.push(coordinates(menu)));
     }

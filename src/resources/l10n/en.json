@@ -3410,5 +3410,14 @@
     "mapSendJob": "Send a job",
     "mapNearbyDistance": "{0} km · about {1} min drive",
     "mapNearbyNone": "No vehicles with a known location.",
-    "sharedClose": "Close"
+    "sharedClose": "Close",
+    "devicePin": "Pin to the top",
+    "deviceUnpin": "Unpin",
+    "deviceFavorite": "Favorite",
+    "viewSaved": "Saved views",
+    "viewName": "View name",
+    "viewSaveCurrent": "Save this view",
+    "viewCopyLink": "Copy link",
+    "viewLinkCopied": "Link to the view copied",
+    "viewShared": "Shared view"
 }
