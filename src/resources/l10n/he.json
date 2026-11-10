@@ -3621,5 +3621,16 @@
     "shareSendWhatsapp": "שליחה בוואטסאפ",
     "shareNewLink": "קישור חדש",
     "shareValidUntil": "הקישור בתוקף עד",
-    "shareWhatsappText": "אפשר לעקוב אחרי {0} בזמן אמת בקישור: {1}"
+    "shareWhatsappText": "אפשר לעקוב אחרי {0} בזמן אמת בקישור: {1}",
+    "sharedRefresh": "רענון",
+    "driverJobMoved": "המשימה עודכנה: {0}",
+    "driverContactDispatcher": "צרו קשר עם הסדרן",
+    "driverContactDispatcherName": "אפשר לפנות אל {0}:",
+    "driverDispatcher": "הסדרן",
+    "driverCall": "התקשרו",
+    "driverAskManager": "פנו למנהל הצי כדי שיקשר את המשתמש שלכם לכרטיס נהג.",
+    "driverMorningCheckDone": "בדיקת בוקר: בוצעה {0} ✓",
+    "driverMorningCheckPending": "בדיקת בוקר: טרם בוצעה",
+    "dispatchContactTitle": "איש קשר לנהגים",
+    "dispatchContactHint": "הנהגים רואים את השם והטלפון בפורטל, עם כפתורי חיוג ו-WhatsApp."
 }

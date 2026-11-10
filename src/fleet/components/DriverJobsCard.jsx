@@ -1,17 +1,21 @@
-import { useReducer, useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import {
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   Paper,
+  Snackbar,
+  Tooltip,
   TextField,
   Typography,
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
 import NavigationRoundedIcon from '@mui/icons-material/NavigationRounded';
+import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import dayjs from 'dayjs';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import { useAsyncTask, useCatch } from '../../reactHelper';
@@ -22,6 +26,8 @@ import { driverNextStatuses } from '../../common/fleet/dispatch';
 import { uploadFleetFile } from '../fleetData';
 import { JobStatusChip, jobKey } from '../DispatchPage';
 import { wazeUrl } from '../../common/util/waze';
+
+const REFRESH_MS = 60000;
 
 const useStyles = makeStyles()((theme) => ({
   card: {
@@ -35,6 +41,9 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
+  },
+  grow: {
+    flex: 1,
   },
   job: {
     display: 'flex',
@@ -139,6 +148,22 @@ const DriverJobsCard = ({ driverId }) => {
   const [jobs, setJobs] = useState(null);
   const [proof, setProof] = useState(null);
   const [reloadKey, reload] = useReducer((k) => k + 1, 0);
+  const [undo, setUndo] = useState(null);
+
+  // ADM-22: new jobs show up without a manual refresh: every minute, and when the app is
+  // opened again.
+  useEffect(() => {
+    if (!canRead || !driverId) return undefined;
+    const timer = setInterval(reload, REFRESH_MS);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') reload();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [canRead, driverId]);
 
   useAsyncTask(async () => {
     void reloadKey;
@@ -164,6 +189,17 @@ const DriverJobsCard = ({ driverId }) => {
       return;
     }
     unwrap(await getFleetClient().from('dispatch_jobs').update({ status }).eq('id', job.id));
+    // ADM-22: a wrong tap can be taken back for five seconds.
+    setUndo({ job, previous: job.status, status });
+    reload();
+  });
+
+  const takeBack = useCatch(async () => {
+    const { job, previous } = undo;
+    setUndo(null);
+    unwrap(
+      await getFleetClient().from('dispatch_jobs').update({ status: previous }).eq('id', job.id),
+    );
     reload();
   });
 
@@ -175,9 +211,14 @@ const DriverJobsCard = ({ driverId }) => {
     <Paper elevation={0} className={classes.card}>
       <div className={classes.head}>
         <LocalShippingRoundedIcon color="primary" />
-        <Typography variant="subtitle1" fontWeight={700}>
+        <Typography variant="subtitle1" fontWeight={700} className={classes.grow}>
           {t('fleetDriverPortalMyJobs')}
         </Typography>
+        <Tooltip title={t('sharedRefresh')}>
+          <IconButton aria-label={t('sharedRefresh')} onClick={reload}>
+            <RefreshRoundedIcon />
+          </IconButton>
+        </Tooltip>
       </div>
       {jobs && jobs.length === 0 && (
         <Typography color="textSecondary">{t('fleetJobsNone')}</Typography>
@@ -233,6 +274,17 @@ const DriverJobsCard = ({ driverId }) => {
           </div>
         );
       })}
+      <Snackbar
+        open={Boolean(undo)}
+        autoHideDuration={5000}
+        onClose={(_, reason) => reason !== 'clickaway' && setUndo(null)}
+        message={undo ? t('driverJobMoved').replace('{0}', t(jobKey('Status', undo.status))) : ''}
+        action={
+          <Button color="inherit" size="small" onClick={takeBack}>
+            {t('sharedUndo')}
+          </Button>
+        }
+      />
       {proof && (
         <ProofDialog
           job={proof.job}

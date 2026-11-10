@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link as RouterLink } from 'react-router-dom';
-import { Alert, Button, Paper, Typography } from '@mui/material';
+import { Alert, Button, Chip, IconButton, Paper, Tooltip, Typography } from '@mui/material';
+import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import dayjs from 'dayjs';
 import ScheduleSendRoundedIcon from '@mui/icons-material/ScheduleSendRounded';
 import { useOutboxCount } from '../common/fleet/useOutbox';
 import { flushOutbox } from '../common/fleet/outbox';
@@ -18,7 +21,6 @@ import { useAsyncTask } from '../reactHelper';
 import { formatStatus, formatTime } from '../common/util/formatter';
 import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetLabel, useFleetProfile, useFleetStatus } from '../common/fleet/useFleet';
-import { statusColor } from '../common/theme/surfaces';
 import ExpiryBadge from './components/ExpiryBadge';
 import FleetNotice from './components/FleetNotice';
 import DriverJobsCard from './components/DriverJobsCard';
@@ -26,6 +28,7 @@ import DriverPrivacyCard from './components/DriverPrivacyCard';
 import DriverSafetyCard from './components/DriverSafetyCard';
 import DriverSelfReviewCard from './components/DriverSelfReviewCard';
 import { incidentKey } from './IncidentsPage';
+import DispatcherContact, { useOrgContact } from './components/DispatcherContact';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -39,6 +42,21 @@ const useStyles = makeStyles()((theme) => ({
     [theme.breakpoints.down('md')]: {
       padding: theme.spacing(2, 2, 4),
     },
+    // ADM-22: read in the sun: secondary text in ink and at 17px, not small slate.
+    '& .MuiTypography-body2': {
+      fontSize: '1.0625rem',
+      color: theme.palette.text.primary,
+    },
+  },
+  vehicle: {
+    fontSize: '1.25rem',
+    fontWeight: 700,
+  },
+  check: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    flexWrap: 'wrap',
   },
   card: {
     padding: theme.spacing(2, 2.5),
@@ -51,11 +69,6 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: '50%',
   },
   actions: {
     display: 'grid',
@@ -83,7 +96,7 @@ const useStyles = makeStyles()((theme) => ({
 // Roadmap 4.6: the driver's own view, made for a phone. Data is limited by the database to
 // the driver's vehicle and the driver's own reports.
 const DriverPortalPage = () => {
-  const { classes, theme } = useStyles();
+  const { classes } = useStyles();
   const t = useTranslation();
   const waiting = useOutboxCount();
   const label = useFleetLabel();
@@ -148,12 +161,33 @@ const DriverPortalPage = () => {
     });
   }, [status, profileId]);
 
+  const contact = useOrgContact();
+  // ADM-22: today's morning check, done or not; while not done it is the main action.
+  const todayCheck = (data?.inspections || []).find((inspection) =>
+    dayjs(inspection.started_at).isSame(dayjs(), 'day'),
+  );
   const deviceId = data?.assignment?.traccar_device_id;
   const device = deviceId ? devices[deviceId] : null;
   const position = deviceId ? positions[deviceId] : null;
 
   return (
-    <PageLayout breadcrumbs={['fleetDriverPortal']} description={t('fleetDriverPortalDescription')}>
+    <PageLayout
+      breadcrumbs={['fleetDriverPortal']}
+      description={t('fleetDriverPortalDescription')}
+      actions={
+        contact && (
+          <Tooltip title={t('driverContactDispatcher')}>
+            <IconButton
+              href={`tel:${contact.phone}`}
+              aria-label={t('driverContactDispatcher')}
+              color="primary"
+            >
+              <SupportAgentRoundedIcon />
+            </IconButton>
+          </Tooltip>
+        )
+      }
+    >
       <FleetNotice permission="inspections.write" />
       <div className={classes.root}>
         {/* ADM-10: what waits in the phone for a line. */}
@@ -170,7 +204,16 @@ const DriverPortalPage = () => {
             {t('driverOutboxWaiting').replace('{0}', waiting)}
           </Alert>
         )}
-        {data && !data.driver && <Alert severity="info">{t('fleetDriverPortalNotLinked')}</Alert>}
+        {data && !data.driver && (
+          <Alert severity="info">
+            <Typography gutterBottom>{t('fleetDriverPortalNotLinked')}</Typography>
+            {contact ? (
+              <DispatcherContact contact={contact} />
+            ) : (
+              <Typography>{t('driverAskManager')}</Typography>
+            )}
+          </Alert>
+        )}
         {data?.outOfService && (
           <Alert severity="error" variant="filled">
             {t('driverVehicleOutOfService').replace('{0}', data.outOfService.reasons || '')}
@@ -187,28 +230,43 @@ const DriverPortalPage = () => {
               </div>
               {data.assignment ? (
                 <>
-                  <Typography variant="h6" component="p">
-                    {device?.name || data.assignment.plate_number}
+                  <Typography component="p" className={classes.vehicle}>
+                    <bdi>{device?.name || data.assignment.plate_number}</bdi>
                     {' · '}
-                    <span dir="ltr">{data.assignment.plate_number}</span>
+                    <bdi dir="ltr">{data.assignment.plate_number}</bdi>
                   </Typography>
                   {device && (
-                    <Typography variant="body2" className={classes.head}>
-                      <span
-                        className={classes.dot}
-                        style={{ backgroundColor: statusColor(theme, device.status) }}
+                    <div className={classes.check}>
+                      <Chip
+                        label={formatStatus(device.status, t)}
+                        color={device.status === 'online' ? 'success' : 'default'}
                       />
-                      {formatStatus(device.status, t)}
-                      {position?.address && ` · ${position.address}`}
-                    </Typography>
+                      {position?.address && (
+                        <Typography variant="body2">{position.address}</Typography>
+                      )}
+                    </div>
                   )}
                 </>
               ) : (
                 <Typography color="textSecondary">{t('fleetNoVehicle')}</Typography>
               )}
+              <div className={classes.check} role="status">
+                {todayCheck ? (
+                  <Chip
+                    color="success"
+                    icon={<CheckCircleRoundedIcon />}
+                    label={t('driverMorningCheckDone').replace(
+                      '{0}',
+                      dayjs(todayCheck.started_at).format('HH:mm'),
+                    )}
+                  />
+                ) : (
+                  <Chip color="warning" label={t('driverMorningCheckPending')} />
+                )}
+              </div>
               <div className={classes.actions}>
                 <Button
-                  variant="contained"
+                  variant={todayCheck ? 'outlined' : 'contained'}
                   className={classes.action}
                   component={RouterLink}
                   to="/driver/check"

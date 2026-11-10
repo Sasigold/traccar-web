@@ -3621,5 +3621,16 @@
     "shareSendWhatsapp": "Send on WhatsApp",
     "shareNewLink": "New link",
     "shareValidUntil": "Link valid until",
-    "shareWhatsappText": "You can follow {0} live at: {1}"
+    "shareWhatsappText": "You can follow {0} live at: {1}",
+    "sharedRefresh": "Refresh",
+    "driverJobMoved": "Job updated: {0}",
+    "driverContactDispatcher": "Contact the dispatcher",
+    "driverContactDispatcherName": "You can reach {0}:",
+    "driverDispatcher": "the dispatcher",
+    "driverCall": "Call",
+    "driverAskManager": "Ask your fleet manager to link your user to a driver card.",
+    "driverMorningCheckDone": "Morning check: done {0} ✓",
+    "driverMorningCheckPending": "Morning check: not done yet",
+    "dispatchContactTitle": "Contact for drivers",
+    "dispatchContactHint": "Drivers see this name and phone in their portal, with call and WhatsApp buttons."
 }

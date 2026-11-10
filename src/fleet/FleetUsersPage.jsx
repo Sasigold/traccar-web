@@ -36,6 +36,7 @@ import {
   roleLabelKey,
 } from '../common/fleet/permissionsCatalog';
 import FleetNotice from './components/FleetNotice';
+import DispatcherContactSettings from './components/DispatcherContactSettings';
 import { applyRole } from './users';
 import { useConfirm } from '../common/components/confirm/ConfirmProvider';
 
@@ -220,6 +221,7 @@ const FleetUsersPage = () => {
       description={t('fleetUsersPageDescription')}
     >
       <FleetNotice permission="users.read" />
+      {canManage && <DispatcherContactSettings />}
       <DataTable
         toolbar={
           <TableToolbar
