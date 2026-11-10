@@ -435,7 +435,7 @@ export default {
         '& .MuiTableCell-head': {
           fontSize: '0.75rem',
           fontWeight: 700,
-          letterSpacing: '0.02em',
+          letterSpacing: theme.direction === 'rtl' ? 0 : '0.02em',
           color: theme.palette.surface.textSecondaryOnTint,
           backgroundColor: theme.palette.surface.sunken,
           borderBottomColor: theme.palette.surface.borderStrong,

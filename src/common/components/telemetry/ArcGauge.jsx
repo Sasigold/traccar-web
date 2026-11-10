@@ -94,7 +94,7 @@ const useStyles = makeStyles()((theme, { size, height }) => ({
     marginTop: 4,
     fontSize: '0.6875rem',
     fontWeight: 600,
-    letterSpacing: '0.06em',
+    letterSpacing: theme.direction === 'rtl' ? 0 : '0.06em',
     color: theme.palette.text.secondary,
   },
 }));

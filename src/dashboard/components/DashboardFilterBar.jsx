@@ -57,10 +57,8 @@ const useStyles = makeStyles()((theme) => ({
     flex: 1,
   },
   synced: {
+    // A11-11: plain in Hebrew, capitals and spacing only for the Latin label (the theme decides).
     ...theme.typography.overline,
-    // Overline capitals and spacing are for the Latin label; Hebrew reads plain.
-    letterSpacing: theme.direction === 'rtl' ? 0 : '0.08em',
-    textTransform: theme.direction === 'rtl' ? 'none' : 'uppercase',
     color: theme.palette.text.secondary,
     whiteSpace: 'nowrap',
     display: 'flex',

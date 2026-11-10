@@ -52,7 +52,7 @@ const useStyles = makeStyles()((theme) => ({
     padding: theme.spacing(0, 1.5, 3),
   },
   group: {
-    ...theme.typography.overline,
+    ...theme.typography.sectionLabel,
     color: theme.palette.text.secondary,
     padding: theme.spacing(1.5, 1, 0.75),
   },

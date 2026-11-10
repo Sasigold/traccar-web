@@ -480,7 +480,7 @@ const ReplayPage = () => {
               </ToggleButtonGroup>
               {stops.length > 0 && (
                 <>
-                  <Typography variant="overline" component="h3">
+                  <Typography variant="sectionLabel" component="h3">
                     {t('reportStops')}
                   </Typography>
                   <ul className={classes.stops}>

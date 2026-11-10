@@ -47,7 +47,7 @@ const useStyles = makeStyles()((theme) => ({
     paddingTop: theme.spacing(1),
   },
   label: {
-    ...theme.typography.overline,
+    ...theme.typography.sectionLabel,
     color: theme.palette.text.secondary,
     marginBottom: theme.spacing(0.75),
   },
