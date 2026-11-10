@@ -1,4 +1,5 @@
 import { test, expect, axe, formatViolations, gotoReady } from './fixtures';
+import { fakeFleet, writeMode } from './fakeFleet';
 
 const ids = [1, 2, 3, 4, 5, 6].map((id) => `deviceId=${id}`).join('&');
 
@@ -58,7 +59,10 @@ for (const report of ['usage', 'trips', 'stops', 'summary']) {
     await gotoReady(page, `/reports/${report}?${ids}&period=today`);
     await page.getByRole('button', { name: 'הצג', exact: true }).click();
     // Trips and stops have several rows per vehicle; the first is enough.
-    const row = page.getByRole('main').getByRole('row', { name: /Delivery Van/ }).first();
+    const row = page
+      .getByRole('main')
+      .getByRole('row', { name: /Delivery Van/ })
+      .first();
     await expect(row).toBeVisible();
     // The row can show before its cells; wait for them.
     await expect(row.locator('td').first()).toBeVisible();
@@ -89,4 +93,46 @@ test('the emissions report estimates CO2 from kilometers', async ({ page }) => {
   const row = page.getByRole('main').getByRole('row', { name: /Delivery Van/ });
   await expect(row).toContainText('164');
   await expect(row).toContainText('ק"מ (סוג דלק לא ידוע, לפי בנזין)');
+});
+
+// REP-13: a stop at one of the fleet's points of interest is named after it.
+test('a stop at a point of interest shows its name', async ({ page }) => {
+  await writeMode(page);
+  await fakeFleet(page, {
+    users: {
+      1: { profile: { id: 'p1', org_id: 'o1', role: 'admin' }, permissions: ['poi.read'] },
+    },
+    tables: {
+      pois: [
+        {
+          id: 'poi1',
+          org_id: 'o1',
+          name: 'מחסן צפון',
+          latitude: 51.5,
+          longitude: -0.12,
+          radius_m: 150,
+        },
+      ],
+    },
+  });
+  const now = Date.now();
+  await page.route('**/api/reports/stops?*', (route) =>
+    route.fulfill({
+      json: [
+        {
+          deviceId: 1,
+          positionId: 501,
+          latitude: 51.5004,
+          longitude: -0.1201,
+          startTime: new Date(now - 3600000).toISOString(),
+          endTime: new Date(now - 1800000).toISOString(),
+          duration: 1800000,
+          engineHours: 0,
+        },
+      ],
+    }),
+  );
+  await gotoReady(page, '/reports/stops?deviceId=1&period=today');
+  await page.getByRole('button', { name: 'הצג', exact: true }).click();
+  await expect(page.getByRole('main').getByText('מחסן צפון')).toBeVisible();
 });
