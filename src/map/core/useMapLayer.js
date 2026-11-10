@@ -4,6 +4,9 @@ import { map } from './MapView';
 
 const emptyFeatureCollection = { type: 'FeatureCollection', features: [] };
 
+/**
+ * @param {{ source?: any, layers: any[], layersDeps: any[], data?: any, dataDeps?: any[] }} options
+ */
 const useMapLayer = ({ source, layers, layersDeps, data, dataDeps = [] }) => {
   const id = useId();
 

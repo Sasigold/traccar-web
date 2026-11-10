@@ -7,7 +7,8 @@ import { toMapCoordinates } from './core/mapUtil';
 // navy to aqua). Each point may carry a weight (for example the hours of a stop).
 const MapHeatmap = ({ points }) => {
   const theme = useTheme();
-  const [low, middle, high] = theme.palette.dataviz.heatmap;
+  // The brand's palette extensions are not in MUI's Palette type.
+  const [low, middle, high] = /** @type {any} */ (theme.palette).dataviz.heatmap;
   const weighted = points.some((point) => point.weight != null);
   const maxWeight = weighted ? Math.max(...points.map((point) => point.weight || 0), 1) : 1;
 
