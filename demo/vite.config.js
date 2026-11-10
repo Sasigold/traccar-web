@@ -12,7 +12,9 @@ process.env.VITE_FLEET_ANON_KEY = 'demo-anon-key';
 process.env.VITE_APP_ENV ||= 'demo';
 
 export default defineConfig((env) => {
-  const config = appConfig(env);
+  // BRD-05: `npm run demo:il` (--mode il) serves the Israeli demo fleet.
+  if (env.mode === 'il') process.env.DEMO_FLEET = 'il';
+  const config = appConfig(env.mode === 'il' ? { ...env, mode: 'development' } : env);
   return {
     ...config,
     server: { host: 'localhost', port: 3000 },

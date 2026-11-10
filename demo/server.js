@@ -1,5 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
+import process from 'node:process';
 import { createDrivers, createFleet, createMaintenance, maintenanceFor } from './fleet.js';
+import { israeliDrivers } from './israel.js';
 import { eventTypes, findEvent, geofences, report, sampleEvent } from './reports.js';
 import { DEMO_USERS, handleSandbox, overlay, overlayOne, sandboxOf } from './sandbox.js';
 
@@ -11,13 +13,23 @@ const groups = [
 ];
 
 export const demoServer = (server) => {
-  const fleet = createFleet();
+  // BRD-05: DEMO_FLEET=il serves the Israeli fleet to everyone (sales, screenshots).
+  const fleet = createFleet(Date.now(), { israeli: process.env.DEMO_FLEET === 'il' });
   // FND-07: the performance profile's fleet of 2,000 (cookie demoFleet=large), made on first use.
   let largeFleet = null;
-  const fleetFor = (request) =>
-    /(?:^|;\s*)demoFleet=large(?:;|$)/.test(request.headers.cookie || '')
-      ? (largeFleet ||= createFleet(Date.now(), { size: 2000 }))
-      : fleet;
+  let israeliFleet = fleet.israeli ? fleet : null;
+  const fleetFor = (request) => {
+    const cookie = request.headers.cookie || '';
+    if (/(?:^|;\s*)demoFleet=large(?:;|$)/.test(cookie)) {
+      return (largeFleet ||= createFleet(Date.now(), { size: 2000 }));
+    }
+    if (/(?:^|;\s*)demoFleet=il(?:;|$)/.test(cookie)) {
+      return (israeliFleet ||= createFleet(Date.now(), { israeli: true }));
+    }
+    return fleet;
+  };
+  const driversFor = (fleetOf) =>
+    fleetOf.israeli ? israeliDrivers(createDrivers()) : createDrivers();
   const sockets = new WebSocketServer({ noServer: true });
   const settings = {
     id: 1,
@@ -172,7 +184,7 @@ export const demoServer = (server) => {
         data = report(fleet, url.pathname.split('/').at(-1), url.searchParams);
         break;
       case '/api/drivers':
-        data = listed('drivers', createDrivers());
+        data = listed('drivers', driversFor(fleet));
         break;
       case '/api/maintenance':
         data = listed(
@@ -240,7 +252,7 @@ export const demoServer = (server) => {
           }
         }
         if (/^\/api\/drivers\/\d+$/.test(url.pathname)) {
-          data = createDrivers().find(
+          data = driversFor(fleet).find(
             (driver) => driver.id === Number(url.pathname.split('/').at(-1)),
           );
           if (data) break;

@@ -48,6 +48,7 @@
   "scripts": {
     "start": "vite --host",
     "demo": "vite --config demo/vite.config.js",
+    "demo:il": "vite --config demo/vite.config.js --mode il",
     "demo:build": "vite build --config demo/vite.config.js --mode demo --outDir build-demo",
     "demo:preview": "vite preview --config demo/vite.config.js --mode demo --outDir build-demo",
     "site": "vite --config website/vite.config.js",

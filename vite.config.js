@@ -71,7 +71,7 @@ export default defineConfig(({ command, mode }) => {
     },
     test: {
       // *.test.jsx render components (React Testing Library, jsdom; FND-07).
-      include: ['src/**/*.test.{js,jsx}', 'supabase/functions/**/*.test.js'],
+      include: ['src/**/*.test.{js,jsx}', 'supabase/functions/**/*.test.js', 'demo/**/*.test.js'],
       setupFiles: ['src/test/setup.js'],
     },
     build: {

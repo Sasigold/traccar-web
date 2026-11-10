@@ -1,4 +1,5 @@
 import route from './route.js';
+import { CITIES, VEHICLES, placeOf } from './israel.js';
 
 const interval = 5000;
 const retention = 20 * 60 * 1000;
@@ -133,10 +134,12 @@ export const maintenanceFor = (deviceId) => (Number(deviceId) === 5 ? [] : creat
 // `size` (FND-07): the performance profile asks for a fleet of 2,000. The extra vehicles are
 // plain ones spread along the route, a fifth of them offline; their history is kept for a
 // minute only, so the server's memory stays small.
-export const createFleet = (now = Date.now(), { size = 0 } = {}) => {
+export const createFleet = (now = Date.now(), { size = 0, israeli = false } = {}) => {
   const details = vehicleDetails(now);
   const anchor = Math.floor(now / interval) * interval;
-  const base = ['Delivery Van', 'Service Van', 'City Shuttle', 'Courier', 'Support Car', 'בדיקה'];
+  const base = israeli
+    ? VEHICLES
+    : ['Delivery Van', 'Service Van', 'City Shuttle', 'Courier', 'Support Car', 'בדיקה'];
   const names = [
     ...base,
     ...Array.from(
@@ -221,7 +224,11 @@ export const createFleet = (now = Date.now(), { size = 0 } = {}) => {
       const step =
         (timestamp - anchor) / interval + Math.floor((index * route.length) / devices.length);
       const routeIndex = ((step % route.length) + route.length) % route.length;
-      const [longitude, latitude, speed, course] = route[routeIndex];
+      const [routeLongitude, routeLatitude, speed, course] = route[routeIndex];
+      // BRD-05: in the Israeli fleet each vehicle drives the same turns in its own city.
+      const [longitude, latitude] = israeli
+        ? placeOf(index, [routeLongitude, routeLatitude])
+        : [routeLongitude, routeLatitude];
       const moving = speed > 0;
       const time = new Date(timestamp).toISOString();
       return {
@@ -235,7 +242,7 @@ export const createFleet = (now = Date.now(), { size = 0 } = {}) => {
         outdated: false,
         latitude,
         longitude,
-        address: 'Central London, UK',
+        address: israeli ? CITIES[index % CITIES.length].address : 'Central London, UK',
         speed,
         course,
         attributes: {
@@ -279,6 +286,7 @@ export const createFleet = (now = Date.now(), { size = 0 } = {}) => {
   };
   advance(now);
   return {
+    israeli,
     advance,
     devices,
     get positions() {

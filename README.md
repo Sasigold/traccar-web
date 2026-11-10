@@ -13,7 +13,12 @@ over its REST API and WebSocket, and to the fleet database (self-hosted Supabase
 npm install
 npm start      # needs a Traccar server on :8082
 npm run demo   # or: the built-in demo server, no Traccar needed
+npm run demo:il  # the same with an Israeli fleet (Hebrew names, Israeli cities), for sales and screenshots
 ```
+
+The e2e tests run against `npm run demo`. A test or a browser can switch to the Israeli fleet with the
+cookie `demoFleet=il`. Screenshots of the demo shown outside the app carry the note
+`ILLUSTRATIVE UI / FICTIONAL DATA`.
 
 Before a commit: `npm run lint` (includes the brand color guard), `npm test`, and
 `npm run test:e2e`. Read [CLAUDE.md](CLAUDE.md) and [BRAND.md](BRAND.md) first.
