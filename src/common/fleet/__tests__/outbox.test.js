@@ -34,18 +34,20 @@ describe('outbox (ADM-10)', () => {
       });
     });
 
-    await enqueue('report', { id: 'r1' }, [{ name: 'a.jpg' }, { name: 'bad.jpg' }]);
-    expect((await flushOutbox())[0].sent).toBe(false);
+    await enqueue('report', { id: 'r1' }, [{ name: 'a.jpg' }, { name: 'bad.jpg' }], {
+      ownerId: 'p1',
+    });
+    expect((await flushOutbox('p1'))[0].sent).toBe(false);
     expect(await listOutbox()).toHaveLength(1);
 
     online = true;
-    const [first] = await flushOutbox();
+    const [first] = await flushOutbox('p1');
     expect(first).toMatchObject({ sent: false, filesLeft: 1 });
     const [left] = await listOutbox();
     expect(left.saved).toBe(true);
     expect(left.files.map((file) => file.done)).toEqual([true, false]);
 
-    expect((await flushOutbox())[0].sent).toBe(true);
+    expect((await flushOutbox('p1'))[0].sent).toBe(true);
     expect(await listOutbox()).toHaveLength(0);
     // The report was saved once, and the good photo went up once.
     expect(rows.size).toBe(1);
@@ -61,6 +63,23 @@ describe('outbox (ADM-10)', () => {
     const item = await enqueue('slow', {});
     await Promise.all([sendItem(item), sendItem(item)]);
     expect(calls).toBe(1);
+  });
+
+  it("sends only what the signed-in user queued, never another driver's report", async () => {
+    const sent = [];
+    registerOutboxKind('owned', async (item) => {
+      sent.push(item.payload.id);
+    });
+    await enqueue('owned', { id: 'dana' }, [], { ownerId: 'p-dana' });
+    // An item from before owners were kept: its incident's reporter is its owner.
+    await enqueue('owned', { id: 'old', incident: { reported_by: 'p-dana' } });
+    await enqueue('owned', { id: 'yossi' }, [], { ownerId: 'p-yossi' });
+    expect(await flushOutbox()).toEqual([]);
+    await flushOutbox('p-yossi');
+    expect(sent).toEqual(['yossi']);
+    expect((await listOutbox('p-dana')).map((item) => item.payload.id)).toEqual(['dana', 'old']);
+    await flushOutbox('p-dana');
+    expect(sent).toEqual(['yossi', 'dana', 'old']);
   });
 
   it('a duplicate key means the row is already there', () => {

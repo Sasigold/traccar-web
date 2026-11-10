@@ -267,7 +267,8 @@ const DriverDamagePage = () => {
             };
           }),
         );
-        const party = partyInvolved
+        // The third party's row (named apart from the form state `party` it is made from).
+        const partyRow = partyInvolved
           ? {
               id: newId(),
               org_id: profile.org_id,
@@ -295,9 +296,10 @@ const DriverDamagePage = () => {
               address: place.trim() || null,
               reported_by: profile.id,
             },
-            party,
+            party: partyRow,
           },
           files,
+          { ownerId: profile.id },
         );
         setPending(item);
       }

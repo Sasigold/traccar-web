@@ -57,6 +57,18 @@ export const matches = (rule, row) => {
   }
 };
 
+// AI-05: the key of one fired row in automation_runs.traccar_event_id, so a rule fires once per
+// row also across tabs. An event has its id; a trip or a stop has none, so it gets a negative key
+// from its vehicle and start (never equal to an event id).
+export const runKey = (row) =>
+  row.id != null && row.eventTime
+    ? row.id
+    : -(Number(row.deviceId) * 1e10 + Math.floor(Date.parse(row.startTime) / 1000));
+
+// How far back the trip and stop rules look on each pass, and how often they look.
+export const REPORT_WINDOW = 30 * 60000;
+export const REPORT_POLL = 5 * 60000;
+
 // The test on the last week: the rows that would have fired, newest first.
 export const backtest = (rule, rows) =>
   rows

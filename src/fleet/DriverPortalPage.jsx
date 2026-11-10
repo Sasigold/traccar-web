@@ -196,7 +196,7 @@ const DriverPortalPage = () => {
             severity="info"
             icon={<ScheduleSendRoundedIcon />}
             action={
-              <Button color="inherit" size="small" onClick={() => flushOutbox()}>
+              <Button color="inherit" size="small" onClick={() => flushOutbox(profile?.id)}>
                 {t('driverOutboxRetry')}
               </Button>
             }

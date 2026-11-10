@@ -71,3 +71,39 @@ test('a rule is tested on the week, saved, and fires on a live alert', async ({
   await expect(page.getByText(/^אוטומציה: כשרכב נוסע מעל 110/)).toBeVisible();
   await expect.poll(() => fleet.tables.automation_runs.length).toBe(1);
 });
+
+// AI-05 (Codex review on PR #26): trip and stop rules run too, not only the live-event ones.
+test('an active after-hours rule fires on a recent night trip', async ({ page }) => {
+  await writeMode(page);
+  const startTime = new Date(Date.now() - 5 * 60000).toISOString();
+  await page.route('**/api/reports/trips?*', (route) =>
+    route.fulfill({ json: [{ deviceId: 1, startTime, endTime: startTime, distance: 1000 }] }),
+  );
+  const fleet = await fakeFleet(page, {
+    users: {
+      1: {
+        profile: { id: 'p1', org_id: 'o1', role: 'admin' },
+        permissions: ['alerts.read', 'alerts.manage'],
+      },
+    },
+    rpc: { fleet_features: ['automations'] },
+    tables: {
+      automation_rules: [
+        {
+          id: 'r1',
+          org_id: 'o1',
+          name: 'כל שעה היא לילה',
+          template: 'afterHours',
+          params: { after: '00:00', before: '23:59' },
+          actions: ['notify'],
+          active: true,
+        },
+      ],
+      automation_runs: [],
+    },
+  });
+  await gotoReady(page, '/');
+  await expect.poll(() => fleet.tables.automation_runs.length).toBe(1);
+  expect(fleet.tables.automation_runs[0]).toMatchObject({ rule_id: 'r1', traccar_device_id: 1 });
+  expect(fleet.tables.automation_runs[0].traccar_event_id).toBeLessThan(0);
+});

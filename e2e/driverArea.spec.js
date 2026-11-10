@@ -329,3 +329,30 @@ test('injuries show the numbers to dial, and the phone sets the place', async ({
     longitude: 34.9896,
   });
 });
+
+// ADM-10 (Codex review on PR #26): a report with a third party is sent with that party.
+test('a report with a third party goes out with the other driver', async ({ page }) => {
+  const writes = await mockFleet(page);
+  await gotoReady(page, '/driver/damage');
+  await page
+    .locator('input[type=file]')
+    .first()
+    .setInputFiles({
+      name: 'damage.jpg',
+      mimeType: 'image/jpeg',
+      buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
+    });
+  await page.getByRole('button', { name: 'המשך' }).click();
+  await page.getByRole('button', { name: 'תאונה', exact: true }).click();
+  await page.getByRole('group', { name: 'יש פצועים?' }).getByRole('button', { name: 'לא' }).click();
+  await page.getByRole('button', { name: 'המשך' }).click();
+  await page
+    .getByRole('group', { name: 'היה מעורב רכב או אדם נוסף?' })
+    .getByRole('button', { name: 'כן' })
+    .click();
+  await page.getByLabel('שם', { exact: true }).fill('משה כהן');
+  await page.getByRole('button', { name: 'שליחת הדיווח' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'הדיווח נשלח' })).toBeVisible();
+  const party = writes.find((write) => write.name === 'incident_parties');
+  expect(party.body).toMatchObject({ role: 'third_party', name: 'משה כהן' });
+});

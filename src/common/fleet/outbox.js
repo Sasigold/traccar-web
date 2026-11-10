@@ -75,12 +75,21 @@ export const onOutboxChange = (listener) => {
 
 export const newId = () => crypto.randomUUID();
 
-export const listOutbox = async () =>
-  (await store.all()).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+// Who queued an item. On a phone shared by drivers, only that driver's session sends it, so a
+// report is never sent (and recorded) as someone else's. Items from before the owner was kept
+// fall back to the incident's reporter.
+export const ownerOf = (item) => item.ownerId ?? item.payload?.incident?.reported_by ?? null;
 
-export const enqueue = async (kind, payload, files = []) => {
+// The queue, oldest first; with `ownerId`, only what that user queued.
+export const listOutbox = async (ownerId) =>
+  (await store.all())
+    .filter((item) => ownerId === undefined || ownerOf(item) === ownerId)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+
+export const enqueue = async (kind, payload, files = [], { ownerId = null } = {}) => {
   const item = {
     id: newId(),
+    ownerId,
     kind,
     createdAt: new Date().toISOString(),
     payload,
@@ -134,8 +143,10 @@ export const sendItem = async (item) => {
   return work;
 };
 
-export const flushOutbox = async () => {
-  const items = await listOutbox();
+// Sends what this user queued (nothing without a user).
+export const flushOutbox = async (ownerId) => {
+  if (!ownerId) return [];
+  const items = await listOutbox(ownerId);
   const results = [];
   for (const item of items) {
     results.push(await sendItem(item));

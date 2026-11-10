@@ -66,3 +66,14 @@ describe('automation rules', () => {
     ).toEqual({ key: 'autoSentenceGeofence', values: ['מחסן'] });
   });
 });
+
+describe('run keys (AI-05)', () => {
+  it('use the event id, or a negative key for a trip or stop', async () => {
+    const { runKey } = await import('../automations');
+    expect(runKey({ id: 77, eventTime: '2026-11-10T06:00:00Z', deviceId: 1 })).toBe(77);
+    const key = runKey({ deviceId: 3, startTime: '2026-11-10T06:00:00Z' });
+    expect(key).toBeLessThan(0);
+    expect(key).toBe(runKey({ deviceId: 3, startTime: '2026-11-10T06:00:00Z' }));
+    expect(key).not.toBe(runKey({ deviceId: 4, startTime: '2026-11-10T06:00:00Z' }));
+  });
+});
