@@ -1,42 +1,30 @@
-# [Traccar Web App](https://www.traccar.org)
+# viper fleet
 
-## Overview
+Hebrew-first (RTL) fleet management on top of [Traccar](https://www.traccar.org): the live map,
+reports, a customizable dashboard, fleet operations (vehicles, drivers, maintenance, costs,
+dispatch, safety) and an administration area, in the viper fleet brand.
 
-This is the browser-based tracking dashboard for [Traccar](https://www.traccar.org), a free and open source GPS tracking platform. It's a React, Material UI, and MapLibre single-page app that talks to the [Traccar server](https://github.com/traccar/traccar) over its REST API, providing the live map, reports, geofences, and device management UI most people mean when they say "Traccar."
-
-This repository is the front-end only. For the back-end server, see the [main Traccar repository](https://github.com/traccar/traccar). You don't need to build this yourself to use Traccar - the server repository already bundles a built copy - this repo is for contributing to or customizing the UI itself.
-
-[Try the live demo](https://www.traccar.org/demo-server/) without installing anything.
-
-| Web Dashboard |
-|---|
-| ![Traccar web dashboard](.github/screenshot.png) |
+This repository is the web app only. It talks to a [Traccar server](https://github.com/traccar/traccar)
+over its REST API and WebSocket, and to the fleet database (self-hosted Supabase, `supabase/`).
 
 ## Development
 
 ```shell
 npm install
-npm start
+npm start      # needs a Traccar server on :8082
+npm run demo   # or: the built-in demo server, no Traccar needed
 ```
 
-This starts a local dev server (Vite) that proxies API requests to a running Traccar server. See the [web app build documentation](https://www.traccar.org/build-web-app/) for full setup details, including how to point it at your own server.
+Before a commit: `npm run lint` (includes the brand color guard), `npm test`, and
+`npm run test:e2e`. Read [CLAUDE.md](CLAUDE.md) and [BRAND.md](BRAND.md) first.
 
-To build a production bundle:
+## Upstream and license
 
-```shell
-npm run build
-```
+viper fleet started as a fork of [traccar/traccar-web](https://github.com/traccar/traccar-web) by
+Anton Tananaev and the Traccar contributors, and keeps its license: Apache License, Version 2.0
+(see [LICENSE.txt](LICENSE.txt)). How upstream fixes are followed: [docs/UPSTREAM.md](docs/UPSTREAM.md).
 
-## Team
-
-- Anton Tananaev ([anton@traccar.org](mailto:anton@traccar.org))
-- Andrey Kunitsyn ([andrey@traccar.org](mailto:andrey@traccar.org))
-
-## License
-
-Apache License, Version 2.0. See [LICENSE.txt](https://github.com/traccar/traccar-web/blob/master/LICENSE.txt) for details.
-
-## Custom Hebrew / RTL fork
+## About this app
 
 This fork is branded as **viper fleet** (SYNC POINT / MIDNIGHT AQUA): midnight navy, aqua, ice,
 paper and ink, Sora + Assistant type, the Sync Point logo and app icons (light by default with a dark
