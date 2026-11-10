@@ -34,7 +34,8 @@ const useStyles = makeStyles()((theme) => ({
 // left to right, like the gauges.
 //
 // Keyboard: arrows move a point, Shift+arrows a minute, Home/End the ends.
-const ReplayTimeline = ({ positions, segments, stops, index, onChange }) => {
+// LIV-10: events (alarms, overspeed...) are dots under the bar, each with its name on hover.
+const ReplayTimeline = ({ positions, segments, stops, events = [], index, onChange }) => {
   const { classes } = useStyles();
   const theme = useTheme();
   const t = useTranslation();
@@ -149,6 +150,27 @@ const ReplayTimeline = ({ positions, segments, stops, index, onChange }) => {
             vectorEffect="non-scaling-stroke"
           />
         ))}
+        {events
+          .filter((event) => {
+            const at = new Date(event.eventTime).getTime();
+            return at >= start && at <= end;
+          })
+          .map((event) => (
+            <line
+              key={event.id}
+              x1={x(new Date(event.eventTime).getTime())}
+              x2={x(new Date(event.eventTime).getTime())}
+              y1={(HEIGHT + BAR) / 2 + 3}
+              y2={HEIGHT - 1}
+              stroke={theme.palette.warning.main}
+              strokeWidth={4}
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+              data-part="event"
+            >
+              <title>{`${formatTime(event.eventTime, 'time')} · ${event.label}`}</title>
+            </line>
+          ))}
         <line
           x1={current}
           x2={current}

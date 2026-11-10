@@ -23,7 +23,7 @@ import MapView from '../map/core/MapView';
 import MapRoutePath from '../map/MapRoutePath';
 import MapRoutePoints from '../map/MapRoutePoints';
 import MapReplayMarker from '../map/MapReplayMarker';
-import { formatNumericHours, formatTime } from '../common/util/formatter';
+import { formatNotificationTitle, formatNumericHours, formatTime } from '../common/util/formatter';
 
 import ReportFilter from '../reports/components/ReportFilter';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -49,6 +49,17 @@ import {
   stepByTime,
   timelineSegments,
 } from './replay/replayTimeline';
+
+// LIV-10: the events marked on the timeline.
+const MARKED_EVENTS = [
+  'alarm',
+  'deviceOverspeed',
+  'geofenceEnter',
+  'geofenceExit',
+  'ignitionOn',
+  'ignitionOff',
+  'driverChanged',
+];
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -191,6 +202,7 @@ const ReplayPage = () => {
   const defaultDeviceId = useSelector((state) => state.devices.selectedId);
 
   const [positions, setPositions] = useState([]);
+  const [events, setEvents] = useState([]);
   const [rawIndex, setRawIndex] = useState(0);
   // Never past the end of the route shown (a route can be replaced while it plays).
   const index = Math.max(0, Math.min(rawIndex, positions.length - 1));
@@ -321,6 +333,28 @@ const ReplayPage = () => {
       });
       setPositions(result.positions);
       setPrivacy(result.hidden ? result : null);
+      // LIV-10: the period's events, as marks on the timeline (not those in hidden time).
+      try {
+        const eventsResponse = await fetchOrThrow(
+          `api/reports/events?${new URLSearchParams({ deviceId, from, to, type: 'allEvents' })}`,
+          { headers: { Accept: 'application/json' } },
+        );
+        const shownFrom = result.positions[0]?.fixTime;
+        const shownTo = result.positions.at(-1)?.fixTime;
+        setEvents(
+          (await eventsResponse.json())
+            .filter(
+              (event) =>
+                MARKED_EVENTS.includes(event.type) &&
+                shownFrom &&
+                event.eventTime >= shownFrom &&
+                event.eventTime <= shownTo,
+            )
+            .slice(0, 500),
+        );
+      } catch {
+        setEvents([]);
+      }
       // An empty period is not an error: it is said quietly under the filter.
       setEmpty(!result.positions.length);
       if (result.positions.length) {
@@ -429,6 +463,13 @@ const ReplayPage = () => {
                 positions={positions}
                 segments={segments}
                 stops={stops}
+                events={events.map((event) => ({
+                  ...event,
+                  label: formatNotificationTitle(t, {
+                    type: event.type,
+                    attributes: { alarms: event.attributes?.alarm },
+                  }),
+                }))}
                 index={index}
                 onChange={setRawIndex}
               />
