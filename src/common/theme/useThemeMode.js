@@ -4,7 +4,7 @@ import { useAttributePreference } from '../util/preferences';
 import usePersistedState from '../util/usePersistedState';
 import fetchOrThrow from '../util/fetchOrThrow';
 import { messagesActions, sessionActions } from '../../store';
-import { surfaces } from './tokens';
+import { chrome } from './tokens';
 
 // Light mode is the default. A user attribute (darkMode) wins when it is set,
 // otherwise the locally persisted choice applies. Readonly users (and users
@@ -44,9 +44,10 @@ export default () => {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
+    // BRD-06 (BRAND.md §7): the browser and status bar are navy in both modes, like the rail.
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
-      meta.content = dark ? surfaces.dark.canvas : surfaces.light.canvas;
+      meta.content = chrome.background;
     }
   }, [dark]);
 

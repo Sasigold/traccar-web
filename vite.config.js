@@ -160,7 +160,8 @@ export default defineConfig(({ command, mode }) => {
         },
         manifest: {
           short_name: brand.title,
-          name: 'VIPER FLEET',
+          // BRD-06: the name is lowercase everywhere, the install screen included.
+          name: 'viper fleet',
           description: brand.description,
           theme_color: brand.colorPrimary,
           background_color: brand.background,
