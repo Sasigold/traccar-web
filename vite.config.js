@@ -41,6 +41,19 @@ const brand = {
   background: '#F8FCFD', // paper
 };
 
+// ARC-12: what the service worker does not install up front (see workbox below).
+const PRECACHE_SKIP = [/exceljs/, /StreamPage/, /^assets\/(ar|ru)-[\w-]{8}\.js$/];
+// Map hosts whose styles, fonts and tiles may be kept on the device (Google, Bing, HERE, TomTom,
+// Yandex and Mapbox are not: their terms limit caching).
+const MAP_CACHE_HOSTS = [
+  'tiles.openfreemap.org',
+  'cdn.traccar.com',
+  'tile.openstreetmap.org',
+  'tiles.locationiq.com',
+  'api.maptiler.com',
+];
+const MAP_TILE = /\/\d+\/\d+\/\d+(@\dx)?\.(pbf|mvt|png|jpe?g|webp)$/;
+
 export default defineConfig(({ command, mode }) => {
   const viteEnv = loadEnv(mode, process.cwd(), 'VITE_');
   // FND-04: a production or staging build says which fleet database it talks to.
@@ -157,6 +170,54 @@ export default defineConfig(({ command, mode }) => {
           sourcemap: false,
           navigateFallbackDenylist: [/\/api(\/|$)/],
           globPatterns: ['**/*.{js,css,html,woff,woff2,mp3}'],
+          // ARC-12: the install holds the shell and the everyday screens. What few people
+          // open (Excel export, video, Arabic and Russian) is fetched
+          // the first time and kept (runtimeCaching below).
+          manifestTransforms: [
+            async (entries) => ({
+              manifest: entries.filter(
+                (entry) => !PRECACHE_SKIP.some((test) => test.test(entry.url)),
+              ),
+              warnings: [],
+            }),
+          ],
+          runtimeCaching: [
+            {
+              // Build files have the content hash in the name: once fetched, never again.
+              urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.includes('/assets/'),
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'vf-assets',
+                expiration: { maxEntries: 150, maxAgeSeconds: 60 * 24 * 3600 },
+              },
+            },
+            {
+              // Map styles, sprites and fonts: shown from the cache, refreshed behind it.
+              urlPattern: ({ url }) =>
+                MAP_CACHE_HOSTS.includes(url.hostname) && !MAP_TILE.test(url.pathname),
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'vf-map-style',
+                expiration: { maxEntries: 300, maxAgeSeconds: 30 * 24 * 3600 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+            {
+              // Map tiles of the providers whose terms allow keeping them, two weeks at most.
+              urlPattern: ({ url }) =>
+                MAP_CACHE_HOSTS.includes(url.hostname) && MAP_TILE.test(url.pathname),
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'vf-map-tiles',
+                expiration: {
+                  maxEntries: 3000,
+                  maxAgeSeconds: 14 * 24 * 3600,
+                  purgeOnQuotaError: true,
+                },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+          ],
         },
         manifest: {
           short_name: brand.title,
