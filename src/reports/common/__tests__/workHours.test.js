@@ -23,3 +23,20 @@ describe('work hours from ignition', () => {
     ]);
   });
 });
+
+describe('a check-in starts the working day (OPS-05)', () => {
+  it('moves the start earlier, and counts a day with no trips', () => {
+    const local = (day, hour, minute = 0) => new Date(2026, 10, day, hour, minute).toISOString();
+    const days = workDays(
+      [{ driverUniqueId: 'd1', startTime: local(9, 8), endTime: local(9, 9) }],
+      [
+        { driver: 'd1', time: local(9, 7, 30) },
+        { driver: 'd1', time: local(10, 7) },
+      ],
+    );
+    expect(days).toHaveLength(2);
+    expect(days[0].start).toBe(Date.parse(local(9, 7, 30)));
+    expect(days[0].end).toBe(Date.parse(local(9, 9)));
+    expect(days[1]).toMatchObject({ day: '2026-11-10', driving: 0 });
+  });
+});

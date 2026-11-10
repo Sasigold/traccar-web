@@ -1430,6 +1430,7 @@ export type Database = {
           created_at: string;
           reviewed_by: string | null;
           reviewed_at: string | null;
+          receipt_path: string | null;
         };
         Insert: {
           id?: string;
@@ -1456,6 +1457,7 @@ export type Database = {
           created_at?: string;
           reviewed_by?: string | null;
           reviewed_at?: string | null;
+          receipt_path?: string | null;
         };
         Update: {
           id?: string;
@@ -1482,6 +1484,7 @@ export type Database = {
           created_at?: string;
           reviewed_by?: string | null;
           reviewed_at?: string | null;
+          receipt_path?: string | null;
         };
         Relationships: [];
       };
@@ -2942,6 +2945,7 @@ export type Database = {
           driver_id: string;
           starts_at: string;
           ends_at: string | null;
+          source: string | null;
         };
         Insert: {
           id?: string;
@@ -2950,6 +2954,7 @@ export type Database = {
           driver_id: string;
           starts_at?: string;
           ends_at?: string | null;
+          source?: string | null;
         };
         Update: {
           id?: string;
@@ -2958,6 +2963,7 @@ export type Database = {
           driver_id?: string;
           starts_at?: string;
           ends_at?: string | null;
+          source?: string | null;
         };
         Relationships: [];
       };
@@ -3863,6 +3869,18 @@ export type Database = {
           p_code: string;
         };
         Returns: Json;
+      };
+      driver_report_fueling: {
+        Args: {
+          p_id: string;
+          p_occurred_at: string;
+          p_total: number;
+          p_liters?: number;
+          p_odometer?: number;
+          p_station?: string;
+          p_receipt_path?: string;
+        };
+        Returns: string;
       };
       fleet_benchmarks: {
         Args: {

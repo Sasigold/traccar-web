@@ -55,6 +55,9 @@ do $$ begin
     'only the new assignment is open';
   assert (select driver_id from public.vehicle_driver_assignments where ends_at is null)
     = 'd6000000-0000-0000-0000-000000000001', 'Dana drives 61 now';
+  -- OPS-05: the check-in says so, for the start of the working day.
+  assert (select source from public.vehicle_driver_assignments where ends_at is null) = 'checkin',
+    'the assignment is a check-in';
 end $$;
 
 -- A viewer who is not a driver cannot check in, nor make a new code.
