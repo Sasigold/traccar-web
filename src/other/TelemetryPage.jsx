@@ -11,6 +11,7 @@ import { useTranslation } from '../common/components/LocalizationProvider';
 import PageHeader from '../common/components/shell/PageHeader';
 import BrandLoader from '../common/components/brand/BrandLoader';
 import TelemetryDashboard from '../common/components/telemetry/TelemetryDashboard';
+import BatteryWarning from '../common/components/telemetry/BatteryWarning';
 import { useVehicleSettings } from '../common/components/telemetry/VehicleSettingsDialog';
 import { formatStatus } from '../common/util/formatter';
 import { formatUpdated, isLive } from '../common/util/freshness';
@@ -164,6 +165,7 @@ const TelemetryPage = () => {
       />
       <div className={classes.content}>
         <div className={classes.inner}>
+          {position && <BatteryWarning deviceId={deviceId} />}
           {position ? (
             <TelemetryDashboard
               position={position}

@@ -1,4 +1,5 @@
 import { afterHours } from '../../dashboard/data/fleetMetrics';
+import { repeatedFaults } from './predict';
 
 // AI-02: the morning's findings, at most four, ranked. Simple statistics on the fleet's own
 // history (the last 28 days), not a model: a vehicle that stopped moving, fuel use that jumped,
@@ -150,6 +151,30 @@ export const computeInsights = (
       deviceId: deviceIds[0],
       score: 45 + deviceIds.length * 5,
       values: { code, name: name(deviceIds[0]), vehicles: deviceIds.length },
+      link: '/',
+    });
+  });
+
+  // AI-06: the same code in three or more vehicles of one model is a pattern, not bad luck.
+  const codes = [];
+  faults.forEach((deviceIds, code) => {
+    deviceIds.forEach((deviceId) => {
+      codes.push({ deviceId, code, model: devices[deviceId]?.attributes?.vehicleModel });
+    });
+  });
+  const patterns = repeatedFaults(codes);
+  // The model finding says more than "the same code on several vehicles".
+  const explained = new Set(patterns.map((group) => `fault-${group.code}`));
+  for (let index = findings.length - 1; index >= 0; index -= 1) {
+    if (explained.has(findings[index].id)) findings.splice(index, 1);
+  }
+  patterns.forEach((group) => {
+    findings.push({
+      id: `model-fault-${group.model}-${group.code}`,
+      kind: 'modelFault',
+      deviceId: group.deviceIds[0],
+      score: 70 + group.count * 3,
+      values: { code: group.code, model: group.model, vehicles: group.count },
       link: '/',
     });
   });

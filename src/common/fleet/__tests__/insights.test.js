@@ -101,3 +101,23 @@ describe('trips without a driver (SAF-02)', () => {
     expect(finding).toMatchObject({ kind: 'noDriver', values: { trips: 1, name: 'ואן' } });
   });
 });
+
+describe('a fault repeating in one model (AI-06)', () => {
+  it('names the model instead of only counting vehicles', () => {
+    const transit = (id) => ({ id, name: `ואן ${id}`, attributes: { vehicleModel: 'Transit' } });
+    const findings = computeInsights(
+      {
+        devices: { 1: transit(1), 2: transit(2), 3: transit(3) },
+        trips: [],
+        positions: {
+          1: { deviceId: 1, attributes: { dtcs: 'P0401' } },
+          2: { deviceId: 2, attributes: { dtcs: 'P0401' } },
+          3: { deviceId: 3, attributes: { dtcs: 'P0401' } },
+        },
+      },
+      now,
+    );
+    expect(findings.map((finding) => finding.kind)).toEqual(['modelFault']);
+    expect(findings[0].values).toEqual({ code: 'P0401', model: 'Transit', vehicles: 3 });
+  });
+});

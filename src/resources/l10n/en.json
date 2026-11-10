@@ -3531,5 +3531,9 @@
     "autoLastTest": "Last test",
     "autoActive": "On",
     "autoTestedSummary": "{0} times in the week before {1}",
-    "autoFired": "Automation: {0} · {1}"
+    "autoFired": "Automation: {0} · {1}",
+    "insightTitle_modelFault": "Code {code} on {vehicles} {model} vehicles",
+    "insightWhy_modelFault": "The same fault on several vehicles of one model is a pattern, not chance. Check with the importer or the garage for a recall or a series fix.",
+    "batteryWeak": "Weak battery: in the last starts the voltage dropped to {0}V. Check or replace it before the vehicle is stranded.",
+    "batteryWatch": "Keep an eye on the battery: the voltage at start is falling ({0}V)."
 }
