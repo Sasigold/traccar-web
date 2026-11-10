@@ -38,6 +38,7 @@ import fetchOrThrow from '../common/util/fetchOrThrow';
 import { formatTime } from '../common/util/formatter';
 import exportExcel from '../common/util/exportExcel';
 import { getFleetClient, unwrap } from '../common/fleet/client';
+import { isExceptionJob, onTimeByCustomer } from '../common/fleet/dispatchStats';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import {
   JOB_PRIORITIES,
@@ -447,7 +448,8 @@ const TrackingDialog = ({ job, deviceId, eta, onClose, onSaved }) => {
   );
 };
 
-const filters = ['today', 'open', 'all'];
+// OPS-11: "exceptions" shows only what needs someone now: late or failed jobs.
+const filters = ['today', 'open', 'exceptions', 'all'];
 
 // Dispatch jobs for vehicles and drivers, live ETA, customer links.
 const DispatchPage = () => {
@@ -458,7 +460,17 @@ const DispatchPage = () => {
   const canWrite = useFleetPermission('dispatch.write');
   const positions = useLivePositions();
 
-  const [filter, setFilter] = useState('today');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [filter, setFilter] = useState(() =>
+    filters.includes(searchParams.get('filter')) ? searchParams.get('filter') : 'today',
+  );
+  const chooseFilter = (value) => {
+    setFilter(value);
+    const next = new URLSearchParams(searchParams);
+    if (value === 'today') next.delete('filter');
+    else next.set('filter', value);
+    setSearchParams(next, { replace: true });
+  };
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState(null);
   const [tracking, setTracking] = useState(null);
@@ -493,7 +505,6 @@ const DispatchPage = () => {
   const drivers = useFleetDrivers(canWrite);
 
   // LIV-21: "send a job" from the map's nearby vehicles opens a new job at that point.
-  const [searchParams, setSearchParams] = useSearchParams();
   useEffect(() => {
     const latitude = searchParams.get('latitude');
     const longitude = searchParams.get('longitude');
@@ -517,6 +528,9 @@ const DispatchPage = () => {
       if (filter === 'open' && !isOpenJob(job.status)) {
         return false;
       }
+      if (filter === 'exceptions' && !isExceptionJob(job)) {
+        return false;
+      }
       return (
         !keyword ||
         [
@@ -531,6 +545,11 @@ const DispatchPage = () => {
       );
     });
   }, [jobs, filter, search]);
+
+  const exceptionCount = useMemo(
+    () => (jobs || []).filter((job) => isExceptionJob(job)).length,
+    [jobs],
+  );
 
   const etaOf = (job) => {
     const deviceId = job.vehicles?.traccar_device_id;
@@ -560,6 +579,16 @@ const DispatchPage = () => {
         [t('fleetJobProofName')]: job.proof_name,
       })),
     );
+    // OPS-11: on time per customer, over the jobs shown.
+    sheets.set(
+      t('fleetJobOnTimeSheet'),
+      onTimeByCustomer(filtered).map((row) => ({
+        [t('fleetJobCustomer')]: row.customer,
+        [t('fleetJobOnTimeDone')]: row.done,
+        [t('fleetJobOnTimeFailed')]: row.failed,
+        [t('fleetJobOnTimeShare')]: row.share == null ? '' : Math.round(row.share * 100),
+      })),
+    );
     await exportExcel(t('fleetDispatchPage'), 'dispatch.xlsx', sheets, theme);
   };
 
@@ -579,10 +608,14 @@ const DispatchPage = () => {
               <Chip
                 key={key}
                 size="small"
-                label={t(`fleetJobFilter${camel(key)}`)}
+                label={
+                  key === 'exceptions' && exceptionCount
+                    ? `${t('fleetJobFilterExceptions')} · ${exceptionCount}`
+                    : t(`fleetJobFilter${camel(key)}`)
+                }
                 color={filter === key ? 'primary' : 'default'}
                 variant={filter === key ? 'filled' : 'outlined'}
-                onClick={() => setFilter(key)}
+                onClick={() => chooseFilter(key)}
               />
             ))}
             exportHandler={canRead ? handleExport : undefined}
