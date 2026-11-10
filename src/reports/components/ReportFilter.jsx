@@ -30,6 +30,7 @@ import VehiclePicker from '../../common/components/vehiclePicker/VehiclePicker';
 import { useRestriction } from '../../common/util/permissions';
 import { messagesActions, reportsActions } from '../../store';
 import ReportIntro from './ReportIntro';
+import PrintHeader from './PrintHeader';
 import { getFormatLocale } from '../../common/util/formatter';
 import { DateRangeField } from '../../common/components/pickers';
 import { PERIODS, periodRange, shiftRange } from '../../dashboard/data/periods';
@@ -243,6 +244,13 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
 
   return (
     <div className={classes.filter} ref={rootRef}>
+      <PrintHeader
+        title={reportName ? t(reportName) : ''}
+        from={from}
+        to={to}
+        deviceIds={deviceIds}
+        groupIds={groupIds}
+      />
       <ReportIntro hint={hint} />
       {deviceType !== 'none' && (
         <div className={classes.filterItem} style={{ flexBasis: 260 }}>

@@ -92,7 +92,7 @@ const PageHeader = ({ breadcrumbs, title, description, actions, onOpenMenu, back
   const parents = crumbs.slice(0, -1);
 
   return (
-    <header className={classes.root}>
+    <header className={`${classes.root} app-page-header`}>
       {((!desktop && !destination) || back) && (
         <IconButton
           edge="start"

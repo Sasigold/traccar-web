@@ -147,7 +147,10 @@ const ResponsiveTable = ({ responsive = true, className, style, ref: externalRef
   const { classes, cx } = useStyles();
   const theme = useTheme();
   // Same breakpoint where the app switches to its mobile navigation (phones and tablets).
-  const compact = useMediaQuery(theme.breakpoints.down('md'));
+  // Cards on narrow screens only: a printed page always gets the table (REP-16).
+  const compact = useMediaQuery(
+    theme.breakpoints.down('md').replace('@media', '@media screen and'),
+  );
   const stacked = responsive && compact;
   const ref = useRef(null);
 

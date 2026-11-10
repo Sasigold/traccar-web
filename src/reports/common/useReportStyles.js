@@ -96,7 +96,7 @@ export default makeStyles()((theme) => ({
       position: 'static',
     },
     '@media print': {
-      display: 'none',
+      position: 'static',
     },
   },
   columnAction: {
@@ -123,8 +123,16 @@ export default makeStyles()((theme) => ({
     [theme.breakpoints.down('md')]: {
       margin: theme.spacing(1.5, 2),
     },
+    // REP-16: on paper only the print header of the filter remains.
     '@media print': {
-      display: 'none !important',
+      display: 'block !important',
+      margin: 0,
+      padding: 0,
+      border: 'none',
+      boxShadow: 'none',
+      '& > *:not(.vf-print-header)': {
+        display: 'none !important',
+      },
     },
   },
   filterItem: {

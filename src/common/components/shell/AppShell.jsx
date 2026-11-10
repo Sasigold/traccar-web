@@ -57,6 +57,9 @@ const useStyles = makeStyles()((theme) => ({
     '&:focus': {
       transform: 'none',
     },
+    '@media print': {
+      display: 'none',
+    },
   },
   content: {
     position: 'relative',

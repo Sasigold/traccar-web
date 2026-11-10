@@ -3470,5 +3470,7 @@
     "reportSpeedLimitOf": "limit {0}",
     "reportStillInside": "Still inside",
     "reportSoFar": "so far",
-    "reportLitersPer100": "Liters per 100 km"
+    "reportLitersPer100": "Liters per 100 km",
+    "reportPrintedBy": "Produced by {0} · {1}",
+    "reportAllVehicles": "All vehicles"
 }

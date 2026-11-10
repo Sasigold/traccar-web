@@ -119,10 +119,48 @@ html.dark body {
   }
 }
 
+/* REP-16: reports print on landscape A4, numbered "01 / 04", with the table head on every page. */
+@page {
+  size: A4 landscape;
+  margin: 12mm 12mm 16mm;
+  @bottom-center {
+    direction: ltr;
+    unicode-bidi: isolate;
+    content: counter(page, decimal-leading-zero) ' / ' counter(pages, decimal-leading-zero);
+    font-family: Sora, sans-serif;
+    font-size: 9pt;
+  }
+}
+
 @media print {
   * {
     height: auto !important;
     overflow: visible !important;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  /* A report's print header replaces the page title on paper. */
+  body:has(.vf-print-header) .app-page-header {
+    display: none !important;
+  }
+
+  tr {
+    break-inside: avoid;
+  }
+
+  /* Sticky table parts (head, totals) flow with the table on paper; totals print once, at the end. */
+  thead th,
+  tfoot,
+  tfoot td,
+  tfoot th {
+    position: static !important;
+  }
+
+  tfoot {
+    display: table-row-group !important;
   }
 
   .app-rail,

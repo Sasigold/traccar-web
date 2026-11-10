@@ -3470,5 +3470,7 @@
     "reportSpeedLimitOf": "מותר {0}",
     "reportStillInside": "עדיין בפנים",
     "reportSoFar": "עד עכשיו",
-    "reportLitersPer100": "ליטר ל-100 ק\"מ"
+    "reportLitersPer100": "ליטר ל-100 ק\"מ",
+    "reportPrintedBy": "הופק על ידי {0} · {1}",
+    "reportAllVehicles": "כל הרכבים"
 }
