@@ -27,7 +27,7 @@ import FleetRoleSection from './components/FleetRoleSection';
 import { traccarFlagsForRole } from '../common/fleet/permissionsCatalog';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import useUserAttributes from '../common/attributes/useUserAttributes';
-import { sessionActions } from '../store';
+import { messagesActions, sessionActions } from '../store';
 import SelectField from '../common/components/SelectField';
 import PasswordField from '../common/components/PasswordField';
 import TotpQrCodeButton from '../common/components/TotpQrCodeButton';
@@ -42,6 +42,12 @@ import fetchOrThrow from '../common/util/fetchOrThrow';
 import FormSection from './components/FormSection';
 import { DateField } from '../common/components/pickers';
 
+const randomPassword = () => {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return btoa(String.fromCharCode(...bytes)).replace(/[+/=]/g, '');
+};
+
 const UserPage = () => {
   const { classes } = useSettingsStyles();
   const navigate = useNavigate();
@@ -55,6 +61,7 @@ const UserPage = () => {
   const currentUser = useSelector((state) => state.session.user);
   const registrationEnabled = useSelector((state) => state.session.server.registration);
   const openIdForced = useSelector((state) => state.session.server.openIdForce);
+  const emailEnabled = useSelector((state) => state.session.server.emailEnabled);
   const totpEnable = useSelector((state) => state.session.server.attributes.totpEnable);
   const totpForce = useSelector((state) => state.session.server.attributes.totpForce);
 
@@ -65,6 +72,10 @@ const UserPage = () => {
   const { id } = useParams();
   const [item, setItem] = useState(id === currentUser.id.toString() ? currentUser : null);
 
+  // ADM-16: a new user gets a link by e-mail to set a password, instead of one typed here.
+  const canInvite = !id && emailEnabled && !openIdForced;
+  const [invite, setInvite] = useState(true);
+  const inviting = canInvite && invite;
   const [deleteEmail, setDeleteEmail] = useState();
   const [deleteFailed, setDeleteFailed] = useState(false);
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
@@ -115,17 +126,32 @@ const UserPage = () => {
     }
   }, [item, searchParams, setSearchParams, attribute]);
 
-  const onItemSaved = (result) => {
+  const onItemSaved = async (result) => {
     if (result.id === currentUser.id) {
       dispatch(sessionActions.updateUser(result));
     }
+    if (inviting && result.email) {
+      await fetchOrThrow('api/password/reset', {
+        method: 'POST',
+        body: new URLSearchParams({ email: result.email }),
+      });
+      dispatch(
+        messagesActions.push({
+          message: t('userInviteSent').replace('{0}', result.email),
+          severity: 'success',
+        }),
+      );
+    }
   };
+
+  // The password nobody knows, replaced when the link is used.
+  const prepare = (value) => (inviting ? { ...value, password: randomPassword() } : value);
 
   const validate = () =>
     item &&
     item.name &&
     item.email &&
-    (item.id || item.password || openIdForced) &&
+    (item.id || item.password || openIdForced || inviting) &&
     (admin || !totpForce || item.totpKey);
 
   return (
@@ -135,6 +161,7 @@ const UserPage = () => {
       setItem={setItem}
       defaultItem={admin ? { deviceLimit: -1 } : {}}
       validate={validate}
+      prepare={prepare}
       onItemSaved={onItemSaved}
       menu={<SettingsMenu />}
       breadcrumbs={['settingsTitle', 'settingsUser']}
@@ -156,7 +183,15 @@ const UserPage = () => {
               helperText={t('userEmailHelp')}
               disabled={fixedEmail && item.id === currentUser.id}
             />
-            {!openIdForced && (
+            {canInvite && (
+              <CheckboxField
+                checked={invite}
+                onChange={(e) => setInvite(e.target.checked)}
+                label={t('userInvite')}
+                helperText={t('userInviteHelp')}
+              />
+            )}
+            {!openIdForced && !inviting && (
               <PasswordField
                 onChange={(e) => setItem({ ...item, password: e.target.value })}
                 label={t('userPassword')}
@@ -371,7 +406,12 @@ const UserPage = () => {
               {t('mapCurrentLocation')}
             </Button>
           </FormSection>
-          <FormSection title={t('sharedPermissions')} description={t('userPermissionsHelp')}>
+          <FormSection
+            title={t('userAdvanced')}
+            description={t('userPermissionsHelp')}
+            collapsible
+            defaultOpen={Boolean(attribute)}
+          >
             <DateField
               label={t('userExpirationTime')}
               value={item.expirationTime ? item.expirationTime.split('T')[0] : '2099-01-01'}

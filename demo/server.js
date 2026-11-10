@@ -162,6 +162,10 @@ export const demoServer = (server) => {
       case '/api/session':
         data = user;
         break;
+      // The time zones the user page offers.
+      case '/api/server/timezones':
+        data = Intl.supportedValuesOf('timeZone');
+        break;
       case '/api/devices':
         data = listed('devices', fleet.devices);
         break;
