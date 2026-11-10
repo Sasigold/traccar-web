@@ -15,7 +15,8 @@ import { getFleetClient, unwrap } from '../../common/fleet/client';
 import { useFleetProfile } from '../../common/fleet/useFleet';
 import { odometerKm } from '../../common/fleet/workOrders';
 import { fromLocalInput, toLocalInput } from '../../common/fleet/incidents';
-import { ensureVehicle } from '../fleetData';
+import { ensureVehicle, uploadFleetFile } from '../fleetData';
+import FileInput from '../../common/components/FileInput';
 import { keepOnBackdrop } from '../../common/util/formDialog';
 import MoneyField from '../../common/components/MoneyField';
 import VehicleSelect from '../../common/components/VehicleSelect';
@@ -46,6 +47,8 @@ const FuelEntryDialog = ({ onClose, onSaved }) => {
     station: '',
   }));
   const [saving, setSaving] = useState(false);
+  // ADM-18: the receipt's photo, kept with the row.
+  const [receipt, setReceipt] = useState(null);
 
   const options = useMemo(
     () => Object.values(devices).sort((a, b) => a.name.localeCompare(b.name)),
@@ -69,6 +72,7 @@ const FuelEntryDialog = ({ onClose, onSaved }) => {
       const device = devices[form.deviceId];
       const liters = Number(form.liters) || null;
       const total = Number(form.total);
+      const receiptPath = receipt ? await uploadFleetFile(profile.org_id, 'fuel', receipt) : null;
       unwrap(
         await getFleetClient()
           .from('fuel_transactions')
@@ -84,6 +88,7 @@ const FuelEntryDialog = ({ onClose, onSaved }) => {
             plate_number: device.attributes?.plateNumber || null,
             fuel_type: device.attributes?.fuelType || null,
             source: 'manual',
+            receipt_path: receiptPath,
             created_by: profile.id,
           }),
       );
@@ -137,6 +142,12 @@ const FuelEntryDialog = ({ onClose, onSaved }) => {
             label={t('fleetFuelFieldStation')}
             value={form.station}
             onChange={set('station')}
+          />
+          <FileInput
+            placeholder={t('fleetExpenseReceipt')}
+            value={receipt}
+            onChange={setReceipt}
+            slotProps={{ htmlInput: { accept: 'image/*,application/pdf' } }}
           />
         </div>
       </DialogContent>

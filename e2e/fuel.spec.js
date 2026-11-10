@@ -30,8 +30,14 @@ test('a manual fueling is saved with the suggested odometer', async ({ page }) =
   await page.getByRole('option', { name: 'Delivery Van' }).click();
   await dialog.getByLabel('ליטרים').fill('40');
   await dialog.getByLabel('סכום').fill('280');
+  await dialog.locator('input[type=file]').setInputFiles({
+    name: 'receipt.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-1.4'),
+  });
   await dialog.getByRole('button', { name: 'שמירה' }).click();
   await expect.poll(() => fleet.tables.fuel_transactions.length).toBe(1);
+  expect(fleet.tables.fuel_transactions[0].receipt_path).toMatch(/^o1\/fuel\//);
   expect(fleet.tables.fuel_transactions[0]).toMatchObject({
     vehicle_id: 'veh1',
     source: 'manual',
