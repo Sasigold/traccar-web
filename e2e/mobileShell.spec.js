@@ -46,6 +46,17 @@ test.describe('phone shell', () => {
 
     await page.getByRole('button', { name: 'הרחבת הכרטיס' }).click();
     await expect(sheet).toHaveAttribute('data-sheet', 'half');
+    // Let the sheet finish growing before the drag starts (a slow CI machine measured the title
+    // mid-animation and dragged from the wrong place).
+    let height = 0;
+    await expect
+      .poll(async () => {
+        const next = (await sheet.boundingBox()).height;
+        const settled = Math.abs(next - height) < 1;
+        height = next;
+        return settled;
+      })
+      .toBe(true);
 
     // Drag the title down: back to the peek.
     const title = page.locator('[data-sheet]').getByText('Delivery Van').first();
