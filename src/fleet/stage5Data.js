@@ -14,9 +14,9 @@ export const useFleetRows = (
       if (order) {
         query = query.order(order, { ascending });
       }
-      return query.limit(1000);
+      return query;
     },
-    { enabled, reloadKey },
+    { enabled, reloadKey, paged: true },
   );
   return enabled && data ? data : null;
 };

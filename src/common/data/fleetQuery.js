@@ -3,6 +3,9 @@ import { useSelector } from 'react-redux';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getFleetClient, unwrap } from '../fleet/client';
 import fetchOrThrow from '../util/fetchOrThrow';
+import store, { messagesActions } from '../../store';
+import { translate } from '../util/translator';
+import { readAll } from './paging';
 
 // ARC-06: queries of the fleet database through one cache. Keys start with the organization
 // (['fleet', orgId, table, ...]), so data of one organization is never shown in another
@@ -11,12 +14,32 @@ export const fleetKey = (orgId, table, ...parts) => ['fleet', orgId ?? null, tab
 
 export const useFleetOrg = () => useSelector((state) => state.fleet.profile?.org_id ?? null);
 
+// The message when a list stops at the ceiling (ARC-08).
+const notifyTruncated = (table, count) =>
+  store.dispatch(
+    messagesActions.push({
+      message: translate('sharedListTruncated').replace('{0}', count.toLocaleString()),
+      severity: 'warning',
+    }),
+  );
+
+export const readAllRows = (table, build, signal) => readAll(table, build, signal, notifyTruncated);
+
 // `build(client)` returns a PostgREST query builder; the request is cancelled with the screen.
-export const useFleetQuery = (table, parts, build, { enabled = true, reloadKey = 0 } = {}) => {
+// With `paged`, every page is read (ARC-08) instead of PostgREST's first 1,000 rows.
+export const useFleetQuery = (
+  table,
+  parts,
+  build,
+  { enabled = true, reloadKey = 0, paged = false } = {},
+) => {
   const orgId = useFleetOrg();
   const query = useQuery({
     queryKey: fleetKey(orgId, table, ...parts),
-    queryFn: async ({ signal }) => unwrap(await build(getFleetClient()).abortSignal(signal)),
+    queryFn: async ({ signal }) =>
+      paged
+        ? readAllRows(table, () => build(getFleetClient()), signal)
+        : unwrap(await build(getFleetClient()).abortSignal(signal)),
     enabled: Boolean(enabled && orgId),
   });
   // Screens that still count reloads (reloadKey) get a fresh fetch on each change.

@@ -13,11 +13,12 @@ import SettingsMenu from '../settings/components/SettingsMenu';
 import { useAsyncTask } from '../reactHelper';
 import { formatTime } from '../common/util/formatter';
 import exportExcel from '../common/util/exportExcel';
-import { getFleetClient, unwrap } from '../common/fleet/client';
+import { getFleetClient } from '../common/fleet/client';
 import { useFleetPermission } from '../common/fleet/useFleet';
 import { isOpenStatus } from '../common/fleet/workOrders';
 import FleetNotice from './components/FleetNotice';
 import { money } from './fleetData';
+import { readAllRows } from '../common/data/fleetQuery';
 
 const useStyles = makeStyles()(() => ({
   row: {
@@ -75,17 +76,17 @@ const WorkOrdersPage = () => {
       return;
     }
     // !inner turns the vehicle embed into a join, so filtering by it drops other vehicles.
-    let query = getFleetClient()
-      .from('work_orders')
-      .select(
-        `*, vendors(name), vehicles${vehicleFilter ? '!inner' : ''}(plate_number, traccar_device_id)`,
-      )
-      .order('opened_at', { ascending: false })
-      .limit(500);
-    if (vehicleFilter) {
-      query = query.eq('vehicles.traccar_device_id', Number(vehicleFilter));
-    }
-    setRows(unwrap(await query) || []);
+    // ARC-08: every page, not the first 500.
+    const build = () => {
+      const query = getFleetClient()
+        .from('work_orders')
+        .select(
+          `*, vendors(name), vehicles${vehicleFilter ? '!inner' : ''}(plate_number, traccar_device_id)`,
+        )
+        .order('opened_at', { ascending: false });
+      return vehicleFilter ? query.eq('vehicles.traccar_device_id', Number(vehicleFilter)) : query;
+    };
+    setRows(await readAllRows('work_orders', build));
   }, [canRead, vehicleFilter]);
 
   const filtered = useMemo(() => {

@@ -3588,5 +3588,6 @@
     "settingsThemeMode": "Color theme",
     "settingsThemeLight": "Light",
     "settingsThemeDark": "Dark",
-    "settingsThemeSystem": "System"
+    "settingsThemeSystem": "System",
+    "sharedListTruncated": "This list is very long: the first {0} rows are shown. Narrow it with a filter to see the rest."
 }

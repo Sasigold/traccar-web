@@ -3588,5 +3588,6 @@
     "settingsThemeMode": "ערכת צבעים",
     "settingsThemeLight": "בהיר",
     "settingsThemeDark": "כהה",
-    "settingsThemeSystem": "לפי המערכת"
+    "settingsThemeSystem": "לפי המערכת",
+    "sharedListTruncated": "הרשימה ארוכה מאוד: מוצגות {0} השורות הראשונות. צמצמו בסינון כדי לראות את השאר."
 }

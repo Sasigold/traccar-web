@@ -255,6 +255,7 @@ export const fakeFleet = async (
             (direction === 'desc' ? -1 : 1),
         );
       }
+      if (params.get('offset')) rows = rows.slice(Number(params.get('offset')));
       if (params.get('limit')) rows = rows.slice(0, Number(params.get('limit')));
       return answer(rows);
     }

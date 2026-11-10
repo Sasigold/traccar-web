@@ -13,10 +13,11 @@ import SettingsMenu from '../settings/components/SettingsMenu';
 import { useAsyncTask } from '../reactHelper';
 import { formatTime } from '../common/util/formatter';
 import exportExcel from '../common/util/exportExcel';
-import { getFleetClient, unwrap } from '../common/fleet/client';
+import { getFleetClient } from '../common/fleet/client';
 import { useFleetPermission } from '../common/fleet/useFleet';
 import FleetNotice from './components/FleetNotice';
 import { money } from './fleetData';
+import { readAllRows } from '../common/data/fleetQuery';
 
 const useStyles = makeStyles()(() => ({
   row: {
@@ -28,7 +29,8 @@ const useStyles = makeStyles()(() => ({
   },
 }));
 
-const camel = (value) => value.replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase());
+// An empty value (an incident whose fault is not set yet) has no key, instead of breaking the list.
+const camel = (value) => String(value ?? '').replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase());
 export const incidentKey = (group, value) => `fleetIncident${group}${camel(value)}`;
 
 const statusColor = {
@@ -63,14 +65,14 @@ const IncidentsPage = () => {
     if (!canRead) {
       return;
     }
+    // ARC-08: every page, not the first 500.
     setRows(
-      unwrap(
-        await getFleetClient()
+      await readAllRows('incidents', () =>
+        getFleetClient()
           .from('incidents')
           .select('*, vehicles(plate_number), drivers(full_name)')
-          .order('occurred_at', { ascending: false })
-          .limit(500),
-      ) || [],
+          .order('occurred_at', { ascending: false }),
+      ),
     );
   }, [canRead]);
 
@@ -103,7 +105,7 @@ const IncidentsPage = () => {
       [t('fleetEntityVehicle')]: row.vehicles?.plate_number,
       [t('sharedDriver')]: row.drivers?.full_name,
       [t('sharedType')]: t(incidentKey('Type', row.type)),
-      [t('fleetIncidentFault')]: t(incidentKey('Fault', row.fault)),
+      [t('fleetIncidentFault')]: row.fault ? t(incidentKey('Fault', row.fault)) : '',
       [t('positionAddress')]: row.address,
       [t('deviceStatus')]: t(incidentKey('Status', row.status)),
       [t('fleetIncidentRepairCost')]: row.repair_cost == null ? '' : Number(row.repair_cost),
@@ -191,7 +193,7 @@ const IncidentsPage = () => {
                 {t(incidentKey('Type', row.type))}
                 {row.injuries && ` · ${t('fleetIncidentInjuries')}`}
               </TableCell>
-              <TableCell>{t(incidentKey('Fault', row.fault))}</TableCell>
+              <TableCell>{row.fault ? t(incidentKey('Fault', row.fault)) : '—'}</TableCell>
               <TableCell>
                 <IncidentStatusChip status={row.status} />
               </TableCell>
