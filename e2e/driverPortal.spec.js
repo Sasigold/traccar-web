@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { test, expect, gotoReady } from './fixtures';
 import { fakeFleet, writeMode } from './fakeFleet';
 
@@ -101,4 +102,41 @@ test('the driver portal reads in Arabic', async ({ page }) => {
   await expect(page.getByText('الفحص الصباحي: لم يُنجز بعد')).toBeVisible();
   await expect(page.getByRole('link', { name: 'التواصل مع المُرسِل' })).toBeVisible();
   await page.screenshot({ path: `test-results/driver-ar-${test.info().project.name}.png` });
+});
+
+// ISR-11: taking the vehicle, signed, with a photo of each side.
+test('the driver takes the vehicle over with photos and a signature', async ({ page }) => {
+  await writeMode(page);
+  const fleet = await setup(page, { vehicle_handovers: [] });
+  await gotoReady(page, '/driver');
+  await page.getByRole('link', { name: 'מסירת רכב' }).click();
+  await expect(page).toHaveURL(/\/driver\/handover$/);
+  await page.getByLabel('ק"מ במד האוץ').fill('45210');
+  await page.getByRole('button', { name: '75%' }).click();
+  await page.getByLabel('מקדימה').setInputFiles({
+    name: 'front.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+      'base64',
+    ),
+  });
+  const pad = page.getByRole('img', { name: 'חתימת הנהג' });
+  const box = await pad.boundingBox();
+  await page.mouse.move(box.x + 20, box.y + 20);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 120, box.y + 40, { steps: 5 });
+  await page.mouse.up();
+  await page.getByRole('button', { name: 'שמירה וחתימה' }).click();
+  await expect(page.getByText(/^הרכב התקבל \d{2}:\d{2} ✓$/)).toBeVisible();
+  expect(fleet.tables.vehicle_handovers).toHaveLength(1);
+  expect(fleet.tables.vehicle_handovers[0]).toMatchObject({
+    vehicle_id: 'v1',
+    driver_id: 'd1',
+    kind: 'handover',
+    odometer_km: 45210,
+    fuel_percent: 75,
+  });
+  expect(fleet.tables.vehicle_handovers[0].photo_paths).toHaveLength(1);
+  expect(fleet.tables.vehicle_handovers[0].driver_signature_path).toMatch(/^o1\/inspections\//);
 });

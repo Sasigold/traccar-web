@@ -2892,6 +2892,57 @@ export type Database = {
         };
         Relationships: [];
       };
+      vehicle_handovers: {
+        Row: {
+          id: string;
+          org_id: string;
+          vehicle_id: string;
+          driver_id: string | null;
+          kind: string;
+          odometer_km: number | null;
+          fuel_percent: number | null;
+          photo_paths: string[];
+          damages: string | null;
+          driver_signature_path: string | null;
+          giver_name: string | null;
+          giver_signature_path: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          vehicle_id: string;
+          driver_id?: string | null;
+          kind: string;
+          odometer_km?: number | null;
+          fuel_percent?: number | null;
+          photo_paths?: string[];
+          damages?: string | null;
+          driver_signature_path?: string | null;
+          giver_name?: string | null;
+          giver_signature_path?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          vehicle_id?: string;
+          driver_id?: string | null;
+          kind?: string;
+          odometer_km?: number | null;
+          fuel_percent?: number | null;
+          photo_paths?: string[];
+          damages?: string | null;
+          driver_signature_path?: string | null;
+          giver_name?: string | null;
+          giver_signature_path?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       vehicles: {
         Row: {
           id: string;
@@ -3800,6 +3851,12 @@ export type Database = {
       touch_last_seen: {
         Args: Record<PropertyKey, never>;
         Returns: undefined;
+      };
+      vehicle_in_my_org: {
+        Args: {
+          p_vehicle: string;
+        };
+        Returns: boolean;
       };
       vehicle_new_checkin_code: {
         Args: {

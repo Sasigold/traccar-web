@@ -72,6 +72,7 @@ const DRIVER_SCREENS = [
   'fleet/DriverPortalPage.jsx',
   'fleet/DriverCheckInPage.jsx',
   'fleet/DriverDamagePage.jsx',
+  'fleet/DriverHandoverPage.jsx',
   'fleet/InspectionPage.jsx',
   'fleet/components/DriverJobsCard.jsx',
   'common/components/shell/navItems.js',

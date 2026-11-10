@@ -12,6 +12,7 @@ import { makeStyles } from 'tss-react/mui';
 import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
 import CarCrashRoundedIcon from '@mui/icons-material/CarCrashRounded';
 import QrCodeScannerRoundedIcon from '@mui/icons-material/QrCodeScannerRounded';
+import KeyRoundedIcon from '@mui/icons-material/KeyRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded';
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
@@ -292,6 +293,16 @@ const DriverPortalPage = () => {
                 >
                   <QrCodeScannerRoundedIcon />
                   {t('driverCheckIn')}
+                </Button>
+                {/* ISR-11: handing the vehicle over or back, signed. */}
+                <Button
+                  variant="outlined"
+                  className={classes.action}
+                  component={RouterLink}
+                  to="/driver/handover"
+                >
+                  <KeyRoundedIcon />
+                  {t('driverHandover')}
                 </Button>
               </div>
             </Paper>
