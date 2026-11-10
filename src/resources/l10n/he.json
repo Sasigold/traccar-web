@@ -3573,5 +3573,16 @@
     "tollsUnknownDriver": "לא שויך",
     "tollsStatusMatched": "הותאם לנסיעה",
     "tollsStatusNoTrip": "אין נסיעה בזמן הזה",
-    "tollsStatusUnknownPlate": "רכב לא מוכר"
+    "tollsStatusUnknownPlate": "רכב לא מוכר",
+    "insuranceFileOpen": "תיק לחברת הביטוח",
+    "insuranceFileTitle": "תיק אירוע לחברת הביטוח",
+    "insuranceFileTrack": "הדקה שלפני ואחרי, מהמכשיר ברכב",
+    "insuranceFileNoTrack": "המכשיר לא שלח מיקומים בדקה שסביב האירוע.",
+    "insuranceFileSeconds": "שניות מהאירוע",
+    "insuranceFileKmh": "{0} קמ\"ש",
+    "insuranceFileKmhPerSecond": "{0} קמ\"ש בשנייה",
+    "insuranceFileSpeedBefore": "מהירות מרבית לפני",
+    "insuranceFileBraking": "הבלימה החזקה ביותר",
+    "insuranceFilePhotos": "תמונות",
+    "insuranceFilePrint": "הדפסה או שמירה כ-PDF"
 }

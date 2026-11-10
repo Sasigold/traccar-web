@@ -60,6 +60,8 @@ import {
 } from './fleetData';
 import { fleetSave, withUploadedFile } from '../common/fleet/fleetSave';
 import { DateField, DateTimeField } from '../common/components/pickers';
+import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
+import InsuranceFileDialog from './components/InsuranceFileDialog';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -144,6 +146,8 @@ const IncidentPage = () => {
   const [parties, setParties] = useState([]);
   const [claim, setClaim] = useState(emptyClaim);
   const [photos, setPhotos] = useState([]);
+  // SAF-04: the file for the insurer.
+  const [insuranceFile, setInsuranceFile] = useState(false);
   const [newPhotos, setNewPhotos] = useState([]);
   const [saving, setSaving] = useState(false);
   const [locating, setLocating] = useState(false);
@@ -501,6 +505,16 @@ const IncidentPage = () => {
             </div>
           </FormSection>
 
+          {incident.id && deviceId && (
+            <Button
+              variant="outlined"
+              startIcon={<DescriptionRoundedIcon />}
+              onClick={() => setInsuranceFile(true)}
+              sx={{ alignSelf: 'flex-start' }}
+            >
+              {t('insuranceFileOpen')}
+            </Button>
+          )}
           <FormSection title={t('fleetIncidentPhotos')} icon={<PhotoCameraRoundedIcon />}>
             {photos.length > 0 && (
               <div className={classes.photos}>
@@ -630,6 +644,15 @@ const IncidentPage = () => {
             </div>
           </FormSection>
         </>
+      )}
+      {insuranceFile && (
+        <InsuranceFileDialog
+          incident={{ ...incident, occurred_at: fromLocalInput(incident.occurred_at) }}
+          deviceId={deviceId}
+          driverName={driverList.find((item) => String(item.id) === driverId)?.name}
+          photos={photos}
+          onClose={() => setInsuranceFile(false)}
+        />
       )}
     </FormPage>
   );

@@ -142,6 +142,11 @@ html.dark body {
     display: table-header-group;
   }
 
+  /* SAF-04: with the insurance file open, only the file prints. */
+  body:has(.vf-insurance-file) #root {
+    display: none !important;
+  }
+
   /* A report's print header replaces the page title on paper. */
   body:has(.vf-print-header) .app-page-header {
     display: none !important;

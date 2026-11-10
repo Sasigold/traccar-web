@@ -3573,5 +3573,16 @@
     "tollsUnknownDriver": "Unassigned",
     "tollsStatusMatched": "Matched to a trip",
     "tollsStatusNoTrip": "No trip at that time",
-    "tollsStatusUnknownPlate": "Unknown vehicle"
+    "tollsStatusUnknownPlate": "Unknown vehicle",
+    "insuranceFileOpen": "File for the insurer",
+    "insuranceFileTitle": "Incident file for the insurer",
+    "insuranceFileTrack": "The minute before and after, from the tracker",
+    "insuranceFileNoTrack": "The tracker sent no positions in the minute around the incident.",
+    "insuranceFileSeconds": "Seconds from the incident",
+    "insuranceFileKmh": "{0} km/h",
+    "insuranceFileKmhPerSecond": "{0} km/h per second",
+    "insuranceFileSpeedBefore": "Top speed before",
+    "insuranceFileBraking": "Hardest braking",
+    "insuranceFilePhotos": "Photos",
+    "insuranceFilePrint": "Print or save as PDF"
 }
