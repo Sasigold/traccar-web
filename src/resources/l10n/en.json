@@ -3400,5 +3400,6 @@
     "geofenceFromFile": "Import from file",
     "geofenceFileHint": "GPX, KML or GeoJSON",
     "geofenceFileEmpty": "The file has no route or area",
-    "geofenceFileUnsupported": "Only GPX, KML or GeoJSON files can be imported"
+    "geofenceFileUnsupported": "Only GPX, KML or GeoJSON files can be imported",
+    "loginResetByAdmin": "Password reset by e-mail is not enabled on this server. Ask your organization's account administrator for a new password."
 }

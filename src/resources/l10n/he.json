@@ -3400,5 +3400,6 @@
     "geofenceFromFile": "יבוא מקובץ",
     "geofenceFileHint": "GPX, KML או GeoJSON",
     "geofenceFileEmpty": "הקובץ לא מכיל מסלול או אזור",
-    "geofenceFileUnsupported": "אפשר לייבא קובצי GPX, KML או GeoJSON בלבד"
+    "geofenceFileUnsupported": "אפשר לייבא קובצי GPX, KML או GeoJSON בלבד",
+    "loginResetByAdmin": "איפוס סיסמה במייל לא מופעל בשרת הזה. פנו למנהל החשבון בארגון כדי לקבל סיסמה חדשה."
 }

@@ -276,17 +276,6 @@ const useStyles = makeStyles()((theme) => ({
       animation: `${rise} 640ms ${theme.tokens.motion.easing.emphasized} 120ms both`,
     },
   },
-  grabber: {
-    display: 'none',
-    [theme.breakpoints.down('md')]: {
-      display: 'block',
-      width: 40,
-      height: 4,
-      borderRadius: theme.tokens.radius.pill,
-      backgroundColor: theme.palette.surface.borderStrong,
-      marginTop: theme.spacing(0.5),
-    },
-  },
   card: {
     position: 'relative',
     width: '100%',
@@ -414,7 +403,6 @@ const LoginLayout = ({ children, options }) => {
       </section>
 
       <div className={classes.formSide}>
-        <span className={classes.grabber} />
         <Paper className={classes.card} elevation={0}>
           <form>{children}</form>
         </Paper>
