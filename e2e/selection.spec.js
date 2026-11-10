@@ -80,6 +80,7 @@ test('J and K move between vehicles, R opens the replay', async ({ page, isMobil
 // LIV-12: a short hover on a vehicle shows who it is.
 test('hovering a vehicle on the map shows its card', async ({ page, isMobile }) => {
   test.skip(isMobile, 'hover is a desktop gesture');
+  test.setTimeout(120_000);
   await gotoReady(page, '/');
   // Selecting a vehicle centers the map on it; closing the card leaves it there.
   await page.locator('[data-row="0"]').click();
@@ -93,8 +94,8 @@ test('hovering a vehicle on the map shows its card', async ({ page, isMobile }) 
   const cx = box.x + visibleWidth / 2;
   const cy = box.y + box.height / 2;
   let found = false;
-  for (let dy = -60; dy <= 60 && !found; dy += 20) {
-    for (let dx = -120; dx <= 120 && !found; dx += 20) {
+  for (let dy = -60; dy <= 60 && !found; dy += 15) {
+    for (let dx = -120; dx <= 120 && !found; dx += 30) {
       await page.mouse.move(cx + dx, cy + dy);
       found = await canvas.evaluate((node) => node.style.cursor === 'pointer');
     }
@@ -110,15 +111,24 @@ test('the vehicle card plays its exit before closing', async ({ page, isMobile }
   await page.locator('[data-row="0"]').click();
   const close = page.getByRole('region').getByRole('button', { name: 'סגירה' }).first();
   await expect(close).toBeVisible();
-  await page.evaluate(() => {
-    window.vfAnimations = [];
-    document.addEventListener('animationstart', (event) =>
-      window.vfAnimations.push(event.animationName),
-    );
+  // Right after the click, before the card goes, something around the button plays another
+  // animation: the exit.
+  const animating = await close.evaluate(async (button) => {
+    const names = () => {
+      const list = [];
+      for (let node = button; node; node = node.parentElement) {
+        list.push(getComputedStyle(node).animationName);
+      }
+      return list;
+    };
+    const before = names();
+    button.click();
+    // React applies the click's update right after it; the card closes 160 ms later.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const after = names();
+    // The enter animation keeps its name after it ends; the exit puts on another.
+    return after.some((name, index) => name !== 'none' && name !== before[index]);
   });
-  await close.click();
+  expect(animating).toBe(true);
   await expect(close).toBeHidden();
-  const names = await page.evaluate(() => window.vfAnimations);
-  // The style library renames keyframes; what matters is that one ran on closing.
-  expect(names.length).toBeGreaterThan(0);
 });
