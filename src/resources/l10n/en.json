@@ -3452,5 +3452,7 @@
     "alertResponseDays": "{0} days",
     "alertResponseNone": "No alerts were handled in this period yet.",
     "alertResponseCount": "Taken",
-    "alertResponseMenuDescription": "How fast alerts are handled, and by whom"
+    "alertResponseMenuDescription": "How fast alerts are handled, and by whom",
+    "reportFilterChanged": "The filter changed; the results on screen are for the previous filter.",
+    "reportUpdate": "Update results"
 }

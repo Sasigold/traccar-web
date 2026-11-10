@@ -37,7 +37,29 @@ export default makeStyles()((theme) => ({
       },
     },
   },
+  // REP-10: results made for another filter are dimmed until updated.
+  staleBar: {
+    flexBasis: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(1, 2),
+    borderRadius: theme.tokens.radius.md,
+    backgroundColor: theme.palette.surface.tint,
+    color: theme.palette.text.primary,
+    '& .MuiButton-root': {
+      whiteSpace: 'nowrap',
+      flexShrink: 0,
+    },
+  },
   header: {
+    '& ~ *': {
+      transition: 'opacity 160ms ease',
+    },
+    '&[data-stale="true"] ~ *': {
+      opacity: 0.55,
+    },
     position: 'sticky',
     top: 0,
     left: 0,

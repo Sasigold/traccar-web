@@ -3452,5 +3452,7 @@
     "alertResponseDays": "{0} ימים",
     "alertResponseNone": "עוד לא טופלו התראות בתקופה הזו.",
     "alertResponseCount": "טופלו",
-    "alertResponseMenuDescription": "כמה מהר מטפלים בהתראות, ומי"
+    "alertResponseMenuDescription": "כמה מהר מטפלים בהתראות, ומי",
+    "reportFilterChanged": "הסינון השתנה, והתוצאות שעל המסך הן של הסינון הקודם.",
+    "reportUpdate": "עדכון התוצאות"
 }

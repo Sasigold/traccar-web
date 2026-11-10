@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import {
   FormControl,
@@ -128,11 +128,28 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
   };
   const options = evaluateOptions();
 
+  // REP-10: what the results on screen were made for. Once the filter no longer says that (other
+  // vehicles, or a period not applied yet), the results dim and a bar offers to update them.
+  const [shownFor, setShownFor] = useState(null);
   useEffect(() => {
     if (from && to) {
       onShow({ deviceIds: deviceIds.filter((it) => it !== 'all'), groupIds, from, to });
+      setShownFor({ from, to });
     }
   }, [deviceIds, groupIds, from, to, onShow]);
+  const stale = Boolean(
+    shownFor &&
+    (!from || !to || !dayjs(range[0]).isSame(dayjs(from)) || !dayjs(range[1]).isSame(dayjs(to))),
+  );
+  const rootRef = useRef(null);
+  useEffect(() => {
+    const header = rootRef.current?.parentElement;
+    if (!header) return undefined;
+    header.dataset.stale = String(stale);
+    return () => {
+      delete header.dataset.stale;
+    };
+  }, [stale]);
 
   const dateFormat = new Intl.DateTimeFormat(getFormatLocale(), {
     year: 'numeric',
@@ -204,7 +221,7 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
   }
 
   return (
-    <div className={classes.filter}>
+    <div className={classes.filter} ref={rootRef}>
       <ReportIntro hint={hint} />
       {deviceType !== 'none' && (
         <div className={classes.filterItem} style={{ flexBasis: 260 }}>
@@ -339,6 +356,14 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
             onClick={() => setScheduling(true)}
           >
             {t('reportScheduleButton')}
+          </Button>
+        </div>
+      )}
+      {stale && (
+        <div className={classes.staleBar} role="status">
+          <Typography variant="body2">{t('reportFilterChanged')}</Typography>
+          <Button size="small" variant="outlined" onClick={showReport} disabled={disabled}>
+            {t('reportUpdate')}
           </Button>
         </div>
       )}
