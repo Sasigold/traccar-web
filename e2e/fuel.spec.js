@@ -155,3 +155,33 @@ test('the summary costs per km, opens a vehicle and edits its expense', async ({
   await expect.poll(() => fleet.tables.vehicle_expenses[0].amount).toBe(550);
   expect(fleet.tables.vehicle_expenses).toHaveLength(2);
 });
+
+// ADM-18: a plate the file names that matches no vehicle is mapped by hand, and remembered.
+test('an unknown plate in the import is mapped to a vehicle', async ({ page }) => {
+  await writeMode(page);
+  const fleet = await fakeFleet(page, {
+    users: { 1: accountant },
+    tables: { fuel_transactions: [], fuel_import_profiles: [], vehicles: [] },
+  });
+  await openFuel(page);
+  await page.getByRole('button', { name: 'ייבוא קובץ דלק' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('חברת דלק').click();
+  await page.getByRole('option', { name: 'פז' }).click();
+  const csv = 'תאריך,מספר רכב,סכום לתשלום\n2026-11-01 08:00,99-888-77,250\n';
+  await dialog.locator('input[type=file]').setInputFiles({
+    name: 'paz.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(csv),
+  });
+  await expect(dialog.getByText('מספרי רישוי שלא זוהו')).toBeVisible();
+  await dialog.getByLabel('הרכב של 99-888-77').click();
+  await page.getByRole('option', { name: 'Delivery Van' }).click();
+  await dialog.getByRole('button', { name: /ייבוא 1/ }).click();
+  await expect.poll(() => fleet.tables.fuel_transactions.length).toBe(1);
+  expect(fleet.tables.fuel_transactions[0].vehicle_id).toBeTruthy();
+  expect(fleet.tables.fuel_transactions[0].anomaly_flags || []).not.toContain('unknown_vehicle');
+  await expect
+    .poll(() => fleet.tables.fuel_import_profiles[0]?.mapping?.plates)
+    .toEqual({ 9988877: 1 });
+});

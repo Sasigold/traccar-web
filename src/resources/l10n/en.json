@@ -1603,6 +1603,8 @@
     "fuelCardsFilterUnassigned": "Without a vehicle",
     "fleetFuelFile": "File",
     "fleetFuelColumns": "Which column is which",
+    "fleetFuelUnknownPlates": "Plates we did not recognize: which vehicle are they?",
+    "fleetFuelPlateIs": "Vehicle for {0}",
     "fleetFuelPreviewSummary": "{0} valid rows, {1} invalid, {2} with an anomaly",
     "fleetFuelImportAction": "Import {0} transactions",
     "fleetFuelImported": "{0} transactions imported, {1} already there, {2} invalid rows skipped",

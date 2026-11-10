@@ -1603,6 +1603,8 @@
     "fuelCardsFilterUnassigned": "בלי רכב",
     "fleetFuelFile": "קובץ",
     "fleetFuelColumns": "איזו עמודה היא מה",
+    "fleetFuelUnknownPlates": "מספרי רישוי שלא זוהו: לאיזה רכב הם שייכים?",
+    "fleetFuelPlateIs": "הרכב של {0}",
     "fleetFuelPreviewSummary": "{0} שורות תקינות, {1} שגויות, {2} עם חריגה",
     "fleetFuelImportAction": "ייבוא {0} עסקאות",
     "fleetFuelImported": "יובאו {0} עסקאות, {1} כבר היו קיימות, {2} שורות שגויות דולגו",

@@ -28,7 +28,11 @@ import {
   REQUIRED_FUEL_FIELDS,
   buildTransactions,
   guessColumns,
+  normalizePlate,
+  unknownPlates,
+  withPlateAliases,
 } from '../../common/fleet/fuelImport';
+import VehicleSelect from '../../common/components/VehicleSelect';
 import readSheet from '../../common/util/readSheet';
 import { formatTime } from '../../common/util/formatter';
 import { ensureVehicle, money } from '../fleetData';
@@ -80,6 +84,8 @@ const FuelImportDialog = ({ onClose, onImported }) => {
   const [mapping, setMapping] = useState({});
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState(null);
+  // ADM-18: plates of the file mapped to a vehicle by hand, kept with the company's columns.
+  const [aliases, setAliases] = useState({});
 
   const vehicles = useMemo(
     () =>
@@ -107,9 +113,12 @@ const FuelImportDialog = ({ onClose, onImported }) => {
 
   // A saved mapping by column name applies when this file has those columns.
   const mappingFor = (headerRow, company) => {
-    const saved = savedMappings[company];
+    // The plates mapped by hand are kept beside the columns, not as a column.
+    const saved = Object.fromEntries(
+      Object.entries(savedMappings[company] || {}).filter(([field]) => field !== 'plates'),
+    );
     const guessed = guessColumns(headerRow);
-    if (!saved) return guessed;
+    if (!Object.keys(saved).length) return guessed;
     const byName = Object.fromEntries(
       Object.entries(saved)
         .map(([field, name]) => [field, headerRow.findIndex((header) => String(header) === name)])
@@ -132,14 +141,19 @@ const FuelImportDialog = ({ onClose, onImported }) => {
 
   const chooseProvider = (company) => {
     setProvider(company);
+    setAliases(savedMappings[company]?.plates || {});
     if (rows) setMapping(mappingFor(rows[0] || [], company));
   };
 
   const headers = rows?.[0] || [];
   const transactions = useMemo(
-    () => (rows ? buildTransactions(rows.slice(1), mapping, vehicles) : []),
-    [rows, mapping, vehicles],
+    () =>
+      rows ? buildTransactions(rows.slice(1), mapping, withPlateAliases(vehicles, aliases)) : [],
+    [rows, mapping, vehicles, aliases],
   );
+  const platesToMap = [...new Set([...unknownPlates(transactions), ...Object.keys(aliases)])];
+  const plateShown = (plate) =>
+    transactions.find((tx) => normalizePlate(tx.plate_number) === plate)?.plate_number || plate;
   const valid = transactions.filter((tx) => !tx.errors.length);
   const mappedRequired = REQUIRED_FUEL_FIELDS.every((field) => mapping[field] !== undefined);
 
@@ -187,9 +201,12 @@ const FuelImportDialog = ({ onClose, onImported }) => {
       }
       if (source) {
         // The next file of this company maps itself (by column name).
-        const named = Object.fromEntries(
-          Object.entries(mapping).map(([field, index]) => [field, String(headers[index] ?? '')]),
-        );
+        const named = {
+          ...Object.fromEntries(
+            Object.entries(mapping).map(([field, index]) => [field, String(headers[index] ?? '')]),
+          ),
+          ...(Object.keys(aliases).length && { plates: aliases }),
+        };
         await client
           .from('fuel_import_profiles')
           .upsert(
@@ -278,6 +295,26 @@ const FuelImportDialog = ({ onClose, onImported }) => {
                   </TextField>
                 ))}
               </div>
+              {platesToMap.length > 0 && (
+                <>
+                  <Typography variant="subtitle2">{t('fleetFuelUnknownPlates')}</Typography>
+                  <div className={classes.mapping}>
+                    {platesToMap.map((plate) => (
+                      <VehicleSelect
+                        key={plate}
+                        label={t('fleetFuelPlateIs').replace('{0}', plateShown(plate))}
+                        value={aliases[plate] ? String(aliases[plate]) : ''}
+                        onChange={(deviceId) => {
+                          const next = { ...aliases };
+                          if (deviceId) next[plate] = Number(deviceId);
+                          else delete next[plate];
+                          setAliases(next);
+                        }}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
               <Alert severity={valid.length ? 'info' : 'warning'}>
                 {t('fleetFuelPreviewSummary')
                   .replace('{0}', String(valid.length))
