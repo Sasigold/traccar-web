@@ -3559,5 +3559,19 @@
     "usageUnderused": "{0} vehicles were used on fewer than 20% of the days ({1}). Consider returning one to the lease company or moving it to the pool.",
     "usageUnderusedSaving": "Returning one vehicle saves about {0} a month.",
     "usageVehicleCost": "Monthly cost per vehicle (₪)",
-    "usageVehicleCostHelp": "Lease or capital cost, to estimate the saving"
+    "usageVehicleCostHelp": "Lease or capital cost, to estimate the saving",
+    "reportTolls": "Tolls and parking",
+    "reportTollsDescription": "A Road 6, Carmel tunnels, fast lane or parking statement (CSV or Excel), matched to the trip and the driver.",
+    "tollsLoad": "Load a statement",
+    "tollsEmpty": "Load a statement file to match each charge to a trip and a driver.",
+    "tollsColumnsMissing": "The file has no date, plate and amount columns we recognize.",
+    "tollsNoRows": "The file has no charge rows we can read.",
+    "tollsTime": "Time",
+    "tollsOperator": "Operator / segment",
+    "tollsAmount": "Amount",
+    "tollsByDriver": "Total per driver",
+    "tollsUnknownDriver": "Unassigned",
+    "tollsStatusMatched": "Matched to a trip",
+    "tollsStatusNoTrip": "No trip at that time",
+    "tollsStatusUnknownPlate": "Unknown vehicle"
 }
