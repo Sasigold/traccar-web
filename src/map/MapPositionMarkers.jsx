@@ -82,6 +82,8 @@ const MapPositionMarkers = ({
         latitude: position.latitude,
         longitude: position.longitude,
         image: `${iconKey}-${color}`,
+        // LIV-29: counted by the clusters (their ring shows the state of most of their vehicles).
+        status: device.status || 'unknown',
         title,
         fixTime: position.fixTime,
         rotation: position.course,

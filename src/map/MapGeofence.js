@@ -7,7 +7,8 @@ import { findFonts, geofenceToFeature } from './core/mapUtil';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import { casingLayer, haloColor } from './core/lineCasing';
 
-const MapGeofence = () => {
+// LIV-29: with onGeofenceClick, a click inside a geofence says which one, and where.
+const MapGeofence = ({ onGeofenceClick }) => {
   const theme = useTheme();
   const t = useTranslation();
 
@@ -25,6 +26,22 @@ const MapGeofence = () => {
           'fill-outline-color': ['get', 'color'],
           'fill-opacity': 0.1,
         },
+        ...(onGeofenceClick
+          ? {
+              on: {
+                click: (event) => {
+                  const feature = event.features?.[0];
+                  if (feature?.id != null) {
+                    onGeofenceClick({
+                      id: feature.id,
+                      top: event.originalEvent.clientY,
+                      left: event.originalEvent.clientX,
+                    });
+                  }
+                },
+              },
+            }
+          : {}),
       },
       casingLayer(theme),
       {
@@ -52,7 +69,7 @@ const MapGeofence = () => {
         },
       },
     ],
-    layersDeps: [t, theme.palette.mode],
+    layersDeps: [t, theme.palette.mode, onGeofenceClick],
     data: {
       type: 'FeatureCollection',
       features: Object.values(geofences)

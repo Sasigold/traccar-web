@@ -184,6 +184,27 @@ const MapMarkers = ({
   }
 
   if (cluster) {
+    // LIV-29: a ring under the count, in the color of most of the cluster's vehicles: aqua
+    // online, red offline, slate unknown or mixed.
+    const half = ['/', ['get', 'point_count'], 2];
+    layers.push({
+      key: 'clusterRing',
+      type: 'circle',
+      filter: ['has', 'point_count'],
+      paint: {
+        'circle-radius': ringRadius + 1,
+        'circle-opacity': 0,
+        'circle-stroke-width': 3,
+        'circle-stroke-color': [
+          'case',
+          ['>', ['get', 'offline'], half],
+          theme.palette.error.main,
+          ['>', ['get', 'online'], half],
+          theme.palette.brand.aqua,
+          theme.palette.brand.slate,
+        ],
+      },
+    });
     layers.push({
       key: 'clusters',
       type: 'symbol',
@@ -209,7 +230,17 @@ const MapMarkers = ({
   const animate = smooth && !prefersReducedMotion();
 
   const id = useMapLayer({
-    source: cluster ? { cluster: true, clusterMaxZoom: 14, clusterRadius: 50 } : undefined,
+    source: cluster
+      ? {
+          cluster: true,
+          clusterMaxZoom: 14,
+          clusterRadius: 50,
+          clusterProperties: {
+            online: ['+', ['case', ['==', ['get', 'status'], 'online'], 1, 0]],
+            offline: ['+', ['case', ['==', ['get', 'status'], 'offline'], 1, 0]],
+          },
+        }
+      : undefined,
     layers,
     layersDeps: [
       theme.palette.mode,

@@ -40,6 +40,8 @@
     "sharedIconScale": "Icon Scale",
     "sharedGeofence": "Geofence",
     "sharedGeofences": "Geofences",
+    "geofenceInside": "Inside: {0} vehicles",
+    "geofenceInsideNone": "No vehicles inside right now",
     "sharedGeofenceHint": "Choose a shape to start drawing a geofence.",
     "sharedCreateGeofence": "Create Geofence",
     "sharedNotifications": "Notifications",

@@ -40,6 +40,8 @@
     "sharedIconScale": "קנה מידה של סמלים",
     "sharedGeofence": "גדר וירטואלית",
     "sharedGeofences": "גדרות וירטואליות",
+    "geofenceInside": "בתוך: {0} רכבים",
+    "geofenceInsideNone": "אין רכבים בתוך האזור עכשיו",
     "sharedGeofenceHint": "בחרו צורה כדי להתחיל לצייר גדר וירטואלית.",
     "sharedCreateGeofence": "יצירת גדר וירטואלית",
     "sharedNotifications": "התראות",

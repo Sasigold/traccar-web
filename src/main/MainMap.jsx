@@ -20,6 +20,7 @@ import MapRuler from '../map/control/MapRuler';
 import MapFitFleet from '../map/control/MapFitFleet';
 import MapFocusedEvent from '../map/main/MapFocusedEvent';
 import MapContextMenu from '../map/main/MapContextMenu';
+import GeofenceInside from '../map/main/GeofenceInside';
 import useFeatures from '../common/util/useFeatures';
 import { useStableArray } from '../common/util/stableArray';
 
@@ -32,6 +33,7 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
   const features = useFeatures();
 
   const [rulerActive, setRulerActive] = useState(false);
+  const [geofenceTarget, setGeofenceTarget] = useState(null);
 
   const deviceIds = useStableArray(
     useMemo(() => filteredPositions.map((position) => position.deviceId), [filteredPositions]),
@@ -68,7 +70,7 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
     <>
       <MapView>
         <MapOverlay />
-        <MapGeofence />
+        <MapGeofence onGeofenceClick={setGeofenceTarget} />
         {/* LIV-12: the accuracy circle only for the selected vehicle. */}
         <MapAccuracy positions={selectedPosition ? [selectedPosition] : []} />
         <MapLiveRoutes deviceIds={deviceIds} />
@@ -93,6 +95,7 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
       <MapCurrentLocation />
       <MapGeocoder />
       <MapContextMenu />
+      <GeofenceInside target={geofenceTarget} onClose={() => setGeofenceTarget(null)} />
       {desktop && !features.disableDeviceList && (
         <MapPadding start={theme.dimensions.devicePanelWidth + 2 * theme.dimensions.panelGap} />
       )}
