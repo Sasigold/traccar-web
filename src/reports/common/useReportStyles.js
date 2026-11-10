@@ -37,6 +37,12 @@ export default makeStyles()((theme) => ({
       },
     },
   },
+  // REP-09: the change from the previous period, under the value (text only).
+  delta: {
+    display: 'block',
+    fontSize: '0.75rem',
+    color: theme.palette.text.secondary,
+  },
   // REP-10: results made for another filter are dimmed until updated.
   staleBar: {
     flexBasis: '100%',

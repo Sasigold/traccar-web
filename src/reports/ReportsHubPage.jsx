@@ -1,6 +1,10 @@
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { Typography } from '@mui/material';
+import { Chip, Stack, Typography } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
+import BookmarkRoundedIcon from '@mui/icons-material/BookmarkRounded';
+import usePersistedState from '../common/util/usePersistedState';
+import { savedReportLink } from './common/savedReports';
 import { makeStyles } from 'tss-react/mui';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
@@ -39,6 +43,8 @@ const ReportsHubPage = () => {
   const sections = useReportsSections();
   const selectedId = useSelector((state) => state.devices.selectedId);
   const search = selectedId != null ? `?deviceId=${selectedId}` : '';
+
+  const [savedReports, setSavedReports] = usePersistedState('savedReports', []);
 
   const recent = useMemo(() => {
     const items = sections.flatMap((section) => section.items);
@@ -79,6 +85,38 @@ const ReportsHubPage = () => {
       description={t('reportsHubDescription')}
     >
       <div className={classes.root}>
+        {/* REP-09: views saved from a report open it on the current dates of their period. */}
+        {savedReports.length > 0 && (
+          <section aria-labelledby="reports-hub-saved">
+            <Typography
+              variant="subtitle2"
+              color="textSecondary"
+              component="h2"
+              id="reports-hub-saved"
+              className={classes.heading}
+            >
+              {t('reportSavedViews')}
+            </Typography>
+            <Stack direction="row" flexWrap="wrap" gap={1} component="ul" sx={{ m: 0, p: 0 }}>
+              {savedReports.map((view) => (
+                <li key={view.id} style={{ listStyle: 'none' }}>
+                  <Chip
+                    icon={<BookmarkRoundedIcon />}
+                    label={view.name}
+                    component={RouterLink}
+                    to={savedReportLink(view, new Date())}
+                    clickable
+                    variant="outlined"
+                    onDelete={(event) => {
+                      event.preventDefault();
+                      setSavedReports(savedReports.filter((item) => item.id !== view.id));
+                    }}
+                  />
+                </li>
+              ))}
+            </Stack>
+          </section>
+        )}
         {recent.length > 0 && group('recent', 'reportsRecent', recent)}
         {sections.map((section) => group(section.id, section.titleKey, section.items))}
       </div>

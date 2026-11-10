@@ -11,7 +11,10 @@ import {
   TableBody,
   TableCell,
   Link,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
+import { delta, formatDelta, previousRange } from './common/compare';
 import { useTheme } from '@mui/material/styles';
 import {
   formatDistance,
@@ -62,6 +65,8 @@ const columnsArray = [
   ['spentFuel', 'reportSpentFuel'],
 ];
 const columnsMap = new Map(columnsArray);
+// The columns that compare with the previous period.
+const COMPARED = ['distance', 'averageSpeed', 'maxSpeed', 'engineHours', 'spentFuel'];
 
 // The totals row: distances, engine hours and fuel add up; speeds take the top or the
 // mean weighted by engine hours.
@@ -94,6 +99,9 @@ const SummaryReportPage = () => {
   ]);
   const daily = searchParams.get('daily') === 'true';
   const [items, setItems] = useState([]);
+  // REP-09: the same vehicles in the period right before, for the change in each column.
+  const [compare, setCompare] = usePersistedState('summaryCompare', false);
+  const [previous, setPrevious] = useState(null);
   const [loading, setLoading] = useState(false);
   const [queried, setQueried] = useState(false);
 
@@ -108,12 +116,24 @@ const SummaryReportPage = () => {
           headers: { Accept: 'application/json' },
         });
         setItems(await response.json());
+        if (compare && !daily) {
+          const before = previousRange(from, to);
+          query.set('from', before.from);
+          query.set('to', before.to);
+          const previousResponse = await fetchOrThrow(`api/reports/summary?${query.toString()}`, {
+            headers: { Accept: 'application/json' },
+          });
+          const rows = await previousResponse.json();
+          setPrevious(new Map(rows.map((row) => [row.deviceId, row])));
+        } else {
+          setPrevious(null);
+        }
       } finally {
         setLoading(false);
         setQueried(true);
       }
     },
-    [daily],
+    [daily, compare],
   );
 
   const onExport = useCatch(async () => {
@@ -249,6 +269,16 @@ const SummaryReportPage = () => {
             </FormControl>
           </div>
           <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
+          {!daily && (
+            <div className={classes.filterItem}>
+              <FormControlLabel
+                control={
+                  <Switch checked={compare} onChange={(e) => setCompare(e.target.checked)} />
+                }
+                label={t('reportComparePrevious')}
+              />
+            </div>
+          )}
         </ReportFilter>
       </div>
       {!loading && <ReportKpis items={kpis} />}
@@ -281,9 +311,28 @@ const SummaryReportPage = () => {
                     {vehicleName(devices, item.deviceId)}
                   </Link>
                 </TableCell>
-                {columns.map((key) => (
-                  <TableCell key={key}>{formatValue(item, key)}</TableCell>
-                ))}
+                {columns.map((key) => {
+                  const change =
+                    previous && COMPARED.includes(key)
+                      ? delta(item[key], previous.get(item.deviceId)?.[key])
+                      : null;
+                  return (
+                    <TableCell key={key}>
+                      {formatValue(item, key)}
+                      {change && (
+                        <span
+                          className={classes.delta}
+                          aria-label={t('reportChangeFromPrevious').replace(
+                            '{0}',
+                            formatDelta(change),
+                          )}
+                        >
+                          <bdi dir="ltr">{formatDelta(change)}</bdi>
+                        </span>
+                      )}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))
           ) : (

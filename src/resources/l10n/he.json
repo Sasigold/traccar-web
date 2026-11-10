@@ -3455,5 +3455,11 @@
     "alertResponseMenuDescription": "כמה מהר מטפלים בהתראות, ומי",
     "reportFilterChanged": "הסינון השתנה, והתוצאות שעל המסך הן של הסינון הקודם.",
     "reportUpdate": "עדכון התוצאות",
-    "reportPlate": "לוחית רישוי"
+    "reportPlate": "לוחית רישוי",
+    "reportSaveView": "שמירת תצוגה",
+    "reportSaveViewHint": "נשמרים הדוח, הרכבים והתקופה (למשל \"שבוע שעבר\"). התצוגה מופיעה בעמוד הדוחות.",
+    "reportViewSaved": "התצוגה נשמרה בעמוד הדוחות",
+    "reportSavedViews": "תצוגות שמורות",
+    "reportComparePrevious": "השוואה לתקופה הקודמת",
+    "reportChangeFromPrevious": "שינוי מהתקופה הקודמת: {0}"
 }

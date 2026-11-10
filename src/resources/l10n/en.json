@@ -3455,5 +3455,11 @@
     "alertResponseMenuDescription": "How fast alerts are handled, and by whom",
     "reportFilterChanged": "The filter changed; the results on screen are for the previous filter.",
     "reportUpdate": "Update results",
-    "reportPlate": "Plate number"
+    "reportPlate": "Plate number",
+    "reportSaveView": "Save view",
+    "reportSaveViewHint": "Keeps the report, the vehicles and the period (for example \"last week\"). The view appears on the reports page.",
+    "reportViewSaved": "The view was saved on the reports page",
+    "reportSavedViews": "Saved views",
+    "reportComparePrevious": "Compare with the previous period",
+    "reportChangeFromPrevious": "Change from the previous period: {0}"
 }

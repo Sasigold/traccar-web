@@ -9,10 +9,18 @@ import {
   MenuItem,
   Button,
   Typography,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
 import EventRepeatRoundedIcon from '@mui/icons-material/EventRepeatRounded';
+import BookmarkAddRoundedIcon from '@mui/icons-material/BookmarkAddRounded';
+import usePersistedState from '../../common/util/usePersistedState';
+import { addSavedReport, savedReportView } from '../common/savedReports';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import useReportStyles from '../common/useReportStyles';
 import SplitButton from '../../common/components/SplitButton';
@@ -20,7 +28,7 @@ import ScheduleDialog from './ScheduleDialog';
 import { useReportsSectionItems } from './reportsSections';
 import VehiclePicker from '../../common/components/vehiclePicker/VehiclePicker';
 import { useRestriction } from '../../common/util/permissions';
-import { reportsActions } from '../../store';
+import { messagesActions, reportsActions } from '../../store';
 import ReportIntro from './ReportIntro';
 import { getFormatLocale } from '../../common/util/formatter';
 import { DateRangeField } from '../../common/components/pickers';
@@ -96,6 +104,19 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
   }, [from, to, urlPeriod]);
 
   const [scheduling, setScheduling] = useState(false);
+  // REP-09: this report, these vehicles and this period preset, under a name.
+  const [savedReports, setSavedReports] = usePersistedState('savedReports', []);
+  const [viewName, setViewName] = useState(null);
+  const saveView = () => {
+    setSavedReports(
+      addSavedReport(
+        savedReports,
+        savedReportView({ name: viewName, path: location.pathname, deviceIds, groupIds, period }),
+      ),
+    );
+    setViewName(null);
+    dispatch(messagesActions.push({ message: t('reportViewSaved'), severity: 'success' }));
+  };
 
   const selectedFrom = dayjs(range[0]);
   const selectedTo = dayjs(range[1]);
@@ -358,6 +379,42 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
             {t('reportScheduleButton')}
           </Button>
         </div>
+      )}
+      {deviceType !== 'none' && (
+        <div className={classes.filterItem}>
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<BookmarkAddRoundedIcon />}
+            disabled={!deviceIds.length && !groupIds.length}
+            onClick={() => setViewName(reportName ? t(reportName) : '')}
+          >
+            {t('reportSaveView')}
+          </Button>
+        </div>
+      )}
+      {viewName !== null && (
+        <Dialog open onClose={() => setViewName(null)} fullWidth maxWidth="xs">
+          <DialogTitle>{t('reportSaveView')}</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              fullWidth
+              margin="dense"
+              label={t('viewName')}
+              helperText={t('reportSaveViewHint')}
+              value={viewName}
+              onChange={(event) => setViewName(event.target.value)}
+              slotProps={{ htmlInput: { maxLength: 60 } }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setViewName(null)}>{t('sharedCancel')}</Button>
+            <Button onClick={saveView} disabled={!viewName.trim()}>
+              {t('sharedSave')}
+            </Button>
+          </DialogActions>
+        </Dialog>
       )}
       {stale && (
         <div className={classes.staleBar} role="status">
