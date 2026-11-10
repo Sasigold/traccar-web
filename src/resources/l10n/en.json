@@ -4005,6 +4005,7 @@
     "insuranceFileOpen": "File for the insurer",
     "insuranceFileTitle": "Incident file for the insurer",
     "insuranceFileTrack": "The minute before and after, from the tracker",
+    "insuranceFileSketch": "Sketch of the track around the impact",
     "insuranceFileNoTrack": "The tracker sent no positions in the minute around the incident.",
     "insuranceFileSeconds": "Seconds from the incident",
     "insuranceFileKmh": "{0} km/h",
