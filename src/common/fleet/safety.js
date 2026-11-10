@@ -13,6 +13,26 @@ export const DEFAULT_SCORE_WEIGHTS = {
   fatigueDriving: 15,
   accident: 30,
   idle: 2,
+  // ISR-08: Mobileye warnings, as the device (or a computed attribute) reports them.
+  forwardCollision: 25,
+  pedestrianCollision: 30,
+  headwayWarning: 8,
+  laneDeparture: 5,
+};
+
+// ISR-08: the alarm names Mobileye installations arrive with (Traccar's own laneChange, and the
+// names docs/MOBILEYE.md suggests for a computed attribute) -> a score category.
+export const MOBILEYE_ALARMS = {
+  laneChange: 'laneDeparture',
+  laneDeparture: 'laneDeparture',
+  ldw: 'laneDeparture',
+  headway: 'headwayWarning',
+  headwayWarning: 'headwayWarning',
+  hmw: 'headwayWarning',
+  forwardCollision: 'forwardCollision',
+  fcw: 'forwardCollision',
+  pedestrianCollision: 'pedestrianCollision',
+  pcw: 'pedestrianCollision',
 };
 
 // Below this distance the score isn't meaningful (a single event would dominate it).
@@ -25,6 +45,7 @@ export const eventCategory = (event) => {
   }
   if (event.type === 'alarm') {
     const alarm = event.attributes?.alarm;
+    if (Object.prototype.hasOwnProperty.call(MOBILEYE_ALARMS, alarm)) return MOBILEYE_ALARMS[alarm];
     return Object.prototype.hasOwnProperty.call(DEFAULT_SCORE_WEIGHTS, alarm) ? alarm : null;
   }
   return null;
