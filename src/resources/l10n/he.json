@@ -3801,6 +3801,8 @@
     "alertCaseNoNotes": "עוד אין הערות.",
     "alertCaseAddNote": "הערה חדשה",
     "alertCaseTakenAfter": "טופל אחרי {0} דק'",
+    "alertCaseToSafety": "לתיבת הבטיחות",
+    "alertCaseToRule": "כלל אוטומטי מזה",
     "alertCaseHandle": "טיפול בהתראה",
     "alertCaseDue": "חדש · נותרו {0} דק'",
     "alertCaseLate": "חדש · באיחור {0} דק'",

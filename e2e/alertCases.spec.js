@@ -120,3 +120,56 @@ test('response times per person, and the target', async ({ page }) => {
   await expect(page.getByRole('row', { name: /דנה/ })).toContainText('100%');
   await expect(page.getByRole('row', { name: /יוסי/ })).toContainText('0%');
 });
+
+// LIV-24: from an overspeed alert to the safety inbox, or to a rule of the same kind.
+test('an overspeed alert leads to the safety inbox and to a ready rule', async ({
+  page,
+  context,
+}) => {
+  await writeMode(page);
+  await fakeFleet(page, {
+    users: {
+      1: {
+        profile: { id: 'p1', org_id: 'o1', role: 'manager', full_name: 'דנה' },
+        permissions: ['alerts.read', 'alerts.manage', 'safety.read'],
+      },
+    },
+    rpc: { fleet_features: ['alertCases', 'automations', 'safety'] },
+    tables: {
+      profiles: people,
+      alert_cases: [],
+      alert_case_notes: [],
+      automation_rules: [],
+      automation_runs: [],
+    },
+  });
+  const client = `t${Math.random().toString(36).slice(2)}`;
+  await context.addCookies([{ name: 'demoClient', value: client, url: 'http://localhost:3000' }]);
+  await gotoReady(page, '/');
+  await expect
+    .poll(async () => {
+      const response = await page.request.get(
+        `/api/demo/event?client=${client}&deviceId=2&type=deviceOverspeed&speed=60`,
+      );
+      return (await response.json()).sent;
+    })
+    .toBeGreaterThan(0);
+  await page
+    .getByRole('button', { name: /^התראות/ })
+    .first()
+    .click();
+  await page
+    .getByRole('dialog', { name: 'התראות' })
+    .getByRole('button', { name: /^טיפול בהתראה · Service Van/ })
+    .click();
+  const dialog = page.getByRole('dialog', { name: /Service Van/ });
+  await expect(dialog.getByRole('link', { name: 'לתיבת הבטיחות' })).toHaveAttribute(
+    'href',
+    '/fleet/safety/inbox',
+  );
+  await dialog.getByRole('link', { name: 'כלל אוטומטי מזה' }).click();
+  await expect(page).toHaveURL(/\/fleet\/automations\?template=overspeed/);
+  await expect(page.getByRole('dialog', { name: 'כלל חדש' }).getByLabel(/מהירות/)).toHaveValue(
+    '111',
+  );
+});

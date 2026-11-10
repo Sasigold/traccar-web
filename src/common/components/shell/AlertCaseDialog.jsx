@@ -27,6 +27,9 @@ import { getFleetClient, unwrap } from '../../fleet/client';
 import { useFleetQuery, useInvalidateFleet } from '../../data/fleetQuery';
 import { CASE_STATUSES, caseRow } from '../../fleet/alertCases';
 import { formatNotificationTitle, formatTime } from '../../util/formatter';
+import { isSafetyAlert, ruleFromAlert, ruleLink } from '../../fleet/alertLinks';
+import { useFleetPermission } from '../../fleet/useFleet';
+import { useFleetFeature } from '../../fleet/features';
 
 const statusKey = (status) =>
   ({ new: 'alertCaseNew', in_progress: 'alertCaseInProgress', closed: 'alertCaseClosed' })[status];
@@ -36,6 +39,10 @@ const AlertCaseDialog = ({ event, alertCase, people, onClose }) => {
   const t = useTranslation();
   const invalidate = useInvalidateFleet();
   const profile = useSelector((state) => state.fleet.profile);
+  const safetyRead = useFleetPermission('safety.read');
+  const safetyFeature = useFleetFeature('safety');
+  const safetyAllowed = safetyRead && safetyFeature;
+  const rulesAllowed = useFleetPermission('alerts.manage');
   const device = useSelector((state) => state.devices.items[event.deviceId]);
   const [note, setNote] = useState('');
 
@@ -165,7 +172,18 @@ const AlertCaseDialog = ({ event, alertCase, people, onClose }) => {
           </div>
         </Stack>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
+        {/* LIV-24: driving behavior goes on in the safety inbox; any kind can become a rule. */}
+        {safetyAllowed && isSafetyAlert(event) && (
+          <Button component={RouterLink} to="/fleet/safety/inbox" onClick={onClose}>
+            {t('alertCaseToSafety')}
+          </Button>
+        )}
+        {rulesAllowed && ruleFromAlert(event) && (
+          <Button component={RouterLink} to={ruleLink(ruleFromAlert(event))} onClick={onClose}>
+            {t('alertCaseToRule')}
+          </Button>
+        )}
         <Button component={RouterLink} to="/fleet/alerts/response" onClick={onClose}>
           {t('alertResponseTitle')}
         </Button>

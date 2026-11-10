@@ -3801,6 +3801,8 @@
     "alertCaseNoNotes": "No notes yet.",
     "alertCaseAddNote": "New note",
     "alertCaseTakenAfter": "taken after {0} min",
+    "alertCaseToSafety": "To the safety inbox",
+    "alertCaseToRule": "Make a rule from this",
     "alertCaseHandle": "Handle alert",
     "alertCaseDue": "New · {0} min left",
     "alertCaseLate": "New · {0} min late",
