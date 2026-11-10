@@ -1,6 +1,7 @@
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
 import StoreRoundedIcon from '@mui/icons-material/StoreRounded';
 import DnsRoundedIcon from '@mui/icons-material/DnsRounded';
+import SimCardRoundedIcon from '@mui/icons-material/SimCardRounded';
 import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import SellRoundedIcon from '@mui/icons-material/SellRounded';
@@ -35,6 +36,13 @@ export const adminSections = [
         icon: DnsRoundedIcon,
         path: '/admin/devices',
         match: (pathname) => pathname.startsWith('/admin/device'),
+      },
+      {
+        id: 'sims',
+        titleKey: 'adminSims',
+        icon: SimCardRoundedIcon,
+        path: '/admin/sims',
+        match: (pathname) => pathname.startsWith('/admin/sims'),
       },
       {
         id: 'users',

@@ -2718,6 +2718,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      sim_cards: {
+        Row: {
+          iccid: string;
+          msisdn: string | null;
+          carrier: string | null;
+          status: string;
+          traccar_device_id: number | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          iccid: string;
+          msisdn?: string | null;
+          carrier?: string | null;
+          status?: string;
+          traccar_device_id?: number | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          iccid?: string;
+          msisdn?: string | null;
+          carrier?: string | null;
+          status?: string;
+          traccar_device_id?: number | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       tachograph_downloads: {
         Row: {
           id: string;

@@ -127,6 +127,7 @@ const CustomersPage = lazy(() => import('./admin/CustomersPage'));
 const CustomerPage = lazy(() => import('./admin/CustomerPage'));
 const AdminDevicesPage = lazy(() => import('./admin/AdminDevicesPage'));
 const DeviceSetupPage = lazy(() => import('./admin/DeviceSetupPage'));
+const SimsPage = lazy(() => import('./admin/SimsPage'));
 const AdminUsersPage = lazy(() => import('./admin/AdminUsersPage'));
 const BillingPage = lazy(() => import('./admin/BillingPage'));
 const PlansPage = lazy(() => import('./admin/PlansPage'));
@@ -313,6 +314,7 @@ const Navigation = () => {
             <Route path="customer/:id" element={<CustomerPage />} />
             <Route path="customer" element={<CustomerPage />} />
             <Route path="devices" element={<AdminDevicesPage />} />
+            <Route path="sims" element={<SimsPage />} />
             <Route path="device/:id" element={<DeviceSetupPage />} />
             <Route path="device" element={<DeviceSetupPage />} />
             <Route path="users" element={<AdminUsersPage />} />
