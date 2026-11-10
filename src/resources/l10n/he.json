@@ -3384,5 +3384,14 @@
     "shortcutReplayStep": "בשחזור מסלול: נקודה קדימה או אחורה",
     "shortcutReplayMinute": "בשחזור מסלול: דקה קדימה או אחורה",
     "shellSkipToContent": "דילוג לתוכן",
-    "mapLiveTitle": "מפה חיה"
+    "mapLiveTitle": "מפה חיה",
+    "streamChannel": "ערוץ מצלמה",
+    "streamChannelNumber": "ערוץ {0}",
+    "streamIdle": "בחרו ערוץ ולחצו הפעלה",
+    "streamIdleHint": "השידור מתחיל אחרי שהמצלמה ברכב מקבלת את הבקשה.",
+    "streamConnecting": "מתחברים למצלמה…",
+    "streamFailed": "לא הצלחנו להתחבר למצלמה",
+    "streamFailedHint": "ייתכן שהרכב כבוי, מחוץ לקליטה, או שאין מצלמה בערוץ הזה.",
+    "streamUnsupported": "הדפדפן הזה לא מנגן שידור חי. נסו בדפדפן אחר.",
+    "streamRetry": "נסו שוב"
 }

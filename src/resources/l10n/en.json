@@ -3384,5 +3384,14 @@
     "shortcutReplayStep": "In route replay: a point forward or back",
     "shortcutReplayMinute": "In route replay: a minute forward or back",
     "shellSkipToContent": "Skip to content",
-    "mapLiveTitle": "Live map"
+    "mapLiveTitle": "Live map",
+    "streamChannel": "Camera channel",
+    "streamChannelNumber": "Channel {0}",
+    "streamIdle": "Choose a channel and press play",
+    "streamIdleHint": "The stream starts once the camera in the vehicle receives the request.",
+    "streamConnecting": "Connecting to the camera…",
+    "streamFailed": "Couldn't connect to the camera",
+    "streamFailedHint": "The vehicle may be off, out of coverage, or there is no camera on this channel.",
+    "streamUnsupported": "This browser can't play live video. Try another browser.",
+    "streamRetry": "Try again"
 }
