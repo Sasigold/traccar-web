@@ -3211,6 +3211,8 @@
     "replayTimeline": "ציר הזמן של המסלול",
     "replayEmpty": "אין מיקומים בתקופה הזו. נסו תקופה אחרת.",
     "shellMore": "עוד",
+    "shellMenu": "תפריט",
+    "a11ySelected": "נבחר: {0}",
     "sheetExpand": "הרחבת הכרטיס",
     "sheetCollapse": "כיווץ הכרטיס",
     "driverDamageQueued": "הדיווח נשמר בטלפון {0}",

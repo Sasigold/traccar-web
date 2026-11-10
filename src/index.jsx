@@ -18,6 +18,8 @@ import { installNumberInputGuards } from './common/util/numberInputs';
 import TelemetryRoute from './common/telemetry/TelemetryRoute';
 import { ConfirmProvider } from './common/components/confirm/ConfirmProvider';
 import UnsavedChangesGuard from './common/components/confirm/UnsavedChangesGuard';
+import Announcer from './common/components/Announcer';
+import SelectionAnnouncer from './common/components/SelectionAnnouncer';
 
 // FND-05: a tab from before a deploy reloads once instead of showing an error.
 installStaleBuildRecovery();
@@ -41,6 +43,8 @@ root.render(
                     <UnsavedChangesGuard />
                     <Navigation />
                     <MessageHandler />
+                    <Announcer />
+                    <SelectionAnnouncer />
                   </BrowserRouter>
                   <NativeInterface />
                 </ServerProvider>

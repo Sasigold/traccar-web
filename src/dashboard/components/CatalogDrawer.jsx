@@ -151,10 +151,10 @@ const CatalogDrawer = ({ open, onClose, onAdd, availability, singletonsUsed }) =
       anchor="right"
       open={open}
       onClose={onClose}
-      slotProps={{ paper: { className: classes.paper } }}
+      slotProps={{ paper: { className: classes.paper, 'aria-labelledby': 'catalog-title' } }}
     >
       <div className={classes.header}>
-        <Typography component="h2" className={classes.title}>
+        <Typography id="catalog-title" component="h2" className={classes.title}>
           {t('dashboardAddWidget')}
         </Typography>
         <IconButton aria-label={t('sharedHide')} onClick={onClose}>

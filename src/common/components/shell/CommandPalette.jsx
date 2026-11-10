@@ -528,7 +528,8 @@ const CommandPalette = ({ open, onClose }) => {
       onClose={onClose}
       maxWidth={false}
       classes={{ container: classes.container }}
-      slotProps={{ paper: { className: classes.paper } }}
+      // A11-08: the window has a name.
+      slotProps={{ paper: { className: classes.paper, 'aria-label': t('shellCommandPalette') } }}
     >
       <div className={classes.inputRow}>
         <SearchRoundedIcon />

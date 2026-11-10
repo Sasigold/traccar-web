@@ -3211,6 +3211,8 @@
     "replayTimeline": "Route timeline",
     "replayEmpty": "No locations in this period. Try another period.",
     "shellMore": "More",
+    "shellMenu": "Menu",
+    "a11ySelected": "Selected: {0}",
     "sheetExpand": "Expand the card",
     "sheetCollapse": "Collapse the card",
     "driverDamageQueued": "The report was saved on the phone at {0}",

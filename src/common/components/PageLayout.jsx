@@ -4,6 +4,7 @@ import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import { useSearchParams } from 'react-router-dom';
 import PageHeader from './shell/PageHeader';
+import { useTranslation } from './LocalizationProvider';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -92,6 +93,7 @@ const useStyles = makeStyles()((theme) => ({
 // header and a scrolling content area. On phones the section navigation
 // opens as a drawer from the header (or with ?menu=true).
 const PageLayout = ({ menu, breadcrumbs, title, description, actions, backTo, children }) => {
+  const t = useTranslation();
   const { classes } = useStyles();
   const theme = useTheme();
 
@@ -108,7 +110,7 @@ const PageLayout = ({ menu, breadcrumbs, title, description, actions, backTo, ch
           anchor="left"
           open={openDrawer}
           onClose={() => setOpenDrawer(false)}
-          slotProps={{ paper: { className: classes.mobileDrawer } }}
+          slotProps={{ paper: { className: classes.mobileDrawer, 'aria-label': t('shellMenu') } }}
         >
           {menu}
         </Drawer>

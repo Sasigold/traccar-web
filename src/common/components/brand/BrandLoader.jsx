@@ -1,3 +1,4 @@
+import { translate } from '../../util/translator';
 import { SYMBOL_BRACKET_BOTTOM, SYMBOL_BRACKET_TOP, SYMBOL_DOT } from './brandGeometry';
 
 // The brand loading animation: the app icon whose two brackets sync onto the
@@ -5,14 +6,15 @@ import { SYMBOL_BRACKET_BOTTOM, SYMBOL_BRACKET_TOP, SYMBOL_DOT } from './brandGe
 // shared with the startup loader in index.html, so both stay identical.
 // Use it for any loading state that fills an area. Full-screen loading goes
 // through <Loader />, which shows the instance in index.html.
-const BrandLoader = ({ size = 72, label = 'viper fleet', className }) => (
+// A11-08: it says what it is doing ("Loading…"), not the brand's name.
+const BrandLoader = ({ size = 72, label, className }) => (
   <svg
     className={className ? `vf-loader ${className}` : 'vf-loader'}
     width={size}
     height={size}
     viewBox="0 0 100 100"
     role="progressbar"
-    aria-label={label}
+    aria-label={label || translate('sharedLoading')}
     style={{ width: size, height: size, direction: 'ltr' }}
   >
     <rect className="vf-loader__tile" width="100" height="100" rx="22" />

@@ -124,7 +124,13 @@ const PageHeader = ({ breadcrumbs, title, description, actions, onOpenMenu, back
             )}
           </Breadcrumbs>
         )}
-        <Typography variant={desktop ? 'h4' : 'h6'} component="h1" className={classes.title} noWrap>
+        <Typography
+          id="page-title"
+          variant={desktop ? 'h4' : 'h6'}
+          component="h1"
+          className={classes.title}
+          noWrap
+        >
           {resolvedTitle}
         </Typography>
         {desktop && description && (
