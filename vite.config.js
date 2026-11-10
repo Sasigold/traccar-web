@@ -113,7 +113,7 @@ export default defineConfig(({ command, mode }) => {
               {
                 name: 'mui',
                 // Components only some pages use stay with those pages (PRF-06: first-load budget).
-                test: /node_modules[\\/](@mui[\\/](material(?![\\/](esm[\\/])?(Autocomplete|Slider|Stepper|Step|StepLabel|StepContent|StepButton|StepIcon|StepConnector|MobileStepper|Rating|SpeedDial|SpeedDialAction|SpeedDialIcon|Pagination|PaginationItem|TablePagination|ImageList|ImageListItem|ImageListItemBar)[\\/])|system|styled-engine|utils|private-theming)|@emotion|tss-react|stylis|stylis-plugin-rtl)[\\/]/,
+                test: /node_modules[\\/](@mui[\\/](material(?![\\/](esm[\\/])?(Autocomplete|Slider|Stepper|Step|StepLabel|StepContent|StepButton|StepIcon|StepConnector|MobileStepper|Rating|SpeedDial|SpeedDialAction|SpeedDialIcon|Pagination|PaginationItem|TablePagination|ImageList|ImageListItem|ImageListItemBar|TableHead|TableSortLabel|TableContainer|TableFooter|Accordion|AccordionSummary|AccordionDetails|AccordionActions|Tabs|Tab|TabScrollButton|AvatarGroup|Radio|RadioGroup|Fab|LinearProgress)[\\/])|system|styled-engine|utils|private-theming)|@emotion|tss-react|stylis|stylis-plugin-rtl)[\\/]/,
                 priority: 10,
               },
             ],
