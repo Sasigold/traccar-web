@@ -224,6 +224,9 @@ const CatalogDrawer = ({ open, onClose, onAdd, availability, singletonsUsed }) =
                     key={preset.id}
                     className={classes.item}
                     disabled={Boolean(reason)}
+                    // A widget that can be added once turns disabled when it is added; the focus
+                    // stays on it, inside the catalog, so Escape still closes the catalog.
+                    focusableWhenDisabled
                     focusRipple
                     onClick={() => {
                       onAdd(preset.id);
