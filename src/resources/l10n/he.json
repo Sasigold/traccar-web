@@ -1252,7 +1252,7 @@
     "fleetRecipientChannel": "ערוץ",
     "fleetRecipientAddress": "כתובת",
     "fleetRecipientPhone": "מספר WhatsApp",
-    "fleetRecipientPhoneHint": "בפורמט בינלאומי, למשל ‎+972501234567",
+    "fleetRecipientPhoneHint": "מספר נייד, למשל 050-1234567",
     "fleetRecipientKinds": "מקבל",
     "fleetRecipientActive": "פעיל",
     "fleetRecipientPaused": "מושהה",
@@ -3589,5 +3589,11 @@
     "settingsThemeLight": "בהיר",
     "settingsThemeDark": "כהה",
     "settingsThemeSystem": "לפי המערכת",
-    "sharedListTruncated": "הרשימה ארוכה מאוד: מוצגות {0} השורות הראשונות. צמצמו בסינון כדי לראות את השאר."
+    "sharedListTruncated": "הרשימה ארוכה מאוד: מוצגות {0} השורות הראשונות. צמצמו בסינון כדי לראות את השאר.",
+    "fleetRecipientFromUsers": "בחירה מתוך המשתמשים",
+    "fleetRecipientBadPhone": "מספר טלפון לא תקין. למשל 050-1234567.",
+    "fleetRecipientBadEmail": "כתובת אימייל לא תקינה.",
+    "fleetRecipientTest": "שליחת הודעת בדיקה",
+    "fleetRecipientTestNotReady": "השליחה בערוץ הזה עוד לא מחוברת. מנהל השירות מחבר אותה במסך ערוצי השליחה.",
+    "fleetRecipientTestSent": "הודעת בדיקה נשלחה אל {0}"
 }

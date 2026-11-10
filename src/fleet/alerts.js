@@ -32,10 +32,21 @@ export const alertChannels = ['whatsapp', 'sms', 'email'];
 // WhatsApp and SMS need an international number (+972...), email a plausible address.
 export const isPhoneChannel = (channel) => channel === 'whatsapp' || channel === 'sms';
 
-export const validRecipientAddress = (channel, address) => {
+// ADM-27: a phone number as people type it (050-1234567) becomes the international form.
+export const normalizeRecipientAddress = (channel, address) => {
   const value = (address || '').trim();
+  if (!isPhoneChannel(channel)) return value;
+  const digits = value.replace(/[^\d+]/g, '');
+  if (digits.startsWith('+')) return digits;
+  if (digits.startsWith('972')) return `+${digits}`;
+  if (digits.startsWith('0')) return `+972${digits.slice(1)}`;
+  return digits;
+};
+
+export const validRecipientAddress = (channel, address) => {
+  const value = normalizeRecipientAddress(channel, address);
   if (isPhoneChannel(channel)) {
-    return /^\+[1-9]\d{7,14}$/.test(value.replace(/[\s-]/g, ''));
+    return /^\+[1-9]\d{7,14}$/.test(value);
   }
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 };

@@ -1252,7 +1252,7 @@
     "fleetRecipientChannel": "Channel",
     "fleetRecipientAddress": "Address",
     "fleetRecipientPhone": "WhatsApp number",
-    "fleetRecipientPhoneHint": "International format, e.g. +972501234567",
+    "fleetRecipientPhoneHint": "A mobile number, for example 050-1234567",
     "fleetRecipientKinds": "Receives",
     "fleetRecipientActive": "Active",
     "fleetRecipientPaused": "Paused",
@@ -3589,5 +3589,11 @@
     "settingsThemeLight": "Light",
     "settingsThemeDark": "Dark",
     "settingsThemeSystem": "System",
-    "sharedListTruncated": "This list is very long: the first {0} rows are shown. Narrow it with a filter to see the rest."
+    "sharedListTruncated": "This list is very long: the first {0} rows are shown. Narrow it with a filter to see the rest.",
+    "fleetRecipientFromUsers": "Choose from the users",
+    "fleetRecipientBadPhone": "Not a valid phone number. For example 050-1234567.",
+    "fleetRecipientBadEmail": "Not a valid email address.",
+    "fleetRecipientTest": "Send a test message",
+    "fleetRecipientTestNotReady": "Sending on this channel is not connected yet. The service manager connects it in the sending channels screen.",
+    "fleetRecipientTestSent": "A test message was sent to {0}"
 }

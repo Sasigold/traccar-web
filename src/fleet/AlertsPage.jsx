@@ -1,4 +1,4 @@
-import { useReducer, useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -27,6 +27,8 @@ import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsAct
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import SendRoundedIcon from '@mui/icons-material/SendRounded';
+import { useFleetRows } from './stage5Data';
 import ValidityTabs from './components/ValidityTabs';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
@@ -44,13 +46,14 @@ import {
   useFleetProfile,
   useFleetStatus,
 } from '../common/fleet/useFleet';
-import { fleetActions } from '../store';
+import { fleetActions, messagesActions } from '../store';
 import ExpiryBadge, { useDaysText } from './components/ExpiryBadge';
 import {
   acknowledgeAlerts,
   alertChannels,
   alertKinds,
   isPhoneChannel,
+  normalizeRecipientAddress,
   loadOpenAlerts,
   validRecipientAddress,
 } from './alerts';
@@ -162,9 +165,7 @@ const AlertsPage = () => {
   const saveRecipient = useCatch(async () => {
     const client = getFleetClient();
     const { id, ...values } = editing;
-    const address = isPhoneChannel(values.channel)
-      ? values.address.replace(/[\s-]/g, '')
-      : values.address.trim();
+    const address = normalizeRecipientAddress(values.channel, values.address);
     const payload = { ...values, address, name: values.name.trim() };
     if (id) {
       unwrap(await client.from('alert_recipients').update(payload).eq('id', id));
@@ -173,6 +174,31 @@ const AlertsPage = () => {
     }
     setEditing(null);
     reload();
+  });
+
+  // ADM-27: a test message, once the channel can send.
+  const [ready, setReady] = useState({});
+  useEffect(() => {
+    if (!canManage || view !== 'recipients') return;
+    getFleetClient()
+      .rpc('messaging_ready')
+      .then(({ data }) =>
+        setReady(Object.fromEntries((data || []).map((row) => [row.channel, row.ready]))),
+      );
+  }, [canManage, view]);
+  const people = useFleetRows('profiles', {
+    select: 'id, full_name, email',
+    order: 'full_name',
+    enabled: Boolean(editing),
+  });
+  const testRecipient = useCatch(async (row) => {
+    unwrap(await getFleetClient().rpc('alert_recipient_test', { p_recipient: row.id }));
+    dispatch(
+      messagesActions.push({
+        message: t('fleetRecipientTestSent').replace('{0}', row.name),
+        severity: 'success',
+      }),
+    );
   });
 
   const removeRecipient = useCatch(async (id, name) => {
@@ -360,6 +386,22 @@ const AlertsPage = () => {
                     {t(row.active ? 'fleetRecipientActive' : 'fleetRecipientPaused')}
                   </TableCell>
                   <TableCell className={classes.actions}>
+                    <Tooltip
+                      title={t(
+                        ready[row.channel] ? 'fleetRecipientTest' : 'fleetRecipientTestNotReady',
+                      )}
+                    >
+                      <span>
+                        <IconButton
+                          size="small"
+                          disabled={!ready[row.channel]}
+                          onClick={() => testRecipient(row)}
+                          aria-label={`${t('fleetRecipientTest')}: ${row.name}`}
+                        >
+                          <SendRoundedIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                     <Tooltip title={t('sharedEdit')}>
                       <IconButton
                         size="small"
@@ -449,10 +491,42 @@ const AlertsPage = () => {
                   </MenuItem>
                 ))}
               </TextField>
+              <Autocomplete
+                options={people || []}
+                getOptionLabel={(person) => person.full_name || person.email || ''}
+                onChange={(_, person) =>
+                  person &&
+                  setEditing({
+                    ...editing,
+                    name: person.full_name || editing.name,
+                    profile_id: person.id,
+                    address:
+                      editing.channel === 'email'
+                        ? person.email || ''
+                        : person.phone || editing.address,
+                  })
+                }
+                renderInput={(params) => (
+                  <TextField {...params} label={t('fleetRecipientFromUsers')} />
+                )}
+              />
               <TextField
                 label={t(editing.channel === 'email' ? 'userEmail' : 'fleetRecipientPhone')}
+                error={
+                  Boolean(editing.address.trim()) &&
+                  !validRecipientAddress(editing.channel, editing.address)
+                }
                 helperText={
-                  isPhoneChannel(editing.channel) ? t('fleetRecipientPhoneHint') : undefined
+                  Boolean(editing.address.trim()) &&
+                  !validRecipientAddress(editing.channel, editing.address)
+                    ? t(
+                        isPhoneChannel(editing.channel)
+                          ? 'fleetRecipientBadPhone'
+                          : 'fleetRecipientBadEmail',
+                      )
+                    : isPhoneChannel(editing.channel)
+                      ? t('fleetRecipientPhoneHint')
+                      : undefined
                 }
                 value={editing.address}
                 onChange={(event) => setEditing({ ...editing, address: event.target.value })}
