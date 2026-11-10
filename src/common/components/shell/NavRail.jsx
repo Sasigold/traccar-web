@@ -15,6 +15,7 @@ import BrandLogo, { BrandSymbol } from '../brand/BrandLogo';
 import { useTranslation } from '../LocalizationProvider';
 import useNavItems from './navItems';
 import { useShell } from './ShellContext';
+import { prefetchRoute } from '../../util/prefetchRoute';
 
 const useStyles = makeStyles()((theme, { collapsed }) => ({
   root: {
@@ -164,6 +165,9 @@ const NavRail = () => {
               selected={selected}
               aria-current={selected ? 'page' : undefined}
               className={classes.item}
+              // LIV-16: the screen starts loading on hover or focus.
+              onPointerEnter={() => prefetchRoute(item.path)}
+              onFocus={() => prefetchRoute(item.path)}
             >
               <ListItemIcon className={classes.itemIcon}>
                 <Icon />

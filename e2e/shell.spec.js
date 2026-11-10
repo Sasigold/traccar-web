@@ -20,3 +20,12 @@ test('skip to content, a page title, and focus on the title after moving', async
   await expect(page).toHaveTitle(/ · viper fleet$/);
   await expect(page.locator('#main-content h1')).toBeFocused();
 });
+
+// LIV-16: resting on a navigation item starts loading that screen.
+test('hovering a navigation item loads its screen ahead', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the rail is a desktop navigation');
+  await gotoReady(page, '/');
+  const request = page.waitForRequest(/DashboardPage/);
+  await page.getByRole('navigation').getByRole('link', { name: 'דשבורד' }).hover();
+  await request;
+});
