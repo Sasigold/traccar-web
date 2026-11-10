@@ -1,6 +1,18 @@
 import { useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Chip, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Chip,
+  IconButton,
+  MenuItem,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TableSortLabel,
+  TextField,
+  useMediaQuery,
+} from '@mui/material';
+import SwapVertRoundedIcon from '@mui/icons-material/SwapVertRounded';
 import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import { useTranslation } from '../../common/components/LocalizationProvider';
@@ -13,7 +25,7 @@ import exportExcel from '../../common/util/exportExcel';
 import { useFleetPermission } from '../../common/fleet/useFleet';
 import { useFleetQuery } from '../../common/data/fleetQuery';
 import FleetNotice from './FleetNotice';
-import { filterRows } from './listRows';
+import { filterRows, sortRows } from './listRows';
 
 const useStyles = makeStyles()(() => ({
   row: {
@@ -31,7 +43,10 @@ const useStyles = makeStyles()(() => ({
 // filter chips, count, Excel), the loading rows, the empty state and the clickable rows.
 //
 //   columns: [{ key, label, render?(row), value?(row) (Excel, and the cell when no render),
-//               nowrap?, ltr?, table? (false: only in Excel), export? (false: only on screen) }]
+//               nowrap?, ltr?, table? (false: only in Excel), export? (false: only on screen),
+//               sortValue?(row) (default: the row's own `key`, else value), sort? (false) }]
+// ADM-15: the chip, the search and the order live in the address (?filter=, ?q=, ?sort=,
+// ?dir=), so a link or the back button lands on the same list.
 //   filters: [{ key, label, test?(row) }] (the first is the default unless `defaultFilter`)
 const FleetListPage = ({
   title,
@@ -56,8 +71,31 @@ const FleetListPage = ({
   const navigate = useNavigate();
   const canRead = useFleetPermission(permission);
 
-  const [filter, setFilter] = useState(defaultFilter ?? filters?.[0]?.key);
-  const [search, setSearch] = useState('');
+  const [params, setParams] = useSearchParams();
+  const setParam = (changes) =>
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        Object.entries(changes).forEach(([key, value]) =>
+          value ? next.set(key, value) : next.delete(key),
+        );
+        return next;
+      },
+      { replace: true },
+    );
+  const initialFilter = defaultFilter ?? filters?.[0]?.key;
+  const filter = filters?.some((item) => item.key === params.get('filter'))
+    ? params.get('filter')
+    : initialFilter;
+  const setFilter = (key) => setParam({ filter: key === initialFilter ? null : key });
+  // The box answers at once; the address follows.
+  const [search, setSearch] = useState(() => params.get('q') || '');
+  const changeSearch = (value) => {
+    setSearch(value);
+    setParam({ q: value.trim() || null });
+  };
+  const sortKey = params.get('sort');
+  const sortDir = params.get('dir') === 'desc' ? 'desc' : 'asc';
   const { data: rows } = useFleetQuery(table, queryParts, query, {
     enabled: canRead,
     paged: true,
@@ -67,12 +105,28 @@ const FleetListPage = ({
   // rows and the inputs decide when to filter again.
   const rulesRef = useRef({ filters, searchOf });
   rulesRef.current = { filters, searchOf };
-  const filtered = useMemo(
-    () => filterRows(rows, { ...rulesRef.current, filter, search }),
-    [rows, filter, search],
-  );
-
   const cellValue = (column, row) => (column.value ? column.value(row) : row[column.key]);
+  const sortColumn = columns.find((column) => column.key === sortKey && column.sort !== false);
+  const sortValueOf = (column) =>
+    column &&
+    (column.sortValue || ((row) => (column.key in row ? row[column.key] : cellValue(column, row))));
+  const filtered = useMemo(
+    () =>
+      sortRows(
+        filterRows(rows, { ...rulesRef.current, filter, search }),
+        sortValueOf(sortColumn),
+        sortDir,
+      ),
+    // The column is found by its key, which is the dependency.
+    // eslint-disable-next-line @eslint-react/exhaustive-deps
+    [rows, filter, search, sortKey, sortDir],
+  );
+  const sortBy = (key) =>
+    setParam(
+      sortKey === key
+        ? { sort: sortDir === 'asc' ? key : null, dir: sortDir === 'asc' ? 'desc' : null }
+        : { sort: key, dir: null },
+    );
 
   const handleExport = async () => {
     const data = filtered.map((row) =>
@@ -87,8 +141,40 @@ const FleetListPage = ({
     await exportExcel(t(title), exportFile, sheets, theme);
   };
 
-  const open = (row) => rowLink && navigate(rowLink(row));
+  // On a phone the rows are cards without the header: the order is chosen from a list.
   const shown = columns.filter((column) => column.table !== false);
+  const phone = useMediaQuery(theme.breakpoints.down('md'));
+  const sortable = shown.filter((column) => column.sort !== false && column.label);
+  const phoneSort = phone && (
+    <>
+      <TextField
+        select
+        size="small"
+        label={t('sharedSortBy')}
+        value={sortColumn ? sortKey : ''}
+        onChange={(event) => setParam({ sort: event.target.value || null, dir: null })}
+        sx={{ minWidth: 140 }}
+      >
+        <MenuItem value="">{t('sharedSortDefault')}</MenuItem>
+        {sortable.map((column) => (
+          <MenuItem key={column.key} value={column.key}>
+            {column.label}
+          </MenuItem>
+        ))}
+      </TextField>
+      {sortColumn && (
+        <IconButton
+          size="small"
+          aria-label={t(sortDir === 'asc' ? 'sharedSortDescending' : 'sharedSortAscending')}
+          onClick={() => setParam({ dir: sortDir === 'asc' ? 'desc' : null })}
+        >
+          <SwapVertRoundedIcon fontSize="small" />
+        </IconButton>
+      )}
+    </>
+  );
+
+  const open = (row) => rowLink && navigate(rowLink(row));
 
   return (
     <PageLayout
@@ -101,19 +187,22 @@ const FleetListPage = ({
       <DataTable
         toolbar={
           <TableToolbar
-            search={{ value: search, onChange: setSearch }}
+            search={{ value: search, onChange: changeSearch }}
             count={rows ? filtered.length : undefined}
             exportHandler={exportFile ? handleExport : undefined}
-            filters={filters?.map((item) => (
-              <Chip
-                key={item.key}
-                size="small"
-                label={item.label}
-                color={filter === item.key ? 'primary' : 'default'}
-                variant={filter === item.key ? 'filled' : 'outlined'}
-                onClick={() => setFilter(item.key)}
-              />
-            ))}
+            filters={[
+              ...(filters || []).map((item) => (
+                <Chip
+                  key={item.key}
+                  size="small"
+                  label={item.label}
+                  color={filter === item.key ? 'primary' : 'default'}
+                  variant={filter === item.key ? 'filled' : 'outlined'}
+                  onClick={() => setFilter(item.key)}
+                />
+              )),
+              phoneSort && <span key="sort">{phoneSort}</span>,
+            ].filter(Boolean)}
             actions={actions}
           />
         }
@@ -129,7 +218,19 @@ const FleetListPage = ({
         <TableHead>
           <TableRow>
             {shown.map((column) => (
-              <TableCell key={column.key}>{column.label}</TableCell>
+              <TableCell key={column.key} sortDirection={sortKey === column.key ? sortDir : false}>
+                {column.sort === false ? (
+                  column.label
+                ) : (
+                  <TableSortLabel
+                    active={sortKey === column.key}
+                    direction={sortKey === column.key ? sortDir : 'asc'}
+                    onClick={() => sortBy(column.key)}
+                  >
+                    {column.label}
+                  </TableSortLabel>
+                )}
+              </TableCell>
             ))}
           </TableRow>
         </TableHead>

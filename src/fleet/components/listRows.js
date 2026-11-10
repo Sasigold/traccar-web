@@ -11,3 +11,20 @@ export const filterRows = (rows, { filters, filter, searchOf, search }) => {
         )),
   );
 };
+
+// ADM-15: rows in a column's order. Numbers by value, text in Hebrew order, empty values last
+// whichever way. `valueOf(row)` is the column's sort value.
+const collator = new Intl.Collator('he', { numeric: true, sensitivity: 'base' });
+export const sortRows = (rows, valueOf, direction = 'asc') => {
+  if (!valueOf) return rows;
+  const sign = direction === 'desc' ? -1 : 1;
+  return [...rows].sort((a, b) => {
+    const x = valueOf(a);
+    const y = valueOf(b);
+    const xEmpty = x == null || x === '';
+    const yEmpty = y == null || y === '';
+    if (xEmpty || yEmpty) return xEmpty === yEmpty ? 0 : xEmpty ? 1 : -1;
+    if (typeof x === 'number' && typeof y === 'number') return (x - y) * sign;
+    return collator.compare(String(x), String(y)) * sign;
+  });
+};

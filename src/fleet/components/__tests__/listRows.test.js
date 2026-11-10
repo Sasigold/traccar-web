@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterRows } from '../listRows';
+import { filterRows, sortRows } from '../listRows';
 
 const rows = [
   { id: 1, status: 'open', number: 12, vehicles: { plate_number: '12-345-67' } },
@@ -28,5 +28,24 @@ describe('filterRows (ARC-10)', () => {
 
   it('shows nothing while the rows are not loaded', () => {
     expect(filterRows(undefined, { filters, filter: 'all', searchOf, search: '' })).toEqual([]);
+  });
+});
+
+describe('sortRows (ADM-15)', () => {
+  const list = [
+    { id: 1, n: 10, name: 'שמשון' },
+    { id: 2, n: 2, name: 'אבי' },
+    { id: 3, n: null, name: '' },
+    { id: 4, n: 33, name: 'בני' },
+  ];
+
+  it('orders numbers by value and text in Hebrew order, empty values last both ways', () => {
+    expect(ids(sortRows(list, (row) => row.n, 'asc'))).toEqual([2, 1, 4, 3]);
+    expect(ids(sortRows(list, (row) => row.n, 'desc'))).toEqual([4, 1, 2, 3]);
+    expect(ids(sortRows(list, (row) => row.name, 'asc'))).toEqual([2, 4, 1, 3]);
+  });
+
+  it('keeps the order when no column is chosen', () => {
+    expect(sortRows(list, null)).toBe(list);
   });
 });

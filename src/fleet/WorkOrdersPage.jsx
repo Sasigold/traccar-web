@@ -106,6 +106,7 @@ const WorkOrdersPage = () => {
           key: 'statusChip',
           label: t('deviceStatus'),
           export: false,
+          sortValue: (row) => row.status,
           render: (row) => <WorkOrderStatusChip status={row.status} />,
         },
         {
