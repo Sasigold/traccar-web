@@ -12,6 +12,7 @@ import { describeChanges, isHiddenField, linkedIds, showValue } from '../../comm
 import { vehicleDocumentTypes } from '../../common/fleet/fleetSync';
 import { vehicleExpiryFields } from '../../common/fleet/fleetFields';
 import FormSection from '../../settings/components/FormSection';
+import { pascalCase } from '../../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   nowrap: {
@@ -30,8 +31,6 @@ const config = {
   vehicle: { table: 'vehicles', idColumn: 'traccar_device_id', fk: 'vehicle_id' },
   driver: { table: 'drivers', idColumn: 'traccar_driver_id', fk: 'driver_id' },
 };
-
-const camel = (value) => value.replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase());
 
 // Database column -> translation key, so the history reads "Plate number" instead of "plate_number".
 const fieldLabels = {
@@ -164,8 +163,8 @@ const HistorySection = ({ entity, traccarId }) => {
     if (value == null || value === '') return '—';
     if (key in links) return links[key][value] || t('historyUnknownLink');
     if (typeof value === 'boolean') return t(value ? 'sharedYes' : 'sharedNo');
-    if (key === 'fuel_type') return t(`fleetFuel${camel(value)}`);
-    if (key === 'ownership') return t(`fleetOwnership${camel(value)}`);
+    if (key === 'fuel_type') return t(`fleetFuel${pascalCase(value)}`);
+    if (key === 'ownership') return t(`fleetOwnership${pascalCase(value)}`);
     if (key === 'status' && statusLabels[value]) return t(statusLabels[value]);
     if (key === 'document_type' && documentTypeLabels[value]) {
       return t(documentTypeLabels[value]);
@@ -209,7 +208,7 @@ const HistorySection = ({ entity, traccarId }) => {
                   {names[row.user_id] || t('fleetHistorySystem')}
                 </TableCell>
                 <TableCell>
-                  {`${t(`fleetHistoryAction${camel(row.action)}`)} · ${t(`fleetHistoryTable${camel(row.table_name)}`)}`}
+                  {`${t(`fleetHistoryAction${pascalCase(row.action)}`)} · ${t(`fleetHistoryTable${pascalCase(row.table_name)}`)}`}
                   {describeChanges(row, 6, { label, format, hide: isHiddenField }).map((line) => (
                     <div key={line} className={classes.changes} dir="auto">
                       {line}

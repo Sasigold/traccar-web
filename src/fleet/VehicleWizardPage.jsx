@@ -44,6 +44,7 @@ import { saveFleetRecord, useFleetAccess } from './fleetRecords';
 import { ensureDriver, ensureVehicle } from './fleetData';
 import { saveTraccarDevice, setOdometer } from '../admin/adminApi';
 import { devicesActions, maintenancesActions } from '../store';
+import { capitalize } from '../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -95,8 +96,6 @@ const useStyles = makeStyles()((theme) => ({
     },
   },
 }));
-
-const capital = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
 
 // Step 1: the device, then a live "waiting for the first report…" until it reports.
 const DeviceStep = ({ device, form, setForm }) => {
@@ -250,7 +249,7 @@ const VehicleWizardPage = () => {
         const template = MAINTENANCE_TEMPLATES.find((item) => item.id === id);
         const payload = maintenancePayload(
           template,
-          maintenanceName(t(`vehicleWizardPlan${capital(id)}`), device.name),
+          maintenanceName(t(`vehicleWizardPlan${capitalize(id)}`), device.name),
           odometerKm,
         );
         const response = await fetchOrThrow('api/maintenance', {
@@ -374,7 +373,7 @@ const VehicleWizardPage = () => {
                         }
                       />
                     }
-                    label={t(`vehicleWizardPlan${capital(template.id)}`)}
+                    label={t(`vehicleWizardPlan${capitalize(template.id)}`)}
                   />
                 </div>
               ))}
@@ -392,7 +391,7 @@ const VehicleWizardPage = () => {
                   <RemoveCircleOutlineRoundedIcon color="disabled" fontSize="small" />
                 )}
                 <Typography variant="body2">
-                  {t(`vehicleWizardStep${capital(item)}`)}
+                  {t(`vehicleWizardStep${capitalize(item)}`)}
                   {item === 'driver' && done.driver && ` · ${done.driver}`}
                   {!done[item] && ` · ${t('vehicleWizardSkipped')}`}
                 </Typography>
@@ -422,7 +421,7 @@ const VehicleWizardPage = () => {
           <Stepper activeStep={step} alternativeLabel>
             {SETUP_STEPS.map((item) => (
               <Step key={item} completed={Boolean(done[item]) || step > SETUP_STEPS.indexOf(item)}>
-                <StepLabel>{t(`vehicleWizardStep${capital(item)}`)}</StepLabel>
+                <StepLabel>{t(`vehicleWizardStep${capitalize(item)}`)}</StepLabel>
               </Step>
             ))}
           </Stepper>
@@ -433,7 +432,7 @@ const VehicleWizardPage = () => {
                 .replace('{0}', step + 1)
                 .replace('{1}', SETUP_STEPS.length)}
               {' · '}
-              {t(`vehicleWizardStep${capital(key)}`)}
+              {t(`vehicleWizardStep${capitalize(key)}`)}
             </Typography>
             <LinearProgress
               variant="determinate"

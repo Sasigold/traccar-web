@@ -31,6 +31,7 @@ import { useVendors } from './fleetData';
 import ValidatedField from '../common/components/ValidatedField';
 import { keepOnBackdrop } from '../common/util/formDialog';
 import WazeButton from '../common/components/WazeButton';
+import { capitalize } from '../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -54,8 +55,7 @@ export const vendorTypes = [
   'fuel',
   'other',
 ];
-export const vendorTypeKey = (type) =>
-  `fleetVendorType${type.replace(/^\w/, (c) => c.toUpperCase())}`;
+export const vendorTypeKey = (type) => `fleetVendorType${capitalize(type)}`;
 
 const emptyVendor = {
   name: '',

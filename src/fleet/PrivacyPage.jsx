@@ -46,6 +46,7 @@ import { messagesActions } from '../store';
 import { fleetConfig } from '../common/fleet/config';
 import { FILES_BUCKET } from './fleetData';
 import { downloadJson } from '../common/util/downloadFile';
+import { capitalize } from '../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   page: {
@@ -429,9 +430,7 @@ const ViewLogSection = ({ log }) => {
                 <TableRow key={row.id}>
                   <TableCell>{formatTime(row.viewed_at, 'minutes')}</TableCell>
                   <TableCell>{row.profiles?.full_name || '—'}</TableCell>
-                  <TableCell>
-                    {t(`privacyView${row.view.replace(/^\w/, (c) => c.toUpperCase())}`)}
-                  </TableCell>
+                  <TableCell>{t(`privacyView${capitalize(row.view)}`)}</TableCell>
                   <TableCell>{names(row.traccar_device_ids)}</TableCell>
                   <TableCell>
                     {row.from_time

@@ -21,6 +21,7 @@ import { ensureDriver, uploadFleetFile } from '../fleetData';
 import { DateField } from '../../common/components/pickers';
 import { DEFAULT_OFFICER_RULES, addMonths } from '../../common/fleet/safetyOfficer';
 import { keepOnBackdrop } from '../../common/util/formDialog';
+import { capitalize } from '../../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -145,7 +146,7 @@ const SafetyRecordDialog = ({
 
   return (
     <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="xs">
-      <DialogTitle>{t(`fleetSafetyAdd${kind.replace(/^\w/, (c) => c.toUpperCase())}`)}</DialogTitle>
+      <DialogTitle>{t(`fleetSafetyAdd${capitalize(kind)}`)}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>
           <TextField
@@ -239,7 +240,7 @@ const SafetyRecordDialog = ({
               >
                 {['conversation', 'investigation', 'periodic'].map((value) => (
                   <MenuItem key={value} value={value}>
-                    {t(`fleetReviewKind${value.replace(/^\w/, (c) => c.toUpperCase())}`)}
+                    {t(`fleetReviewKind${capitalize(value)}`)}
                   </MenuItem>
                 ))}
               </TextField>

@@ -1,3 +1,4 @@
+import { capitalize, pascalCase } from '../util/stringUtils';
 // Roadmap stage 3: fleet permission keys by area, and the effective role matrix (pure, tested).
 
 export const PERMISSION_AREAS = [
@@ -35,10 +36,10 @@ export const EDITABLE_ROLES = [
 export const permissionLabelKey = (key) =>
   `fleetPerm${key
     .split('.')
-    .map((part) => part.replace(/^\w/, (c) => c.toUpperCase()))
+    .map((part) => capitalize(part))
     .join('')}`;
 
-export const areaLabelKey = (area) => `fleetPermArea${area.replace(/^\w/, (c) => c.toUpperCase())}`;
+export const areaLabelKey = (area) => `fleetPermArea${capitalize(area)}`;
 
 // defaults: [{ role, permission }]; overrides: [{ role, permission, granted }].
 export const effectiveGranted = (role, permission, defaults, overrides) => {
@@ -59,8 +60,7 @@ export const toggleChange = (role, permission, granted, defaults) => {
 };
 
 // "safety_officer" -> "fleetRoleSafetyOfficer"
-export const roleLabelKey = (role) =>
-  `fleetRole${role.replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase())}`;
+export const roleLabelKey = (role) => `fleetRole${pascalCase(role)}`;
 
 // Traccar user flags that match a fleet role, so Traccar's own screens agree with it.
 export const traccarFlagsForRole = (role) => ({

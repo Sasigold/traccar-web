@@ -7,6 +7,7 @@ import { useAsyncTask, useCatch } from '../../reactHelper';
 import { getFleetClient, unwrap } from '../../common/fleet/client';
 import { formatTime } from '../../common/util/formatter';
 import { DRIVER_ANSWERS } from '../../common/fleet/safetyInbox';
+import { capitalize, pascalCase } from '../../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   card: {
@@ -26,9 +27,7 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const capital = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
-const answerKey = (answer) =>
-  `safetyAnswer${capital(answer.replace(/_(\w)/g, (_, c) => c.toUpperCase()))}`;
+const answerKey = (answer) => `safetyAnswer${pascalCase(answer)}`;
 
 // SAF-01: events the manager sent to the driver for a 30-second self-review: what happened,
 // one question, "understood". Only the driver's own events are readable here.
@@ -66,7 +65,7 @@ const DriverSelfReviewCard = () => {
       {events.map((event) => (
         <div key={event.id} className={classes.event}>
           <Typography fontWeight={600}>
-            {t(`fleetSafetyEvent${capital(event.category)}`)}
+            {t(`fleetSafetyEvent${capitalize(event.category)}`)}
           </Typography>
           <Typography variant="body2" color="textSecondary">
             {formatTime(event.occurred_at, 'minutes')}

@@ -67,6 +67,7 @@ import { fleetSave, withUploadedFile } from '../common/fleet/fleetSave';
 import { loadMaintenanceLinks, markMaintenanceDone } from './maintenance';
 import { DateField } from '../common/components/pickers';
 import WazeButton from '../common/components/WazeButton';
+import { capitalize } from '../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -370,7 +371,7 @@ const WorkOrderPage = () => {
               </div>
               {garageIssue && (
                 <Alert severity="warning" className={classes.full}>
-                  {t(`safetyGarage${garageIssue.replace(/^\w/, (c) => c.toUpperCase())}Warning`)}
+                  {t(`safetyGarage${capitalize(garageIssue)}Warning`)}
                 </Alert>
               )}
               <DateField
@@ -429,7 +430,7 @@ const WorkOrderPage = () => {
                       >
                         {ITEM_KINDS.map((kind) => (
                           <MenuItem key={kind} value={kind}>
-                            {t(`fleetItemKind${kind.replace(/^\w/, (c) => c.toUpperCase())}`)}
+                            {t(`fleetItemKind${capitalize(kind)}`)}
                           </MenuItem>
                         ))}
                       </TextField>

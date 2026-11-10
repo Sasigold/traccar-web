@@ -35,6 +35,7 @@ import {
 } from '../../common/fleet/violations';
 import printTransferLetter, { openLetterWindow } from './printTransferLetter';
 import { keepOnBackdrop } from '../../common/util/formDialog';
+import { pascalCase } from '../../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -72,8 +73,7 @@ export const VIOLATION_TYPES = [
   'other',
 ];
 export const VIOLATION_STATUSES = ['open', 'assigned', 'transferred', 'paid', 'appealed', 'closed'];
-const camel = (value) => value.replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase());
-export const violationKey = (group, value) => `fleetViolation${group}${camel(value)}`;
+export const violationKey = (group, value) => `fleetViolation${group}${pascalCase(value)}`;
 
 const OPEN_STATUSES = ['open', 'assigned'];
 

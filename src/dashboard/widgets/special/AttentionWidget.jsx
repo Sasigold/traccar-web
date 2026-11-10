@@ -18,6 +18,7 @@ import { useCachedQuery, useDashboardData } from '../../data/DashboardDataContex
 import { LEVELS, attentionCounts, attentionItems } from '../../data/attention';
 import { useSourceRows } from '../useWidgetModel';
 import { WidgetState } from '../WidgetFrame';
+import { capitalize } from '../../../common/util/stringUtils';
 
 const ROW = 52;
 const SUMMARY = 28;
@@ -104,7 +105,6 @@ const useStyles = makeStyles()((theme) => ({
 }));
 
 const TONE = { critical: 'error', high: 'warning', medium: 'info' };
-const capital = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
 const ready = (data) => (data.status === 'success' ? data.data : []);
 
 // Tickets that still have to be assigned to a driver (ISR-02), for the transfer deadline.
@@ -139,7 +139,7 @@ const useDescribe = () => {
           item.label,
         );
       case 'incident': {
-        const type = t(`fleetIncidentType${capital(item.incidentType || 'other')}`);
+        const type = t(`fleetIncidentType${capitalize(item.incidentType || 'other')}`);
         return item.days === 0
           ? t('attentionIncidentToday').replace('{0}', type)
           : t('attentionIncident').replace('{0}', type).replace('{1}', days(item.days));
@@ -225,7 +225,7 @@ const AttentionWidget = ({ width, height, table }) => {
     item.name ||
     devices[item.deviceId]?.name ||
     '—';
-  const levelLabel = (level) => t(`attentionLevel${capital(level)}`);
+  const levelLabel = (level) => t(`attentionLevel${capitalize(level)}`);
 
   if (table) {
     return (

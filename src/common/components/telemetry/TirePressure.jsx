@@ -5,6 +5,7 @@ import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import TireRepairRoundedIcon from '@mui/icons-material/TireRepairRounded';
 import { useTranslation } from '../LocalizationProvider';
 import { formatPressure } from './vehicleProfile';
+import { capitalize } from '../../util/stringUtils';
 
 // Top view of a car with its four tires, front at the top. Left and right are
 // physical sides of the vehicle, so the drawing never flips in RTL.
@@ -214,8 +215,7 @@ const wheelLabels = {
   rr: 'tireRearRight',
 };
 
-export const pressureUnitKey = (unit) =>
-  `pressureUnit${unit.replace(/^\w/, (c) => c.toUpperCase())}`;
+export const pressureUnitKey = (unit) => `pressureUnit${capitalize(unit)}`;
 
 const TirePressure = ({ reading, onConfigure }) => {
   const { classes, cx } = useStyles();

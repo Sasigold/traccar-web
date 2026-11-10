@@ -41,6 +41,7 @@ import {
 } from '../common/fleet/fuelChecks';
 import { money } from './fleetData';
 import FleetNotice from './components/FleetNotice';
+import { capitalize } from '../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   tiles: {
@@ -83,7 +84,6 @@ const useStyles = makeStyles()((theme) => ({
 }));
 
 const DAYS = 30;
-const capital = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
 const query = (deviceIds, from, to, extra = []) => {
   const params = new URLSearchParams({ from: from.toISOString(), to: to.toISOString() });
   deviceIds.forEach((id) => params.append('deviceId', id));
@@ -234,7 +234,7 @@ const FuelChecksPage = () => {
         ? t('fuelWhyFar').replace('{0}', finding.km)
         : t('fuelWhyMoving');
     }
-    return t(`fuelRule${capital(finding.rule)}Help`);
+    return t(`fuelRule${capitalize(finding.rule)}Help`);
   };
 
   return (
@@ -304,7 +304,7 @@ const FuelChecksPage = () => {
               <TableCell>
                 {devices[finding.deviceId]?.name || finding.row?.plate_number || '—'}
               </TableCell>
-              <TableCell>{t(`fuelRule${capital(finding.rule)}`)}</TableCell>
+              <TableCell>{t(`fuelRule${capitalize(finding.rule)}`)}</TableCell>
               <TableCell>{why(finding)}</TableCell>
               <TableCell>
                 {finding.deviceId && (
@@ -337,9 +337,9 @@ const FuelChecksPage = () => {
                   }
                   label={
                     <>
-                      <Typography>{t(`fuelRule${capital(rule)}`)}</Typography>
+                      <Typography>{t(`fuelRule${capitalize(rule)}`)}</Typography>
                       <Typography variant="body2" color="textSecondary">
-                        {t(`fuelRule${capital(rule)}Help`)}
+                        {t(`fuelRule${capitalize(rule)}Help`)}
                       </Typography>
                     </>
                   }

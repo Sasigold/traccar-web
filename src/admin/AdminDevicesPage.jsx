@@ -30,6 +30,7 @@ import CustomerSelect from './components/CustomerSelect';
 import AssignCustomerDialog from './components/AssignCustomerDialog';
 import { useAdminAccess, useAdminDirectory, useTraccarList } from './useAdmin';
 import { assignDevices } from './adminApi';
+import { capitalize } from '../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   filters: {
@@ -251,9 +252,7 @@ const AdminDevicesPage = () => {
                   <TableCell>
                     <StateChip
                       state={device.status || 'unknown'}
-                      label={t(
-                        `deviceStatus${(device.status || 'unknown').replace(/^\w/, (c) => c.toUpperCase())}`,
-                      )}
+                      label={t(`deviceStatus${capitalize(device.status || 'unknown')}`)}
                     />
                     {device.lastUpdate && (
                       <Typography

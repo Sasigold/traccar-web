@@ -29,6 +29,7 @@ import FleetNotice from './components/FleetNotice';
 import FuelImportDialog, { fuelFlagKey } from './components/FuelImportDialog';
 import ExpenseDialog, { expenseCategoryKey } from './components/ExpenseDialog';
 import { money, openFleetFile, useVehicleIndex } from './fleetData';
+import { capitalize } from '../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   number: {
@@ -53,7 +54,6 @@ const useStyles = makeStyles()((theme) => ({
 
 const views = ['summary', 'fuel', 'expenses'];
 const periods = [1, 3, 6, 12];
-const capital = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
 
 // Roadmap stage 2: fuel and other costs per vehicle, the fuel company import and expenses.
 const CostsPage = () => {
@@ -154,7 +154,7 @@ const CostsPage = () => {
       }));
     }
     const sheets = new Map();
-    sheets.set(t(`fleetCostsView${capital(view)}`), data);
+    sheets.set(t(`fleetCostsView${capitalize(view)}`), data);
     await exportExcel(t('fleetCostsPage'), `costs-${view}.xlsx`, sheets, theme);
   };
 
@@ -162,7 +162,7 @@ const CostsPage = () => {
     <Chip
       key={key}
       size="small"
-      label={t(`fleetCostsView${capital(key)}`)}
+      label={t(`fleetCostsView${capitalize(key)}`)}
       color={view === key ? 'primary' : 'default'}
       variant={view === key ? 'filled' : 'outlined'}
       onClick={() => setView(key)}

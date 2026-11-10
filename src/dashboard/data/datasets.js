@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import { speedFromKnots } from '../../common/util/converter';
+import { pascalCase } from '../../common/util/stringUtils';
 import { activeDaysPct, afterHours, co2Kg, privateTrip } from './fleetMetrics';
 
 // What a widget can show: datasets, their dimensions ("by …") and measures ("how much").
@@ -83,8 +84,7 @@ export const liveRow = (device, position, now, speedUnit = 'kmh', fuelRatio = ()
 // ─── dimensions ──────────────────────────────────────────────────────────────
 
 // l10n key of a dimension value: prefix + CamelCase value ('in_shop' → 'InShop').
-export const labelKeyOf = (prefix, value) =>
-  `${prefix}${String(value).replace(/(^|_)(\w)/g, (_, __, letter) => letter.toUpperCase())}`;
+export const labelKeyOf = (prefix, value) => `${prefix}${pascalCase(String(value))}`;
 
 const timeHour = (row, ctx) => dayjs(ctx.timeOf(row)).hour();
 const timeWeekday = (row, ctx) => dayjs(ctx.timeOf(row)).day();

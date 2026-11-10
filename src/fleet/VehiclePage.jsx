@@ -50,6 +50,7 @@ import { money } from './fleetData';
 import { monthlyBenefit, propulsionOf } from '../common/fleet/benefit';
 import { workOrderStatusKey } from './WorkOrdersPage';
 import { incidentKey } from './IncidentsPage';
+import { capitalize } from '../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -408,9 +409,7 @@ const VehiclePage = () => {
             value={maintenance ? maintenance.maintenance.name : dash}
             hint={
               maintenance && maintenance.state.status !== 'unknown'
-                ? t(
-                    `vehicleMaintenance${maintenance.state.status.replace(/^\w/, (c) => c.toUpperCase())}`,
-                  )
+                ? t(`vehicleMaintenance${capitalize(maintenance.state.status)}`)
                 : undefined
             }
           />
@@ -434,11 +433,7 @@ const VehiclePage = () => {
           aria-label={device.name}
         >
           {TABS.map((key) => (
-            <Tab
-              key={key}
-              value={key}
-              label={t(`vehicleTab${key.replace(/^\w/, (c) => c.toUpperCase())}`)}
-            />
+            <Tab key={key} value={key} label={t(`vehicleTab${capitalize(key)}`)} />
           ))}
         </Tabs>
 
@@ -495,9 +490,7 @@ const VehiclePage = () => {
                     <TableCell>{item.name}</TableCell>
                     <TableCell>
                       {state && state.status !== 'unknown'
-                        ? t(
-                            `vehicleMaintenance${state.status.replace(/^\w/, (c) => c.toUpperCase())}`,
-                          )
+                        ? t(`vehicleMaintenance${capitalize(state.status)}`)
                         : dash}
                     </TableCell>
                   </TableRow>

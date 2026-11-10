@@ -27,6 +27,7 @@ import SafetyRecordDialog from './components/SafetyRecordDialog';
 import { violationKey } from './components/ViolationDialog';
 import { incidentKey } from './IncidentsPage';
 import { money } from './fleetData';
+import { capitalize } from '../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -97,8 +98,6 @@ const Section = ({ title, children }) => {
     </Paper>
   );
 };
-
-const capital = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
 
 // Roadmap 4.7: the driver file for the transport safety officer, printable as a PDF.
 const DriverFilePage = () => {
@@ -213,7 +212,7 @@ const DriverFilePage = () => {
             {canWrite &&
               ['check', 'training', 'review'].map((kind) => (
                 <Button key={kind} variant="outlined" onClick={() => setDialog(kind)}>
-                  {t(`fleetSafetyAdd${capital(kind)}`)}
+                  {t(`fleetSafetyAdd${capitalize(kind)}`)}
                 </Button>
               ))}
           </div>
@@ -344,7 +343,7 @@ const DriverFilePage = () => {
                           <TableCell className={classes.nowrap}>
                             {formatTime(row.held_at, 'date')}
                           </TableCell>
-                          <TableCell>{t(`fleetReviewKind${capital(row.kind)}`)}</TableCell>
+                          <TableCell>{t(`fleetReviewKind${capitalize(row.kind)}`)}</TableCell>
                           <TableCell>{row.summary}</TableCell>
                           <TableCell>{row.decisions}</TableCell>
                         </TableRow>

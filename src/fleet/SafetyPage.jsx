@@ -57,6 +57,7 @@ import { assignmentResolver, loadAssignments, loadDriving, loadSafetySettings } 
 import { formatDays } from '../common/util/plural';
 import { violationUrgency, violationsByDriver } from '../common/fleet/violations';
 import { keepOnBackdrop } from '../common/util/formDialog';
+import { capitalize } from '../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   groupRow: {
@@ -85,7 +86,6 @@ const useStyles = makeStyles()((theme) => ({
 const views = ['scores', 'leaders', 'hours', 'compliance', 'violations', 'byDriver'];
 const recordViews = ['compliance', 'violations', 'byDriver'];
 const periods = [7, 30, 90];
-const capital = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
 const scoreColor = (score) =>
   score == null ? 'default' : score >= 80 ? 'success' : score >= 60 ? 'warning' : 'error';
 const hoursText = (minutes) =>
@@ -126,7 +126,7 @@ const SettingsDialog = ({ settings, onClose, onSaved }) => {
               key={key}
               type="number"
               size="small"
-              label={t(`fleetSafetyEvent${capital(key)}`)}
+              label={t(`fleetSafetyEvent${capitalize(key)}`)}
               value={weights[key]}
               onChange={(event) => setWeights({ ...weights, [key]: Number(event.target.value) })}
               slotProps={{ htmlInput: { dir: 'ltr', min: 0 } }}
@@ -138,7 +138,7 @@ const SettingsDialog = ({ settings, onClose, onSaved }) => {
               key={key}
               type="number"
               size="small"
-              label={t(`fleetSafetyRule${capital(key)}`)}
+              label={t(`fleetSafetyRule${capitalize(key)}`)}
               value={rules[key]}
               onChange={(event) => setRules({ ...rules, [key]: Number(event.target.value) })}
               slotProps={{ htmlInput: { dir: 'ltr', min: 0 } }}
@@ -422,7 +422,7 @@ const SafetyPage = () => {
       }));
     }
     const sheets = new Map();
-    sheets.set(t(`fleetSafetyView${capital(view)}`), data);
+    sheets.set(t(`fleetSafetyView${capitalize(view)}`), data);
     await exportExcel(t('fleetSafetyPage'), `safety-${view}.xlsx`, sheets, theme);
   };
 
@@ -430,7 +430,7 @@ const SafetyPage = () => {
     <Chip
       key={key}
       size="small"
-      label={t(`fleetSafetyView${capital(key)}`)}
+      label={t(`fleetSafetyView${capitalize(key)}`)}
       color={view === key ? 'primary' : 'default'}
       variant={view === key ? 'filled' : 'outlined'}
       onClick={() => setView(key)}
@@ -524,7 +524,7 @@ const SafetyPage = () => {
         empty={rows != null && rows.length === 0}
         emptyState={{
           icon: <HealthAndSafetyRoundedIcon />,
-          title: t(`fleetSafetyNone${capital(view)}`),
+          title: t(`fleetSafetyNone${capitalize(view)}`),
         }}
       >
         {view === 'scores' && (
@@ -562,7 +562,7 @@ const SafetyPage = () => {
                     {Object.entries(row.counts)
                       .map(
                         ([category, count]) =>
-                          `${t(`fleetSafetyEvent${capital(category)}`)} ${count}`,
+                          `${t(`fleetSafetyEvent${capitalize(category)}`)} ${count}`,
                       )
                       .join(' · ') || '—'}
                   </TableCell>
@@ -658,7 +658,7 @@ const SafetyPage = () => {
                               color="error"
                               variant="outlined"
                               sx={{ m: 0.25 }}
-                              label={`${t(`fleetSafetyHours${capital(violation.type)}`)} · ${formatTime(violation.day, 'date')}`}
+                              label={`${t(`fleetSafetyHours${capitalize(violation.type)}`)} · ${formatTime(violation.day, 'date')}`}
                             />
                           </Tooltip>
                         ))}

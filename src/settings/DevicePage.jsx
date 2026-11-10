@@ -39,6 +39,7 @@ import {
 } from '../common/fleet/fleetFields';
 import { DateField } from '../common/components/pickers';
 import GovRegistryButton from '../fleet/components/GovRegistryButton';
+import { capitalize } from '../common/util/stringUtils';
 
 // A far-future date (the old placeholder) reads as no limit.
 const serviceExpiry = (value) =>
@@ -230,7 +231,7 @@ const DevicePage = () => {
               data={deviceCategories
                 .map((category) => ({
                   id: category,
-                  name: t(`category${category.replace(/^\w/, (c) => c.toUpperCase())}`),
+                  name: t(`category${capitalize(category)}`),
                 }))
                 .sort((a, b) => a.name.localeCompare(b.name))}
               label={t('deviceCategory')}

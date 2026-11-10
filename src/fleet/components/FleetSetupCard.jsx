@@ -12,6 +12,7 @@ import { getFleetClient } from '../../common/fleet/client';
 import { useFleetProfile, useFleetReady } from '../../common/fleet/useFleet';
 import { setupProgress, setupSteps } from '../../common/fleet/fleetSetup';
 import usePersistedState from '../../common/util/usePersistedState';
+import { capitalize } from '../../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   card: {
@@ -170,14 +171,14 @@ const FleetSetupCard = ({ className, quiet = false }) => {
             {step === progress.next ? (
               <>
                 <Typography variant="body2" fontWeight={600}>
-                  {t(`setupStep${step.id.replace(/^\w/, (c) => c.toUpperCase())}`)}
+                  {t(`setupStep${capitalize(step.id)}`)}
                 </Typography>
                 <Button
                   variant={quiet ? 'outlined' : 'contained'}
                   size="small"
                   component={RouterLink}
                   to={step.path}
-                  aria-label={`${t('setupContinue')}: ${t(`setupStep${step.id.replace(/^\w/, (c) => c.toUpperCase())}`)}`}
+                  aria-label={`${t('setupContinue')}: ${t(`setupStep${capitalize(step.id)}`)}`}
                 >
                   {t('setupContinue')}
                 </Button>
@@ -190,7 +191,7 @@ const FleetSetupCard = ({ className, quiet = false }) => {
                 className={step.done ? classes.doneText : undefined}
                 color={step.done ? undefined : 'primary'}
               >
-                {t(`setupStep${step.id.replace(/^\w/, (c) => c.toUpperCase())}`)}
+                {t(`setupStep${capitalize(step.id)}`)}
                 {step.done && <span className={classes.hidden}>{` · ${t('setupDone')}`}</span>}
               </Typography>
             )}

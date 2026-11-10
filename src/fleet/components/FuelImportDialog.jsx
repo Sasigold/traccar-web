@@ -33,6 +33,7 @@ import readSheet from '../../common/util/readSheet';
 import { formatTime } from '../../common/util/formatter';
 import { ensureVehicle, money } from '../fleetData';
 import { keepOnBackdrop } from '../../common/util/formDialog';
+import { pascalCase } from '../../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   body: {
@@ -57,8 +58,7 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const camel = (value) => value.replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase());
-export const fuelFlagKey = (flag) => `fleetFuelFlag${camel(flag)}`;
+export const fuelFlagKey = (flag) => `fleetFuelFlag${pascalCase(flag)}`;
 
 // Fuel company file -> fuel_transactions, with column mapping, preview and anomaly flags.
 // Transactions already imported (same provider and transaction number) are skipped.
@@ -191,7 +191,7 @@ const FuelImportDialog = ({ onClose, onImported }) => {
                     key={field}
                     select
                     size="small"
-                    label={t(`fleetFuelField${camel(field)}`)}
+                    label={t(`fleetFuelField${pascalCase(field)}`)}
                     value={mapping[field] ?? ''}
                     required={REQUIRED_FUEL_FIELDS.includes(field)}
                     onChange={(event) => {

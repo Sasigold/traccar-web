@@ -1,4 +1,5 @@
 import { useFleetQuery } from '../common/data/fleetQuery';
+import { pascalCase } from '../common/util/stringUtils';
 
 // Rows of a fleet database table through the shared cache (ARC-06): two screens asking for the
 // same rows share one request. Reloaded when reloadKey changes; null while loading.
@@ -54,4 +55,4 @@ export const toNumber = (value) =>
     ? null
     : Number(value);
 
-export const camel = (value) => value.replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase());
+export const camel = (value) => pascalCase(value);

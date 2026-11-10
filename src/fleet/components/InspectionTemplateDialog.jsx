@@ -20,6 +20,7 @@ import { fleetSave } from '../../common/fleet/fleetSave';
 import { useFleetProfile } from '../../common/fleet/useFleet';
 import { DEFAULT_CHECKLIST, FREQUENCIES, ITEM_TYPES } from '../../common/fleet/inspections';
 import { keepOnBackdrop } from '../../common/util/formDialog';
+import { pascalCase } from '../../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -44,9 +45,8 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const camel = (value) => value.replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase());
-export const itemTypeKey = (type) => `fleetInspectionItemType${camel(type)}`;
-export const frequencyKey = (frequency) => `fleetInspectionFrequency${camel(frequency)}`;
+export const itemTypeKey = (type) => `fleetInspectionItemType${pascalCase(type)}`;
+export const frequencyKey = (frequency) => `fleetInspectionFrequency${pascalCase(frequency)}`;
 
 const withKeys = (items) => items.map((item) => ({ ...item, key: item.id || crypto.randomUUID() }));
 

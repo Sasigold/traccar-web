@@ -19,6 +19,7 @@ import { ensureVehicle, uploadFleetFile } from '../fleetData';
 import { DateField } from '../../common/components/pickers';
 import { keepOnBackdrop } from '../../common/util/formDialog';
 import MoneyField from '../../common/components/MoneyField';
+import { capitalize } from '../../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -40,8 +41,7 @@ export const EXPENSE_CATEGORIES = [
   'tires',
   'other',
 ];
-export const expenseCategoryKey = (category) =>
-  `fleetExpenseCategory${category.replace(/^\w/, (c) => c.toUpperCase())}`;
+export const expenseCategoryKey = (category) => `fleetExpenseCategory${capitalize(category)}`;
 
 const today = () => new Date().toISOString().slice(0, 10);
 

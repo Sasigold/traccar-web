@@ -18,6 +18,7 @@ import { useFleetPermission } from '../common/fleet/useFleet';
 import FleetNotice from './components/FleetNotice';
 import { money } from './fleetData';
 import { readAllRows } from '../common/data/fleetQuery';
+import { pascalCase } from '../common/util/stringUtils';
 
 const useStyles = makeStyles()(() => ({
   row: {
@@ -30,8 +31,7 @@ const useStyles = makeStyles()(() => ({
 }));
 
 // An empty value (an incident whose fault is not set yet) has no key, instead of breaking the list.
-const camel = (value) => String(value ?? '').replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase());
-export const incidentKey = (group, value) => `fleetIncident${group}${camel(value)}`;
+export const incidentKey = (group, value) => `fleetIncident${group}${pascalCase(value)}`;
 
 const statusColor = {
   reported: 'error',
@@ -132,7 +132,7 @@ const IncidentsPage = () => {
               <Chip
                 key={key}
                 size="small"
-                label={t(`fleetIncidentFilter${camel(key)}`)}
+                label={t(`fleetIncidentFilter${pascalCase(key)}`)}
                 color={filter === key ? 'primary' : 'default'}
                 variant={filter === key ? 'filled' : 'outlined'}
                 onClick={() => setFilter(key)}

@@ -21,6 +21,7 @@ import { expiryStatus } from '../common/fleet/fleetFields';
 import ExpiryBadge from '../fleet/components/ExpiryBadge';
 import { useRestriction } from '../common/util/permissions';
 import NewDriverChip from '../fleet/components/NewDriverChip';
+import { capitalize } from '../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   expiry: {
@@ -173,9 +174,7 @@ const DriversPage = () => {
               </TableCell>
               <TableCell>
                 {item.attributes?.driverStatus &&
-                  t(
-                    `fleetDriverStatus${item.attributes.driverStatus.replace(/^\w/, (c) => c.toUpperCase())}`,
-                  )}
+                  t(`fleetDriverStatus${capitalize(item.attributes.driverStatus)}`)}
               </TableCell>
               <TableCell className={settingsClasses.columnAction} padding="none">
                 <CollectionActions

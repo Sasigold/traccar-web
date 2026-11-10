@@ -51,6 +51,7 @@ import {
 } from './adminApi';
 import { DateField } from '../common/components/pickers';
 import { formatGrouped } from '../common/util/formatter';
+import { capitalize } from '../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -176,7 +177,7 @@ const DeviceSetupPage = () => {
       deviceCategories
         .map((category) => ({
           id: category,
-          name: t(`category${category.replace(/^\w/, (c) => c.toUpperCase())}`),
+          name: t(`category${capitalize(category)}`),
         }))
         .sort((a, b) => a.name.localeCompare(b.name)),
     [t],
