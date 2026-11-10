@@ -87,7 +87,7 @@ test('a ticket counts down to its transfer deadline and edits in place', async (
 
   // Charging the driver is saved on the same ticket (an update, not a new one).
   await dialog.getByLabel('חיוב הנהג בקנס').check();
-  await dialog.getByRole('button', { name: 'שמירה' }).click();
+  await dialog.getByRole('button', { name: 'שמירה', exact: true }).click();
   await expect(dialog).toBeHidden();
   const update = writes.find((write) => write.url.includes('driver_violations'));
   expect(update.method).toBe('PATCH');

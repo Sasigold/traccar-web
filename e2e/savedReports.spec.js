@@ -14,7 +14,7 @@ test('a saved view opens from the reports page', async ({ page }) => {
   await page.getByRole('button', { name: 'שמירת תצוגה' }).click();
   const dialog = page.getByRole('dialog', { name: 'שמירת תצוגה' });
   await dialog.getByLabel('שם התצוגה').fill('ואן · היום');
-  await dialog.getByRole('button', { name: 'שמירה' }).click();
+  await dialog.getByRole('button', { name: 'שמירה', exact: true }).click();
   await expect(page.getByText('התצוגה נשמרה בעמוד הדוחות')).toBeVisible();
 
   await gotoReady(page, '/reports');

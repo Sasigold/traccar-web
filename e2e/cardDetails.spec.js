@@ -23,7 +23,7 @@ test('a geofence from the card is created only when saved, and linked to the veh
   expect(posts).toEqual([]);
 
   await page.getByLabel('שם').fill('מחסן ראשי');
-  await page.getByRole('button', { name: 'שמירה' }).click();
+  await page.getByRole('button', { name: 'שמירה', exact: true }).click();
   await expect.poll(() => posts.map(([path]) => path)).toEqual(['geofences', 'permissions']);
   expect(posts[0][1]).toMatchObject({
     name: 'מחסן ראשי',

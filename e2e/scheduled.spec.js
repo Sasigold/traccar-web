@@ -43,7 +43,7 @@ test('a report is scheduled from a visible button and listed in plain words', as
   await dialog.getByRole('button', { name: 'כל שבוע' }).click();
   await dialog.getByLabel('בשעה').click();
   await page.getByRole('option', { name: '08:00' }).click();
-  await dialog.getByRole('button', { name: 'שמירה' }).click();
+  await dialog.getByRole('button', { name: 'שמירה', exact: true }).click();
 
   await expect(page).toHaveURL(/\/reports\/scheduled$/);
   const ical = Buffer.from(

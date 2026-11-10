@@ -101,7 +101,7 @@ test('the privacy page saves the working hours and publishes the notice', async 
   await gotoReady(page, '/fleet/privacy');
   await page.getByLabel('הסתרת המיקום מחוץ לשעות העבודה').check();
   await page.getByRole('button', { name: 'ו׳' }).click();
-  await page.getByRole('button', { name: 'שמירה' }).click();
+  await page.getByRole('button', { name: 'שמירה', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'נשמר' })).toBeVisible();
   const policy = calls.find((call) => call.name === 'privacy_policies');
   expect(policy.body).toMatchObject({

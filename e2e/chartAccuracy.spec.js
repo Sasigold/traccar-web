@@ -20,7 +20,7 @@ test('a target is a dashed line, and the unit is written with the chart', async 
   await page.getByRole('menuitem', { name: 'הגדרות הרכיב' }).click();
   const dialog = page.getByRole('dialog', { name: 'הגדרות הרכיב' });
   await dialog.getByLabel('יעד').fill('5');
-  await dialog.getByRole('button', { name: 'שמירה' }).click();
+  await dialog.getByRole('button', { name: 'שמירה', exact: true }).click();
   await expect(dialog).toBeHidden();
   if (!isMobile) await page.getByRole('button', { name: 'סיום' }).click();
   await expect(chart.locator('figcaption')).toHaveText('ק"מ');

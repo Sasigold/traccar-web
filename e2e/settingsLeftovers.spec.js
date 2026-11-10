@@ -79,7 +79,7 @@ test('a notification that is not for every vehicle says which ones', async ({ pa
   await appliesTo.click();
   await page.getByRole('option', { name: 'Delivery Van' }).click();
   await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'שמירה' }).click();
+  await page.getByRole('button', { name: 'שמירה', exact: true }).click();
   await expect.poll(() => posts).toEqual([{ deviceId: expect.any(Number), notificationId: 41 }]);
 });
 

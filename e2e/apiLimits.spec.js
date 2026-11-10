@@ -55,9 +55,9 @@ test("a platform administrator sets an organization's API package limit", async 
   await row.getByRole('button', { name: 'עריכת מגבלה: הובלות הצפון' }).click();
   const dialog = page.getByRole('dialog', { name: 'הובלות הצפון' });
   await dialog.getByLabel('בקשות בדקה').fill('0');
-  await expect(dialog.getByRole('button', { name: 'שמירה' })).toBeDisabled();
+  await expect(dialog.getByRole('button', { name: 'שמירה', exact: true })).toBeDisabled();
   await dialog.getByLabel('בקשות בדקה').fill('300');
-  await dialog.getByRole('button', { name: 'שמירה' }).click();
+  await dialog.getByRole('button', { name: 'שמירה', exact: true }).click();
   await expect(dialog).toBeHidden();
   const write = writes.find((item) => item.url.includes('/rest/v1/api_limits'));
   expect(write.method).toBe('POST');

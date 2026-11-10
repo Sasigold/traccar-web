@@ -1,4 +1,4 @@
-import { Button } from '@mui/material';
+import { Button, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { glass } from '../../common/theme/surfaces';
 import { useTranslation } from '../../common/components/LocalizationProvider';
@@ -12,6 +12,7 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'flex-end',
+    flexWrap: 'wrap',
     gap: theme.spacing(1),
     padding: theme.spacing(1.5, 3),
     ...glass(theme, 0.9),
@@ -34,14 +35,25 @@ const useStyles = makeStyles()((theme) => ({
   button: {
     minWidth: 120,
   },
+  hint: {
+    color: theme.palette.text.secondary,
+    marginInlineEnd: 'auto',
+    [theme.breakpoints.down('sm')]: {
+      flexBasis: '100%',
+    },
+  },
 }));
 
-// Sticky action bar for forms: cancel on the side, primary save at inline-end.
+// Sticky action bar for forms: cancel on the side, primary save at inline-end. ADM-14: a new
+// item can also be saved and kept open (onSaveAndContinue), and a disabled save says why
+// (disabledHint).
 const SaveBar = ({
   onCancel,
   onSave,
+  onSaveAndContinue,
   saving = false,
   disabled = false,
+  disabledHint,
   saveLabel,
   cancelLabel,
   saveColor = 'primary',
@@ -52,9 +64,24 @@ const SaveBar = ({
   return (
     <div className={classes.root}>
       {children && <div className={classes.extra}>{children}</div>}
+      {disabled && disabledHint && !children && (
+        <Typography variant="body2" className={classes.hint} role="status">
+          {disabledHint}
+        </Typography>
+      )}
       {onCancel && (
         <Button variant="outlined" color="inherit" className={classes.button} onClick={onCancel}>
           {cancelLabel || t('sharedCancel')}
+        </Button>
+      )}
+      {onSaveAndContinue && (
+        <Button
+          variant="outlined"
+          color="inherit"
+          onClick={onSaveAndContinue}
+          disabled={disabled || saving}
+        >
+          {t('sharedSaveAndContinue')}
         </Button>
       )}
       {onSave && (

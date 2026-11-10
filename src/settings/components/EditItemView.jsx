@@ -7,7 +7,7 @@ import {
   useFormChanges,
   useLeaveGuard,
 } from '../../common/components/confirm/unsavedChanges';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { messagesActions } from '../../store';
 import { Skeleton } from '@mui/material';
@@ -31,6 +31,7 @@ const EditItemView = ({
   description,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { id } = useParams();
   const [saving, setSaving] = useState(false);
@@ -54,7 +55,9 @@ const EditItemView = ({
     [id, item, defaultItem, endpoint, setItem],
   );
 
-  const handleSave = useCatch(async () => {
+  // ADM-14: "save and continue" keeps a new item open at its own address (/<entity>/<id>), where
+  // the parts that need a saved item (documents, links, maintenance) open.
+  const handleSave = useCatch(async (stay = false) => {
     let url = `api/${endpoint}`;
     if (id) {
       url += `/${id}`;
@@ -81,7 +84,13 @@ const EditItemView = ({
         }),
       );
       discardUnsavedChanges();
-      goBack(navigate);
+      if (stay && saved?.id) {
+        navigate(`${location.pathname.replace(/\/$/, '')}/${saved.id}${location.search}`, {
+          replace: true,
+        });
+      } else {
+        goBack(navigate);
+      }
     } finally {
       setSaving(false);
     }
@@ -96,9 +105,11 @@ const EditItemView = ({
       footer={
         <SaveBar
           onCancel={() => leave(() => goBack(navigate))}
-          onSave={handleSave}
+          onSave={() => handleSave(false)}
+          onSaveAndContinue={id ? undefined : () => handleSave(true)}
           saving={saving}
           disabled={!item || !validate()}
+          disabledHint={item ? t('sharedSaveNeedsRequired') : undefined}
         />
       }
     >

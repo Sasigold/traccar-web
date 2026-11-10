@@ -74,6 +74,6 @@ test('saving a vehicle names it', async ({ page, isMobile }) => {
     .click();
   await expect(page).toHaveURL(/\/settings\/device\/1$/);
   await page.getByLabel('שם', { exact: true }).fill('Delivery Van 2');
-  await page.getByRole('button', { name: 'שמירה' }).click();
+  await page.getByRole('button', { name: 'שמירה', exact: true }).click();
   await expect(page.getByText('Delivery Van 2 נשמר')).toBeVisible();
 });

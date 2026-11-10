@@ -86,6 +86,25 @@ describe('saving an item', () => {
     expect(api.calls.map((call) => `${call.method} ${call.url}`)).toEqual(['POST api/groups']);
   });
 
+  // ADM-14: a new item stays open at its own address, and a disabled save says why.
+  it('save and continue keeps a new item open at its address', async () => {
+    const { user, api } = await open('/settings/group', {
+      'POST api/groups': (url, init) => ({ id: 9, ...JSON.parse(init.body) }),
+      'GET api/groups/9': { id: 9, name: 'דרום', attributes: {} },
+    });
+    const keep = await screen.findByRole('button', { name: 'שמירה והמשך' });
+    expect(keep).toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent('כדי לשמור יש למלא את שדות החובה');
+    await user.type(screen.getByLabelText('שם'), 'דרום');
+    expect(screen.queryByText('כדי לשמור יש למלא את שדות החובה')).toBeNull();
+    await user.click(keep);
+    await waitFor(() => expect(location.current.pathname).toBe('/settings/group/9'));
+    expect(await screen.findByLabelText('שם')).toHaveValue('דרום');
+    expect(api.calls[0].method).toBe('POST');
+    // An item that is already saved has no "save and continue".
+    expect(screen.queryByRole('button', { name: 'שמירה והמשך' })).toBeNull();
+  });
+
   it('stays on the form and shows the server error when the save fails', async () => {
     const { user, store } = await open('/settings/group/5', {
       'GET api/groups/5': { id: 5, name: 'צפון', attributes: {} },
