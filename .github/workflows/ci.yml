@@ -78,6 +78,15 @@ jobs:
     - run: npm ci --prefix demo
     - run: npx playwright install --with-deps chromium
     - run: npm run test:e2e -- --trace off
+    # BRD-07: light and dark screenshots of the main screens, to look at in the pull request.
+    - run: npx playwright test e2e/screens.spec.js --project desktop --project mobile --trace off
+      env:
+        SCREENS: '1'
+    - uses: actions/upload-artifact@v7
+      with:
+        name: screens
+        path: screens
+        retention-days: 14
     - uses: actions/upload-artifact@v7
       if: failure()
       with:
