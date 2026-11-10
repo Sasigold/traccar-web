@@ -63,8 +63,8 @@ For a CPU profile in the browser: open `http://localhost:3000` after setting the
 
 `npm run build && npm run size` adds up (gzip) what the first screen downloads: the entry script,
 the scripts it preloads and the stylesheets. CI fails above 500 KB. In November 2026 it went from
-613 KB to 482 KB by loading the vehicle card (react-rnd, the telemetry gauges), the search window
-and the alerts list when first opened, and English only when chosen (Hebrew has every key). The
+613 KB to about 494 KB by loading the vehicle card (react-rnd, the telemetry gauges) and the alerts list
+when first opened, and English only when chosen (Hebrew has every key). The
 biggest parts left are our own entry chunk, MUI, the Hebrew strings, React and the fleet database
 client (supabase-js), which could load after the login.
 
