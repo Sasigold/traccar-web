@@ -400,3 +400,30 @@ test('with no signal the fueling waits in the phone and goes later', async ({ pa
   await expect(page.getByText('ממתין לשליחה (1)')).toHaveCount(0);
   expect(writes.filter((write) => write.name === 'driver_report_fueling')).toHaveLength(1);
 });
+
+// ADM-10: with no signal the morning check waits in the phone, and goes later, once.
+test('with no signal the morning check waits in the phone and goes later', async ({ page }) => {
+  const net = { down: false };
+  const writes = await mockFleet(page, net);
+  await gotoReady(page, '/driver/check');
+  await expect(page.getByRole('group', { name: 'צמיגים' })).toBeVisible();
+  net.down = true;
+  await page
+    .getByRole('group', { name: 'צמיגים' })
+    .getByRole('button', { name: 'תקין', exact: true })
+    .click();
+  await page.getByRole('button', { name: 'שליחת הבדיקה' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'הבדיקה שמורה בטלפון' })).toBeVisible();
+  expect(writes.filter((write) => write.name === 'inspections')).toHaveLength(0);
+
+  await page.getByRole('link', { name: 'חזרה לאזור הנהג' }).click();
+  await expect(page.getByText('ממתין לשליחה (1)')).toBeVisible();
+  net.down = false;
+  await page.getByRole('button', { name: 'לשלוח עכשיו' }).click();
+  await expect(page.getByText('ממתין לשליחה (1)')).toHaveCount(0);
+  expect(writes.filter((write) => write.name === 'inspections')).toHaveLength(1);
+  expect(writes.find((write) => write.name === 'inspection_items').body[0]).toMatchObject({
+    label: 'צמיגים',
+    passed: true,
+  });
+});

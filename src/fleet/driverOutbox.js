@@ -87,3 +87,43 @@ export const sendFueling = async (item, mark) => {
 };
 
 registerOutboxKind('fuel', sendFueling);
+
+// ADM-10: the driver's morning check. The inspection, its items and the issues it raises carry
+// ids made in the phone; each photo or signature has a fixed path. Any step can be repeated.
+export const inspectionFilePath = (orgId, item, file) =>
+  `${orgId}/inspections/${item.id}-${file.id}-${safeName(file.name)}`;
+
+export const sendInspection = async (item, mark) => {
+  const { inspection, items, issues } = item.payload;
+  if (!item.saved) {
+    await insertOnce('inspections', inspection);
+    await mark({ saved: true });
+  }
+  await sendFiles(item, mark, async (file) => {
+    const { error } = await getFleetClient()
+      .storage.from(FILES_BUCKET)
+      .upload(inspectionFilePath(inspection.org_id, item, file), file.blob, {
+        contentType: file.type || 'image/jpeg',
+        upsert: false,
+      });
+    if (error && !fileExists(error)) {
+      throw error;
+    }
+  });
+  if (!item.itemsSaved) {
+    const pathOf = Object.fromEntries(
+      item.files.map((file) => [file.itemIndex, inspectionFilePath(inspection.org_id, item, file)]),
+    );
+    await insertOnce(
+      'inspection_items',
+      items.map((row, index) => ({ ...row, photo_path: pathOf[index] ?? null })),
+    );
+    await mark({ itemsSaved: true });
+  }
+  if (issues.length && !item.issuesSaved) {
+    await insertOnce('issues', issues);
+    await mark({ issuesSaved: true });
+  }
+};
+
+registerOutboxKind('inspection', sendInspection);
