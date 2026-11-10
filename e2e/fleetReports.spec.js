@@ -6,6 +6,7 @@ for (const [name, path] of [
   ['usage', 'usage'],
   ['cost per km', 'cost-per-km'],
   ['device health', 'device-health'],
+  ['emissions', 'emissions'],
 ]) {
   test(`the ${name} report lists every chosen vehicle`, async ({ page }) => {
     await gotoReady(page, `/reports/${path}?${ids}&period=today`);
@@ -71,4 +72,16 @@ test('number columns line up at the end', async ({ page, isMobile }) => {
     expect(cell.align).toBe('left');
     expect(cell.numeric).toContain('tabular-nums');
   });
+});
+
+// OPS-10: without fuel data the CO2 is estimated from kilometers, and says so.
+test('the emissions report estimates CO2 from kilometers', async ({ page }) => {
+  await page.route('**/api/reports/summary?*', (route) =>
+    route.fulfill({ json: [{ deviceId: 1, distance: 100000 }] }),
+  );
+  await gotoReady(page, `/reports/emissions?deviceId=1&period=today`);
+  await page.getByRole('button', { name: 'הצג', exact: true }).click();
+  const row = page.getByRole('main').getByRole('row', { name: /Delivery Van/ });
+  await expect(row).toContainText('164');
+  await expect(row).toContainText('ק"מ (סוג דלק לא ידוע, לפי בנזין)');
 });

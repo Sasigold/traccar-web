@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import ViewTimelineRoundedIcon from '@mui/icons-material/ViewTimelineRounded';
 import DonutLargeRoundedIcon from '@mui/icons-material/DonutLargeRounded';
 import PaidRoundedIcon from '@mui/icons-material/PaidRounded';
+import Co2RoundedIcon from '@mui/icons-material/Co2Rounded';
 import MonitorHeartRoundedIcon from '@mui/icons-material/MonitorHeartRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
@@ -239,6 +240,17 @@ export const useReportsSections = () => {
               match: exact('/reports/cost-per-km'),
               carry: true,
               visible: fleetCosts,
+            },
+            {
+              // OPS-10: works from kilometers alone; fuel imports make it exact.
+              id: 'emissions',
+              descriptionKey: 'reportEmissionsDescription',
+              titleKey: 'reportEmissions',
+              icon: Co2RoundedIcon,
+              path: '/reports/emissions',
+              match: exact('/reports/emissions'),
+              carry: true,
+              visible: true,
             },
             {
               id: 'costs',

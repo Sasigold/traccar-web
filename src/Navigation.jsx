@@ -64,6 +64,7 @@ const ReportsHubPage = lazy(() => import('./reports/ReportsHubPage'));
 const TimelineReportPage = lazy(() => import('./reports/TimelineReportPage'));
 const UsageReportPage = lazy(() => import('./reports/UsageReportPage'));
 const CostPerKmReportPage = lazy(() => import('./reports/CostPerKmReportPage'));
+const EmissionsReportPage = lazy(() => import('./reports/EmissionsReportPage'));
 const DeviceHealthReportPage = lazy(() => import('./reports/DeviceHealthReportPage'));
 const CombinedReportPage = lazy(() => import('./reports/CombinedReportPage'));
 const HeatmapReportPage = lazy(() => import('./reports/HeatmapReportPage'));
@@ -364,6 +365,7 @@ const Navigation = () => {
             <Route path="work-hours" element={<WorkHoursReportPage />} />
             <Route path="tolls" element={<TollsReportPage />} />
             <Route path="cost-per-km" element={<CostPerKmReportPage />} />
+            <Route path="emissions" element={<EmissionsReportPage />} />
             <Route path="device-health" element={<DeviceHealthReportPage />} />
             <Route path="chart" element={<ChartReportPage />} />
             <Route path="events" element={<EventReportPage />} />
