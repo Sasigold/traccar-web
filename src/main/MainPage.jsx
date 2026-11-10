@@ -29,8 +29,10 @@ import FleetStats from './components/FleetStats';
 import ExpiryTiles from '../fleet/components/ExpiryTiles';
 import { decodeView } from './savedViews';
 import { fitView } from './components/SavedViews';
-import PickedBar from './PickedBar';
-import WeatherBanner from './WeatherBanner';
+
+// Loaded only when used: picking vehicles (LIV-25) and weather alerts (SAF-07).
+const PickedBar = lazy(() => import('./PickedBar'));
+const WeatherBanner = lazy(() => import('./WeatherBanner'));
 
 // PRF-06: the vehicle card (with react-rnd and the telemetry gauges) loads when a vehicle is
 // first selected, not with the map.
@@ -178,6 +180,8 @@ const MainPage = () => {
   const readonly = useRestriction('readonly');
 
   const mapOnSelect = useAttributePreference('mapOnSelect', true);
+  const weatherAlerts = useAttributePreference('weatherAlerts', false);
+  const picking = useSelector((state) => state.devices.picked != null);
 
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
   const cardHidden = useSelector((state) => state.devices.cardHidden);
@@ -397,8 +401,10 @@ const MainPage = () => {
                     />
                   ) : (
                     <>
-                      <WeatherBanner />
-                      <PickedBar shown={filteredDevices} />
+                      <Suspense fallback={null}>
+                        {weatherAlerts && <WeatherBanner />}
+                        {picking && <PickedBar shown={filteredDevices} />}
+                      </Suspense>
                       <DeviceList
                         devices={filteredDevices}
                         keyword={keyword}
