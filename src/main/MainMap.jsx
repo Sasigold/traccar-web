@@ -19,6 +19,7 @@ import MapScale from '../map/MapScale';
 import MapRuler from '../map/control/MapRuler';
 import MapFitFleet from '../map/control/MapFitFleet';
 import MapFocusedEvent from '../map/main/MapFocusedEvent';
+import MapContextMenu from '../map/main/MapContextMenu';
 import useFeatures from '../common/util/useFeatures';
 import { useStableArray } from '../common/util/stableArray';
 
@@ -91,6 +92,7 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
       <MapScale />
       <MapCurrentLocation />
       <MapGeocoder />
+      <MapContextMenu />
       {desktop && !features.disableDeviceList && (
         <MapPadding start={theme.dimensions.devicePanelWidth + 2 * theme.dimensions.panelGap} />
       )}

@@ -3401,5 +3401,14 @@
     "geofenceFileHint": "GPX, KML or GeoJSON",
     "geofenceFileEmpty": "The file has no route or area",
     "geofenceFileUnsupported": "Only GPX, KML or GeoJSON files can be imported",
-    "loginResetByAdmin": "Password reset by e-mail is not enabled on this server. Ask your organization's account administrator for a new password."
+    "loginResetByAdmin": "Password reset by e-mail is not enabled on this server. Ask your organization's account administrator for a new password.",
+    "mapNearbyVehicles": "Nearby vehicles",
+    "mapGeofenceHere": "Create a geofence here",
+    "mapCopyCoordinates": "Copy coordinates",
+    "mapNavigateHere": "Navigate here (Waze)",
+    "mapCoordinatesCopied": "Coordinates copied",
+    "mapSendJob": "Send a job",
+    "mapNearbyDistance": "{0} km · about {1} min drive",
+    "mapNearbyNone": "No vehicles with a known location.",
+    "sharedClose": "Close"
 }

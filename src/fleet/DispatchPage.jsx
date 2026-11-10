@@ -1,4 +1,5 @@
-import { useMemo, useReducer, useState } from 'react';
+import { useEffect, useMemo, useReducer, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import {
   Alert,
@@ -396,6 +397,18 @@ const DispatchPage = () => {
   const pois = useFleetRows('pois', { order: 'name', enabled: canWrite });
   const vehicles = useFleetVehicles(canWrite);
   const drivers = useFleetDrivers(canWrite);
+
+  // LIV-21: "send a job" from the map's nearby vehicles opens a new job at that point.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const latitude = searchParams.get('latitude');
+    const longitude = searchParams.get('longitude');
+    if (!canWrite || !latitude || !longitude || !vehicles) return;
+    const deviceId = Number(searchParams.get('deviceId'));
+    const vehicle = vehicles.find((item) => item.traccar_device_id === deviceId);
+    setEditing({ ...emptyJob(), latitude, longitude, vehicle_id: vehicle?.id || '' });
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams, canWrite, vehicles]);
 
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase();

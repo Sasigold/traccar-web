@@ -3401,5 +3401,14 @@
     "geofenceFileHint": "GPX, KML או GeoJSON",
     "geofenceFileEmpty": "הקובץ לא מכיל מסלול או אזור",
     "geofenceFileUnsupported": "אפשר לייבא קובצי GPX, KML או GeoJSON בלבד",
-    "loginResetByAdmin": "איפוס סיסמה במייל לא מופעל בשרת הזה. פנו למנהל החשבון בארגון כדי לקבל סיסמה חדשה."
+    "loginResetByAdmin": "איפוס סיסמה במייל לא מופעל בשרת הזה. פנו למנהל החשבון בארגון כדי לקבל סיסמה חדשה.",
+    "mapNearbyVehicles": "רכבים קרובים",
+    "mapGeofenceHere": "יצירת גדר כאן",
+    "mapCopyCoordinates": "העתקת קואורדינטות",
+    "mapNavigateHere": "ניווט לכאן (Waze)",
+    "mapCoordinatesCopied": "הקואורדינטות הועתקו",
+    "mapSendJob": "שליחת משימה",
+    "mapNearbyDistance": "{0} ק\"מ · כ-{1} דק' נסיעה",
+    "mapNearbyNone": "אין רכבים עם מיקום ידוע.",
+    "sharedClose": "סגירה"
 }
