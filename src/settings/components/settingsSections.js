@@ -1,5 +1,6 @@
 // @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import AccessibilityNewRoundedIcon from '@mui/icons-material/AccessibilityNewRounded';
+import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded';
 import SavingsRoundedIcon from '@mui/icons-material/SavingsRounded';
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
@@ -516,6 +517,16 @@ const useSectionCatalog = () => {
             path: '/fleet/safety-officer',
             match: (pathname) => pathname.startsWith('/fleet/safety-officer'),
             visible: fleetSafety && has('safetyOfficer'),
+          },
+          {
+            // AI-10: short courses from the company's procedures.
+            id: 'courses',
+            titleKey: 'coursesPage',
+            descriptionKey: 'coursesPageDescription',
+            icon: SchoolRoundedIcon,
+            path: '/fleet/courses',
+            match: (pathname) => pathname.startsWith('/fleet/courses'),
+            visible: fleetSafety && has('safety'),
           },
         ],
       },

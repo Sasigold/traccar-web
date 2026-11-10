@@ -30,6 +30,7 @@ import DriverSafetyCard from './components/DriverSafetyCard';
 import DriverSelfReviewCard from './components/DriverSelfReviewCard';
 import { incidentKey } from './IncidentsPage';
 import DispatcherContact, { useOrgContact } from './components/DispatcherContact';
+import DriverCoursesCard from './components/DriverCoursesCard';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -310,6 +311,8 @@ const DriverPortalPage = () => {
             <DriverJobsCard driverId={data.driver.id} />
 
             <DriverPrivacyCard driverId={data.driver.id} hasVehicle={Boolean(data.assignment)} />
+
+            <DriverCoursesCard />
 
             <DriverSelfReviewCard />
             <DriverSafetyCard driverId={data.driver.id} />

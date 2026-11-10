@@ -37,6 +37,8 @@ const InspectionPage = lazy(() => import('./fleet/InspectionPage'));
 const RolesPage = lazy(() => import('./fleet/RolesPage'));
 const FleetUsersPage = lazy(() => import('./fleet/FleetUsersPage'));
 const DriverPortalPage = lazy(() => import('./fleet/DriverPortalPage'));
+const DriverCoursePage = lazy(() => import('./fleet/DriverCoursePage'));
+const CoursesPage = lazy(() => import('./fleet/CoursesPage'));
 const DriverDamagePage = lazy(() => import('./fleet/DriverDamagePage'));
 const SafetyPage = lazy(() => import('./fleet/SafetyPage'));
 const VehiclePage = lazy(() => import('./fleet/VehiclePage'));
@@ -252,6 +254,7 @@ const Navigation = () => {
             <Route path="damage" element={<DriverDamagePage />} />
             <Route path="checkin" element={<DriverCheckInPage />} />
             <Route path="handover" element={<DriverHandoverPage />} />
+            <Route path="course/:id" element={<DriverCoursePage />} />
           </Route>
           <Route path="fleet">
             <Route index element={<FleetHubPage />} />
@@ -278,6 +281,7 @@ const Navigation = () => {
             <Route path="safety" element={<SafetyPage />} />
             <Route path="safety/inbox" element={<SafetyInboxPage />} />
             <Route path="safety-officer" element={<SafetyOfficerPage />} />
+            <Route path="courses" element={<CoursesPage />} />
             <Route path="driver-file/:id" element={<DriverFilePage />} />
             <Route path="poi" element={<PoiPage />} />
             <Route path="dispatch" element={<DispatchPage />} />
