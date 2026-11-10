@@ -305,13 +305,13 @@ const AdminOverviewPage = () => {
                     <ListItemButton
                       key={invoice.id}
                       className={classes.item}
-                      onClick={() => navigate(`/admin/customer/${invoice.customer_id}`)}
+                      onClick={() => navigate(`/admin/customer/${invoice.customer_id}?tab=billing`)}
                     >
                       <ListItemText
                         primary={invoice.customer_name}
                         secondary={
                           <>
-                            <span dir="ltr">{`#${invoice.number} · ${invoice.due_date}`}</span>
+                            <span dir="ltr">{`#${invoice.number} · ${formatTime(invoice.due_date, 'date')}`}</span>
                             {` · ${money(invoice.total)}`}
                           </>
                         }

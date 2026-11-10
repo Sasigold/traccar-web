@@ -10,6 +10,7 @@ import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import { useLocalization, useTranslation } from '../common/components/LocalizationProvider';
+import { formatTime } from '../common/util/formatter';
 import { useAsyncTask, useCatch } from '../reactHelper';
 import { messagesActions } from '../store';
 import exportExcel from '../common/util/exportExcel';
@@ -294,7 +295,7 @@ const BillingPage = () => {
                         </span>
                       </TableCell>
                       <TableCell className={classes.number}>
-                        <span dir="ltr">{invoice.due_date}</span>
+                        <span dir="ltr">{formatTime(invoice.due_date, 'date')}</span>
                       </TableCell>
                       <TableCell className={classes.number}>{money(invoice.total)}</TableCell>
                       <TableCell>
