@@ -199,23 +199,23 @@ P1 · חשוב · תיקון · השפעה גבוהה · מאמץ קטן · עד
 - **מה ראינו:** `index.jsx` מייבא את `preloadImages`, שמייבא את `mapUtil`, שמייבא את `MapView`, שיוצר `new maplibregl.Map()` כבר בטעינת המודול. כך כל דף, כולל מסך הכניסה, מוריד ומפרש כ-1.09MB (290KB gzip) של maplibre, יוצר הקשר WebGL ומצייר כ-180 canvas של סמנים. הטעינה הראשונית 2.78MB (788KB gzip).
 - **מה לעשות:** להעביר את מערכת הקואורדינטות כפרמטר (או `mapState.js` קטן), ליצור את המפה רק כש-`MapView` עולה לראשונה, ולהעביר את `preloadImages` ל-chunk של המפה. זה אמור להוריד בערך שליש מהטעינה הראשונית של מסך הכניסה.
 
-### ⬜ PRF-04: כמעט אין memoization: כל עדכון מרנדר את כל העץ
+### 🟡 PRF-04: כמעט אין memoization: כל עדכון מרנדר את כל העץ
 
-P2 · שיפור · שיפור · השפעה בינונית · מאמץ בינוני · עד שבוע
+P2 · שיפור · שיפור · השפעה בינונית · מאמץ בינוני · עד שבוע · **בוצע:** `cc8054b`, `2a6a808` (React Compiler runs only on the components that opt in ('use memo'); memoized selectors and StatusCard are left)
 
 - **מה ראינו:** יש 313 קריאות `useSelector` ב-112 קבצים, ורק `createSelector` אחד ו-`React.memo` אחד. 30 קבצים מאזינים לכל `devices.items`, כולל `CommandPalette` ו-`EventsDrawer` שתמיד טעונים גם כשהם סגורים. `useFilter` מסנן בתוך effect ושולח שני setState, כלומר שני רינדורים לכל עדכון, ומפרסר תאריכים בתוך פונקציית המיון.
 - **מה לעשות:** React Compiler (דורש `@vitejs/plugin-react` עם `babel-plugin-react-compiler`), selectors עם memo, טעינה של חלון החיפוש ומגירת האירועים רק כשפותחים אותם, `useFilter` כ-`useMemo` עם תאריכים מפורסרים מראש, ו-`React.memo` ל-`DeviceRow`, `StatusCard` ו-`MainToolbar`.
 
-### ⬜ PRF-05: עבודה מיותרת בכל עדכון: עיגולי דיוק, מסלולים ובקשות כפולות
+### 🟡 PRF-05: עבודה מיותרת בכל עדכון: עיגולי דיוק, מסלולים ובקשות כפולות
 
-P2 · שיפור · תיקון · השפעה בינונית · מאמץ קטן · עד יומיים
+P2 · שיפור · תיקון · השפעה בינונית · מאמץ קטן · עד יומיים · **בוצע:** `ec3eb78` (motion is still worked out in the browser (now incrementally), and the double api/devices at startup was not reproduced)
 
 - **מה ראינו:** `MapAccuracy` בונה פוליגון של 64 קודקודים לכל מיקום בכל עדכון (320,000 קודקודים ב-5,000 רכבים). `MapLiveRoutes` שולח `setData` בכל רינדור, גם כשהמסלולים כבויים. `api/devices` נשלף פעמיים בהפעלה ושוב בכל ניתוק. `MotionController` מושך 24 שעות של אירועי תנועה לכל הרכבים כל 5 דקות. בקשות דוחות לא מבוטלות כשעוזבים את הדף.
 - **מה לעשות:** שכבת circle עם רדיוס לפי זום במקום פוליגונים, דילוג על `setData` כשאין שינוי, שליפה אחת של רכבים, debounce לגיבוי ה-REST, חישוב התנועה בשרת או בטווח קצר, ו-`signal` לכל דוח.
 
-### ⬜ PRF-06: קוד כבד שנטען מוקדם מדי, ובלי תקציב גודל
+### 🟡 PRF-06: קוד כבד שנטען מוקדם מדי, ובלי תקציב גודל
 
-P2 · שיפור · שיפור · השפעה בינונית · מאמץ קטן · עד יומיים
+P2 · שיפור · שיפור · השפעה בינונית · מאמץ קטן · עד יומיים · **בוצע:** `81ab1a5` (supabase-js is still in the first load, and the map provider list was kept (removing Chinese maps is a product decision))
 
 - **מה ראינו:** supabase-js (כולל לקוחות auth ו-realtime שלא בשימוש), `TelemetryDashboard` (714 שורות), `CommandPalette`, `react-rnd`, ורשימה של 28 ספקי מפות (Yandex, AutoNavi, Tencent) עם `gcoord` לקואורדינטות סיניות, כולם בטעינה הראשונית. `chunkSizeWarningLimit` הועלה ל-1100 כדי להעלים את האזהרה, וה-chunk הראשי (625KB) משתנה בכל פריסה.
 - **מה לעשות:** `import()` דינמי ללקוח הצי אחרי הכניסה, טעינה עצלה של הכרטיס ושל חלון החיפוש, קיצוץ רשימת ספקי המפות, `size-limit` ב-CI עם תקציב (למשל 500KB gzip לטעינה הראשונית), והפרדה בין קוד מעטפת יציב לקוד שמשתנה.
