@@ -67,3 +67,21 @@ export const repeatedFaults = (codes, minVehicles = 3) => {
     }))
     .sort((a, b) => b.count - a.count);
 };
+
+// AI-06: what the latest position already says about a vehicle needing service, for the
+// vehicle list: fault codes it reports now, or a low battery while the engine is off (resting
+// voltage under 11.8 V on a 12 V system, 23.6 V on a 24 V one). [] when nothing.
+export const serviceReasons = (position) => {
+  const attributes = position?.attributes || {};
+  const reasons = [];
+  const codes = String([attributes.dtcs, attributes.faults].filter(Boolean).join(','))
+    .split(/[\s,;]+/)
+    .filter((code) => /^[PBCU][0-9A-F]{4}$/i.test(code));
+  if (codes.length) reasons.push({ type: 'faults', codes });
+  const volts = Number(attributes.power);
+  if (attributes.ignition === false && Number.isFinite(volts) && volts > 6) {
+    const limit = volts > 18 ? 23.6 : 11.8;
+    if (volts < limit) reasons.push({ type: 'battery', volts });
+  }
+  return reasons;
+};

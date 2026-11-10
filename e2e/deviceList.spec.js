@@ -40,3 +40,33 @@ test('the list sorted by group has headers that count and fold', async ({ page, 
   await header.click();
   await expect(header).toHaveAttribute('aria-expanded', 'true');
 });
+
+// AI-06: a vehicle reporting fault codes is marked in the list.
+test('a vehicle with fault codes is marked as needing a check', async ({ page, isMobile }) => {
+  const mark = (positions) =>
+    positions.map((position) =>
+      position.deviceId === 1
+        ? { ...position, attributes: { ...position.attributes, dtcs: 'P0420' } }
+        : position,
+    );
+  await page.route('**/api/positions', async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({ response, json: mark(await response.json()) });
+  });
+  await page.routeWebSocket(/\/api\/socket/, (ws) => {
+    const server = ws.connectToServer();
+    server.onMessage((message) => {
+      const data = JSON.parse(String(message));
+      if (data.positions) data.positions = mark(data.positions);
+      ws.send(JSON.stringify(data));
+    });
+    ws.onMessage((message) => server.send(message));
+  });
+  await gotoReady(page, '/');
+  if (isMobile) {
+    await page.getByRole('button', { name: 'רשימת רכבים' }).click();
+  }
+  await expect(
+    page.getByRole('button', { name: /Delivery Van.*כדאי לבדוק במוסך: קודי תקלה P0420/ }),
+  ).toBeVisible();
+});

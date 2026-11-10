@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { batteryHealth, crankVoltages, repeatedFaults } from '../predict';
+import { batteryHealth, crankVoltages, repeatedFaults, serviceReasons } from '../predict';
 
 // AI-06: warnings from data the devices already send.
 const start = Date.parse('2026-11-09T07:00:00Z');
@@ -41,5 +41,26 @@ describe('repeated faults', () => {
     expect(repeatedFaults(codes)).toEqual([
       { model: 'Transit', code: 'P0420', count: 3, deviceIds: [1, 2, 3] },
     ]);
+  });
+});
+
+describe('needs service in the list (AI-06)', () => {
+  it('reads fault codes and a low resting battery', () => {
+    expect(serviceReasons({ attributes: { dtcs: 'P0420, P0301' } })).toEqual([
+      { type: 'faults', codes: ['P0420', 'P0301'] },
+    ]);
+    expect(serviceReasons({ attributes: { ignition: false, power: 11.4 } })).toEqual([
+      { type: 'battery', volts: 11.4 },
+    ]);
+    expect(serviceReasons({ attributes: { ignition: false, power: 23.1 } })[0].type).toBe(
+      'battery',
+    );
+  });
+
+  it('stays quiet while driving or when all is well', () => {
+    expect(serviceReasons({ attributes: { ignition: true, power: 11.4 } })).toEqual([]);
+    expect(serviceReasons({ attributes: { ignition: false, power: 12.6 } })).toEqual([]);
+    expect(serviceReasons({ attributes: { dtcs: '' } })).toEqual([]);
+    expect(serviceReasons(null)).toEqual([]);
   });
 });

@@ -22,6 +22,7 @@ import BatteryCharging60Icon from '@mui/icons-material/BatteryCharging60Rounded'
 import Battery20Icon from '@mui/icons-material/Battery20Rounded';
 import BatteryCharging20Icon from '@mui/icons-material/BatteryCharging20Rounded';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
+import BuildCircleRoundedIcon from '@mui/icons-material/BuildCircleRounded';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useLivePosition } from '../common/fleet/usePrivacy';
@@ -47,6 +48,7 @@ import useActivityText, { toneColor } from '../common/components/useActivityText
 import { brandTile, statusColor } from '../common/theme/surfaces';
 import Highlight from '../common/components/Highlight';
 import { deviceSearchFields, matchDevice } from '../common/util/deviceSearch';
+import { serviceReasons } from '../common/fleet/predict';
 
 dayjs.extend(relativeTime);
 
@@ -353,9 +355,21 @@ const DeviceRow = ({ devices, tokens = [], favorites = [], index, style, focusIn
   const batteryLabel =
     position?.attributes.hasOwnProperty('batteryLevel') &&
     `${t('positionBatteryLevel')}: ${formatPercentage(Math.round(position.attributes.batteryLevel))}`;
+  // AI-06: fault codes now, or a weak battery at rest.
+  const service = serviceReasons(position);
+  const serviceLabel =
+    service.length > 0 &&
+    `${t('serviceNeeded')}: ${service
+      .map((reason) =>
+        reason.type === 'faults'
+          ? t('serviceFaults').replace('{0}', reason.codes.join(', '))
+          : t('serviceBattery').replace('{0}', reason.volts.toFixed(1)),
+      )
+      .join(' · ')}`;
   const indicatorLabels = [
     item.disabled && t('deviceDisabledChip'),
     alarmLabel,
+    serviceLabel,
     ignitionLabel,
     batteryLabel,
   ].filter(Boolean);
@@ -498,6 +512,13 @@ const DeviceRow = ({ devices, tokens = [], favorites = [], index, style, focusIn
               <Tooltip title={alarmLabel}>
                 <span className={classes.indicator} aria-hidden>
                   <ErrorRoundedIcon fontSize="small" className={classes.error} />
+                </span>
+              </Tooltip>
+            )}
+            {serviceLabel && (
+              <Tooltip title={serviceLabel}>
+                <span className={classes.indicator} aria-hidden>
+                  <BuildCircleRoundedIcon fontSize="small" className={classes.warning} />
                 </span>
               </Tooltip>
             )}
