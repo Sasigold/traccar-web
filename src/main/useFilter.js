@@ -7,6 +7,7 @@ import { deviceSearchFields, matchDevice, tokenizeSearch } from '../common/util/
 import { sameItems } from '../common/util/stableArray';
 import { byImportance } from './importance';
 import { pinFavorites } from './savedViews';
+import { sortByGroup } from './groupRows';
 
 export default (
   keyword,
@@ -74,6 +75,12 @@ export default (
       case 'name':
         filtered.sort((device1, device2) => device1.name.localeCompare(device2.name));
         break;
+      case 'group': {
+        // LIV-22: by group, for the list's group headers.
+        const byGroup = sortByGroup(filtered, groups);
+        filtered.splice(0, filtered.length, ...byGroup);
+        break;
+      }
       case 'lastUpdate': {
         // PRF-04: each date parsed once, not twice per comparison.
         const times = new Map(
@@ -100,7 +107,8 @@ export default (
         break;
     }
     // LIV-22: favorites on top, except while searching (the best match comes first then).
-    const ordered = tokens.length ? filtered : pinFavorites(filtered, favorites);
+    const ordered =
+      tokens.length || filterSort === 'group' ? filtered : pinFavorites(filtered, favorites);
     if (!sameItems(lastDevicesRef.current, ordered)) {
       lastDevicesRef.current = ordered;
       setFilteredDevices(ordered);

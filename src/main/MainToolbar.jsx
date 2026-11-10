@@ -350,6 +350,7 @@ const MainToolbar = ({
               <MenuItem value="">{' '}</MenuItem>
               <MenuItem value="name">{t('sharedName')}</MenuItem>
               <MenuItem value="lastUpdate">{t('deviceLastUpdate')}</MenuItem>
+              <MenuItem value="group">{t('sortByGroup')}</MenuItem>
             </Select>
           </FormControl>
           <FormGroup>

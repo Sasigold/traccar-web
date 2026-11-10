@@ -407,6 +407,7 @@ const MainPage = () => {
                       </Suspense>
                       <DeviceList
                         devices={filteredDevices}
+                        grouped={filterSort === 'group'}
                         keyword={keyword}
                         favorites={favorites}
                       />

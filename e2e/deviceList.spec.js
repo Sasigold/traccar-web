@@ -20,3 +20,23 @@ test('a search shows "1 of 6", a chip to remove, and an empty result says how to
   await expect(active).toHaveCount(0);
   await expect(search).toHaveValue('');
 });
+
+// LIV-22: the list by group, with headers that count and fold.
+test('the list sorted by group has headers that count and fold', async ({ page, isMobile }) => {
+  await gotoReady(page, '/');
+  if (isMobile) {
+    await page.getByRole('button', { name: 'רשימת רכבים' }).click();
+  }
+  await page.getByRole('button', { name: 'סינון' }).first().click();
+  await page.getByLabel('מיון לפי').click();
+  await page.getByRole('option', { name: 'לפי קבוצה' }).click();
+  await page.keyboard.press('Escape');
+  const header = page.getByRole('button', { name: /: \d+ רכבים$/ }).first();
+  await expect(header).toHaveAttribute('aria-expanded', 'true');
+  const rowsBefore = await page.locator('[data-row]').count();
+  await header.click();
+  await expect(header).toHaveAttribute('aria-expanded', 'false');
+  await expect.poll(() => page.locator('[data-row]').count()).toBeLessThan(rowsBefore);
+  await header.click();
+  await expect(header).toHaveAttribute('aria-expanded', 'true');
+});
