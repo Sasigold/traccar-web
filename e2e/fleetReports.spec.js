@@ -58,6 +58,8 @@ test('number columns line up at the end', async ({ page, isMobile }) => {
   await page.getByRole('button', { name: 'הצג', exact: true }).click();
   const row = page.getByRole('main').getByRole('row', { name: /Delivery Van/ });
   await expect(row).toBeVisible();
+  // The row can show before its cells; wait for them.
+  await expect(row.locator('td').first()).toBeVisible();
   const cells = await row.locator('td').evaluateAll((nodes) =>
     nodes.map((node) => ({
       text: node.textContent,
