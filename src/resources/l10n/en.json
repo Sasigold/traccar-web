@@ -3393,5 +3393,7 @@
     "streamFailed": "Couldn't connect to the camera",
     "streamFailedHint": "The vehicle may be off, out of coverage, or there is no camera on this channel.",
     "streamUnsupported": "This browser can't play live video. Try another browser.",
-    "streamRetry": "Try again"
+    "streamRetry": "Try again",
+    "eventNoLocation": "This event has no location",
+    "eventNoLocationHint": "The device reported the event without a GPS fix. Its details are in the alerts list."
 }
