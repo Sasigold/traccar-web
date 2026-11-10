@@ -56,6 +56,7 @@ import {
 } from './stage5Data';
 import { DateTimeField } from '../common/components/pickers';
 import { keepOnBackdrop } from '../common/util/formDialog';
+import CopyButton from '../common/components/CopyButton';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -349,9 +350,7 @@ const TrackingDialog = ({ job, deviceId, eta, onClose, onSaved }) => {
         <Button onClick={onClose}>{t('sharedCancel')}</Button>
         {link ? (
           <>
-            <Button onClick={() => navigator.clipboard?.writeText(message)}>
-              {t('sharedCopy')}
-            </Button>
+            <CopyButton text={message} size="medium" />
             <Button
               variant="contained"
               href={whatsappLink(job.customer_phone, message)}

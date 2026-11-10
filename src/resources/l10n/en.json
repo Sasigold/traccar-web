@@ -3664,5 +3664,8 @@
     "pickerPlusHalfYear": "+6 months",
     "logsAutoScroll": "Scroll to the end automatically",
     "moneyVatIncluded": "Including VAT",
-    "moneyVatExcluded": "Before VAT"
+    "moneyVatExcluded": "Before VAT",
+    "sharedCopiedCheck": "Copied ✓",
+    "sharedSavedNamed": "{0} saved",
+    "fleetApiKeyKept": "I saved the key somewhere safe (it will not be shown again)"
 }

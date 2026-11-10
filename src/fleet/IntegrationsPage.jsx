@@ -48,6 +48,7 @@ import FleetNotice from './components/FleetNotice';
 import { camel, useFleetRows } from './stage5Data';
 import { useConfirm } from '../common/components/confirm/ConfirmProvider';
 import { keepOnBackdrop } from '../common/util/formDialog';
+import CopyButton from '../common/components/CopyButton';
 
 const useStyles = makeStyles()((theme) => ({
   stack: {
@@ -83,6 +84,7 @@ const KeyDialog = ({ onClose, onSaved }) => {
   const [scope, setScope] = useState('read');
   const [months, setMonths] = useState(12);
   const [created, setCreated] = useState(null);
+  const [keptKey, setKeptKey] = useState(false);
 
   // SEC-22: the key is made on the server (random bytes, stored as a peppered HMAC) and comes
   // back once; it expires after the chosen months.
@@ -101,7 +103,12 @@ const KeyDialog = ({ onClose, onSaved }) => {
   });
 
   return (
-    <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="sm">
+    <Dialog
+      open
+      onClose={created && !keptKey ? undefined : keepOnBackdrop(onClose)}
+      fullWidth
+      maxWidth="sm"
+    >
       <DialogTitle>{t('fleetApiKeyAdd')}</DialogTitle>
       <DialogContent>
         {created ? (
@@ -110,6 +117,15 @@ const KeyDialog = ({ onClose, onSaved }) => {
             <Typography className={classes.code} dir="ltr">
               {created}
             </Typography>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={keptKey}
+                  onChange={(event) => setKeptKey(event.target.checked)}
+                />
+              }
+              label={t('fleetApiKeyKept')}
+            />
           </div>
         ) : (
           <div className={classes.stack}>
@@ -149,10 +165,9 @@ const KeyDialog = ({ onClose, onSaved }) => {
       <DialogActions>
         {created ? (
           <>
-            <Button onClick={() => navigator.clipboard?.writeText(created)}>
-              {t('sharedCopy')}
-            </Button>
-            <Button variant="contained" onClick={onClose}>
+            <CopyButton text={created} size="medium" />
+            {/* ADM-28: the key is shown once, so closing waits for "I saved it". */}
+            <Button variant="contained" onClick={onClose} disabled={!keptKey}>
               {t('fleetDone')}
             </Button>
           </>

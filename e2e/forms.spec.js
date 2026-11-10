@@ -61,3 +61,19 @@ test('a form dialog fills the phone, with a file button and shekels', async ({
   await expect(dialog.getByText('₪')).toBeVisible();
   await expect(dialog.getByText('כולל מע"מ')).toBeVisible();
 });
+
+// ADM-28: a save says what was saved.
+test('saving a vehicle names it', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the phone list is cards; the message itself is the same');
+  await writeMode(page);
+  // Opened from the list inside the app, as a user would (saving goes back there).
+  await gotoReady(page, '/settings/devices');
+  await page
+    .getByRole('row', { name: /Delivery Van/ })
+    .getByRole('button', { name: 'עריכה' })
+    .click();
+  await expect(page).toHaveURL(/\/settings\/device\/1$/);
+  await page.getByLabel('שם', { exact: true }).fill('Delivery Van 2');
+  await page.getByRole('button', { name: 'שמירה' }).click();
+  await expect(page.getByText('Delivery Van 2 נשמר')).toBeVisible();
+});

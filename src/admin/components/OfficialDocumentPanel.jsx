@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { Alert, Button, IconButton, Link, Tooltip, Typography } from '@mui/material';
+import { Alert, Button, Link, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
+import CopyButton from '../../common/components/CopyButton';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import { useAsyncTask } from '../../reactHelper';
@@ -197,15 +197,7 @@ const OfficialDocumentPanel = ({ invoice, readonly, onChanged }) => {
           <Typography className={classes.url} dir="ltr">
             {invoice.payment_url}
           </Typography>
-          <Tooltip title={t('sharedCopy')}>
-            <IconButton
-              size="small"
-              aria-label={t('sharedCopy')}
-              onClick={() => navigator.clipboard?.writeText(invoice.payment_url)}
-            >
-              <ContentCopyRoundedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          <CopyButton icon text={invoice.payment_url} />
         </div>
       )}
 

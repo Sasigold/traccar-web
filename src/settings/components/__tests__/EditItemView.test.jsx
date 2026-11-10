@@ -48,7 +48,7 @@ afterEach(() => vi.unstubAllGlobals());
 describe('saving an item', () => {
   it('loads the item, saves the change with PUT and goes back', async () => {
     const onItemSaved = vi.fn();
-    const { user, api } = await open(
+    const { user, api, store } = await open(
       '/settings/group/5',
       {
         'GET api/groups/5': { id: 5, name: 'צפון', groupId: 0, attributes: {} },
@@ -66,6 +66,11 @@ describe('saving an item', () => {
     const put = api.calls.find((call) => call.method === 'PUT');
     expect(JSON.parse(put.body)).toEqual({ id: 5, name: 'צפון רחוק', groupId: 0, attributes: {} });
     expect(onItemSaved).toHaveBeenCalledWith(expect.objectContaining({ name: 'צפון רחוק' }));
+    // ADM-28: the save says what was saved.
+    expect(store.getState().messages.messages).toContainEqual({
+      message: 'צפון רחוק נשמר',
+      severity: 'success',
+    });
   });
 
   it('creates a new item with POST, and cannot save it empty', async () => {

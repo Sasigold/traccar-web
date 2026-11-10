@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Button,
-  IconButton,
   Link,
   MenuItem,
   Table,
@@ -11,7 +10,6 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Tooltip,
   Typography,
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
@@ -33,6 +31,7 @@ import { useFleetPermission } from '../common/fleet/useFleet';
 import { RESOURCES } from '../../supabase/functions/public-api/resources.js';
 import { buildOpenApi } from '../../supabase/functions/public-api/openapi.js';
 import { apiBaseUrl, apiLimits, curlExample, powerBiQuery } from './apiDocs';
+import CopyButton from '../common/components/CopyButton';
 
 const useStyles = makeStyles()((theme) => ({
   page: {
@@ -200,15 +199,7 @@ const ApiDocsPage = () => {
               <Typography className={classes.inline} dir="ltr">
                 {base}
               </Typography>
-              <Tooltip title={t('sharedCopy')}>
-                <IconButton
-                  size="small"
-                  aria-label={t('sharedCopy')}
-                  onClick={() => navigator.clipboard?.writeText(base)}
-                >
-                  <ContentCopyRoundedIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
+              <CopyButton icon text={base} />
             </div>
           </div>
           <CodeBlock label={t('apiDocsExample')} code={curlExample(base, resource)} />

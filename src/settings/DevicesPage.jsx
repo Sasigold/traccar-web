@@ -105,6 +105,7 @@ const DevicesPage = () => {
 
   const [reloadKey, reload] = useReducer((k) => k + 1, 0);
   const [items, setItems] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [showAll, setShowAll] = usePersistedState('showAllDevices', false);
   const [hasMore, setHasMore] = useState(true);
@@ -156,8 +157,13 @@ const DevicesPage = () => {
   useAsyncTask(
     async ({ signal }) => {
       void reloadKey;
-      setItems([]);
-      await loadItems(0, signal);
+      // ADM-28: the rows stay (dimmed) while the list reloads, instead of flashing empty.
+      setRefreshing(true);
+      try {
+        await loadItems(0, signal);
+      } finally {
+        setRefreshing(false);
+      }
     },
     [reloadKey, loadItems],
   );
@@ -222,6 +228,7 @@ const DevicesPage = () => {
       description={t('settingsDevicesDescription')}
     >
       <DataTable
+        refreshing={refreshing && items.length > 0}
         toolbar={
           <>
             <TableToolbar

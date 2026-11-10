@@ -43,6 +43,7 @@ const DriversPage = () => {
 
   const [reloadKey, reload] = useReducer((k) => k + 1, 0);
   const [items, setItems] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
   // ADM-13: drivers from a spreadsheet.
   const [importing, setImporting] = useState(false);
   const storeDrivers = useSelector((state) => state.drivers.items);
@@ -84,8 +85,13 @@ const DriversPage = () => {
   useAsyncTask(
     async ({ signal }) => {
       void reloadKey;
-      setItems([]);
-      await loadItems(0, signal);
+      // ADM-28: the rows stay (dimmed) while the list reloads, instead of flashing empty.
+      setRefreshing(true);
+      try {
+        await loadItems(0, signal);
+      } finally {
+        setRefreshing(false);
+      }
     },
     [reloadKey, loadItems],
   );
@@ -93,6 +99,7 @@ const DriversPage = () => {
   return (
     <PageLayout menu={<SettingsMenu />} breadcrumbs={['fleetTitle', 'sharedDrivers']}>
       <DataTable
+        refreshing={refreshing && items.length > 0}
         toolbar={
           <TableToolbar
             search={{ value: searchKeyword, onChange: setSearchKeyword }}

@@ -24,7 +24,6 @@ import {
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import CachedRoundedIcon from '@mui/icons-material/CachedRounded';
-import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
 import DnsRoundedIcon from '@mui/icons-material/DnsRounded';
 import VolumeUpRoundedIcon from '@mui/icons-material/VolumeUpRounded';
@@ -49,6 +48,7 @@ import { DateField } from '../common/components/pickers';
 import usePersistedState from '../common/util/usePersistedState';
 import { config as telemetry } from '../common/telemetry/install';
 import { ANALYTICS_OPT_OUT_KEY, browserOptedOut } from '../common/telemetry/analytics';
+import CopyButton from '../common/components/CopyButton';
 
 const deviceFields = [
   { id: 'name', name: 'sharedName' },
@@ -496,19 +496,7 @@ const PreferencesPage = () => {
                         </IconButton>
                       </span>
                     </Tooltip>
-                    <Tooltip title={t('sharedCopy')} describeChild>
-                      <span>
-                        <IconButton
-                          aria-label={t('sharedCopy')}
-                          size="small"
-                          edge="end"
-                          onClick={() => navigator.clipboard.writeText(token)}
-                          disabled={!token}
-                        >
-                          <ContentCopyRoundedIcon fontSize="small" />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
+                    <CopyButton icon text={token} edge="end" />
                   </div>
                 </InputAdornment>
               }

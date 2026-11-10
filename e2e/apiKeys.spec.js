@@ -36,4 +36,15 @@ test('a new key comes from the server, once, with the chosen validity', async ({
   expect(months).toBeGreaterThan(5.5);
   expect(months).toBeLessThan(6.5);
   expect(fleet.tables.api_keys).toEqual([]);
+
+  // ADM-28: copying says so, and closing waits for "I saved it".
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await dialog.getByRole('button', { name: 'העתקה' }).click();
+  await expect(dialog.getByRole('button', { name: 'הועתק ✓' })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'העתקה' })).toBeVisible({ timeout: 4000 });
+  const done = dialog.getByRole('button', { name: 'סיום' });
+  await expect(done).toBeDisabled();
+  await dialog.getByLabel(/שמרתי את המפתח/).check();
+  await done.click();
+  await expect(dialog).toBeHidden();
 });
