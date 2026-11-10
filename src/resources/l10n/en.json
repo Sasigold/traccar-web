@@ -3472,5 +3472,6 @@
     "reportSoFar": "so far",
     "reportLitersPer100": "Liters per 100 km",
     "reportPrintedBy": "Produced by {0} · {1}",
-    "reportAllVehicles": "All vehicles"
+    "reportAllVehicles": "All vehicles",
+    "dashboardTooLargeDetail": "{0} vehicles × {1} days, the limit is {2}"
 }

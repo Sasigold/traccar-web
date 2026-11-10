@@ -550,6 +550,7 @@ const DashboardPage = () => {
   const content = (
     <DashboardDataProvider
       filters={dashboard.filters}
+      onFilters={tv ? undefined : setFilters}
       refresh={tv ? dashboard.refresh || 300 : dashboard.refresh}
     >
       <div ref={rootRef} className={tv ? `${classes.root} ${classes.tv}` : classes.root}>

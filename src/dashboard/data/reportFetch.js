@@ -17,10 +17,14 @@ export const LIMITS = {
 };
 
 export class TooLargeError extends Error {
-  constructor(source) {
+  constructor(source, detail = {}) {
     super(`too large: ${source}`);
     this.name = 'TooLargeError';
     this.source = source;
+    // REP-17: how much was asked for, so the widget can say it ("120 vehicles × 30 days").
+    this.devices = detail.devices;
+    this.days = detail.days;
+    this.limit = detail.limit;
   }
 }
 
@@ -44,7 +48,7 @@ export const reportUrl = (endpoint, { from, to, deviceIds, params = {} }) => {
 export const checkSize = (sourceKey, deviceCount, dayCount) => {
   const limit = LIMITS[sourceKey];
   if (limit && deviceCount * dayCount > limit) {
-    throw new TooLargeError(sourceKey);
+    throw new TooLargeError(sourceKey, { devices: deviceCount, days: dayCount, limit });
   }
 };
 

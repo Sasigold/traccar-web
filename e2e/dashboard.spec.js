@@ -51,6 +51,25 @@ test.describe('dashboard', () => {
     await expectGapless(page);
   });
 
+  // REP-17: the arrows keep the preset and walk the calendar, named by month.
+  test('the period arrows move a month at a time and name it', async ({ page }) => {
+    const period = page.getByRole('combobox', { name: 'תקופה' });
+    await period.click();
+    await page.getByRole('option', { name: 'חודש נוכחי' }).click();
+    const next = page.getByRole('button', { name: 'התקופה הבאה' });
+    await expect(next).toBeDisabled();
+    await page.getByRole('button', { name: 'התקופה הקודמת' }).click();
+    await expect(period).toContainText('חודש קודם');
+    await page.getByRole('button', { name: 'התקופה הקודמת' }).click();
+    const twoBack = new Date();
+    twoBack.setDate(1);
+    twoBack.setMonth(twoBack.getMonth() - 2);
+    await expect(period).toContainText(String(twoBack.getFullYear()));
+    await expect(next).toBeEnabled();
+    await next.click();
+    await expect(period).toContainText('חודש קודם');
+  });
+
   test('a period change reaches the activity widgets and the table view', async ({ page }) => {
     await page.getByRole('button', { name: 'דשבורד חדש' }).click();
     await page.getByRole('menuitem', { name: /פעילות/ }).click();

@@ -127,7 +127,7 @@ const ChartWidget = ({
     );
   }
   if (['error', 'tooLarge'].includes(data.status) && !view) {
-    return <WidgetState state={data.status} />;
+    return <WidgetState state={data.status} error={data.error} />;
   }
   if (!view) {
     return <WidgetState state="loading" loadingLabel={title} />;

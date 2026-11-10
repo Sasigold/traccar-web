@@ -15,6 +15,7 @@ import { useChartTheme } from '../../charts/chartTheme';
 import SegmentedBar from '../../charts/SegmentedBar';
 import TableView from '../../charts/TableView';
 import { DIMENSIONS, sourceOf } from '../../data/datasets';
+import { periodRange } from '../../data/periods';
 import { aggregate } from '../../data/aggregate';
 import { useDashboardData } from '../../data/DashboardDataContext';
 import { useLabels } from '../useLabels';
@@ -128,15 +129,27 @@ const useOpenDevice = () => {
   };
 };
 
-// Events since the app was opened (live from the server; capped at 50).
+// Today's events (REP-17: filled from the server on load, so the morning is not empty) and the
+// live ones since; newest first, capped at 50.
 export const EventFeedWidget = ({ height }) => {
   const { classes } = useStyles();
   const t = useTranslation();
   const navigate = useNavigate();
   const chart = useChartTheme();
   const { deviceIds } = useDashboardData();
-  const events = useSelector((state) => state.events.items);
+  const live = useSelector((state) => state.events.items);
   const devices = useSelector((state) => state.devices.items);
+  const today = useMemo(() => periodRange('today'), []);
+  const history = useSourceRows('events', sourceOf('events'), today);
+  const events = useMemo(() => {
+    const byId = new Map();
+    [...(history.status === 'success' ? history.data : []), ...live].forEach((event) => {
+      byId.set(event.id ?? `${event.deviceId}-${event.eventTime}`, event);
+    });
+    return [...byId.values()]
+      .sort((a, b) => Date.parse(b.eventTime) - Date.parse(a.eventTime))
+      .slice(0, 50);
+  }, [history.status, history.data, live]);
   const rows = useMemo(() => {
     const scope = new Set(deviceIds);
     return events
@@ -284,7 +297,9 @@ export const MaintenanceWidget = ({ height, table }) => {
     return <WidgetState state="loading" />;
   }
   if (data.status !== 'success') {
-    return <WidgetState state={data.status === 'tooLarge' ? 'tooLarge' : 'error'} />;
+    return (
+      <WidgetState state={data.status === 'tooLarge' ? 'tooLarge' : 'error'} error={data.error} />
+    );
   }
   const rank = { overdue: 0, due: 1, ok: 2, unknown: 3 };
   const rows = [...data.data]
@@ -347,7 +362,9 @@ export const TopVehiclesWidget = ({ width }) => {
     return <WidgetState state="loading" />;
   }
   if (data.status !== 'success') {
-    return <WidgetState state={data.status === 'tooLarge' ? 'tooLarge' : 'error'} />;
+    return (
+      <WidgetState state={data.status === 'tooLarge' ? 'tooLarge' : 'error'} error={data.error} />
+    );
   }
   const byDevice = new Map();
   data.data.forEach((row) => {

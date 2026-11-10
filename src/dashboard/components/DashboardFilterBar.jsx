@@ -21,7 +21,7 @@ import { NextPeriodIcon, PreviousPeriodIcon } from '../../common/components/Peri
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import useFeatures from '../../common/util/useFeatures';
-import { PERIODS, periodRange, shiftRange } from '../data/periods';
+import { PERIODS, periodRange, shiftFilters } from '../data/periods';
 import { REFRESH_OPTIONS } from '../model/schema';
 import { useDashboardData, useLastSynced } from '../data/DashboardDataContext';
 import { PERIOD_KEYS, periodLabel } from './periodLabel';
@@ -101,15 +101,8 @@ const DashboardFilterBar = ({ filters, refresh, onFilters, onRefresh }) => {
   const groupList = Object.values(groups).sort((a, b) => a.name.localeCompare(b.name));
   const shiftable = filters.period !== 'custom' || Boolean(filters.from);
 
-  const shift = (step) => {
-    const next = shiftRange(filters.period, range, step);
-    onFilters({
-      ...filters,
-      period: 'custom',
-      from: next.from.toISOString(),
-      to: next.to.toISOString(),
-    });
-  };
+  // REP-17: the arrows keep the preset and move it on the calendar.
+  const shift = (step) => onFilters(shiftFilters(filters, step));
 
   return (
     <div className={classes.root}>
@@ -129,7 +122,13 @@ const DashboardFilterBar = ({ filters, refresh, onFilters, onRefresh }) => {
             const current = periodRange(filters.period, dayjs(), filters);
             setCustom({ from: toInput(current.from), to: toInput(current.to) });
           } else {
-            onFilters({ ...filters, period: event.target.value, from: undefined, to: undefined });
+            onFilters({
+              ...filters,
+              period: event.target.value,
+              from: undefined,
+              to: undefined,
+              offset: 0,
+            });
           }
         }}
       >
@@ -155,7 +154,11 @@ const DashboardFilterBar = ({ filters, refresh, onFilters, onRefresh }) => {
               <IconButton
                 size="small"
                 aria-label={t('dashboardNextPeriod')}
-                disabled={range.to.isAfter(dayjs())}
+                disabled={
+                  filters.period === 'custom'
+                    ? range.to.isAfter(dayjs())
+                    : (Number(filters.offset) || 0) >= 0
+                }
                 onClick={() => shift(1)}
               >
                 <NextPeriodIcon />
@@ -253,6 +256,7 @@ const DashboardFilterBar = ({ filters, refresh, onFilters, onRefresh }) => {
               onFilters({
                 ...filters,
                 period: 'custom',
+                offset: 0,
                 from: dayjs(custom.from).toISOString(),
                 to: dayjs(custom.to).endOf('minute').toISOString(),
               });

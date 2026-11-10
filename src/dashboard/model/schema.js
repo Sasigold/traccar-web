@@ -27,6 +27,11 @@ export const normalizeFilters = (filters) => {
       ? [...new Set(filters.groupIds.map(Number).filter((id) => Number.isInteger(id) && id > 0))]
       : [],
   };
+  // REP-17: a preset moved back on the calendar (0 = the current one, never ahead).
+  const offset = Math.trunc(Number(filters?.offset));
+  if (period !== 'custom' && Number.isFinite(offset) && offset < 0 && offset >= -120) {
+    result.offset = offset;
+  }
   if (period === 'custom') {
     if (validCustom(filters.from, filters.to)) {
       result.from = filters.from;

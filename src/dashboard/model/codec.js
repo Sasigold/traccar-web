@@ -54,7 +54,12 @@ export const encodeDashboard = (dashboard) => {
   const { filters } = dashboard;
   const out = {
     i: dashboard.id,
-    f: filters.period === 'custom' ? [filters.period, filters.from, filters.to] : [filters.period],
+    f:
+      filters.period === 'custom'
+        ? [filters.period, filters.from, filters.to]
+        : filters.offset
+          ? [filters.period, null, null, filters.offset]
+          : [filters.period],
     g: filters.groupIds,
     r: dashboard.refresh,
     L: dashboard.rows.map((row) => [
@@ -99,12 +104,12 @@ const decodeDashboard = (value) => {
       }),
     };
   });
-  const [period, from, to] = Array.isArray(value.f) ? value.f : [];
+  const [period, from, to, offset] = Array.isArray(value.f) ? value.f : [];
   return {
     id: value.i,
     name: value.n,
     nameKey: value.k,
-    filters: { period, from, to, groupIds: value.g },
+    filters: { period, from, to, offset, groupIds: value.g },
     refresh: value.r,
     rows,
     widgets: Object.fromEntries(
