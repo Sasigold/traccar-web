@@ -17,3 +17,18 @@ test("this week's leaders are ranked in groups", async ({ page }) => {
   await expect(page.getByRole('cell', { name: '1', exact: true }).first()).toBeVisible();
   await expect(page.getByText(/בלי אירוע|—/).first()).toBeVisible();
 });
+
+// ISR-07: the driving hours view still loads with the weekly rest rule and the allowance.
+test('driving hours list each driver with their violations', async ({ page }) => {
+  await writeMode(page);
+  await fakeFleet(page, {
+    users: {
+      1: { profile: { id: 'p1', org_id: 'o1', role: 'manager' }, permissions: ['safety.read'] },
+    },
+    rpc: { fleet_features: ['safety'] },
+    tables: {},
+  });
+  await gotoReady(page, '/fleet/safety?view=hours');
+  await expect(page.getByRole('button', { name: 'שעות נהיגה' })).toBeVisible();
+  await expect(page.locator('tbody tr').filter({ hasText: /\d/ }).first()).toBeVisible();
+});

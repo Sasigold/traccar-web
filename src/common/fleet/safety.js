@@ -174,3 +174,56 @@ export const drivingHours = (trips, rules = DEFAULT_HOURS_RULES) => {
   const total = daily.reduce((sum, item) => sum + item.minutes, 0);
   return { daily, violations, totalMinutes: total };
 };
+
+// ISR-07: regulation 168 also asks for 25 hours of continuous rest in every 8 days.
+// The longest gap between driving inside each 8-day window that ends on a driving day.
+export const WEEKLY_REST_MINUTES = 25 * 60;
+
+export const weeklyRestViolations = (trips, rules = DEFAULT_HOURS_RULES, now = Date.now()) => {
+  const intervals = drivingIntervals(trips, rules.minBreak);
+  if (!intervals.length) return [];
+  const violations = [];
+  const window = 8 * 86400000;
+  const first = intervals[0].start;
+  intervals.forEach((interval) => {
+    const end = interval.end;
+    const start = end - window;
+    // Only windows fully covered by the data can be judged.
+    if (start < first) return;
+    const inside = intervals.filter((other) => other.end > start && other.start < end);
+    let longest = Math.max(0, inside[0].start - start);
+    for (let index = 1; index < inside.length; index += 1) {
+      longest = Math.max(longest, inside[index].start - inside[index - 1].end);
+    }
+    longest = Math.max(longest, end - inside[inside.length - 1].end);
+    if (longest / 60000 < (rules.minWeeklyRest ?? WEEKLY_REST_MINUTES)) {
+      violations.push({
+        type: 'weeklyRest',
+        day: dayKey(end),
+        minutes: Math.round(longest / 60000),
+      });
+    }
+  });
+  // One finding per day.
+  return violations
+    .filter((item, index) => violations.findIndex((other) => other.day === item.day) === index)
+    .filter((item) => Date.parse(`${item.day}T00:00:00`) <= now);
+};
+
+// Before it happens: how much driving is left today and in the rolling week, and the warning
+// level ("near" within 30 minutes of a limit).
+export const drivingAllowance = (trips, rules = DEFAULT_HOURS_RULES, now = Date.now()) => {
+  const { daily } = drivingHours(trips, rules);
+  const today = dayKey(now);
+  const todayMinutes = daily.find((item) => item.day === today)?.minutes || 0;
+  const weekMinutes = daily
+    .filter((item) => Date.parse(`${item.day}T00:00:00`) > now - 7 * 86400000)
+    .reduce((sum, item) => sum + item.minutes, 0);
+  const left = Math.min(rules.maxDailyDriving - todayMinutes, rules.maxWeeklyDriving - weekMinutes);
+  return {
+    todayMinutes,
+    weekMinutes,
+    leftMinutes: Math.max(0, left),
+    level: left <= 0 ? 'over' : left <= 30 ? 'near' : 'ok',
+  };
+};

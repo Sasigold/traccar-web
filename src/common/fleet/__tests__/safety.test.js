@@ -104,3 +104,37 @@ describe('driving hours', () => {
     expect(violations.filter((v) => v.type === 'weekly').map((v) => v.day)).toEqual(['2026-11-07']);
   });
 });
+
+describe('regulation 168, the rest of it (ISR-07)', () => {
+  const day = (d, h) => new Date(2026, 10, d, h).toISOString();
+  // Ten days in a row, 08:00-16:00 with short breaks: never 25 hours off.
+  const everyDay = Array.from({ length: 10 }, (_, i) => ({
+    startTime: day(1 + i, 8),
+    endTime: day(1 + i, 16),
+  }));
+
+  it('needs 25 hours of continuous rest in every 8 days', async () => {
+    const { weeklyRestViolations } = await import('../safety');
+    const found = weeklyRestViolations(everyDay, undefined, Date.parse(day(11, 0)));
+    expect(found.length).toBeGreaterThan(0);
+    expect(found[0].type).toBe('weeklyRest');
+    const withDayOff = everyDay.filter((_, i) => i !== 4 && i !== 5);
+    expect(weeklyRestViolations(withDayOff, undefined, Date.parse(day(11, 0)))).toEqual([]);
+  });
+
+  it('warns before the daily limit', async () => {
+    const { drivingAllowance } = await import('../safety');
+    const allowance = drivingAllowance(
+      [
+        {
+          startTime: new Date(2026, 10, 9, 6).toISOString(),
+          endTime: new Date(2026, 10, 9, 17, 40).toISOString(),
+        },
+      ],
+      undefined,
+      new Date(2026, 10, 9, 18).getTime(),
+    );
+    expect(allowance.level).toBe('near');
+    expect(allowance.leftMinutes).toBeLessThanOrEqual(30);
+  });
+});

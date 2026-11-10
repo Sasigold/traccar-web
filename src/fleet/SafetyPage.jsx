@@ -41,8 +41,10 @@ import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import {
   DEFAULT_HOURS_RULES,
   DEFAULT_SCORE_WEIGHTS,
+  drivingAllowance,
   drivingHours,
   eventCategory,
+  weeklyRestViolations,
   scoreDrivers,
 } from '../common/fleet/safety';
 import { cleanStreak, driverDays, leaderboard, weekOf } from '../common/fleet/leaderboard';
@@ -318,7 +320,16 @@ const SafetyPage = () => {
       }
     });
     return [...byDriver.entries()]
-      .map(([driver, trips]) => ({ driver, ...drivingHours(trips, settings.rules) }))
+      .map(([driver, trips]) => {
+        const result = drivingHours(trips, settings.rules);
+        return {
+          driver,
+          ...result,
+          // ISR-07: 25 hours of rest in every 8 days, and what is left today before a limit.
+          violations: [...result.violations, ...weeklyRestViolations(trips, settings.rules)],
+          allowance: drivingAllowance(trips, settings.rules),
+        };
+      })
       .sort((a, b) => b.violations.length - a.violations.length || b.totalMinutes - a.totalMinutes);
   }, [driving, settings]);
 
@@ -615,7 +626,24 @@ const SafetyPage = () => {
               {hours?.map((row) => (
                 <TableRow key={row.driver} hover>
                   <TableCell>{driverName(row.driver)}</TableCell>
-                  <TableCell className={classes.number}>{hoursText(row.totalMinutes)}</TableCell>
+                  <TableCell className={classes.number}>
+                    {hoursText(row.totalMinutes)}
+                    {row.allowance.level !== 'ok' && (
+                      <Chip
+                        size="small"
+                        sx={{ mx: 0.5 }}
+                        color={row.allowance.level === 'over' ? 'error' : 'warning'}
+                        label={
+                          row.allowance.level === 'over'
+                            ? t('fleetSafetyNoDrivingLeft')
+                            : t('fleetSafetyDrivingLeft').replace(
+                                '{0}',
+                                hoursText(row.allowance.leftMinutes),
+                              )
+                        }
+                      />
+                    )}
+                  </TableCell>
                   <TableCell className={classes.number}>{row.daily.length}</TableCell>
                   <TableCell>
                     {row.violations.length === 0

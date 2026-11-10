@@ -3544,5 +3544,8 @@
     "fleetSafetyStreak": "רצף נקי",
     "fleetSafetyStreakDays": "{0} בלי אירוע",
     "fleetSafetyAllVehicles": "כל הרכבים",
-    "fleetSafetyNoneLeaders": "עוד אין מספיק נסיעות השבוע לטבלה."
+    "fleetSafetyNoneLeaders": "עוד אין מספיק נסיעות השבוע לטבלה.",
+    "fleetSafetyHoursWeeklyRest": "בלי 25 שעות מנוחה ב-8 ימים",
+    "fleetSafetyDrivingLeft": "נותרו {0} נהיגה",
+    "fleetSafetyNoDrivingLeft": "הגיע למגבלת הנהיגה"
 }
