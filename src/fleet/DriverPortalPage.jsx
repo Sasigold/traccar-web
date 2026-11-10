@@ -13,6 +13,7 @@ import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
 import CarCrashRoundedIcon from '@mui/icons-material/CarCrashRounded';
 import QrCodeScannerRoundedIcon from '@mui/icons-material/QrCodeScannerRounded';
 import KeyRoundedIcon from '@mui/icons-material/KeyRounded';
+import LocalGasStationRoundedIcon from '@mui/icons-material/LocalGasStationRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded';
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
@@ -304,6 +305,16 @@ const DriverPortalPage = () => {
                 >
                   <KeyRoundedIcon />
                   {t('driverHandover')}
+                </Button>
+                {/* ADM-18: a fueling paid on the road, with the receipt's photo. */}
+                <Button
+                  variant="outlined"
+                  className={classes.action}
+                  component={RouterLink}
+                  to="/driver/fuel"
+                >
+                  <LocalGasStationRoundedIcon />
+                  {t('driverFuel')}
                 </Button>
               </div>
             </Paper>

@@ -434,7 +434,15 @@ const CostsPage = () => {
                   <TableCell>
                     <span dir="ltr">{plate(row.vehicle_id, row.plate_number)}</span>
                   </TableCell>
-                  <TableCell>{row.station}</TableCell>
+                  <TableCell>
+                    {row.station}
+                    {/* ADM-18: the receipt a driver photographed with the fueling. */}
+                    {row.receipt_path && (
+                      <Button size="small" onClick={() => openFleetFile(row.receipt_path)}>
+                        {t('fleetExpenseReceipt')}
+                      </Button>
+                    )}
+                  </TableCell>
                   <TableCell className={classes.number}>{row.liters}</TableCell>
                   <TableCell className={classes.number}>{money(row.total)}</TableCell>
                   <TableCell>

@@ -49,6 +49,7 @@ const AiSettingsPage = lazy(() => import('./fleet/AiSettingsPage'));
 const SafetyInboxPage = lazy(() => import('./fleet/SafetyInboxPage'));
 const DriverCheckInPage = lazy(() => import('./fleet/DriverCheckInPage'));
 const DriverHandoverPage = lazy(() => import('./fleet/DriverHandoverPage'));
+const DriverFuelPage = lazy(() => import('./fleet/DriverFuelPage'));
 const FuelChecksPage = lazy(() => import('./fleet/FuelChecksPage'));
 const AlertResponsePage = lazy(() => import('./fleet/AlertResponsePage'));
 const PoolPage = lazy(() => import('./fleet/PoolPage'));
@@ -256,6 +257,7 @@ const Navigation = () => {
             <Route path="damage" element={<DriverDamagePage />} />
             <Route path="checkin" element={<DriverCheckInPage />} />
             <Route path="handover" element={<DriverHandoverPage />} />
+            <Route path="fuel" element={<DriverFuelPage />} />
             <Route path="course/:id" element={<DriverCoursePage />} />
           </Route>
           <Route path="fleet">

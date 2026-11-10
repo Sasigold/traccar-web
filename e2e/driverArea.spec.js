@@ -356,3 +356,47 @@ test('a report with a third party goes out with the other driver', async ({ page
   const party = writes.find((write) => write.name === 'incident_parties');
   expect(party.body).toMatchObject({ role: 'third_party', name: 'משה כהן' });
 });
+
+// ADM-18: a fueling from the road, with the receipt's photo, on the driver's own vehicle.
+const fillFuel = async (page) => {
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'receipt.jpg',
+    mimeType: 'image/jpeg',
+    buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
+  });
+  await expect(page.getByRole('img', { name: 'צילום הקבלה' })).toBeVisible();
+  await page.getByLabel('סכום').fill('280');
+  await page.getByLabel('ליטרים').fill('40');
+  await page.getByLabel('ק״מ מדווח').fill('45210');
+  await page.getByRole('button', { name: 'שליחת התדלוק' }).click();
+};
+
+test('the driver sends a fueling with the photo of the receipt', async ({ page }) => {
+  const writes = await mockFleet(page);
+  await gotoReady(page, '/driver');
+  await page.getByRole('link', { name: 'תדלוק / קבלה' }).click();
+  await expect(page.getByRole('heading', { name: '12-345-67' })).toBeVisible();
+  await fillFuel(page);
+  await expect(page.getByRole('status').filter({ hasText: 'התדלוק נשמר' })).toBeVisible();
+  const upload = writes.find((write) => write.name === 'storage');
+  expect(upload.path).toMatch(/\/o1\/fuel\//);
+  const call = writes.find((write) => write.name === 'driver_report_fueling');
+  expect(call.body).toMatchObject({ p_total: 280, p_liters: 40, p_odometer: 45210 });
+  expect(call.body.p_receipt_path).toMatch(/^o1\/fuel\//);
+});
+
+test('with no signal the fueling waits in the phone and goes later', async ({ page }) => {
+  const net = { down: false };
+  const writes = await mockFleet(page, net);
+  await gotoReady(page, '/driver/fuel');
+  await expect(page.getByRole('heading', { name: '12-345-67' })).toBeVisible();
+  net.down = true;
+  await fillFuel(page);
+  await expect(page.getByRole('status').filter({ hasText: 'התדלוק שמור בטלפון' })).toBeVisible();
+  await page.getByRole('link', { name: 'חזרה לאזור הנהג' }).click();
+  await expect(page.getByText('ממתין לשליחה (1)')).toBeVisible();
+  net.down = false;
+  await page.getByRole('button', { name: 'לשלוח עכשיו' }).click();
+  await expect(page.getByText('ממתין לשליחה (1)')).toHaveCount(0);
+  expect(writes.filter((write) => write.name === 'driver_report_fueling')).toHaveLength(1);
+});
