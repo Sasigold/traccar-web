@@ -19,10 +19,22 @@ import { useAiAvailable } from '../../fleet/useAi';
 
 // AI-01: loaded the first time it is opened.
 const AssistantPanel = lazy(() => import('../assistant/AssistantPanel'));
-// PRF-04: the search window and the alerts list are loaded, and listen to the store, only
-// from the first time they are opened.
-const CommandPalette = lazy(() => import('./CommandPalette'));
-const EventsDrawer = lazy(() => import('./EventsDrawer'));
+// PRF-04: the search window and the alerts list are not in the first load, and the alerts list
+// listens to the store only from the first time it is opened.
+const loadPalette = () => import('./CommandPalette');
+const loadEvents = () => import('./EventsDrawer');
+const CommandPalette = lazy(loadPalette);
+const EventsDrawer = lazy(loadEvents);
+// Fetched once the app is idle; then the search window is mounted (closed), so the first Ctrl+K
+// opens at once and keeps what is typed.
+const whenIdle = (run) => {
+  if (typeof window.requestIdleCallback === 'function') {
+    const handle = window.requestIdleCallback(run, { timeout: 3000 });
+    return () => window.cancelIdleCallback(handle);
+  }
+  const timer = setTimeout(run, 1500);
+  return () => clearTimeout(timer);
+};
 
 // True from the first time `open` is true (kept mounted afterwards, for the closing motion).
 const useOpenedOnce = (open) => {
@@ -102,7 +114,17 @@ const AppShell = ({ children }) => {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [eventsOpen, setEventsOpen] = useState(false);
-  const paletteMounted = useOpenedOnce(paletteOpen);
+  const [panelsLoaded, setPanelsLoaded] = useState(false);
+  useEffect(
+    () =>
+      whenIdle(() => {
+        Promise.all([loadPalette(), loadEvents()])
+          .then(() => setPanelsLoaded(true))
+          .catch(() => {});
+      }),
+    [],
+  );
+  const paletteMounted = useOpenedOnce(paletteOpen) || panelsLoaded;
   const eventsMounted = useOpenedOnce(eventsOpen);
   const [railCollapsed, setRailCollapsed] = usePersistedState('navRailCollapsed', false);
   const aiAvailable = useAiAvailable();
