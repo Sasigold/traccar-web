@@ -11,9 +11,10 @@
 # provides SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.
 set -eu
 
-HOST="${DEPLOY_HOST:-root@72.61.153.60}"
+# SEC-21: no address in the repository; set DEPLOY_HOST=user@address (or use ~/.ssh/config).
+HOST="${DEPLOY_HOST:?Set DEPLOY_HOST=user@address of the VPS}"
 FLEET_DIR="${FLEET_DIR:-/docker/viper-fleet}"
-FLEET_URL="${FLEET_URL:-https://viper-fleet-api.srv2122641.hstgr.cloud}"
+FLEET_URL="${FLEET_URL:?Set FLEET_URL to the fleet API address}"
 FUNCTIONS="public-api billing-documents fleet-ai"
 
 cd "$(dirname "$0")/..

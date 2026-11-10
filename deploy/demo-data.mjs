@@ -65,7 +65,10 @@ const baseUrl = args.url.replace(/\/+$/, '');
 
 // FND-04: demo vehicles on the production server skew the admin KPIs, "devices without a customer"
 // and the billing counts. Use the staging server; production only on explicit request.
-const PRODUCTION_TRACCAR = ['traccar-ovjj.srv2122641.hstgr.cloud', '72.61.153.60:8082'];
+const PRODUCTION_TRACCAR = [
+  'traccar-ovjj.srv2122641.hstgr.cloud',
+  ...(process.env.PRODUCTION_TRACCAR_HOSTS || '').split(',').filter(Boolean),
+];
 const target = new URL(baseUrl);
 const isProduction =
   PRODUCTION_TRACCAR.includes(target.hostname) || PRODUCTION_TRACCAR.includes(target.host);

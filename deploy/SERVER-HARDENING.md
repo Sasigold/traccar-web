@@ -20,7 +20,7 @@ cookie, the Basic auth of scripts, API tokens) crosses the internet unencrypted.
    reaches the container by its network name.
 2. `docker compose up -d traccar`.
 3. Check from your own computer (not from the server):
-   `sh deploy/check-exposure.sh 72.61.153.60 https://traccar-ovjj.srv2122641.hstgr.cloud`.
+   `sh deploy/check-exposure.sh <vps-address> https://<site>`.
    Every internal port must say `closed`, and `http://` must redirect to `https://`.
    (From a cloud session behind a proxy this check is not reliable: the proxy may refuse the
    ports itself.)
@@ -44,7 +44,7 @@ an IMEI can send false positions for it. Ways to narrow it, from the simplest:
 
 `deploy/demo-data.mjs` refuses the production server unless given `--allow-production` (FND-04).
 To remove old demo vehicles from production once:
-`node deploy/demo-data.mjs clean --url https://traccar-ovjj.srv2122641.hstgr.cloud --allow-production`.
+`node deploy/demo-data.mjs clean --url https://<site> --allow-production`.
 
 ## 4. Checklist (SEC-19)
 
@@ -52,7 +52,7 @@ Check each item on the server, write the result in the table with the date, and 
 
 | # | What | How to check | Expected | Result |
 |---|---|---|---|---|
-| 1 | Traccar `web.origin` | `traccar.xml` | the site address, e.g. `https://traccar-ovjj.srv2122641.hstgr.cloud` (without it some versions answer CORS for any origin with credentials) | |
+| 1 | Traccar `web.origin` | `traccar.xml` | the site address, e.g. `https://<site>` (without it some versions answer CORS for any origin with credentials) | |
 | 2 | Session cookie flags | browser DevTools → the `JSESSIONID` cookie | `Secure`, `HttpOnly`, `SameSite=Lax` or `Strict` (`web.sameSiteCookie`) | |
 | 3 | Two-factor for administrators | `traccar.xml`: `server.totpForce` / user attribute | on for administrators | |
 | 4 | Traccar self-registration | Settings → Server → "Registration" | off | |
@@ -68,3 +68,17 @@ Check each item on the server, write the result in the table with the date, and 
 | 14 | Backups | `deploy/backup.sh` in cron, a copy off the server | last night's backup exists and restores | |
 
 Date of the last check: ____ · by: ____
+
+## Server details stay out of the repository (SEC-21)
+
+The scripts and workflows no longer carry the server's address, its host key or a root login.
+
+1. In GitHub, Settings → Secrets and variables → Actions → **Variables**, add:
+   - `DEPLOY_HOST`: `user@address` of the VPS. Prefer a deploy user over `root` (a user in the
+     `docker` group that owns the web and fleet directories).
+   - `VPS_HOST_KEY`: the line printed by `ssh-keyscan -t ed25519 <address>`.
+   - `PRODUCTION_SITE_URL` and `PRODUCTION_FLEET_URL`: the app's and the fleet API's addresses.
+2. On your own machine, set `DEPLOY_HOST` (and `FLEET_URL` for `deploy/functions.sh`) before
+   running the scripts, or add a `Host vf` entry in `~/.ssh/config` and use `DEPLOY_HOST=vf`.
+3. Keep the repository private. The address is still in the git history; rewriting history is
+   optional, since the hardening above (firewall, key-only SSH) is what protects the server.

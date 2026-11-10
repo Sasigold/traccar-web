@@ -17,7 +17,8 @@
 # DEPLOY_HOST=local runs the server side on this machine (for testing the script).
 set -eu
 
-HOST="${DEPLOY_HOST:-root@72.61.153.60}"
+# SEC-21: no address in the repository; set DEPLOY_HOST=user@address (or use ~/.ssh/config).
+HOST="${DEPLOY_HOST:?Set DEPLOY_HOST=user@address of the VPS}"
 REMOTE_DIR="${DEPLOY_DIR:-/docker/traccar-ovjj/web}"
 KEEP="${KEEP_RELEASES:-5}"
 

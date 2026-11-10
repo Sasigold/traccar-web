@@ -57,7 +57,7 @@ jobs:
     - run: npm ci
     - run: npm run build
       env:
-        VITE_FLEET_URL: ${{ vars.PRODUCTION_FLEET_URL || 'https://viper-fleet-api.srv2122641.hstgr.cloud' }}
+        VITE_FLEET_URL: ${{ vars.PRODUCTION_FLEET_URL }}
         VITE_FLEET_ANON_KEY: ${{ vars.PRODUCTION_FLEET_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzkzODAyMjQ4LCJleHAiOjE5NTE0ODIyNDh9.2VsAyl2IFUy3QarPwReLOwcKhSthi62FZIyxs5YyrxU' }}
         # FND-06: error reports and analytics, off while these variables are empty (none secret).
         VITE_ERROR_DSN: ${{ vars.PRODUCTION_ERROR_DSN }}
@@ -112,10 +112,10 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     env:
-      DEPLOY_HOST: root@72.61.153.60
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
       DEPLOY_DIR: /docker/traccar-ovjj/web
-      SITE_URL: https://traccar-ovjj.srv2122641.hstgr.cloud
-      FLEET_URL: ${{ vars.PRODUCTION_FLEET_URL || 'https://viper-fleet-api.srv2122641.hstgr.cloud' }}
+      SITE_URL: ${{ vars.PRODUCTION_SITE_URL }}
+      FLEET_URL: ${{ vars.PRODUCTION_FLEET_URL }}
       DB_CONTAINER: ${{ vars.PRODUCTION_DB_CONTAINER }}
       RUNTIME_CONTAINER: ${{ vars.PRODUCTION_RUNTIME_CONTAINER }}
     steps:
@@ -128,13 +128,19 @@ jobs:
     - name: Configure SSH
       env:
         SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        VPS_HOST_KEY: ${{ vars.VPS_HOST_KEY }}
       run: |
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
         printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
-        # Pinned host key of the VPS (ssh-keyscan -t ed25519 72.61.153.60)
-        echo '72.61.153.60 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID5SogCUGVSqGkOEvyAJz8/h8e5bvMed6JOhA3oE23R9' >> ~/.ssh/known_hosts
+        # SEC-21: the server's address and its pinned host key are repository variables
+        # (DEPLOY_HOST = user@address, VPS_HOST_KEY = the line of `ssh-keyscan -t ed25519 <address>`).
+        if [ -z "$DEPLOY_HOST" ] || [ -z "$VPS_HOST_KEY" ]; then
+          echo "::error::Set the repository variables DEPLOY_HOST and VPS_HOST_KEY (deploy/SERVER-HARDENING.md)."
+          exit 1
+        fi
+        printf '%s\n' "$VPS_HOST_KEY" >> ~/.ssh/known_hosts
 
     - name: Upload to VPS (retries on connection problems)
       run: |
