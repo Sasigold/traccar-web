@@ -121,3 +121,35 @@ test('a Hebrew address is completed and located', async ({ page, isMobile }) => 
   await expect(dialog.getByLabel('קו אורך')).toHaveValue('34.8106');
   expect(geocoded).toEqual(['הרצל 12, רמת גן']);
 });
+
+// ADM-20: the jobs on a map and as each driver's day.
+test('the jobs are shown on a map and per driver', async ({ page }) => {
+  await writeMode(page);
+  await fakeFleet(page, {
+    users: { 1: dispatcher },
+    rpc: { fleet_features: ['dispatch'] },
+    tables: {
+      dispatch_jobs: [
+        job('j1', 'משלוח לחיפה', 'assigned', 3, {
+          driver_id: 'd1',
+          drivers: { full_name: 'דנה לוי' },
+          latitude: 32.79,
+          longitude: 34.99,
+        }),
+        job('j2', 'איסוף בגבעתיים', 'planned', 5, { latitude: 32.07, longitude: 34.81 }),
+      ],
+      drivers: [{ id: 'd1', org_id: 'o1', full_name: 'דנה לוי' }],
+      pois: [],
+      vehicles: [],
+    },
+  });
+  await gotoReady(page, '/fleet/dispatch?filter=all');
+  const views = page.getByRole('group', { name: 'תצוגה' });
+  await views.getByRole('button', { name: 'לפי נהג' }).click();
+  await expect(page).toHaveURL(/view=schedule/);
+  await expect(page.getByRole('region', { name: 'דנה לוי' })).toContainText('משלוח לחיפה');
+  await expect(page.getByRole('region', { name: 'בלי נהג' })).toContainText('איסוף בגבעתיים');
+  await views.getByRole('button', { name: 'מפה' }).click();
+  await expect(page).toHaveURL(/view=map/);
+  await expect(page.locator('.maplibregl-canvas')).toBeVisible();
+});

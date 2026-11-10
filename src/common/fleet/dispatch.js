@@ -132,3 +132,37 @@ export const isLateJob = (job, now = new Date()) => {
   const due = job.window_end || job.scheduled_at;
   return Boolean(due) && new Date(due) < now && job.status !== 'arrived';
 };
+
+// ADM-20: the map's marker color for a job: done green, failed or late red, under way blue,
+// waiting grey.
+export const jobMarkerColor = (job, now = new Date()) => {
+  if (job.status === 'done') return 'success';
+  if (job.status === 'failed' || isLateJob(job, now)) return 'error';
+  if (['assigned', 'en_route', 'arrived'].includes(job.status)) return 'info';
+  return 'neutral';
+};
+
+// ADM-20: the day per driver: one group per driver (by name), jobs in time order, the jobs with
+// no driver last. [{ driverId, name, jobs }]. Pure.
+export const scheduleByDriver = (jobs) => {
+  const groups = new Map();
+  jobs.forEach((job) => {
+    const key = job.driver_id || '';
+    if (!groups.has(key)) {
+      groups.set(key, {
+        driverId: job.driver_id || null,
+        name: job.drivers?.full_name || null,
+        jobs: [],
+      });
+    }
+    groups.get(key).jobs.push(job);
+  });
+  const time = (job) => (job.scheduled_at ? Date.parse(job.scheduled_at) : Infinity);
+  return [...groups.values()]
+    .map((group) => ({ ...group, jobs: group.jobs.sort((a, b) => time(a) - time(b)) }))
+    .sort((a, b) => {
+      if (!a.driverId) return 1;
+      if (!b.driverId) return -1;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+};
