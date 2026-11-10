@@ -159,7 +159,7 @@ const CombinedReportPage = () => {
         )}
         <div className={classes.containerMain}>
           <div className={classes.header}>
-            <ReportFilter onShow={onShow} deviceType="multiple" loading={loading}>
+            <ReportFilter autoRun={false} onShow={onShow} deviceType="multiple" loading={loading}>
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
             </ReportFilter>
           </div>

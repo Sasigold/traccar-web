@@ -62,7 +62,17 @@ export const updateReportParams = (searchParams, setSearchParams, key, values) =
   setSearchParams(newParams, { replace: true });
 };
 
-const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, loading, formats }) => {
+const ReportFilter = ({
+  children,
+  onShow,
+  onExport,
+  onSchedule,
+  deviceType,
+  loading,
+  formats,
+  // REP-10: a cheap report runs again by itself after a change; position-heavy ones say false.
+  autoRun = true,
+}) => {
   const location = useLocation();
   const reportName = useReportsSectionItems().find((item) =>
     item.match(location.pathname),
@@ -173,6 +183,18 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
     };
   }, [stale]);
 
+  // REP-10: a short period and a few vehicles is cheap: 400ms after the filter changed (and once
+  // a report was shown), it runs again without "Show".
+  const span = validRange ? selectedTo.diff(selectedFrom, 'day', true) : Infinity;
+  const vehicleCount = deviceIds.filter((it) => it !== 'all').length + groupIds.length * 10;
+  const cheap = autoRun && !disabled && span <= 7 && vehicleCount <= 20;
+  const showReportRef = useRef(null);
+  useEffect(() => {
+    if (!stale || !cheap || !shownFor) return undefined;
+    const timer = setTimeout(() => showReportRef.current?.(), 400);
+    return () => clearTimeout(timer);
+  }, [stale, cheap, shownFor, range, deviceIds, groupIds]);
+
   const dateFormat = new Intl.DateTimeFormat(getFormatLocale(), {
     year: 'numeric',
     month: period.endsWith('Month') ? 'long' : 'short',
@@ -191,6 +213,7 @@ const ReportFilter = ({ children, onShow, onExport, onSchedule, deviceType, load
     newParams.set('to', selectedTo.toISOString());
     setSearchParams(newParams, { replace: true });
   };
+  showReportRef.current = showReport;
 
   // The arrows move by whole periods (a month stays a whole month); a custom period moves by its
   // own length. Nothing after now.

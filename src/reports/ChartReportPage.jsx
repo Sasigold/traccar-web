@@ -188,6 +188,7 @@ const ChartReportPage = () => {
         )}
         <div className={cx(classes.container, classes.containerMain)}>
           <ReportFilter
+            autoRun={false}
             onShow={onShow}
             onExport={onExport}
             deviceType="single"

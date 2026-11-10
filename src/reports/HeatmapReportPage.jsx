@@ -75,7 +75,7 @@ const HeatmapReportPage = () => {
         )}
         <div className={classes.containerMain}>
           <div className={classes.header}>
-            <ReportFilter onShow={onShow} deviceType="multiple" loading={loading}>
+            <ReportFilter autoRun={false} onShow={onShow} deviceType="multiple" loading={loading}>
               <TextField
                 select
                 size="small"

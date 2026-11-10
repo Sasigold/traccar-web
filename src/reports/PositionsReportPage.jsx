@@ -169,6 +169,7 @@ const PositionsReportPage = () => {
         <div className={classes.containerMain}>
           <div className={classes.header}>
             <ReportFilter
+              autoRun={false}
               onShow={onShow}
               onExport={onExport}
               onSchedule={onSchedule}
