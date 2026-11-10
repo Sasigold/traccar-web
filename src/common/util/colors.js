@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { aqua, navy, status } from '../theme/tokens';
 
 // Route speed in the brand: five steps of the aqua-navy family, slow to fast (no rainbow).

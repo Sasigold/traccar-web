@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 // Roadmap stage 5: customer visits from Traccar geofence events (pure, tested).
 
 // events: Traccar events of type geofenceEnter / geofenceExit (any order).

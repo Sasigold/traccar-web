@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 // Removes personal data before anything leaves the browser for an error or analytics service
 // (FND-06). Pure, unit-tested. Applied to error messages, stack frame addresses and page addresses.
 //

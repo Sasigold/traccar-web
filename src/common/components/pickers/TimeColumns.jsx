@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { useEffect, useMemo, useRef } from 'react';
 import { ButtonBase, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';

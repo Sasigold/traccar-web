@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { useMemo } from 'react';
 import turfCircle from '@turf/circle';
 import { useTheme } from '@mui/material/styles';

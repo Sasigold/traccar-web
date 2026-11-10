@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { useEffect } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import { map } from './core/MapView';

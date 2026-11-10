@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import AccessibilityNewRoundedIcon from '@mui/icons-material/AccessibilityNewRounded';
 import SavingsRoundedIcon from '@mui/icons-material/SavingsRounded';
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';

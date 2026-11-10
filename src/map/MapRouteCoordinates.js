@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { useTheme } from '@mui/material/styles';
 import { useSelector } from 'react-redux';
 import { map } from './core/MapView';

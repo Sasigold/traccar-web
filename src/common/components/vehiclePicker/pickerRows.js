@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { deviceSearchFields, matchDevice, tokenizeSearch } from '../../util/deviceSearch';
 
 // REP-05: the rows of the vehicle picker. Pure, unit-tested.

@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import dayjs from 'dayjs';

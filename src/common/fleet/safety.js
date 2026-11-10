@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 // Roadmap stage 4: driver safety score and driving / rest hours (pure, unit-tested).
 //
 // The numbers here are parameters, not law: the roadmap's legal note says they must be

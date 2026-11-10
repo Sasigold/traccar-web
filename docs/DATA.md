@@ -33,3 +33,16 @@ Signing out clears the cache.
 Replace `useState` + `useAsyncTask` + `getFleetClient()` with `useFleetQuery`, drop the
 `reloadKey` once the screen's writes go through the fleet client, and keep the query key
 parts to what changes the result (filters, ids).
+
+## Types (ARC-11)
+
+- `src/common/fleet/database.d.ts` is the fleet database's contract (tables, views, enums and
+  functions), generated from the migrations: `sh tools/db-types.sh` (with `PGHOST`, `PGPORT`,
+  `PGUSER` for a local Postgres; it runs `supabase/tests/run.sh` first). Commit it with every
+  migration; CI fails when it is stale. Tables that live only on the server come from the
+  stand-in in `supabase/tests/base_standin.sql`.
+- `getFleetClient()` is typed with it, so `from('table')` knows the columns in checked files.
+- `npm run typecheck` (also in CI) runs `tsc` over the JavaScript (`tsconfig.json`, not strict).
+  Files that do not pass yet start with `// @ts-nocheck`; remove that line when you fix one.
+  New code is checked by default and may be written in TypeScript. Row types:
+  `/** @type {import('../common/fleet/database').Tables<'incidents'>} */`.

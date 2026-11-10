@@ -24,6 +24,8 @@ jobs:
     - run: npm ci
     - run: npm ci --prefix demo
     - run: npm run lint
+    # ARC-11: JSDoc and the generated database types (tsconfig.json).
+    - run: npm run typecheck
 
   unit:
     runs-on: ubuntu-latest
@@ -101,4 +103,14 @@ jobs:
       PGPASSWORD: postgres
     steps:
     - uses: actions/checkout@v7
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+        cache-dependency-path: package-lock.json
+    - run: npm ci
     - run: sh supabase/tests/run.sh
+    # ARC-11: src/common/fleet/database.d.ts must match the migrations.
+    - run: sh tools/db-types.sh --check
+      env:
+        SKIP_MIGRATE: 1
