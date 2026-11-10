@@ -3528,6 +3528,7 @@
     "bulkCount": "נבחרו {0}",
     "bulkMoveToGroup": "העברה לקבוצה",
     "bulkSetExpiry": "קביעת תאריך תוקף",
+    "bulkAssignCustomer": "שיוך ללקוח",
     "bulkClear": "ניקוי הבחירה",
     "bulkAppliesTo": "השינוי יחול על {0} רכבים.",
     "bulkExpiryField": "סוג התוקף",

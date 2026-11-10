@@ -18,6 +18,10 @@ import fetchOrThrow from '../../common/util/fetchOrThrow';
 import { runLimited } from '../../common/util/runLimited';
 import { vehicleExpiryFields } from '../../common/fleet/fleetFields';
 import { keepOnBackdrop } from '../../common/util/formDialog';
+import { getFleetClient, unwrap } from '../../common/fleet/client';
+import { useAdminAccess } from '../../admin/useAdmin';
+import { assignDevices } from '../../admin/adminApi';
+import AssignCustomerDialog from '../../admin/components/AssignCustomerDialog';
 
 const useStyles = makeStyles()((theme) => ({
   bar: {
@@ -56,7 +60,7 @@ export const updateDevices = (devices, change) =>
   );
 
 // ADM-13: what can be done to many vehicles at once: move them to a group, set a validity date,
-// export them. `devices` are the full device objects of the chosen rows.
+// link them to a customer (with customers.manage), export them. `devices` are the full device objects of the chosen rows.
 const BulkVehicleBar = ({ devices, onDone, onClear, onExport }) => {
   const { classes } = useStyles();
   const t = useTranslation();
@@ -66,6 +70,25 @@ const BulkVehicleBar = ({ devices, onDone, onClear, onExport }) => {
   const [expiryField, setExpiryField] = useState(vehicleExpiryFields[0]?.key || '');
   const [expiryDate, setExpiryDate] = useState('');
   const [saving, setSaving] = useState(false);
+  const access = useAdminAccess();
+  // The customers are read when the dialog opens, not with the page.
+  const [customers, setCustomers] = useState(null);
+
+  const openCustomers = useCatch(async () => {
+    setCustomers(
+      unwrap(await getFleetClient().from('customers').select('id, name, status').order('name')) ||
+        [],
+    );
+  });
+
+  const assignCustomer = useCatch(async (customerId) => {
+    await assignDevices(
+      devices.map((device) => device.id),
+      customerId,
+    );
+    setCustomers(null);
+    onDone();
+  });
 
   const apply = useCatch(async () => {
     setSaving(true);
@@ -96,12 +119,27 @@ const BulkVehicleBar = ({ devices, onDone, onClear, onExport }) => {
       <Button size="small" variant="outlined" onClick={() => setDialog('expiry')}>
         {t('bulkSetExpiry')}
       </Button>
+      {access.customersManage && (
+        <Button size="small" variant="outlined" onClick={openCustomers}>
+          {t('bulkAssignCustomer')}
+        </Button>
+      )}
       <Button size="small" variant="outlined" onClick={onExport}>
         {t('reportExport')}
       </Button>
       <Button size="small" onClick={onClear}>
         {t('bulkClear')}
       </Button>
+      {customers && (
+        <AssignCustomerDialog
+          open
+          title={t('bulkAssignCustomer')}
+          description={t('bulkAppliesTo').replace('{0}', devices.length)}
+          customers={customers}
+          onClose={() => setCustomers(null)}
+          onAssign={assignCustomer}
+        />
+      )}
       {dialog && (
         <Dialog open onClose={keepOnBackdrop(() => setDialog(null))} fullWidth maxWidth="xs">
           <DialogTitle>{t(dialog === 'group' ? 'bulkMoveToGroup' : 'bulkSetExpiry')}</DialogTitle>

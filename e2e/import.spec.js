@@ -1,6 +1,6 @@
 import { Buffer } from 'node:buffer';
 import { test, expect, gotoReady } from './fixtures';
-import { writeMode } from './fakeFleet';
+import { fakeFleet, writeMode } from './fakeFleet';
 
 // ADM-13: vehicles from a spreadsheet, and actions on many vehicles at once.
 const csv = [
@@ -68,4 +68,34 @@ test('many vehicles move to a group at once', async ({ page }) => {
     ['Delivery Van', 2],
   ]);
   await expect(bar).toBeHidden();
+});
+
+// ADM-13: with customers.manage, the chosen vehicles are linked to a customer at once.
+test('many vehicles are linked to a customer at once', async ({ page }) => {
+  await writeMode(page);
+  const fleet = await fakeFleet(page, {
+    users: {
+      1: {
+        profile: { id: 'p1', org_id: 'o1', role: 'admin', full_name: 'דנה' },
+        permissions: ['vehicles.read', 'customers.read', 'customers.manage'],
+      },
+    },
+    tables: {
+      customers: [{ id: 'c1', name: 'הובלות הצפון', status: 'active' }],
+      customer_users: [],
+      device_registry: [],
+    },
+  });
+  await gotoReady(page, '/settings/devices');
+  await page.getByRole('checkbox', { name: 'בחירת Delivery Van' }).check();
+  await page.getByRole('checkbox', { name: 'בחירת Courier' }).check();
+  const bar = page.getByRole('region', { name: 'פעולות על הרכבים שנבחרו' });
+  await bar.getByRole('button', { name: 'שיוך ללקוח' }).click();
+  const dialog = page.getByRole('dialog', { name: 'שיוך ללקוח' });
+  await dialog.getByRole('combobox').click();
+  await page.getByRole('option', { name: 'הובלות הצפון' }).click();
+  await dialog.getByRole('button', { name: 'שיוך' }).click();
+  await expect(dialog).toBeHidden();
+  await expect.poll(() => fleet.tables.device_registry.length).toBe(2);
+  expect(fleet.tables.device_registry.every((row) => row.customer_id === 'c1')).toBe(true);
 });

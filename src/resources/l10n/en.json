@@ -3528,6 +3528,7 @@
     "bulkCount": "{0} chosen",
     "bulkMoveToGroup": "Move to group",
     "bulkSetExpiry": "Set a validity date",
+    "bulkAssignCustomer": "Link to a customer",
     "bulkClear": "Clear the choice",
     "bulkAppliesTo": "The change applies to {0} vehicles.",
     "bulkExpiryField": "Validity",
