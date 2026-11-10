@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useStore } from 'react-redux';
 import MainPage from './main/MainPage';
 import App from './App';
 import Loader from './common/components/Loader';
@@ -9,7 +9,8 @@ import ReportVisits from './reports/components/ReportVisits';
 import { useAsyncTask } from './reactHelper';
 import { devicesActions } from './store';
 import { generateLoginToken } from './common/components/NativeInterface';
-import { useLocalization } from './common/components/LocalizationProvider';
+import { useLocalization, useTranslation } from './common/components/LocalizationProvider';
+import { useConfirm } from './common/components/confirm/ConfirmProvider';
 import fetchOrThrow from './common/util/fetchOrThrow';
 
 // The vehicle and driver lists moved to the fleet area (ADM-02); old links keep their filters.
@@ -139,6 +140,9 @@ const InvoicingPage = lazy(() => import('./admin/InvoicingPage'));
 
 const Navigation = () => {
   const dispatch = useDispatch();
+  const storeRef = useStore();
+  const confirm = useConfirm();
+  const t = useTranslation();
   const { setLocalLanguage } = useLocalization();
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -162,13 +166,26 @@ const Navigation = () => {
 
       if (searchParams.has('token')) {
         const token = searchParams.get('token');
-        await fetch(`api/session?token=${encodeURIComponent(token)}`, { signal });
+        // SEC-20: a link with a token does not replace a signed-in session without asking.
+        const signedIn =
+          Boolean(storeRef.getState().session.user) || (await fetch('api/session', { signal })).ok;
+        if (
+          !signedIn ||
+          (await confirm({
+            title: t('loginReplaceSessionTitle'),
+            message: t('loginReplaceSession'),
+            confirmLabel: t('loginReplaceSessionConfirm'),
+            danger: false,
+          }))
+        ) {
+          await fetch(`api/session?token=${encodeURIComponent(token)}`, { signal });
+        }
         newParams.delete('token');
       }
 
       if (searchParams.has('uniqueId')) {
         const response = await fetchOrThrow(
-          `api/devices?uniqueId=${searchParams.get('uniqueId')}`,
+          `api/devices?uniqueId=${encodeURIComponent(searchParams.get('uniqueId'))}`,
           { signal },
         );
         const items = await response.json();
@@ -187,7 +204,16 @@ const Navigation = () => {
 
       setSearchParams(newParams, { replace: true });
     },
-    [hasQueryParams, searchParams, setSearchParams, dispatch, setLocalLanguage],
+    [
+      hasQueryParams,
+      searchParams,
+      setSearchParams,
+      dispatch,
+      setLocalLanguage,
+      storeRef,
+      confirm,
+      t,
+    ],
   );
 
   if (hasQueryParams) {

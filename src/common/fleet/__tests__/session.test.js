@@ -29,6 +29,21 @@ describe('fleet session', () => {
     expect(globalThis.fetch).toHaveBeenCalledTimes(2);
   });
 
+  // SEC-20: the Traccar token lives a minute and is revoked once traccar-auth has used it.
+  it('asks for a one-minute Traccar token and revokes it after the exchange', async () => {
+    const { default: fetchOrThrow } = await import('../../util/fetchOrThrow');
+    fetchOrThrow.mockClear();
+    globalThis.fetch.mockResolvedValueOnce(minted(3600));
+    const before = Date.now();
+    await session.ensureFleetSession(9);
+    const [, request] = fetchOrThrow.mock.calls.find(([url]) => url === 'api/session/token');
+    const expiration = Date.parse(new URLSearchParams(request.body).get('expiration'));
+    expect(expiration - before).toBeLessThanOrEqual(61000);
+    await vi.waitFor(() =>
+      expect(fetchOrThrow.mock.calls.map(([url]) => url)).toContain('api/session/token/revoke'),
+    );
+  });
+
   it('gives no token after logout', async () => {
     globalThis.fetch.mockResolvedValueOnce(minted(3600));
     await session.ensureFleetSession(7);

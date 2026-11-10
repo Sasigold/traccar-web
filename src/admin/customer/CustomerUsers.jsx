@@ -62,6 +62,9 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
+// SEC-20: a password the admin types for someone else is at least this long.
+const MIN_PASSWORD = 10;
+
 const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged }) => {
   const { classes } = useStyles();
   const t = useTranslation();
@@ -314,7 +317,9 @@ const CustomerUsers = ({ customer, users, directory, editable, onUsersChanged })
           </Button>
           <Button
             variant="contained"
-            disabled={!draft.name.trim() || !draft.email.trim() || draft.password.length < 6}
+            disabled={
+              !draft.name.trim() || !draft.email.trim() || draft.password.length < MIN_PASSWORD
+            }
             onClick={handleCreate}
           >
             {t('adminCreateUser')}
