@@ -18,6 +18,7 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Menu,
   ToggleButton,
   ToggleButtonGroup,
 } from '@mui/material';
@@ -36,6 +37,10 @@ import { keepOnBackdrop } from '../common/util/formDialog';
 import FleetNotice from './components/FleetNotice';
 import { useFleetRows } from './fleetRows';
 import PoolWeekCalendar from './components/PoolWeekCalendar';
+import { useSelector } from 'react-redux';
+import { useTheme } from '@mui/material/styles';
+import exportExcel from '../common/util/exportExcel';
+import { monthlyBenefit, poolBenefit, poolNights, propulsionOf } from '../common/fleet/benefit';
 
 const STATUS_COLOR = {
   requested: 'warning',
@@ -253,6 +258,9 @@ const PoolPage = () => {
   const [returning, setReturning] = useState(null);
   const [problem, setProblem] = useState(null);
   const [picked, setPicked] = useState(null);
+  const [payrollAnchor, setPayrollAnchor] = useState(null);
+  const theme = useTheme();
+  const devices = useSelector((state) => state.devices.items);
   const [searchParams, setSearchParams] = useSearchParams();
   const view = searchParams.get('view') === 'calendar' ? 'calendar' : 'list';
   const setView = (value) => {
@@ -284,6 +292,47 @@ const PoolPage = () => {
   const nameOf = (id) => (people || []).find((person) => person.id === id)?.full_name || '—';
   const deviceOf = (id) =>
     (vehicles || []).find((vehicle) => vehicle.id === id)?.traccar_device_id || null;
+  // ISR-05: the month's nights with a pool car, per person, with the benefit to charge in payroll
+  // (the vehicle's monthly value × nights ÷ days; at most one full value a month), and the nights
+  // one by one.
+  const exportPayroll = useCatch(async (monthsBack) => {
+    setPayrollAnchor(null);
+    const month = dayjs().subtract(monthsBack, 'month');
+    const { days, log, totals } = poolNights(bookings || [], month.toDate());
+    const benefitOf = (vehicleId) => {
+      const device = devices[deviceOf(vehicleId)];
+      return monthlyBenefit(
+        device?.attributes?.listPrice,
+        propulsionOf(device?.attributes?.fuelType),
+      );
+    };
+    const sheets = new Map();
+    sheets.set(
+      t('poolPayrollSheet'),
+      totals.map((row) => ({
+        [t('poolWho')]: nameOf(row.personId),
+        [t('sharedDevice')]: plateOf(row.vehicleId),
+        [t('poolNights')]: row.nights,
+        [t('fleetMonthlyBenefit')]: benefitOf(row.vehicleId) ?? '',
+        [t('poolBenefitCharged')]: poolBenefit(benefitOf(row.vehicleId), row.nights, days) ?? '',
+      })),
+    );
+    sheets.set(
+      t('poolNightLog'),
+      log.map((night) => ({
+        [t('reportStartDate')]: night.date,
+        [t('poolWho')]: nameOf(night.personId),
+        [t('sharedDevice')]: plateOf(night.vehicleId),
+      })),
+    );
+    await exportExcel(
+      `${t('poolPayrollExport')} ${month.format('MM/YYYY')}`,
+      `pool-payroll-${month.format('YYYY-MM')}.xlsx`,
+      sheets,
+      theme,
+    );
+  });
+
   const actionsOf = (row) => (
     <BookingActions
       row={row}
@@ -346,6 +395,27 @@ const PoolPage = () => {
             <ToggleButton value="list">{t('poolList')}</ToggleButton>
             <ToggleButton value="calendar">{t('poolCalendar')}</ToggleButton>
           </ToggleButtonGroup>
+          {manage && (
+            <>
+              <Button
+                variant="outlined"
+                size="small"
+                disabled={!bookings?.length}
+                aria-haspopup="menu"
+                onClick={(event) => setPayrollAnchor(event.currentTarget)}
+              >
+                {t('poolPayrollExport')}
+              </Button>
+              <Menu
+                anchorEl={payrollAnchor}
+                open={Boolean(payrollAnchor)}
+                onClose={() => setPayrollAnchor(null)}
+              >
+                <MenuItem onClick={() => exportPayroll(0)}>{t('reportThisMonth')}</MenuItem>
+                <MenuItem onClick={() => exportPayroll(1)}>{t('reportPreviousMonth')}</MenuItem>
+              </Menu>
+            </>
+          )}
           <Button
             variant="contained"
             size="small"

@@ -99,3 +99,54 @@ test('the pool week calendar opens a booking and its handover check', async ({ p
   await dialog.getByRole('link', { name: 'בדיקה לפני מסירה' }).click();
   await expect(page).toHaveURL(/\/fleet\/inspection\?deviceId=1/);
 });
+
+// ISR-05: the month's nights with a pool car go to payroll, with the benefit to charge.
+test('the pool nights of the month are exported for payroll', async ({ page }) => {
+  const day = (offset, hour) => {
+    const date = new Date();
+    date.setDate(1 + offset);
+    date.setHours(hour, 0, 0, 0);
+    return date.toISOString();
+  };
+  await writeMode(page);
+  await fakeFleet(page, {
+    users: {
+      1: {
+        profile: { id: 'p1', org_id: 'o1', role: 'manager', full_name: 'דנה' },
+        permissions: ['vehicles.read', 'pool.manage'],
+      },
+    },
+    rpc: { fleet_features: ['pool'] },
+    tables: {
+      vehicles: [
+        { id: 'v1', org_id: 'o1', plate_number: '12-345-67', pool: true, traccar_device_id: 1 },
+      ],
+      pool_bookings: [
+        {
+          id: 'b1',
+          org_id: 'o1',
+          vehicle_id: 'v1',
+          requested_by: 'p1',
+          status: 'returned',
+          starts_at: day(0, 16),
+          ends_at: day(2, 8),
+        },
+      ],
+      profiles: [{ id: 'p1', org_id: 'o1', full_name: 'דנה' }],
+    },
+  });
+  await gotoReady(page, '/fleet/pool');
+  await page.getByRole('button', { name: 'ייצוא לשכר' }).click();
+  const download = page.waitForEvent('download');
+  await page.getByRole('menuitem', { name: 'חודש נוכחי' }).click();
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(/pool-payroll-\d{4}-\d{2}.*\.xlsx$/);
+  const { default: ExcelJS } = await import('exceljs');
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(await file.path());
+  const values = [];
+  workbook.worksheets[0].eachRow((row) => values.push(row.values.filter(Boolean).join('|')));
+  // Two nights with the car, for Dana.
+  expect(values.some((line) => line.includes('דנה') && line.includes('|2'))).toBe(true);
+  expect(workbook.worksheets[1].rowCount).toBeGreaterThan(1);
+});
