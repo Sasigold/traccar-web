@@ -51,6 +51,14 @@ import fetchOrThrow from '../common/util/fetchOrThrow';
 import exportExcel from '../common/util/exportExcel';
 import { deviceEquality } from '../common/util/deviceEquality';
 import { plateOf, vehicleName } from './common/vehicle';
+import {
+  activeDaysByDevice,
+  distancePerDay,
+  drivingByDevice,
+  fuelPer100,
+  idlePercent,
+} from './common/summaryExtras';
+import DailyDistanceChart from './components/DailyDistanceChart';
 import { alignOf, NUMERIC_COLUMNS } from './common/numericColumns';
 
 const columnsArray = [
@@ -64,6 +72,10 @@ const columnsArray = [
   ['startHours', 'reportStartEngineHours'],
   ['endHours', 'reportEndEngineHours'],
   ['spentFuel', 'reportSpentFuel'],
+  // REP-14: days on the road, consumption and idling.
+  ['activeDays', 'reportActiveDays'],
+  ['fuelPer100', 'reportFuelPer100'],
+  ['idlePercent', 'reportIdlePercent'],
 ];
 const columnsMap = new Map(columnsArray);
 // The columns that compare with the previous period.
@@ -105,6 +117,9 @@ const SummaryReportPage = () => {
   const [previous, setPrevious] = useState(null);
   const [loading, setLoading] = useState(false);
   const [queried, setQueried] = useState(false);
+  // REP-14: the period day by day, for the chart and the active days.
+  const [days, setDays] = useState(null);
+  const wantIdle = columns.includes('idlePercent');
 
   const onShow = useRunCallback(
     async ({ deviceIds, groupIds, from, to, signal }) => {
@@ -117,7 +132,41 @@ const SummaryReportPage = () => {
           signal,
           headers: { Accept: 'application/json' },
         });
-        setItems(await response.json());
+        const rows = await response.json();
+        const span = (Date.parse(to) - Date.parse(from)) / 86400000;
+        let dailyRows = daily ? rows : null;
+        if (!daily && span > 1 && span <= 93) {
+          const dayQuery = new URLSearchParams(query);
+          dayQuery.set('daily', 'true');
+          dailyRows = await fetchOrThrow(`api/reports/summary?${dayQuery}`, {
+            signal,
+            headers: { Accept: 'application/json' },
+          }).then((result) => result.json());
+        }
+        // Idling needs the driving time, from the trips: only when the column is shown.
+        let driving = null;
+        if (wantIdle) {
+          const tripQuery = new URLSearchParams(query);
+          tripQuery.delete('daily');
+          driving = drivingByDevice(
+            await fetchOrThrow(`api/reports/trips?${tripQuery}`, {
+              signal,
+              headers: { Accept: 'application/json' },
+            }).then((result) => result.json()),
+          );
+        }
+        const active = !daily && dailyRows ? activeDaysByDevice(dailyRows) : null;
+        setItems(
+          rows.map((row) => ({
+            ...row,
+            activeDays: active ? active.get(row.deviceId) || 0 : null,
+            fuelPer100: fuelPer100(row.spentFuel, row.distance),
+            idlePercent: driving
+              ? idlePercent(row.engineHours, driving.get(row.deviceId) || 0)
+              : null,
+          })),
+        );
+        setDays(dailyRows && span > 1 && span <= 93 ? distancePerDay(dailyRows, from, to) : null);
         if (compare && !daily) {
           const before = previousRange(from, to);
           query.set('from', before.from);
@@ -126,8 +175,8 @@ const SummaryReportPage = () => {
             signal,
             headers: { Accept: 'application/json' },
           });
-          const rows = await previousResponse.json();
-          setPrevious(new Map(rows.map((row) => [row.deviceId, row])));
+          const previousRows = await previousResponse.json();
+          setPrevious(new Map(previousRows.map((row) => [row.deviceId, row])));
         } else {
           setPrevious(null);
         }
@@ -136,7 +185,7 @@ const SummaryReportPage = () => {
         setQueried(true);
       }
     },
-    [daily, compare],
+    [daily, compare, wantIdle],
   );
 
   const onExport = useCatch(async () => {
@@ -235,6 +284,10 @@ const SummaryReportPage = () => {
         return value > 0 ? formatNumericHours(value, t) : null;
       case 'spentFuel':
         return value > 0 ? formatVolume(value, volumeUnit, t) : null;
+      case 'fuelPer100':
+        return value == null ? null : value.toFixed(1);
+      case 'idlePercent':
+        return value == null ? null : `${value}%`;
       default:
         return value;
     }
@@ -285,6 +338,7 @@ const SummaryReportPage = () => {
         </ReportFilter>
       </div>
       {!loading && <ReportKpis items={kpis} />}
+      {!loading && days?.length > 1 && <DailyDistanceChart points={days} />}
       <DataTable variant="flush">
         <TableHead>
           <TableRow>

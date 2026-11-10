@@ -12,6 +12,10 @@ export const NUMERIC_COLUMNS = new Set([
   'odometer',
   'startHours',
   'endHours',
+  // REP-14: the summary's own figures.
+  'activeDays',
+  'fuelPer100',
+  'idlePercent',
   // Times are figures too, and read best lined up.
   'startTime',
   'endTime',
