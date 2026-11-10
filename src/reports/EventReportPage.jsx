@@ -37,6 +37,7 @@ import { eventIconKey } from '../map/core/preloadImages';
 import { deviceEquality } from '../common/util/deviceEquality';
 import VehicleCell from './components/VehicleCell';
 import { vehicleName, vehicleTitle } from './common/vehicle';
+import useSelectedRow from './common/useSelectedRow';
 
 const columnsArray = [
   ['eventTime', 'positionFixTime'],
@@ -90,6 +91,7 @@ const EventReportPage = () => {
   const [loading, setLoading] = useState(false);
   const [queried, setQueried] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const selectedRowRef = useSelectedRow(selectedItem);
   const [position, setPosition] = useState(null);
 
   useEffect(() => {
@@ -360,7 +362,11 @@ const EventReportPage = () => {
               )}
               {!loading ? (
                 sortedItems.map((item) => (
-                  <TableRow key={item.id}>
+                  <TableRow
+                    key={item.id}
+                    ref={selectedItem === item ? selectedRowRef : undefined}
+                    className={selectedItem === item ? classes.selectedRow : undefined}
+                  >
                     <TableCell className={classes.columnAction} padding="none">
                       {(item.positionId &&
                         (selectedItem === item ? (

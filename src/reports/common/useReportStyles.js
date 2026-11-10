@@ -7,6 +7,15 @@ export default makeStyles()((theme) => ({
     flexDirection: 'column',
   },
   containerMap: {
+    // REP-11: the map opens smoothly instead of jumping in.
+    animation: `vf-report-map-in 220ms ${theme.tokens.motion.easing.standard}`,
+    '@media (prefers-reduced-motion: reduce)': {
+      animation: 'none',
+    },
+    '@keyframes vf-report-map-in': {
+      from: { opacity: 0, transform: 'translateY(-8px)' },
+      to: { opacity: 1, transform: 'none' },
+    },
     flexBasis: 'var(--report-map-height, 40%)',
     flexShrink: 0,
     margin: theme.spacing(0.5, 3, 0),
@@ -35,6 +44,14 @@ export default makeStyles()((theme) => ({
       '& > *': {
         flex: '0 0 auto !important',
       },
+    },
+  },
+  // REP-11: the row shown on the map: an ice row with a 3px bar at the start.
+  selectedRow: {
+    backgroundColor: `${theme.palette.surface.tint} !important`,
+    '& > td:first-of-type': {
+      boxShadow: 'none',
+      borderInlineStart: `3px solid ${theme.palette.primary.main}`,
     },
   },
   // REP-09: the change from the previous period, under the value (text only).

@@ -51,6 +51,7 @@ import exportExcel from '../common/util/exportExcel';
 import { deviceEquality } from '../common/util/deviceEquality';
 import VehicleCell from './components/VehicleCell';
 import { vehicleName, vehicleTitle } from './common/vehicle';
+import useSelectedRow from './common/useSelectedRow';
 
 const columnsArray = [
   ['startTime', 'reportStartTime'],
@@ -88,6 +89,7 @@ const StopReportPage = () => {
   const [loading, setLoading] = useState(false);
   const [queried, setQueried] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const selectedRowRef = useSelectedRow(selectedItem);
   const [hiddenRows, setHiddenRows] = useState(0);
 
   const onShow = useCatchCallback(async ({ deviceIds, groupIds, from, to }) => {
@@ -262,7 +264,11 @@ const StopReportPage = () => {
               )}
               {!loading ? (
                 sortedItems.map((item) => (
-                  <TableRow key={item.positionId}>
+                  <TableRow
+                    key={item.positionId}
+                    ref={selectedItem === item ? selectedRowRef : undefined}
+                    className={selectedItem === item ? classes.selectedRow : undefined}
+                  >
                     <TableCell className={classes.columnAction} padding="none">
                       {selectedItem === item ? (
                         <IconButton
