@@ -158,6 +158,7 @@
    - `20261116150000_automation_rest_day.sql`: אוטומציה לנסיעה בשבת או בחג (ISR-09).
    - `20261116160000_vehicle_handovers.sql`: מסירת רכב והחזרתו בחתימה (ISR-11).
    - `20261116170000_sim_cards.sql`: מלאי כרטיסי SIM (BIZ-05).
+   - `20261116180000_fuel_card_limits.sql`: מגבלות לכרטיסי דלק (ADM-31).
 
 **פריסה ושרת:**
 3. פריסה לייצור: ידנית, Actions ← "Promote to production" (מקלידים `production`). דחיפה ל-`main` מעלה ל-staging
