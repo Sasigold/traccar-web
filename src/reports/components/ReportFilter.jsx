@@ -20,7 +20,8 @@ import dayjs from 'dayjs';
 import EventRepeatRoundedIcon from '@mui/icons-material/EventRepeatRounded';
 import BookmarkAddRoundedIcon from '@mui/icons-material/BookmarkAddRounded';
 import usePersistedState from '../../common/util/usePersistedState';
-import { addSavedReport, savedReportView } from '../common/savedReports';
+import { addSavedReport, reportOptions, savedReportView } from '../common/savedReports';
+import ReportColumnsContext from './reportColumns';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import useReportStyles from '../common/useReportStyles';
 import SplitButton from '../../common/components/SplitButton';
@@ -117,12 +118,21 @@ const ReportFilter = ({
   const [scheduling, setScheduling] = useState(false);
   // REP-09: this report, these vehicles and this period preset, under a name.
   const [savedReports, setSavedReports] = usePersistedState('savedReports', []);
+  const columnsRef = useRef(null);
   const [viewName, setViewName] = useState(null);
   const saveView = () => {
     setSavedReports(
       addSavedReport(
         savedReports,
-        savedReportView({ name: viewName, path: location.pathname, deviceIds, groupIds, period }),
+        savedReportView({
+          name: viewName,
+          path: location.pathname,
+          deviceIds,
+          groupIds,
+          period,
+          options: reportOptions(searchParams),
+          columns: columnsRef.current,
+        }),
       ),
     );
     setViewName(null);
@@ -266,211 +276,213 @@ const ReportFilter = ({
   }
 
   return (
-    <div className={classes.filter} ref={rootRef}>
-      <PrintHeader
-        title={reportName ? t(reportName) : ''}
-        from={from}
-        to={to}
-        deviceIds={deviceIds}
-        groupIds={groupIds}
-      />
-      <ReportIntro hint={hint} />
-      {deviceType !== 'none' && (
-        <div className={classes.filterItem} style={{ flexBasis: 260 }}>
-          {/* REP-05: one picker for vehicles and groups, with search by plate. */}
-          <VehiclePicker
-            label={t(deviceType === 'multiple' ? 'deviceTitle' : 'reportDevice')}
-            multiple={deviceType === 'multiple'}
-            value={{ deviceIds, groupIds: deviceType === 'multiple' ? groupIds : [] }}
-            onChange={(selection) => {
-              const newParams = new URLSearchParams(searchParams);
-              ['deviceId', 'groupId', 'from', 'to'].forEach((key) => newParams.delete(key));
-              selection.deviceIds.forEach((id) => newParams.append('deviceId', id));
-              selection.groupIds.forEach((id) => newParams.append('groupId', id));
-              setSearchParams(newParams, { replace: true });
-            }}
-          />
-        </div>
-      )}
-      <>
-        <div className={classes.filterItem} style={{ flexBasis: 220 }}>
-          <FormControl fullWidth>
-            <InputLabel id="report-filter-report-period-label" shrink>
-              {t('reportPeriod')}
-            </InputLabel>
-            <Select
-              labelId="report-filter-report-period-label"
-              label={t('reportPeriod')}
-              value=""
-              displayEmpty
-              renderValue={() => periodLabel}
-              onChange={(e) => {
-                setPeriod(e.target.value);
-                if (e.target.value !== 'custom') {
-                  setRange(getPeriodRange(e.target.value));
-                }
+    <ReportColumnsContext value={columnsRef}>
+      <div className={classes.filter} ref={rootRef}>
+        <PrintHeader
+          title={reportName ? t(reportName) : ''}
+          from={from}
+          to={to}
+          deviceIds={deviceIds}
+          groupIds={groupIds}
+        />
+        <ReportIntro hint={hint} />
+        {deviceType !== 'none' && (
+          <div className={classes.filterItem} style={{ flexBasis: 260 }}>
+            {/* REP-05: one picker for vehicles and groups, with search by plate. */}
+            <VehiclePicker
+              label={t(deviceType === 'multiple' ? 'deviceTitle' : 'reportDevice')}
+              multiple={deviceType === 'multiple'}
+              value={{ deviceIds, groupIds: deviceType === 'multiple' ? groupIds : [] }}
+              onChange={(selection) => {
+                const newParams = new URLSearchParams(searchParams);
+                ['deviceId', 'groupId', 'from', 'to'].forEach((key) => newParams.delete(key));
+                selection.deviceIds.forEach((id) => newParams.append('deviceId', id));
+                selection.groupIds.forEach((id) => newParams.append('groupId', id));
+                setSearchParams(newParams, { replace: true });
               }}
-              startAdornment={
-                <InputAdornment position="start">
-                  <IconButton
-                    edge="start"
-                    size="small"
-                    disabled={loading || !validRange}
-                    onClick={() => shiftPeriod(-1)}
-                    aria-label={t('a11yPreviousPeriod')}
-                  >
-                    <PreviousPeriodIcon />
-                  </IconButton>
-                </InputAdornment>
-              }
-              endAdornment={
-                <InputAdornment position="end">
-                  <IconButton
-                    edge="end"
-                    size="small"
-                    disabled={loading || !validRange || nextInFuture}
-                    onClick={() => shiftPeriod(1)}
-                    aria-label={t('a11yNextPeriod')}
-                  >
-                    <NextPeriodIcon />
-                  </IconButton>
-                </InputAdornment>
-              }
-            >
-              {PERIODS.map((value) => (
-                <MenuItem key={value} value={value}>
-                  {t(PERIOD_KEYS[value])}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </div>
-        {period === 'custom' && (
-          <div className={classes.filterItem} style={{ flexGrow: 2 }}>
-            <DateRangeField
-              withTime
-              label={t('reportPeriod')}
-              from={
-                range[0] && selectedFrom.isValid()
-                  ? selectedFrom.locale('en').format('YYYY-MM-DDTHH:mm')
-                  : ''
-              }
-              to={
-                range[1] && selectedTo.isValid()
-                  ? selectedTo.locale('en').format('YYYY-MM-DDTHH:mm')
-                  : ''
-              }
-              onChange={(_from, _to, { from: start, to: end }) =>
-                setRange([
-                  start ? start.toISOString() : '',
-                  end ? end.endOf('minute').toISOString() : '',
-                ])
-              }
-              fullWidth
             />
           </div>
         )}
-      </>
-      {children}
-      <div className={classes.filterItem}>
-        {Object.keys(options).length === 1 ? (
-          <Button
-            fullWidth
-            variant="contained"
-            color="primary"
-            disabled={disabled}
-            onClick={onClick}
-          >
-            <Typography variant="button" noWrap>
-              {t(loading ? 'sharedLoading' : 'reportShow')}
-            </Typography>
-          </Button>
-        ) : (
-          <SplitButton
-            fullWidth
-            variant="contained"
-            color="primary"
-            disabled={disabled}
-            onClick={onClick}
-            selected={selectedOption}
-            setSelected={onSelected}
-            options={options}
+        <>
+          <div className={classes.filterItem} style={{ flexBasis: 220 }}>
+            <FormControl fullWidth>
+              <InputLabel id="report-filter-report-period-label" shrink>
+                {t('reportPeriod')}
+              </InputLabel>
+              <Select
+                labelId="report-filter-report-period-label"
+                label={t('reportPeriod')}
+                value=""
+                displayEmpty
+                renderValue={() => periodLabel}
+                onChange={(e) => {
+                  setPeriod(e.target.value);
+                  if (e.target.value !== 'custom') {
+                    setRange(getPeriodRange(e.target.value));
+                  }
+                }}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <IconButton
+                      edge="start"
+                      size="small"
+                      disabled={loading || !validRange}
+                      onClick={() => shiftPeriod(-1)}
+                      aria-label={t('a11yPreviousPeriod')}
+                    >
+                      <PreviousPeriodIcon />
+                    </IconButton>
+                  </InputAdornment>
+                }
+                endAdornment={
+                  <InputAdornment position="end">
+                    <IconButton
+                      edge="end"
+                      size="small"
+                      disabled={loading || !validRange || nextInFuture}
+                      onClick={() => shiftPeriod(1)}
+                      aria-label={t('a11yNextPeriod')}
+                    >
+                      <NextPeriodIcon />
+                    </IconButton>
+                  </InputAdornment>
+                }
+              >
+                {PERIODS.map((value) => (
+                  <MenuItem key={value} value={value}>
+                    {t(PERIOD_KEYS[value])}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </div>
+          {period === 'custom' && (
+            <div className={classes.filterItem} style={{ flexGrow: 2 }}>
+              <DateRangeField
+                withTime
+                label={t('reportPeriod')}
+                from={
+                  range[0] && selectedFrom.isValid()
+                    ? selectedFrom.locale('en').format('YYYY-MM-DDTHH:mm')
+                    : ''
+                }
+                to={
+                  range[1] && selectedTo.isValid()
+                    ? selectedTo.locale('en').format('YYYY-MM-DDTHH:mm')
+                    : ''
+                }
+                onChange={(_from, _to, { from: start, to: end }) =>
+                  setRange([
+                    start ? start.toISOString() : '',
+                    end ? end.endOf('minute').toISOString() : '',
+                  ])
+                }
+                fullWidth
+              />
+            </div>
+          )}
+        </>
+        {children}
+        <div className={classes.filterItem}>
+          {Object.keys(options).length === 1 ? (
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              disabled={disabled}
+              onClick={onClick}
+            >
+              <Typography variant="button" noWrap>
+                {t(loading ? 'sharedLoading' : 'reportShow')}
+              </Typography>
+            </Button>
+          ) : (
+            <SplitButton
+              fullWidth
+              variant="contained"
+              color="primary"
+              disabled={disabled}
+              onClick={onClick}
+              selected={selectedOption}
+              setSelected={onSelected}
+              options={options}
+            />
+          )}
+        </div>
+        {onSchedule && !readonly && (
+          <div className={classes.filterItem}>
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<EventRepeatRoundedIcon />}
+              disabled={!deviceIds.filter((it) => it !== 'all').length && !groupIds.length}
+              onClick={() => setScheduling(true)}
+            >
+              {t('reportScheduleButton')}
+            </Button>
+          </div>
+        )}
+        {deviceType !== 'none' && (
+          <div className={classes.filterItem}>
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<BookmarkAddRoundedIcon />}
+              disabled={!deviceIds.length && !groupIds.length}
+              onClick={() => setViewName(reportName ? t(reportName) : '')}
+            >
+              {t('reportSaveView')}
+            </Button>
+          </div>
+        )}
+        {viewName !== null && (
+          <Dialog open onClose={() => setViewName(null)} fullWidth maxWidth="xs">
+            <DialogTitle>{t('reportSaveView')}</DialogTitle>
+            <DialogContent>
+              <TextField
+                autoFocus
+                fullWidth
+                margin="dense"
+                label={t('viewName')}
+                helperText={t('reportSaveViewHint')}
+                value={viewName}
+                onChange={(event) => setViewName(event.target.value)}
+                slotProps={{ htmlInput: { maxLength: 60 } }}
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setViewName(null)}>{t('sharedCancel')}</Button>
+              <Button onClick={saveView} disabled={!viewName.trim()}>
+                {t('sharedSave')}
+              </Button>
+            </DialogActions>
+          </Dialog>
+        )}
+        {stale && (
+          <div className={classes.staleBar} role="status">
+            <Typography variant="body2">{t('reportFilterChanged')}</Typography>
+            <Button size="small" variant="outlined" onClick={showReport} disabled={disabled}>
+              {t('reportUpdate')}
+            </Button>
+          </div>
+        )}
+        {scheduling && (
+          <ScheduleDialog
+            title={t('reportScheduleButton')}
+            defaultName={reportName ? t(reportName) : ''}
+            onClose={() => setScheduling(false)}
+            onSave={async (schedule) => {
+              await onSchedule(
+                deviceIds.filter((it) => it !== 'all'),
+                groupIds,
+                schedule,
+              );
+              setScheduling(false);
+            }}
           />
         )}
       </div>
-      {onSchedule && !readonly && (
-        <div className={classes.filterItem}>
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={<EventRepeatRoundedIcon />}
-            disabled={!deviceIds.filter((it) => it !== 'all').length && !groupIds.length}
-            onClick={() => setScheduling(true)}
-          >
-            {t('reportScheduleButton')}
-          </Button>
-        </div>
-      )}
-      {deviceType !== 'none' && (
-        <div className={classes.filterItem}>
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={<BookmarkAddRoundedIcon />}
-            disabled={!deviceIds.length && !groupIds.length}
-            onClick={() => setViewName(reportName ? t(reportName) : '')}
-          >
-            {t('reportSaveView')}
-          </Button>
-        </div>
-      )}
-      {viewName !== null && (
-        <Dialog open onClose={() => setViewName(null)} fullWidth maxWidth="xs">
-          <DialogTitle>{t('reportSaveView')}</DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              fullWidth
-              margin="dense"
-              label={t('viewName')}
-              helperText={t('reportSaveViewHint')}
-              value={viewName}
-              onChange={(event) => setViewName(event.target.value)}
-              slotProps={{ htmlInput: { maxLength: 60 } }}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setViewName(null)}>{t('sharedCancel')}</Button>
-            <Button onClick={saveView} disabled={!viewName.trim()}>
-              {t('sharedSave')}
-            </Button>
-          </DialogActions>
-        </Dialog>
-      )}
-      {stale && (
-        <div className={classes.staleBar} role="status">
-          <Typography variant="body2">{t('reportFilterChanged')}</Typography>
-          <Button size="small" variant="outlined" onClick={showReport} disabled={disabled}>
-            {t('reportUpdate')}
-          </Button>
-        </div>
-      )}
-      {scheduling && (
-        <ScheduleDialog
-          title={t('reportScheduleButton')}
-          defaultName={reportName ? t(reportName) : ''}
-          onClose={() => setScheduling(false)}
-          onSave={async (schedule) => {
-            await onSchedule(
-              deviceIds.filter((it) => it !== 'all'),
-              groupIds,
-              schedule,
-            );
-            setScheduling(false);
-          }}
-        />
-      )}
-    </div>
+    </ReportColumnsContext>
   );
 };
 

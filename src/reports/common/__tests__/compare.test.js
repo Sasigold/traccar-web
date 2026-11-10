@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { delta, formatDelta, previousRange } from '../compare';
-import { addSavedReport, savedReportLink, savedReportView } from '../savedReports';
+import { addSavedReport, reportOptions, savedReportLink, savedReportView } from '../savedReports';
 
 // REP-09: comparing with the period before, and saved report views.
 describe('the previous period', () => {
@@ -44,5 +44,27 @@ describe('saved report views', () => {
       'c',
       'a',
     ]);
+  });
+});
+
+describe('a saved view keeps the report options and columns (REP-09)', () => {
+  it('stores the options apart from the period and vehicles, and puts them back', () => {
+    const options = reportOptions('deviceId=1&from=a&to=b&period=today&daily=true&view=geofence');
+    expect(options).toEqual([
+      ['daily', 'true'],
+      ['view', 'geofence'],
+    ]);
+    const view = savedReportView({
+      name: 'יומי',
+      path: '/reports/summary',
+      deviceIds: [1],
+      period: 'today',
+      options,
+      columns: ['distance', 'activeDays'],
+    });
+    const link = new URL(savedReportLink(view, new Date('2026-11-10T10:00:00Z')), 'http://x');
+    expect(link.searchParams.get('daily')).toBe('true');
+    expect(link.searchParams.get('view')).toBe('geofence');
+    expect(link.searchParams.get('columns')).toBe('distance,activeDays');
   });
 });

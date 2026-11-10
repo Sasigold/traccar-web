@@ -49,3 +49,32 @@ test('the summary shows the change from the previous period', async ({ page }) =
   await page.getByRole('button', { name: 'הצג' }).first().click();
   await expect(page.getByLabel('שינוי מהתקופה הקודמת: ▲ 20%')).toBeVisible();
 });
+
+// REP-09: a saved view also keeps the report's options and its columns.
+test('a saved view opens with its columns and options', async ({ page }) => {
+  await page.addInitScript(() => {
+    if (!sessionStorage.getItem('seeded')) {
+      localStorage.setItem('summaryColumns', JSON.stringify(['distance', 'maxSpeed']));
+      sessionStorage.setItem('seeded', '1');
+    }
+  });
+  await gotoReady(page, `/reports/summary?deviceId=1&period=today&daily=true&${day()}`);
+  await page.getByRole('button', { name: 'שמירת תצוגה' }).click();
+  const dialog = page.getByRole('dialog', { name: 'שמירת תצוגה' });
+  await dialog.getByLabel('שם התצוגה').fill('מהירות יומית');
+  await dialog.getByRole('button', { name: 'שמירה', exact: true }).click();
+
+  // The columns change after saving; the view brings back its own.
+  await page.evaluate(() => localStorage.setItem('summaryColumns', JSON.stringify(['distance'])));
+  await gotoReady(page, '/reports');
+  await page
+    .locator('section[aria-labelledby="reports-hub-saved"]')
+    .getByRole('link', { name: 'מהירות יומית' })
+    .click();
+  await expect(page).toHaveURL(/daily=true/);
+  await expect(page).not.toHaveURL(/columns=/);
+  await expect
+    .poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('summaryColumns'))))
+    .toEqual(['distance', 'maxSpeed']);
+  await expect(page.getByLabel('עמודות להצגה')).toContainText('מהירות מרבית');
+});
