@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useFleetReader } from '../../fleet/useFleet';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
+import TodayRoundedIcon from '@mui/icons-material/TodayRounded';
 import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import HexagonRoundedIcon from '@mui/icons-material/HexagonRounded';
@@ -40,6 +41,17 @@ export default () => {
     const reportsPath = '/reports';
     return (
       [
+        // LIV-23: the phone's home: the day at a glance. A phone tab only; the desktop has the
+        // map and the dashboard side by side.
+        {
+          key: 'today',
+          titleKey: 'todayTitle',
+          icon: TodayRoundedIcon,
+          path: '/today',
+          match: (pathname) => pathname === '/today',
+          hidden: driverRole,
+          phoneOnly: true,
+        },
         {
           key: 'map',
           titleKey: 'mapTitle',

@@ -3419,5 +3419,14 @@
     "viewSaveCurrent": "Save this view",
     "viewCopyLink": "Copy link",
     "viewLinkCopied": "Link to the view copied",
-    "viewShared": "Shared view"
+    "viewShared": "Shared view",
+    "todayTitle": "Today",
+    "todayHello": "Hello, {0}",
+    "todayHelloAnonymous": "Hello",
+    "todaySubtitle": "Your day at a glance",
+    "todayMoving": "vehicles moving",
+    "todayStopped": "Stopped",
+    "todayOffline": "Offline",
+    "todayShortcuts": "Shortcuts",
+    "todayTripsReport": "Trips report"
 }

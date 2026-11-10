@@ -113,6 +113,7 @@ const SharePage = lazy(() => import('./settings/SharePage'));
 const AnnouncementPage = lazy(() => import('./settings/AnnouncementPage'));
 const EmulatorPage = lazy(() => import('./other/EmulatorPage'));
 const StreamPage = lazy(() => import('./other/StreamPage'));
+const TodayPage = lazy(() => import('./main/TodayPage'));
 const AuditPage = lazy(() => import('./reports/AuditPage'));
 const SettingsHubPage = lazy(() => import('./settings/SettingsHubPage'));
 const AdminOverviewPage = lazy(() => import('./admin/AdminOverviewPage'));
@@ -196,6 +197,7 @@ const Navigation = () => {
         <Route path="/" element={<App />}>
           <Route index element={<MainPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="today" element={<TodayPage />} />
 
           <Route path="position/:id" element={<PositionPage />} />
           <Route path="telemetry/:deviceId" element={<TelemetryPage />} />

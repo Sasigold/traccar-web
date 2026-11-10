@@ -3419,5 +3419,14 @@
     "viewSaveCurrent": "שמירת התצוגה",
     "viewCopyLink": "העתקת קישור",
     "viewLinkCopied": "הקישור לתצוגה הועתק",
-    "viewShared": "תצוגה משותפת"
+    "viewShared": "תצוגה משותפת",
+    "todayTitle": "היום",
+    "todayHello": "שלום, {0}",
+    "todayHelloAnonymous": "שלום",
+    "todaySubtitle": "התמונה היומית שלכם",
+    "todayMoving": "רכבים בתנועה",
+    "todayStopped": "עומדים",
+    "todayOffline": "מנותקים",
+    "todayShortcuts": "קיצורים",
+    "todayTripsReport": "דוח נסיעות"
 }

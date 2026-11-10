@@ -60,9 +60,12 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-// LIV-09: at most five tabs: the map, reports, the fleet (or a driver's area), alerts and "More".
-// Everything else (dashboard, geofences, settings, the admin area, the account) is in "More".
-const TAB_KEYS = ['map', 'reports', 'fleet', 'driver'];
+// LIV-09: at most five tabs: three destinations, alerts and "More". LIV-23: the three are the
+// first available of today, the map, the fleet, a driver's area and reports; the rest
+// (dashboard, geofences, settings, the admin area, the account) is in "More". The trips report
+// is also a shortcut on "Today".
+const TAB_ORDER = ['today', 'map', 'fleet', 'driver', 'reports'];
+const TAB_COUNT = 3;
 
 const MobileTabs = () => {
   const { classes } = useStyles();
@@ -74,8 +77,12 @@ const MobileTabs = () => {
   // ADM-05: unsaved changes are asked about before leaving.
   const leave = useLeaveGuard(useConfirm(), t);
   const navItems = useNavItems();
-  const items = navItems.filter((item) => TAB_KEYS.includes(item.key));
-  const moreItems = navItems.filter((item) => !TAB_KEYS.includes(item.key));
+  const tabKeys = TAB_ORDER.filter((key) => navItems.some((item) => item.key === key)).slice(
+    0,
+    TAB_COUNT,
+  );
+  const items = tabKeys.map((key) => navItems.find((item) => item.key === key));
+  const moreItems = navItems.filter((item) => !tabKeys.includes(item.key));
   const alerts = !features.disableEvents;
 
   const socket = useSelector((state) => state.session.socket);

@@ -131,7 +131,7 @@ const NavRail = () => {
   const { classes, theme } = useStyles({ collapsed });
   const t = useTranslation();
   const location = useLocation();
-  const items = useNavItems();
+  const items = useNavItems().filter((item) => !item.phoneOnly);
 
   const logo = useSelector((state) => state.session.server.attributes?.logo);
 
