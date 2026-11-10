@@ -1,7 +1,4 @@
 import { useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
-import { ButtonBase, Typography } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import { useAsyncTask } from '../../reactHelper';
@@ -9,38 +6,13 @@ import { getFleetClient } from '../../common/fleet/client';
 import { useFleetPermission } from '../../common/fleet/useFleet';
 import { periodStart } from '../../common/fleet/costs';
 import { money } from '../fleetData';
+import KpiTile from '../../common/components/KpiTile';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
     gap: theme.spacing(1.5),
-  },
-  tile: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'stretch',
-    textAlign: 'start',
-    gap: 2,
-    padding: theme.spacing(1.5, 2),
-    borderRadius: theme.tokens.radius.lg,
-    border: '1px solid transparent',
-    backgroundColor: theme.palette.surface.tint,
-    '&:hover, &:focus-visible': {
-      borderColor: alpha(theme.palette.primary.main, 0.4),
-    },
-  },
-  label: {
-    fontSize: '0.75rem',
-    fontWeight: 600,
-    color: theme.palette.surface.textSecondaryOnTint,
-  },
-  value: {
-    fontSize: '1.5rem',
-    fontWeight: 600,
-    lineHeight: 1.2,
-    color: theme.palette.text.primary,
-    fontVariantNumeric: 'tabular-nums',
   },
 }));
 
@@ -104,18 +76,18 @@ const FleetKpis = () => {
 
   return (
     <div className={classes.grid}>
-      {tiles.map((tile) => (
-        <ButtonBase key={tile.key} component={RouterLink} to={tile.to} className={classes.tile}>
-          <span className={classes.label}>{t(tile.label)}</span>
-          <Typography component="span" className={classes.value}>
-            {values[tile.key] == null
-              ? '—'
-              : tile.format
-                ? tile.format(values[tile.key])
-                : values[tile.key]}
-          </Typography>
-        </ButtonBase>
-      ))}
+      {tiles.map((tile) => {
+        const value = values[tile.key];
+        return (
+          <KpiTile
+            key={tile.key}
+            size="md"
+            to={tile.to}
+            label={t(tile.label)}
+            value={value != null && tile.format ? tile.format(value) : value}
+          />
+        );
+      })}
     </div>
   );
 };

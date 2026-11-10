@@ -18,6 +18,7 @@ const useStyles = makeStyles()((theme) => ({
     borderRadius: theme.tokens.radius.xs,
     border: `1px solid ${theme.palette.surface.borderStrong}`,
     fontFamily: theme.tokens.font.mono,
+    fontVariantNumeric: 'tabular-nums',
     fontSize: '0.75rem',
     textAlign: 'center',
   },

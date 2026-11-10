@@ -46,6 +46,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   code: {
     fontFamily: theme.tokens.font.mono,
+    fontVariantNumeric: 'tabular-nums',
     color: theme.palette.text.secondary,
   },
   title: {

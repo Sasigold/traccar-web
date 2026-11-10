@@ -88,6 +88,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   tokenField: {
     fontFamily: theme.tokens.font.mono,
+    fontVariantNumeric: 'tabular-nums',
     fontSize: '0.8125rem',
   },
   infoGrid: {

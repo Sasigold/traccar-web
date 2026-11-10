@@ -63,6 +63,7 @@ import { fleetSave, withUploadedFile } from '../common/fleet/fleetSave';
 import { DateField, DateTimeField } from '../common/components/pickers';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import InsuranceFileDialog from './components/InsuranceFileDialog';
+import VehicleSelect from '../common/components/VehicleSelect';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -189,18 +190,6 @@ const IncidentPage = () => {
     );
   }, [id, canRead]);
 
-  const deviceOptions = useMemo(
-    () =>
-      Object.values(devices)
-        .map((device) => ({
-          id: String(device.id),
-          name: device.attributes?.plateNumber
-            ? `${device.name} · ${device.attributes.plateNumber}`
-            : device.name,
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [devices],
-  );
   const driverList = useMemo(
     () => Object.values(drivers).sort((a, b) => a.name.localeCompare(b.name)),
     [drivers],
@@ -397,18 +386,7 @@ const IncidentPage = () => {
         <>
           <FormSection title={t('fleetIncidentEvent')} icon={<CarCrashRoundedIcon />}>
             <div className={classes.grid}>
-              <TextField
-                select
-                label={t('fleetEntityVehicle')}
-                value={deviceId}
-                onChange={(event) => setDeviceId(event.target.value)}
-              >
-                {deviceOptions.map((option) => (
-                  <MenuItem key={option.id} value={option.id}>
-                    {option.name}
-                  </MenuItem>
-                ))}
-              </TextField>
+              <VehicleSelect value={deviceId} onChange={setDeviceId} />
               <DateTimeField
                 label={t('fleetIncidentOccurred')}
                 value={incident.occurred_at}

@@ -23,6 +23,7 @@ import FleetListPage from './components/FleetListPage';
 import { FUEL_PROVIDERS } from './components/FuelImportDialog';
 import { ensureVehicle, money } from './fleetData';
 import { pascalCase } from '../common/util/stringUtils';
+import VehicleSelect from '../common/components/VehicleSelect';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -93,21 +94,10 @@ const CardDialog = ({ card, onClose, onSaved }) => {
             onChange={set('card_number')}
             slotProps={{ htmlInput: { dir: 'ltr', inputMode: 'numeric', autoComplete: 'off' } }}
           />
-          <TextField
-            select
-            label={t('fleetEntityVehicle')}
+          <VehicleSelect
             value={form.deviceId}
-            onChange={set('deviceId')}
-          >
-            <MenuItem value="">&nbsp;</MenuItem>
-            {Object.values(devices)
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((device) => (
-                <MenuItem key={device.id} value={String(device.id)}>
-                  {device.name}
-                </MenuItem>
-              ))}
-          </TextField>
+            onChange={(deviceId) => set('deviceId')({ target: { value: deviceId } })}
+          />
           <DateField
             label={t('fuelCardValidUntil')}
             value={form.valid_until || ''}

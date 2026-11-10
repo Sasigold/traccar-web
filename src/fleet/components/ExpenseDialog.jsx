@@ -20,6 +20,7 @@ import { DateField } from '../../common/components/pickers';
 import { keepOnBackdrop } from '../../common/util/formDialog';
 import MoneyField from '../../common/components/MoneyField';
 import { capitalize } from '../../common/util/stringUtils';
+import VehicleSelect from '../../common/components/VehicleSelect';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -102,19 +103,11 @@ const ExpenseDialog = ({ onClose, onSaved }) => {
       <DialogTitle>{t('fleetExpenseAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>
-          <TextField
-            select
-            label={t('fleetEntityVehicle')}
+          <VehicleSelect
+            devices={options}
             value={form.deviceId}
-            onChange={set('deviceId')}
-          >
-            <MenuItem value="">&nbsp;</MenuItem>
-            {options.map((device) => (
-              <MenuItem key={device.id} value={String(device.id)}>
-                {device.name}
-              </MenuItem>
-            ))}
-          </TextField>
+            onChange={(deviceId) => set('deviceId')({ target: { value: deviceId } })}
+          />
           <TextField
             select
             label={t('fleetExpenseCategory')}

@@ -212,7 +212,9 @@ export const motion = {
 export const type = {
   fontFamily: '"Sora Variable", Sora, "Assistant Brand", Assistant, "Segoe UI", Arial, sans-serif',
   hebrew: '"Assistant Brand", Assistant, "Segoe UI", Arial, sans-serif',
-  mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+  // ADM-29: codes, keys and identifiers stay in Sora (with tabular digits where they are set),
+  // not a monospace font outside the brand.
+  mono: '"Sora Variable", Sora, "Segoe UI", Arial, sans-serif',
   // Brand weights are 400 / 500 / 600 / 700 only.
   // [fontSize, fontWeight, lineHeight]
   scale: {

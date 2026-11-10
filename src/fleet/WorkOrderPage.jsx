@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -79,6 +79,7 @@ import WazeButton from '../common/components/WazeButton';
 import { capitalize } from '../common/util/stringUtils';
 import DocumentPrintHeader from '../common/components/print/DocumentPrintHeader';
 import { formatTime } from '../common/util/formatter';
+import VehicleSelect from '../common/components/VehicleSelect';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -207,19 +208,6 @@ const WorkOrderPage = () => {
       setMaintenance(links.map((link) => link.maintenance));
     },
     [deviceId],
-  );
-
-  const deviceOptions = useMemo(
-    () =>
-      Object.values(devices)
-        .map((device) => ({
-          id: String(device.id),
-          name: device.attributes?.plateNumber
-            ? `${device.name} · ${device.attributes.plateNumber}`
-            : device.name,
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [devices],
   );
 
   const set = (changes) => setOrder((current) => ({ ...current, ...changes }));
@@ -383,19 +371,7 @@ const WorkOrderPage = () => {
           />
           <FormSection title={t('fleetWorkOrderDetails')} icon={<HandymanRoundedIcon />}>
             <div className={classes.grid}>
-              <TextField
-                select
-                label={t('fleetEntityVehicle')}
-                value={deviceId}
-                onChange={(event) => chooseDevice(event.target.value)}
-                disabled={Boolean(id)}
-              >
-                {deviceOptions.map((option) => (
-                  <MenuItem key={option.id} value={option.id}>
-                    {option.name}
-                  </MenuItem>
-                ))}
-              </TextField>
+              <VehicleSelect value={deviceId} onChange={chooseDevice} disabled={Boolean(id)} />
               <TextField
                 label={t('fleetWorkOrderTitle')}
                 value={order.title || ''}

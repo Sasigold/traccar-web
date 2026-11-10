@@ -6,7 +6,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  MenuItem,
   TextField,
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
@@ -19,6 +18,7 @@ import { fromLocalInput, toLocalInput } from '../../common/fleet/incidents';
 import { ensureVehicle } from '../fleetData';
 import { keepOnBackdrop } from '../../common/util/formDialog';
 import MoneyField from '../../common/components/MoneyField';
+import VehicleSelect from '../../common/components/VehicleSelect';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -98,19 +98,12 @@ const FuelEntryDialog = ({ onClose, onSaved }) => {
       <DialogTitle>{t('fleetFuelManual')}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>
-          <TextField
-            select
+          <VehicleSelect
             required
-            label={t('fleetEntityVehicle')}
+            devices={options}
             value={form.deviceId}
-            onChange={chooseVehicle}
-          >
-            {options.map((device) => (
-              <MenuItem key={device.id} value={String(device.id)}>
-                {device.name}
-              </MenuItem>
-            ))}
-          </TextField>
+            onChange={(deviceId) => chooseVehicle({ target: { value: deviceId } })}
+          />
           <TextField
             type="datetime-local"
             required

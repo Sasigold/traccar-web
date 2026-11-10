@@ -20,7 +20,7 @@ import TableToolbar from '../common/components/table/TableToolbar';
 import TableShimmer from '../common/components/TableShimmer';
 import AdminMenu from './components/AdminMenu';
 import AdminGate from './components/AdminGate';
-import KpiTile from './components/KpiTile';
+import KpiTile from '../common/components/KpiTile';
 import StateChip from './components/StateChip';
 import InvoiceDialog from './components/InvoiceDialog';
 import GenerateBillsDialog from './components/GenerateBillsDialog';

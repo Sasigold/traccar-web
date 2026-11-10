@@ -40,6 +40,7 @@ import { odometerKm } from '../common/fleet/workOrders';
 import FleetNotice from './components/FleetNotice';
 import SignaturePad from './components/SignaturePad';
 import { ensureDriver, ensureVehicle, openFleetFile, uploadFleetFile } from './fleetData';
+import VehicleSelect from '../common/components/VehicleSelect';
 
 const useStyles = makeStyles()((theme) => ({
   top: {
@@ -490,22 +491,7 @@ const InspectionPage = ({ driverMode = false }) => {
           </Typography>
         )}
         <div className={classes.top}>
-          {!driverMode && (
-            <TextField
-              select
-              label={t('fleetEntityVehicle')}
-              value={deviceId}
-              onChange={(event) => setDeviceId(event.target.value)}
-            >
-              {Object.values(devices)
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map((device) => (
-                  <MenuItem key={device.id} value={String(device.id)}>
-                    {device.name}
-                  </MenuItem>
-                ))}
-            </TextField>
-          )}
+          {!driverMode && <VehicleSelect value={deviceId} onChange={setDeviceId} />}
           {(!driverMode || templates.length > 1) && (
             <TextField
               select

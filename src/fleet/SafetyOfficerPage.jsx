@@ -54,6 +54,7 @@ import printQuarterReport from './components/printQuarterReport';
 import { ensureDriver, ensureVehicle, openFleetFile, uploadFleetFile } from './fleetData';
 import { keepOnBackdrop } from '../common/util/formDialog';
 import { capitalize } from '../common/util/stringUtils';
+import VehicleSelect from '../common/components/VehicleSelect';
 
 const useStyles = makeStyles()((theme) => ({
   number: {
@@ -252,20 +253,10 @@ const TachographDialog = ({ initial, onClose, onSaved }) => {
             <MenuItem value="card">{t('safetyTachographCard')}</MenuItem>
           </TextField>
           {form.kind === 'vehicle' ? (
-            <TextField
-              select
-              label={t('fleetEntityVehicle')}
+            <VehicleSelect
               value={form.deviceId}
-              onChange={set('deviceId')}
-            >
-              {Object.values(devices)
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map((device) => (
-                  <MenuItem key={device.id} value={String(device.id)}>
-                    {device.name}
-                  </MenuItem>
-                ))}
-            </TextField>
+              onChange={(deviceId) => set('deviceId')({ target: { value: deviceId } })}
+            />
           ) : (
             <TextField
               select

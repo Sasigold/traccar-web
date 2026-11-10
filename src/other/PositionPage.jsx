@@ -63,6 +63,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   mono: {
     fontFamily: theme.tokens.font.mono,
+    fontVariantNumeric: 'tabular-nums',
     fontSize: '0.8125rem',
     color: theme.palette.text.secondary,
   },

@@ -36,6 +36,7 @@ import {
 import printTransferLetter, { openLetterWindow } from './printTransferLetter';
 import { keepOnBackdrop } from '../../common/util/formDialog';
 import { pascalCase } from '../../common/util/stringUtils';
+import VehicleSelect from '../../common/components/VehicleSelect';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -294,20 +295,10 @@ const ViolationDialog = ({ violation, onClose, onSaved }) => {
       <DialogTitle>{t(violation ? 'fleetViolationEdit' : 'fleetViolationAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>
-          <TextField
-            select
-            label={t('fleetEntityVehicle')}
+          <VehicleSelect
             value={form.deviceId}
-            onChange={set('deviceId')}
-          >
-            {Object.values(devices)
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((device) => (
-                <MenuItem key={device.id} value={String(device.id)}>
-                  {device.name}
-                </MenuItem>
-              ))}
-          </TextField>
+            onChange={(deviceId) => set('deviceId')({ target: { value: deviceId } })}
+          />
           <DateTimeField
             label={t('fleetIncidentOccurred')}
             value={form.occurred_at}
