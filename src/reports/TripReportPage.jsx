@@ -468,7 +468,7 @@ const TripReportPage = () => {
               {!loading ? (
                 sortedItems.map((item) => (
                   <TableRow
-                    key={item.startPositionId}
+                    key={`${item.deviceId}-${item.startPositionId}-${item.startTime}`}
                     ref={selectedItem === item ? selectedRowRef : undefined}
                     className={selectedItem === item ? classes.selectedRow : undefined}
                   >

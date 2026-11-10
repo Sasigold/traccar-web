@@ -307,7 +307,7 @@ const StopReportPage = () => {
               {!loading ? (
                 sortedItems.map((item) => (
                   <TableRow
-                    key={item.positionId}
+                    key={`${item.deviceId}-${item.positionId}-${item.startTime}`}
                     ref={selectedItem === item ? selectedRowRef : undefined}
                     className={selectedItem === item ? classes.selectedRow : undefined}
                   >
