@@ -162,6 +162,9 @@
    - `20261116160000_vehicle_handovers.sql`: מסירת רכב והחזרתו בחתימה (ISR-11).
    - `20261116170000_sim_cards.sql`: מלאי כרטיסי SIM (BIZ-05).
    - `20261116180000_fuel_card_limits.sql`: מגבלות לכרטיסי דלק (ADM-31).
+   - `20261116190000_branded_email.sql`: מייל בעיצוב המותג (BRD-08). אחר כך ממלאים בניהול השירות ←
+     הודעות ← מייל את "כתובת האתר", מגישים את תבנית הוואטסאפ לאישור ב-Meta ומאמתים את הדומיין ב-Resend
+     (docs/MESSAGING-TEMPLATES.md).
 
 **פריסה ושרת:**
 3. פריסה לייצור: ידנית, Actions ← "Promote to production" (מקלידים `production`). דחיפה ל-`main` מעלה ל-staging

@@ -162,6 +162,18 @@ const ChannelCard = ({ spec, settings, hasSecret, onSaved }) => {
             slotProps={{ htmlInput: { dir: 'ltr' } }}
           />
         )}
+        {spec.channel === 'email' && (
+          // BRD-08: the branded email loads its logo from the app and its button opens it.
+          <TextField
+            className={classes.wide}
+            label={t('messagingSiteUrl')}
+            helperText={t('messagingSiteUrlHelp')}
+            value={values.site_url || ''}
+            onChange={(event) => setValues({ ...values, site_url: event.target.value || null })}
+            error={Boolean(values.site_url) && !/^https:\/\/[^\s/]+/.test(values.site_url)}
+            slotProps={{ htmlInput: { dir: 'ltr', inputMode: 'url' } }}
+          />
+        )}
         <div className={classes.wide}>
           <Button variant="outlined" onClick={save}>
             {t('sharedSave')}

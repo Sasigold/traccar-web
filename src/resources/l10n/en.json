@@ -2621,6 +2621,8 @@
     "messagingSenderResend": "Sender, e.g. viper fleet <alerts@domain.com>",
     "messagingSenderWebhook": "Webhook URL",
     "messagingTemplate": "Template name",
+    "messagingSiteUrl": "Site address (https)",
+    "messagingSiteUrlHelp": "Email goes out in the brand design: the logo loads from this address and the button in the email opens it. Without it, the email has no logo or button.",
     "messagingTemplateHelp": "A Hebrew utility template with {{1}} for the message text",
     "messagingKeyMeta": "Access token",
     "messagingKeyVonage": "API key:API secret",

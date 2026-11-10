@@ -77,6 +77,8 @@ import { loadMaintenanceLinks, markMaintenanceDone } from './maintenance';
 import { DateField } from '../common/components/pickers';
 import WazeButton from '../common/components/WazeButton';
 import { capitalize } from '../common/util/stringUtils';
+import DocumentPrintHeader from '../common/components/print/DocumentPrintHeader';
+import { formatTime } from '../common/util/formatter';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -367,6 +369,18 @@ const WorkOrderPage = () => {
       <FleetNotice permission="maintenance.read" />
       {order && (
         <>
+          <DocumentPrintHeader
+            kind="WORK ORDER"
+            portrait
+            title={`${t('fleetWorkOrder')} ${order.number || ''}`.trim()}
+            lines={[
+              order.title,
+              devices[deviceId] && `${t('sharedDevice')}: ${devices[deviceId].name}`,
+              selectedVendor && `${t('fleetVendor')}: ${selectedVendor.name}`,
+              order.opened_at &&
+                `${t('fleetWorkOrderOpened')}: ${formatTime(order.opened_at, 'date')}`,
+            ]}
+          />
           <FormSection title={t('fleetWorkOrderDetails')} icon={<HandymanRoundedIcon />}>
             <div className={classes.grid}>
               <TextField

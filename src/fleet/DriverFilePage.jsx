@@ -28,6 +28,7 @@ import { violationKey } from './components/ViolationDialog';
 import { incidentKey } from './IncidentsPage';
 import { money } from './fleetData';
 import { capitalize } from '../common/util/stringUtils';
+import DocumentPrintHeader from '../common/components/print/DocumentPrintHeader';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -48,6 +49,10 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: theme.spacing(2),
+    // On paper the shared document header (BRD-08) takes its place.
+    '@media print': {
+      display: 'none',
+    },
   },
   section: {
     padding: theme.spacing(2, 2.5),
@@ -190,6 +195,12 @@ const DriverFilePage = () => {
       <FleetNotice permission="safety.read" />
       {file && (
         <div className={classes.root}>
+          <DocumentPrintHeader
+            kind="DRIVER FILE"
+            portrait
+            title={`${t('fleetDriverFile')}: ${file.traccar.name}`}
+            lines={[t('fleetDriverFilePrinted').replace('{0}', formatTime(producedAt, 'minutes'))]}
+          />
           <div className={classes.header}>
             <div>
               <Typography variant="h5" component="h1" fontWeight={700}>

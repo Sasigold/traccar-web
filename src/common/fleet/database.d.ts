@@ -1917,6 +1917,7 @@ export type Database = {
           template: string | null;
           language: string;
           updated_at: string;
+          site_url: string | null;
         };
         Insert: {
           channel: string;
@@ -1926,6 +1927,7 @@ export type Database = {
           template?: string | null;
           language?: string;
           updated_at?: string;
+          site_url?: string | null;
         };
         Update: {
           channel?: string;
@@ -1935,6 +1937,7 @@ export type Database = {
           template?: string | null;
           language?: string;
           updated_at?: string;
+          site_url?: string | null;
         };
         Relationships: [];
       };
@@ -3717,9 +3720,23 @@ export type Database = {
         };
         Returns: number;
       };
+      messaging_email_html: {
+        Args: {
+          p_subject: string;
+          p_body: string;
+          p_site_url: string;
+        };
+        Returns: string;
+      };
       messaging_expire: {
         Args: Record<PropertyKey, never>;
         Returns: number;
+      };
+      messaging_html_text: {
+        Args: {
+          p_text: string;
+        };
+        Returns: string;
       };
       messaging_ready: {
         Args: Record<PropertyKey, never>;
