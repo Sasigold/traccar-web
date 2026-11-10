@@ -28,7 +28,9 @@ import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import { useConfirm } from '../common/components/confirm/ConfirmProvider';
 import FuelEntryDialog from './components/FuelEntryDialog';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import { periodStart, pivotCosts } from '../common/fleet/costs';
+import { periodStart, pivotCosts, withCostPerKm } from '../common/fleet/costs';
+import fetchOrThrow from '../common/util/fetchOrThrow';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import FleetNotice from './components/FleetNotice';
 import FuelImportDialog, { fuelFlagKey } from './components/FuelImportDialog';
 import ExpenseDialog, { expenseCategoryKey } from './components/ExpenseDialog';
@@ -74,59 +76,109 @@ const CostsPage = () => {
   const [months, setMonths] = useState(3);
   const [anomaliesOnly, setAnomaliesOnly] = useState(false);
   const [reloadKey, reload] = useReducer((k) => k + 1, 0);
-  const [rows, setRows] = useState(null);
+  // The rows are kept with the view they were read for, so a view never shows another's rows.
+  const [loaded, setLoaded] = useState({ view: null, rows: null });
+  const rows = loaded.view === view ? loaded.rows : null;
   const [dialog, setDialog] = useState(null);
+  const [editing, setEditing] = useState(null);
+  // ADM-18: a vehicle picked in the summary narrows the fuel and expense lists to it.
+  const [vehicleFilter, setVehicleFilter] = useState(null);
+  const [meters, setMeters] = useState(null);
 
   const from = periodStart(months);
 
   useAsyncTask(async () => {
     void reloadKey;
-    setRows(null);
     if (!canRead) {
       return;
     }
     const client = getFleetClient();
     if (view === 'summary') {
-      setRows(
-        unwrap(await client.from('vehicle_monthly_costs').select('*').gte('month', from)) || [],
-      );
+      setLoaded({
+        view,
+        rows:
+          unwrap(await client.from('vehicle_monthly_costs').select('*').gte('month', from)) || [],
+      });
     } else if (view === 'fuel') {
-      setRows(
-        unwrap(
-          await client
-            .from('fuel_transactions')
-            .select('*')
-            .gte('occurred_at', from)
-            .order('occurred_at', { ascending: false })
-            .limit(1000),
-        ) || [],
-      );
+      setLoaded({
+        view,
+        rows:
+          unwrap(
+            await client
+              .from('fuel_transactions')
+              .select('*')
+              .gte('occurred_at', from)
+              .order('occurred_at', { ascending: false })
+              .limit(1000),
+          ) || [],
+      });
     } else {
-      setRows(
-        unwrap(
-          await client
-            .from('vehicle_expenses')
-            .select('*')
-            .gte('occurred_at', from)
-            .order('occurred_at', { ascending: false })
-            .limit(1000),
-        ) || [],
-      );
+      setLoaded({
+        view,
+        rows:
+          unwrap(
+            await client
+              .from('vehicle_expenses')
+              .select('*')
+              .gte('occurred_at', from)
+              .order('occurred_at', { ascending: false })
+              .limit(1000),
+          ) || [],
+      });
     }
   }, [view, from, canRead, reloadKey]);
 
+  // ADM-18: the distance each vehicle drove in the period (Traccar's summary), for ₪/km.
+  const traccarIds = Object.values(vehicleIndex)
+    .map((vehicle) => vehicle.traccarId)
+    .filter(Boolean)
+    .sort((a, b) => a - b)
+    .join(',');
+  useAsyncTask(
+    async ({ signal }) => {
+      setMeters(null);
+      if (view !== 'summary' || !traccarIds) return;
+      const query = new URLSearchParams({
+        from: new Date(from).toISOString(),
+        to: new Date().toISOString(),
+      });
+      traccarIds.split(',').forEach((id) => query.append('deviceId', id));
+      try {
+        const response = await fetchOrThrow(`api/reports/summary?${query}`, {
+          signal,
+          headers: { Accept: 'application/json' },
+        });
+        const byTraccar = {};
+        (await response.json()).forEach((row) => {
+          byTraccar[row.deviceId] = (byTraccar[row.deviceId] || 0) + (row.distance || 0);
+        });
+        setMeters(
+          Object.fromEntries(
+            Object.entries(vehicleIndex).map(([id, vehicle]) => [id, byTraccar[vehicle.traccarId]]),
+          ),
+        );
+      } catch {
+        // Without the distance the column stays empty; the costs still show.
+        setMeters({});
+      }
+    },
+    [view, from, traccarIds, vehicleIndex],
+  );
+
   const plate = (vehicleId, fallback) => vehicleIndex[vehicleId]?.plate || fallback || '—';
 
-  const summary = useMemo(
-    () => (view === 'summary' && rows ? pivotCosts(rows) : null),
-    [view, rows],
-  );
+  const summary = useMemo(() => {
+    if (view !== 'summary' || !rows) return null;
+    const pivot = pivotCosts(rows);
+    return { ...pivot, lines: withCostPerKm(pivot.lines, meters) };
+  }, [view, rows, meters]);
   const visibleRows = useMemo(
     () =>
-      view === 'fuel' && anomaliesOnly
+      (view === 'fuel' && anomaliesOnly
         ? (rows || []).filter((row) => row.anomaly_flags?.length && !row.reviewed_at)
-        : rows || [],
-    [view, rows, anomaliesOnly],
+        : rows || []
+      ).filter((row) => !vehicleFilter || row.vehicle_id === vehicleFilter),
+    [view, rows, anomaliesOnly, vehicleFilter],
   );
 
   // ADM-18: an anomaly someone checked stops asking for attention (who and when are kept).
@@ -154,6 +206,20 @@ const CostsPage = () => {
     reload();
   });
 
+  const removeExpense = useCatch(async (row) => {
+    if (
+      !(await confirm({
+        title: t('fleetExpenseDeleteConfirm'),
+        message: `${formatTime(row.occurred_at, 'date')} · ${money(row.amount)}`,
+        confirmLabel: t('sharedRemove'),
+      }))
+    ) {
+      return;
+    }
+    unwrap(await getFleetClient().from('vehicle_expenses').delete().eq('id', row.id));
+    reload();
+  });
+
   const handleExport = async () => {
     let data;
     if (view === 'summary') {
@@ -163,6 +229,7 @@ const CostsPage = () => {
         [t('fleetCostMaintenance')]: line.maintenance,
         [t('fleetCostOther')]: line.other,
         [t('fleetWorkOrderTotal')]: line.total,
+        [t('fleetCostPerKm')]: line.perKm ?? '',
       }));
     } else if (view === 'fuel') {
       data = visibleRows.map((row) => ({
@@ -199,6 +266,21 @@ const CostsPage = () => {
       onClick={() => setView(key)}
     />
   ));
+  if (vehicleFilter && view !== 'summary') {
+    viewChips.push(
+      <Chip
+        key="vehicle"
+        size="small"
+        color="primary"
+        label={
+          <>
+            {t('fleetEntityVehicle')}: <span dir="ltr">{plate(vehicleFilter)}</span>
+          </>
+        }
+        onDelete={() => setVehicleFilter(null)}
+      />,
+    );
+  }
   if (view === 'fuel') {
     viewChips.push(
       <Chip
@@ -284,19 +366,34 @@ const CostsPage = () => {
                 <TableCell>{t('fleetCostMaintenance')}</TableCell>
                 <TableCell>{t('fleetCostOther')}</TableCell>
                 <TableCell>{t('fleetWorkOrderTotal')}</TableCell>
+                <TableCell>{t('fleetCostPerKm')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows == null && canRead && <TableShimmer columns={5} />}
+              {rows == null && canRead && <TableShimmer columns={6} />}
               {summary?.lines.map((line) => (
                 <TableRow key={line.vehicleId} hover>
                   <TableCell>
-                    <span dir="ltr">{plate(line.vehicleId)}</span>
+                    {/* ADM-18: the vehicle opens its fuel (or other expenses) in this period. */}
+                    <Button
+                      size="small"
+                      sx={{ minWidth: 0, px: 0.5 }}
+                      aria-label={t('fleetCostsVehicleRows').replace('{0}', plate(line.vehicleId))}
+                      onClick={() => {
+                        setVehicleFilter(line.vehicleId);
+                        setView(line.fuel > 0 ? 'fuel' : 'expenses');
+                      }}
+                    >
+                      <span dir="ltr">{plate(line.vehicleId)}</span>
+                    </Button>
                   </TableCell>
                   <TableCell className={classes.number}>{money(line.fuel)}</TableCell>
                   <TableCell className={classes.number}>{money(line.maintenance)}</TableCell>
                   <TableCell className={classes.number}>{money(line.other)}</TableCell>
                   <TableCell className={classes.number}>{money(line.total)}</TableCell>
+                  <TableCell className={classes.number}>
+                    {line.perKm == null ? '—' : money(line.perKm)}
+                  </TableCell>
                 </TableRow>
               ))}
               {summary?.lines.length > 0 && (
@@ -308,6 +405,7 @@ const CostsPage = () => {
                   </TableCell>
                   <TableCell className={classes.number}>{money(summary.totals.other)}</TableCell>
                   <TableCell className={classes.number}>{money(summary.totals.total)}</TableCell>
+                  <TableCell />
                 </TableRow>
               )}
             </TableBody>
@@ -394,10 +492,11 @@ const CostsPage = () => {
                 <TableCell>{t('fleetExpenseAmount')}</TableCell>
                 <TableCell>{t('fleetExpenseReference')}</TableCell>
                 <TableCell>{t('fleetExpenseReceipt')}</TableCell>
+                {canWrite && <TableCell aria-label={t('shellActions')} />}
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows == null && canRead && <TableShimmer columns={6} />}
+              {rows == null && canRead && <TableShimmer columns={canWrite ? 7 : 6} />}
               {visibleRows.map((row) => (
                 <TableRow key={row.id} hover>
                   <TableCell className={classes.number}>
@@ -416,6 +515,24 @@ const CostsPage = () => {
                       </Button>
                     )}
                   </TableCell>
+                  {canWrite && (
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                      <IconButton
+                        size="small"
+                        aria-label={t('sharedEdit')}
+                        onClick={() => setEditing(row)}
+                      >
+                        <EditRoundedIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        aria-label={t('sharedRemove')}
+                        onClick={() => removeExpense(row)}
+                      >
+                        <DeleteOutlineRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
@@ -430,6 +547,17 @@ const CostsPage = () => {
           onClose={() => setDialog(null)}
           onSaved={() => {
             setDialog(null);
+            reload();
+          }}
+        />
+      )}
+      {editing && (
+        <ExpenseDialog
+          expense={editing}
+          deviceId={vehicleIndex[editing.vehicle_id]?.traccarId}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null);
             reload();
           }}
         />

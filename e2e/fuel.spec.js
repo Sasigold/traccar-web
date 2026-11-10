@@ -90,3 +90,68 @@ test('an import remembers the company columns and can be undone', async ({ page 
   await expect(dialog.getByText('הייבוא בוטל')).toBeVisible();
   expect(fleet.tables.fuel_transactions).toHaveLength(0);
 });
+
+// ADM-18: the summary shows ₪/km from the distance driven, a vehicle opens its own rows, and an
+// expense row is edited in place.
+test('the summary costs per km, opens a vehicle and edits its expense', async ({ page }) => {
+  await writeMode(page);
+  const month = new Date();
+  month.setDate(1);
+  const fleet = await fakeFleet(page, {
+    users: { 1: accountant },
+    tables: {
+      vehicles: [
+        { id: 'veh1', org_id: 'o1', traccar_device_id: 1, plate_number: '12-345-67' },
+        { id: 'veh2', org_id: 'o1', traccar_device_id: 2, plate_number: '76-543-21' },
+      ],
+      vehicle_monthly_costs: [
+        {
+          vehicle_id: 'veh1',
+          month: month.toISOString().slice(0, 10),
+          category: 'toll',
+          amount: 500,
+        },
+      ],
+      vehicle_expenses: [
+        {
+          id: 'e1',
+          org_id: 'o1',
+          vehicle_id: 'veh1',
+          category: 'toll',
+          occurred_at: new Date().toISOString().slice(0, 10),
+          amount: 500,
+        },
+        {
+          id: 'e2',
+          org_id: 'o1',
+          vehicle_id: 'veh2',
+          category: 'parking',
+          occurred_at: new Date().toISOString().slice(0, 10),
+          amount: 40,
+        },
+      ],
+    },
+  });
+  await page.route('**/api/reports/summary?*', (route) =>
+    route.fulfill({ json: [{ deviceId: 1, distance: 250000 }] }),
+  );
+  await gotoReady(page, '/fleet/costs');
+  const row = page.getByRole('row').filter({ hasText: '12-345-67' });
+  // 500 ₪ over 250 km.
+  await expect(row).toContainText('2');
+  await expect(row.getByRole('cell').last()).toHaveText(/2(\.00)?/);
+
+  await row.getByRole('button', { name: 'התדלוקים וההוצאות של 12-345-67' }).click();
+  await expect(page.getByRole('button', { name: 'הוצאות', exact: true })).toBeVisible();
+  await expect(page.getByRole('row').filter({ hasText: '76-543-21' })).toHaveCount(0);
+  await page
+    .getByRole('row')
+    .filter({ hasText: '12-345-67' })
+    .getByRole('button', { name: 'עריכה' })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'עריכת הוצאה' });
+  await dialog.getByLabel('סכום').fill('550');
+  await dialog.getByRole('button', { name: 'שמירה' }).click();
+  await expect.poll(() => fleet.tables.vehicle_expenses[0].amount).toBe(550);
+  expect(fleet.tables.vehicle_expenses).toHaveLength(2);
+});
