@@ -1,5 +1,6 @@
 import { API_VERSION, DEFAULT_LIMIT, MAX_LIMIT, buildOpenApi } from './openapi.js';
 import { RESOURCES, resourceOf } from './resources.js';
+import { handleMcp } from './mcp.js';
 
 // The public API gateway (INT-01), without Deno: `handle(request, { rpc })` answers a standard
 // Request with a Response. `rpc(name, args)` calls a database function with the service role and
@@ -9,11 +10,13 @@ import { RESOURCES, resourceOf } from './resources.js';
 //   GET /v1                    what is available
 //   GET /v1/openapi.json       the OpenAPI document (?lang=he for Hebrew), no key needed
 //   GET /v1/<resource>         a page of rows: ?limit=&cursor=&updated_since=
+//   POST /v1/mcp               the same rows as MCP tools (AI-07, mcp.js)
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Authorization, X-API-Key, Content-Type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers':
+    'Authorization, X-API-Key, Content-Type, Accept, Mcp-Protocol-Version, Mcp-Session-Id',
   'Access-Control-Expose-Headers':
     'X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, Retry-After',
 };
@@ -125,6 +128,65 @@ const rateHeaders = (auth) =>
       }
     : {};
 
+// A page of rows for a key's organization, as the REST list and the MCP tools return it.
+const pageOf = async (rpc, orgId, resource, query) => {
+  const page = await rpc('api_v1_rows', {
+    p_org: orgId,
+    p_resource: resource,
+    p_since: query.since,
+    p_limit: query.limit,
+    p_offset: query.offset,
+  });
+  if (!page) return null;
+  const data = page.data ?? [];
+  const nextCursor = data.length === query.limit ? encodeCursor(query.offset + data.length) : null;
+  return { data, nextCursor };
+};
+
+const rpcError = (id, code, message, status = 200) =>
+  json(status, { jsonrpc: '2.0', id: id ?? null, error: { code, message } });
+
+// AI-07: one JSON-RPC message per POST, answered with JSON (no event stream, no session).
+const handleMcpRequest = async (request, rpc) => {
+  if (request.method !== 'POST') {
+    return error(405, 'method_not_allowed', 'Use POST for MCP messages.', {
+      Allow: 'POST, OPTIONS',
+    });
+  }
+  let message;
+  try {
+    message = await request.json();
+  } catch {
+    return rpcError(null, -32700, 'Parse error.', 400);
+  }
+  if (Array.isArray(message)) {
+    return rpcError(null, -32600, 'Send one message per request.', 400);
+  }
+  try {
+    const auth = await rpc('api_authorize', { p_key: keyOf(request.headers), p_scope: 'read' });
+    if (Number(auth?.status) === 401) {
+      return error(401, 'unauthorized', MESSAGES.unauthorized, {
+        'WWW-Authenticate': 'Bearer realm="viper fleet"',
+      });
+    }
+    const answer = await handleMcp(message, {
+      authorize: async () => auth,
+      rows: async (resource, params) => {
+        const query = parseQuery(params);
+        if (query.error) return { error: query.error };
+        const page = await pageOf(rpc, auth.org_id, resource, query);
+        return page ? { data: page.data, next_cursor: page.nextCursor } : { error: 'Not found.' };
+      },
+    });
+    if (answer == null) {
+      return new Response(null, { status: 202, headers: CORS });
+    }
+    return json(200, answer, rateHeaders(auth));
+  } catch {
+    return rpcError(message?.id, -32603, MESSAGES.server_error);
+  }
+};
+
 export const handle = async (request, { rpc, publicUrl = null }) => {
   if (request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: CORS });
@@ -133,6 +195,9 @@ export const handle = async (request, { rpc, publicUrl = null }) => {
   const route = routeOf(url.pathname);
   if (route == null) {
     return error(404, 'not_found', `Use /${API_VERSION}/<resource>.`);
+  }
+  if (route === 'mcp') {
+    return handleMcpRequest(request, rpc);
   }
   if (request.method !== 'GET') {
     return error(405, 'method_not_allowed', MESSAGES.method_not_allowed, { Allow: 'GET, OPTIONS' });
@@ -185,19 +250,11 @@ export const handle = async (request, { rpc, publicUrl = null }) => {
       return error(500, 'server_error');
     }
 
-    const page = await rpc('api_v1_rows', {
-      p_org: auth.org_id,
-      p_resource: resource.name,
-      p_since: query.since,
-      p_limit: query.limit,
-      p_offset: query.offset,
-    });
+    const page = await pageOf(rpc, auth.org_id, resource.name, query);
     if (!page) {
       return error(404, 'not_found');
     }
-    const data = page.data ?? [];
-    const nextCursor =
-      data.length === query.limit ? encodeCursor(query.offset + data.length) : null;
+    const { data, nextCursor } = page;
     let next = null;
     if (nextCursor) {
       const nextUrl = new URL(`${base}/${resource.name}`);
