@@ -3597,5 +3597,13 @@
     "fleetRecipientTestNotReady": "השליחה בערוץ הזה עוד לא מחוברת. מנהל השירות מחבר אותה במסך ערוצי השליחה.",
     "fleetRecipientTestSent": "הודעת בדיקה נשלחה אל {0}",
     "sharedNavigateWaze": "ניווט ב-Waze",
-    "cardNavigateToVehicle": "ניווט אל הרכב (Waze)"
+    "cardNavigateToVehicle": "ניווט אל הרכב (Waze)",
+    "fleetLicenseIssued": "תאריך הוצאת הרישיון",
+    "fleetNoNewDrivers": "לא לנהגים חדשים",
+    "newDriver": "נהג חדש",
+    "newDriverEscort": "נהג חדש · בליווי",
+    "newDriverUntil": "נהג חדש עד {0}",
+    "newDriverEscortDay": "חובת ליווי ביום ובלילה",
+    "newDriverEscortNight": "חובת ליווי בלילה",
+    "newDriverVehicleWarning": "הרכב {0} סומן כלא מתאים לנהגים חדשים, והנהג שמשויך אליו עדיין נהג חדש."
 }

@@ -20,6 +20,7 @@ import { formatTime } from '../common/util/formatter';
 import { expiryStatus } from '../common/fleet/fleetFields';
 import ExpiryBadge from '../fleet/components/ExpiryBadge';
 import { useRestriction } from '../common/util/permissions';
+import NewDriverChip from '../fleet/components/NewDriverChip';
 
 const useStyles = makeStyles()((theme) => ({
   expiry: {
@@ -140,7 +141,12 @@ const DriversPage = () => {
         <TableBody>
           {visible.map((item) => (
             <TableRow key={item.id}>
-              <TableCell>{item.name}</TableCell>
+              <TableCell>
+                <span className={classes.expiry}>
+                  {item.name}
+                  <NewDriverChip issued={item.attributes?.licenseIssued} />
+                </span>
+              </TableCell>
               <TableCell>
                 <span dir="ltr">{item.uniqueId}</span>
               </TableCell>

@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Autocomplete, Chip, MenuItem, TextField } from '@mui/material';
+import { Autocomplete, Chip, FormControlLabel, MenuItem, Switch, TextField } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import FormSection from '../../settings/components/FormSection';
 import ExpiryBadge from './ExpiryBadge';
+import NewDriverChip from './NewDriverChip';
 import { DateField } from '../../common/components/pickers';
 import { FIELD_KINDS, fieldError } from '../../common/util/israeliFields';
 
@@ -148,7 +149,8 @@ const FleetFieldsSection = ({
               onChange={(event) => update(field.key, event.target.value)}
               slotProps={{ inputLabel: { shrink: true } }}
             />
-            {showExpiry && value && <ExpiryBadge date={value} />}
+            {field.newDriver && value && <NewDriverChip issued={value} />}
+            {showExpiry && !field.newDriver && value && <ExpiryBadge date={value} />}
           </div>
         );
       case 'number':
@@ -163,6 +165,19 @@ const FleetFieldsSection = ({
             }
             slotProps={ltr}
             {...feedback}
+          />
+        );
+      case 'boolean':
+        return (
+          <FormControlLabel
+            key={field.key}
+            control={
+              <Switch
+                checked={Boolean(value)}
+                onChange={(event) => update(field.key, event.target.checked || null)}
+              />
+            }
+            label={label}
           />
         );
       case 'multiline':

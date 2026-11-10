@@ -3597,5 +3597,13 @@
     "fleetRecipientTestNotReady": "Sending on this channel is not connected yet. The service manager connects it in the sending channels screen.",
     "fleetRecipientTestSent": "A test message was sent to {0}",
     "sharedNavigateWaze": "Navigate with Waze",
-    "cardNavigateToVehicle": "Navigate to the vehicle (Waze)"
+    "cardNavigateToVehicle": "Navigate to the vehicle (Waze)",
+    "fleetLicenseIssued": "License issued on",
+    "fleetNoNewDrivers": "Not for new drivers",
+    "newDriver": "New driver",
+    "newDriverEscort": "New driver · escort",
+    "newDriverUntil": "New driver until {0}",
+    "newDriverEscortDay": "Escort required day and night",
+    "newDriverEscortNight": "Escort required at night",
+    "newDriverVehicleWarning": "{0} is marked as not for new drivers, and the driver assigned to it is still a new driver."
 }

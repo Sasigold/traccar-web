@@ -27,7 +27,7 @@ export const OWNERSHIP_TYPES = ['owned', 'leased', 'rented'];
 
 export const DRIVER_STATUSES = ['active', 'suspended', 'ended'];
 
-// type: text | date | select | multiselect | number | multiline.
+// type: text | date | select | multiselect | number | multiline | boolean.
 // kind: an Israeli identifier checked and normalized on blur (common/util/israeliFields.js).
 // ltr: values that stay left-to-right in a Hebrew UI (numbers, codes, plates).
 export const vehicleFields = [
@@ -52,6 +52,8 @@ export const vehicleFields = [
   },
   // ISR-05: the list price ("מחיר מחירון"), for the taxable benefit of a company car.
   { key: 'listPrice', labelKey: 'fleetListPrice', type: 'number', ltr: true },
+  // ISR-12: a vehicle new drivers should not get (a truck, a passenger van).
+  { key: 'noNewDrivers', labelKey: 'fleetNoNewDrivers', type: 'boolean' },
 ];
 
 export const vehicleExpiryFields = [
@@ -87,6 +89,8 @@ export const driverLicenseFields = [
     type: 'multiselect',
     options: LICENSE_CLASSES,
   },
+  // ISR-12: when the license was first issued; a driver is "new" for the first two years.
+  { key: 'licenseIssued', labelKey: 'fleetLicenseIssued', type: 'date', newDriver: true },
 ];
 
 export const driverExpiryFields = [

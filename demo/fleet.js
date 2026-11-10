@@ -108,6 +108,8 @@ export const createDrivers = (now = Date.now()) => [
     uniqueId: '2C3D4E5F',
     attributes: {
       licenseClasses: ['B'],
+      // ISR-12: a new driver, still with the night escort.
+      licenseIssued: dateFrom(now, -120),
       licenseExpiry: dateFrom(now, 700),
       driverStatus: 'active',
     },
