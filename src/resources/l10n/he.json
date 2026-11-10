@@ -3555,5 +3555,9 @@
     "reportWorkHoursDescription": "יום העבודה של כל נהג מההתנעה הראשונה עד האחרונה, עם זמן הנהיגה. ייצוא לשכר (חילן, מלם).",
     "workDaysCount": "ימי עבודה",
     "workHoursTotal": "שעות (מהתנעה ראשונה עד אחרונה)",
-    "workHoursAverage": "ממוצע ליום"
+    "workHoursAverage": "ממוצע ליום",
+    "usageUnderused": "{0} רכבים היו בשימוש בפחות מ-20% מהימים ({1}). אפשר לשקול להחזיר רכב ליסינג או להעביר אותו למאגר.",
+    "usageUnderusedSaving": "החזרת רכב אחד חוסכת כ-{0} בחודש.",
+    "usageVehicleCost": "עלות חודשית לרכב (₪)",
+    "usageVehicleCostHelp": "ליסינג או החזר הון, להערכת החיסכון"
 }

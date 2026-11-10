@@ -54,6 +54,13 @@ export default makeStyles()((theme) => ({
       borderInlineStart: `3px solid ${theme.palette.primary.main}`,
     },
   },
+  // OPS-04: the note above a fleet report's table.
+  recommendation: {
+    margin: theme.spacing(0, 3, 2),
+    [theme.breakpoints.down('md')]: {
+      margin: theme.spacing(0, 2, 2),
+    },
+  },
   // REP-09: the change from the previous period, under the value (text only).
   delta: {
     display: 'block',

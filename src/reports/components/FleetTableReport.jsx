@@ -34,6 +34,8 @@ const FleetTableReport = ({
   rowKey = (item) => item.deviceId,
   rowLink = (item) => `/fleet/vehicle/${item.deviceId}`,
   nameLabelKey = 'sharedDevice',
+  // A note above the table drawn from the results (OPS-04: the fleet-size recommendation).
+  summary,
 }) => {
   const { classes } = useReportStyles();
   const t = useTranslation();
@@ -104,6 +106,7 @@ const FleetTableReport = ({
               {filterChildren}
             </ReportFilter>
           </div>
+          {!loading && summary?.(items)}
           <DataTable variant="flush">
             <TableHead>
               <TableRow>

@@ -3555,5 +3555,9 @@
     "reportWorkHoursDescription": "Each driver's working day from the first to the last ignition, with driving time. Export for payroll.",
     "workDaysCount": "Work days",
     "workHoursTotal": "Hours (first to last ignition)",
-    "workHoursAverage": "Average per day"
+    "workHoursAverage": "Average per day",
+    "usageUnderused": "{0} vehicles were used on fewer than 20% of the days ({1}). Consider returning one to the lease company or moving it to the pool.",
+    "usageUnderusedSaving": "Returning one vehicle saves about {0} a month.",
+    "usageVehicleCost": "Monthly cost per vehicle (₪)",
+    "usageVehicleCostHelp": "Lease or capital cost, to estimate the saving"
 }
