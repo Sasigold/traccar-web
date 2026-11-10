@@ -27,6 +27,10 @@ export const normalizeFilters = (filters) => {
       ? [...new Set(filters.groupIds.map(Number).filter((id) => Number.isInteger(id) && id > 0))]
       : [],
   };
+  // REP-05: one fleet driver (their id) narrows the vehicles to theirs.
+  if (typeof filters?.driverId === 'string' && /^[\w-]{1,64}$/.test(filters.driverId)) {
+    result.driverId = filters.driverId;
+  }
   // REP-17: a preset moved back on the calendar (0 = the current one, never ahead).
   const offset = Math.trunc(Number(filters?.offset));
   if (period !== 'custom' && Number.isFinite(offset) && offset < 0 && offset >= -120) {

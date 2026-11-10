@@ -131,7 +131,7 @@ export const useSourceRows = (ds, source, range, enabled = true) => {
         maintenanceStatus: maintenanceStatus(maintenance, positions?.[deviceId]).status,
       }));
     }
-    if (dataset.fleet && deviceIds.length && context.filters.groupIds.length) {
+    if (dataset.fleet && context.scoped) {
       const inScope = new Set(deviceIds);
       data = data.filter((row) => row.deviceId == null || inScope.has(row.deviceId));
     }
@@ -148,7 +148,7 @@ export const useSourceRows = (ds, source, range, enabled = true) => {
     source.key,
     positions,
     deviceIds,
-    context.filters.groupIds.length,
+    context.scoped,
   ]);
 };
 

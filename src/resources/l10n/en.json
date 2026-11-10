@@ -2354,6 +2354,8 @@
     "dashboardPreviousPeriod": "Previous period",
     "dashboardNextPeriod": "Next period",
     "dashboardAllVehicles": "All vehicles",
+    "dashboardAllDrivers": "All drivers",
+    "dashboardDriverFilter": "Driver: the vehicles they had in the period",
     "dashboardAutoRefresh": "Auto refresh",
     "dashboardRefreshOff": "No auto refresh",
     "dashboardEveryMinutes": "Every {0} min",

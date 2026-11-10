@@ -2354,6 +2354,8 @@
     "dashboardPreviousPeriod": "התקופה הקודמת",
     "dashboardNextPeriod": "התקופה הבאה",
     "dashboardAllVehicles": "כל הרכבים",
+    "dashboardAllDrivers": "כל הנהגים",
+    "dashboardDriverFilter": "נהג: הרכבים שהיו אצלו בתקופה",
     "dashboardAutoRefresh": "רענון אוטומטי",
     "dashboardRefreshOff": "ללא רענון אוטומטי",
     "dashboardEveryMinutes": "כל {0} דק'",

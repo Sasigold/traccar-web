@@ -79,6 +79,9 @@ export const encodeDashboard = (dashboard) => {
       Object.entries(dashboard.widgets).map(([id, widget]) => [id, encodeWidget(widget)]),
     ),
   };
+  if (filters.driverId) {
+    out.v = filters.driverId;
+  }
   if (dashboard.name) {
     out.n = dashboard.name;
   } else if (dashboard.nameKey) {
@@ -113,7 +116,7 @@ const decodeDashboard = (value) => {
     id: value.i,
     name: value.n,
     nameKey: value.k,
-    filters: { period, from, to, offset, groupIds: value.g },
+    filters: { period, from, to, offset, groupIds: value.g, driverId: value.v },
     refresh: value.r,
     rows,
     widgets: Object.fromEntries(

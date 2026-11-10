@@ -38,3 +38,18 @@ export const scopeKey = (ids) => {
   });
   return `${ids.length}:${(hash >>> 0).toString(36)}`;
 };
+
+// REP-05: the vehicles a driver had during the period, by their assignment history
+// ({ traccarDeviceId, start, end } with end null while open). Pure.
+export const driverDeviceIds = (assignments, range) => {
+  const from = range.from.valueOf();
+  const to = range.to.valueOf();
+  const ids = new Set();
+  (assignments || []).forEach((row) => {
+    if (!row.traccarDeviceId) return;
+    const start = Date.parse(row.start);
+    const end = row.end ? Date.parse(row.end) : Infinity;
+    if (start < to && end > from) ids.add(row.traccarDeviceId);
+  });
+  return ids;
+};
