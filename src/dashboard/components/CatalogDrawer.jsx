@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   ButtonBase,
   Chip,
@@ -131,6 +131,7 @@ const CatalogDrawer = ({ open, onClose, onAdd, availability, singletonsUsed }) =
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState(null);
   const [added, setAdded] = useState(null);
+  const closeRef = useRef(null);
 
   const items = useMemo(() => {
     const search = query.trim().toLowerCase();
@@ -157,7 +158,7 @@ const CatalogDrawer = ({ open, onClose, onAdd, availability, singletonsUsed }) =
         <Typography id="catalog-title" component="h2" className={classes.title}>
           {t('dashboardAddWidget')}
         </Typography>
-        <IconButton aria-label={t('sharedHide')} onClick={onClose}>
+        <IconButton ref={closeRef} aria-label={t('sharedHide')} onClick={onClose}>
           <CloseRoundedIcon />
         </IconButton>
       </div>
@@ -224,13 +225,14 @@ const CatalogDrawer = ({ open, onClose, onAdd, availability, singletonsUsed }) =
                     key={preset.id}
                     className={classes.item}
                     disabled={Boolean(reason)}
-                    // A widget that can be added once turns disabled when it is added; the focus
-                    // stays on it, inside the catalog, so Escape still closes the catalog.
-                    focusableWhenDisabled
                     focusRipple
                     onClick={() => {
                       onAdd(preset.id);
                       setAdded(preset.id);
+                      // A widget that can be added once turns disabled now: the focus goes to the
+                      // catalog's close button instead of falling out of the catalog (where
+                      // Escape would no longer close it).
+                      if (preset.singleton) closeRef.current?.focus();
                     }}
                   >
                     <span className={classes.icon}>
