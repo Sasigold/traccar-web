@@ -8,6 +8,7 @@ import {
   Tooltip,
   Chip,
   Avatar,
+  Checkbox,
   ListItemAvatar,
   ListItemText,
   ListItemButton,
@@ -251,8 +252,11 @@ const DeviceRow = ({ devices, tokens = [], favorites = [], index, style, focusIn
   const admin = useAdministrator();
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
   const selectTime = useSelector((state) => state.devices.selectTime);
+  // LIV-25: while picking, a tap picks the vehicle instead of opening it.
+  const picking = useSelector((state) => state.devices.picked != null);
 
   const item = devices[index];
+  const picked = useSelector((state) => Boolean(state.devices.picked?.includes(item.id)));
   const position = useLivePosition(item.id);
   const groups = useSelector((state) => state.groups.items);
   const drivers = useSelector((state) => state.drivers.items);
@@ -385,17 +389,30 @@ const DeviceRow = ({ devices, tokens = [], favorites = [], index, style, focusIn
       <ListItemButton
         ref={rowRef}
         key={item.id}
-        onClick={() => dispatch(devicesActions.selectId(item.id))}
+        onClick={() =>
+          dispatch(
+            picking ? devicesActions.togglePicked(item.id) : devicesActions.selectId(item.id),
+          )
+        }
         disabled={!admin && item.disabled}
         // LIV-30: one tab stop for the whole list; the arrows move between rows (DeviceList).
         tabIndex={focusIndex == null || focusIndex === index ? 0 : -1}
         data-row={index}
-        selected={selectedDeviceId === item.id}
-        aria-pressed={selectedDeviceId === item.id}
+        selected={picking ? picked : selectedDeviceId === item.id}
+        aria-pressed={picking ? picked : selectedDeviceId === item.id}
         className={cx(classes.row, selectedDeviceId === item.id && classes.selected)}
       >
         {selectedDeviceId === item.id && (
           <span key={selectTime} className={classes.flash} aria-hidden />
+        )}
+        {picking && (
+          <Checkbox
+            checked={picked}
+            tabIndex={-1}
+            size="small"
+            sx={{ marginInlineEnd: 0.5 }}
+            slotProps={{ input: { 'aria-hidden': true } }}
+          />
         )}
         <ListItemAvatar className={classes.avatarWrapper}>
           <span className={classes.avatarBox}>
