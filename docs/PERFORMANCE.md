@@ -58,3 +58,20 @@ npx playwright test e2e/performance.spec.js --trace off   # reuses the running s
 
 For a CPU profile in the browser: open `http://localhost:3000` after setting the cookie
 `demoFleet=large` (DevTools → Application → Cookies), then record in the Performance panel.
+
+## First load budget (PRF-06)
+
+`npm run build && npm run size` adds up (gzip) what the first screen downloads: the entry script,
+the scripts it preloads and the stylesheets. CI fails above 500 KB. In November 2026 it went from
+613 KB to 482 KB by loading the vehicle card (react-rnd, the telemetry gauges), the search window
+and the alerts list when first opened, and English only when chosen (Hebrew has every key). The
+biggest parts left are our own entry chunk, MUI, the Hebrew strings, React and the fleet database
+client (supabase-js), which could load after the login.
+
+## Rendering (PRF-04)
+
+React Compiler (`@vitejs/plugin-react` with `babel-plugin-react-compiler`) runs on the components
+that start with `'use memo'`: the vehicle list (`DeviceList`, `DeviceRow`, also `React.memo`) and
+the main toolbar. It is not on for the whole app: the compiler reads the property paths a closure
+uses (for example `menu.latitude`) while rendering, to compare them, so code that is fine without
+it fails when the object is null. Opt a component in only after checking it for that.

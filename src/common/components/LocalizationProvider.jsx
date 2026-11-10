@@ -7,16 +7,17 @@ import Loader from './Loader';
 import { setFormatLanguage } from '../util/formatter';
 import { setTranslator } from '../util/translator';
 
-import en from '../../resources/l10n/en.json';
+// PRF-06: only Hebrew is in the first load. It has every key (src/resources/__tests__), so it needs
+// no fallback; English loads when chosen, and as the fallback of the other languages.
 import he from '../../resources/l10n/he.json';
-import 'dayjs/locale/en';
 import 'dayjs/locale/he';
 
 // viper fleet ships only the languages its customers use. Hebrew and English are bundled so the
 // first screen never waits on a locale download; the rest load on demand.
-const localeLoaders = import.meta.glob(['../../resources/l10n/{ar,ru}.json']);
+const localeLoaders = import.meta.glob(['../../resources/l10n/{en,ar,ru}.json']);
 
 const dayjsLoaders = {
+  en: () => import('dayjs/locale/en.js'),
   ar: () => import('dayjs/locale/ar.js'),
   ru: () => import('dayjs/locale/ru.js'),
 };
@@ -28,19 +29,24 @@ const languages = {
   ru: { country: 'RU', name: 'Русский' },
 };
 
-const cache = new Map([
-  ['en', Promise.resolve({ data: en, dayjsName: 'en' })],
-  ['he', Promise.resolve({ data: he, dayjsName: 'he' })],
-]);
+// `fallback`: where a key missing in `data` is looked up (English, for languages other than
+// Hebrew and English).
+const cache = new Map([['he', Promise.resolve({ data: he, fallback: he, dayjsName: 'he' })]]);
+
+const loadData = (language) =>
+  localeLoaders[`../../resources/l10n/${language}.json`]().then((module) => module.default);
 
 const loadLocale = (language) => {
   if (!cache.has(language)) {
-    const dataLoader = localeLoaders[`../../resources/l10n/${language}.json`];
-    const dayjsLoader = dayjsLoaders[language];
     cache.set(
       language,
-      Promise.all([dataLoader(), dayjsLoader()]).then(([dataMod, dayjsMod]) => ({
-        data: dataMod.default,
+      Promise.all([
+        loadData(language),
+        language === 'en' ? null : loadData('en'),
+        dayjsLoaders[language](),
+      ]).then(([data, fallback, dayjsMod]) => ({
+        data,
+        fallback: fallback ?? data,
         dayjsName: dayjsMod.default.name,
       })),
     );
@@ -60,22 +66,22 @@ const LocalizationContext = createContext({
 });
 
 const ResolvedLocalizationProvider = ({ language, setLocalLanguage, children }) => {
-  const { data, dayjsName } = use(loadLocale(language));
+  const { data, fallback, dayjsName } = use(loadLocale(language));
 
   const direction = /^(ar|he|fa)$/.test(language) ? 'rtl' : 'ltr';
   // Before the children render, so their first paint already uses the app language.
   setFormatLanguage(language);
   // For code outside React (errors, exported files).
-  setTranslator((key) => data[key] ?? en[key]);
+  setTranslator((key) => data[key] ?? fallback[key]);
 
   const value = useMemo(
     () => ({
-      languages: { ...languages, [language]: { ...languages[language], data } },
+      languages: { ...languages, [language]: { ...languages[language], data, fallback } },
       language,
       setLocalLanguage,
       direction,
     }),
-    [language, data, setLocalLanguage, direction],
+    [language, data, fallback, setLocalLanguage, direction],
   );
 
   useEffect(() => {
@@ -113,8 +119,8 @@ export const useLocalization = () => use(LocalizationContext);
 
 export const useTranslation = () => {
   const context = use(LocalizationContext);
-  const { data } = context.languages[context.language];
-  return useMemo(() => (key) => data[key] ?? en[key], [data]);
+  const { data, fallback } = context.languages[context.language];
+  return useMemo(() => (key) => data[key] ?? fallback?.[key], [data, fallback]);
 };
 
 export const useTranslationKeys = (predicate) => {

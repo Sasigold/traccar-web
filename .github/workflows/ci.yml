@@ -55,6 +55,8 @@ jobs:
       env:
         VITE_FLEET_URL: https://fleet.ci.invalid
         VITE_FLEET_ANON_KEY: ci
+    # PRF-06: the first load stays within its budget (tools/size-budget.mjs).
+    - run: npm run size
     - run: npm run build -- --mode staging
       env:
         VITE_FLEET_URL: https://fleet.ci.invalid

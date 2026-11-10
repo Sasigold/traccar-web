@@ -15,7 +15,6 @@ import ActiveFilters from './components/ActiveFilters';
 import DeviceListShimmer from './components/DeviceListShimmer';
 import FilterAltOffRoundedIcon from '@mui/icons-material/FilterAltOffRounded';
 import { rememberDevice } from '../common/util/recentDevices';
-import StatusCard from '../common/components/StatusCard';
 import EmptyState from '../common/components/table/EmptyState';
 import { devicesActions } from '../store';
 import usePersistedState from '../common/util/usePersistedState';
@@ -30,6 +29,10 @@ import FleetStats from './components/FleetStats';
 import ExpiryTiles from '../fleet/components/ExpiryTiles';
 import { decodeView } from './savedViews';
 import { fitView } from './components/SavedViews';
+
+// PRF-06: the vehicle card (with react-rnd and the telemetry gauges) loads when a vehicle is
+// first selected, not with the map.
+const StatusCard = lazy(() => import('../common/components/StatusCard'));
 
 const MainMap = lazy(() => import('./MainMap'));
 
@@ -400,13 +403,15 @@ const MainPage = () => {
         )}
       </div>
       {selectedDeviceId && !cardHidden && !features.disableStatusCard && (
-        <StatusCard
-          deviceId={selectedDeviceId}
-          position={selectedPosition}
-          privacy={hiddenPositions[selectedDeviceId]}
-          onClose={() => dispatch(devicesActions.hideCard())}
-          desktopPadding={panelOffset}
-        />
+        <Suspense fallback={null}>
+          <StatusCard
+            deviceId={selectedDeviceId}
+            position={selectedPosition}
+            privacy={hiddenPositions[selectedDeviceId]}
+            onClose={() => dispatch(devicesActions.hideCard())}
+            desktopPadding={panelOffset}
+          />
+        </Suspense>
       )}
     </div>
   );
