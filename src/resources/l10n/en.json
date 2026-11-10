@@ -3122,6 +3122,8 @@
     "reportUsage": "Fleet usage",
     "reportUsageDescription": "How much each vehicle was used, how long it idled and what that cost, driving after hours and on rest days, and private kilometers.",
     "usageActiveDays": "Active days",
+    "usageEngineHoursPerDay": "Engine hours a day",
+    "usageGroupShare": "Against the group",
     "usageUtilization": "Utilization",
     "usageIdleCost": "Idling cost",
     "usageAfterHours": "After hours",

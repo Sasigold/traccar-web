@@ -3122,6 +3122,8 @@
     "reportUsage": "שימוש בצי",
     "reportUsageDescription": "כמה כל רכב היה בשימוש, כמה עמד בסרק ומה זה עלה, נסיעה מחוץ לשעות ובימי מנוחה, וק״מ פרטי.",
     "usageActiveDays": "ימי פעילות",
+    "usageEngineHoursPerDay": "שעות מנוע ליום",
+    "usageGroupShare": "מול הקבוצה",
     "usageUtilization": "ניצולת",
     "usageIdleCost": "עלות הסרק",
     "usageAfterHours": "מחוץ לשעות",

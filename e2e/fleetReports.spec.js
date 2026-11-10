@@ -136,3 +136,17 @@ test('a stop at a point of interest shows its name', async ({ page }) => {
   await page.getByRole('button', { name: 'הצג', exact: true }).click();
   await expect(page.getByRole('main').getByText('מחסן צפון')).toBeVisible();
 });
+
+// OPS-04: engine hours a day, and each vehicle against the middle vehicle of its group.
+test('the usage report gives engine hours a day and compares within the group', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'the columns are checked on the table');
+  await gotoReady(page, `/reports/usage?${ids}&period=today`);
+  await page.getByRole('button', { name: 'הצג', exact: true }).click();
+  const main = page.getByRole('main');
+  await expect(main.getByRole('columnheader', { name: 'שעות מנוע ליום' })).toBeVisible();
+  await expect(main.getByRole('columnheader', { name: 'מול הקבוצה' })).toBeVisible();
+  await expect(main.getByRole('cell', { name: /^\d+%$/ }).first()).toBeVisible();
+});
