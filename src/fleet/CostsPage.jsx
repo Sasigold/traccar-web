@@ -2,6 +2,7 @@ import { useMemo, useReducer, useState } from 'react';
 import {
   Button,
   Chip,
+  IconButton,
   MenuItem,
   TableBody,
   TableCell,
@@ -19,11 +20,14 @@ import DataTable from '../common/components/table/DataTable';
 import TableToolbar from '../common/components/table/TableToolbar';
 import TableShimmer from '../common/components/TableShimmer';
 import SettingsMenu from '../settings/components/SettingsMenu';
-import { useAsyncTask } from '../reactHelper';
+import { useAsyncTask, useCatch } from '../reactHelper';
 import { formatTime } from '../common/util/formatter';
 import exportExcel from '../common/util/exportExcel';
 import { getFleetClient, unwrap } from '../common/fleet/client';
-import { useFleetPermission } from '../common/fleet/useFleet';
+import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
+import { useConfirm } from '../common/components/confirm/ConfirmProvider';
+import FuelEntryDialog from './components/FuelEntryDialog';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import { periodStart, pivotCosts } from '../common/fleet/costs';
 import FleetNotice from './components/FleetNotice';
 import FuelImportDialog, { fuelFlagKey } from './components/FuelImportDialog';
@@ -63,6 +67,8 @@ const CostsPage = () => {
   const canRead = useFleetPermission('costs.read');
   const canWrite = useFleetPermission('costs.write');
   const vehicleIndex = useVehicleIndex(canRead);
+  const profile = useFleetProfile();
+  const confirm = useConfirm();
 
   const [view, setView] = useState('summary');
   const [months, setMonths] = useState(3);
@@ -118,10 +124,35 @@ const CostsPage = () => {
   const visibleRows = useMemo(
     () =>
       view === 'fuel' && anomaliesOnly
-        ? (rows || []).filter((row) => row.anomaly_flags?.length)
+        ? (rows || []).filter((row) => row.anomaly_flags?.length && !row.reviewed_at)
         : rows || [],
     [view, rows, anomaliesOnly],
   );
+
+  // ADM-18: an anomaly someone checked stops asking for attention (who and when are kept).
+  const markReviewed = useCatch(async (row) => {
+    unwrap(
+      await getFleetClient()
+        .from('fuel_transactions')
+        .update({ reviewed_by: profile.id, reviewed_at: new Date().toISOString() })
+        .eq('id', row.id),
+    );
+    reload();
+  });
+
+  const removeFuel = useCatch(async (row) => {
+    if (
+      !(await confirm({
+        title: t('fleetFuelDeleteConfirm'),
+        message: `${formatTime(row.occurred_at, 'minutes')} · ${money(row.total)}`,
+        confirmLabel: t('sharedRemove'),
+      }))
+    ) {
+      return;
+    }
+    unwrap(await getFleetClient().from('fuel_transactions').delete().eq('id', row.id));
+    reload();
+  });
 
   const handleExport = async () => {
     let data;
@@ -197,6 +228,11 @@ const CostsPage = () => {
           </MenuItem>
         ))}
       </TextField>
+      {canWrite && view === 'fuel' && (
+        <Button variant="outlined" size="small" onClick={() => setDialog('manualFuel')}>
+          {t('fleetFuelManual')}
+        </Button>
+      )}
       {canWrite && view === 'fuel' && (
         <Button
           variant="contained"
@@ -287,10 +323,11 @@ const CostsPage = () => {
                 <TableCell>{t('fleetFuelFieldLiters')}</TableCell>
                 <TableCell>{t('fleetFuelFieldTotal')}</TableCell>
                 <TableCell>{t('fleetFuelAnomalies')}</TableCell>
+                {canWrite && <TableCell aria-label={t('shellActions')} />}
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows == null && canRead && <TableShimmer columns={6} />}
+              {rows == null && canRead && <TableShimmer columns={canWrite ? 7 : 6} />}
               {visibleRows.map((row) => (
                 <TableRow key={row.id} hover>
                   <TableCell className={classes.number}>
@@ -313,8 +350,35 @@ const CostsPage = () => {
                           label={t(fuelFlagKey(flag))}
                         />
                       ))}
+                      {row.anomaly_flags?.length > 0 &&
+                        (row.reviewed_at ? (
+                          <Chip
+                            size="small"
+                            color="success"
+                            variant="outlined"
+                            label={t('fleetFuelReviewed')}
+                            title={formatTime(row.reviewed_at, 'minutes')}
+                          />
+                        ) : (
+                          canWrite && (
+                            <Button size="small" onClick={() => markReviewed(row)}>
+                              {t('fleetFuelMarkReviewed')}
+                            </Button>
+                          )
+                        ))}
                     </span>
                   </TableCell>
+                  {canWrite && (
+                    <TableCell>
+                      <IconButton
+                        size="small"
+                        aria-label={t('sharedRemove')}
+                        onClick={() => removeFuel(row)}
+                      >
+                        <DeleteOutlineRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
@@ -360,6 +424,15 @@ const CostsPage = () => {
       </DataTable>
       {dialog === 'fuel' && (
         <FuelImportDialog onClose={() => setDialog(null)} onImported={reload} />
+      )}
+      {dialog === 'manualFuel' && (
+        <FuelEntryDialog
+          onClose={() => setDialog(null)}
+          onSaved={() => {
+            setDialog(null);
+            reload();
+          }}
+        />
       )}
       {dialog === 'expense' && (
         <ExpenseDialog

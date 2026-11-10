@@ -51,6 +51,7 @@ const VehicleDriverSection = ({ device }) => {
           .replace('{0}', device.name)
           .replace('{1}', holder.driver?.full_name || ''),
         confirmLabel: t('fleetAssignTransferConfirm'),
+        danger: false,
       }))
     ) {
       return;

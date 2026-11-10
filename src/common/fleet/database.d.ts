@@ -1341,6 +1341,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      fuel_import_profiles: {
+        Row: {
+          id: string;
+          org_id: string;
+          provider: string;
+          mapping: Json;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          provider: string;
+          mapping?: Json;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          provider?: string;
+          mapping?: Json;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       fuel_transactions: {
         Row: {
           id: string;
@@ -1365,6 +1389,8 @@ export type Database = {
           import_batch: string | null;
           created_by: string | null;
           created_at: string;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
         };
         Insert: {
           id?: string;
@@ -1389,6 +1415,8 @@ export type Database = {
           import_batch?: string | null;
           created_by?: string | null;
           created_at?: string;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
         };
         Update: {
           id?: string;
@@ -1413,6 +1441,8 @@ export type Database = {
           import_batch?: string | null;
           created_by?: string | null;
           created_at?: string;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
         };
         Relationships: [];
       };

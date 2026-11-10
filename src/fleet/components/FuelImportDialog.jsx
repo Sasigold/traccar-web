@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import {
   Alert,
@@ -60,6 +60,11 @@ const useStyles = makeStyles()((theme) => ({
 
 export const fuelFlagKey = (flag) => `fleetFuelFlag${pascalCase(flag)}`;
 
+// ADM-18: the fuel companies, from a list (the company decides which transactions are the same
+// one, so "דלק" and "Delek" must not be two companies). The mapping of each company's file is
+// kept for the organization.
+export const FUEL_PROVIDERS = ['delek', 'paz', 'sonol', 'ten', 'dor_alon', 'other'];
+
 // Fuel company file -> fuel_transactions, with column mapping, preview and anomaly flags.
 // Transactions already imported (same provider and transaction number) are skipped.
 const FuelImportDialog = ({ onClose, onImported }) => {
@@ -70,6 +75,7 @@ const FuelImportDialog = ({ onClose, onImported }) => {
 
   const [file, setFile] = useState(null);
   const [provider, setProvider] = useState('');
+  const [savedMappings, setSavedMappings] = useState({});
   const [rows, setRows] = useState(null);
   const [mapping, setMapping] = useState({});
   const [importing, setImporting] = useState(false);
@@ -88,6 +94,30 @@ const FuelImportDialog = ({ onClose, onImported }) => {
     [devices],
   );
 
+  useEffect(() => {
+    getFleetClient()
+      .from('fuel_import_profiles')
+      .select('provider, mapping')
+      .then(({ data }) =>
+        setSavedMappings(
+          Object.fromEntries((data || []).map((row) => [row.provider, row.mapping])),
+        ),
+      );
+  }, []);
+
+  // A saved mapping by column name applies when this file has those columns.
+  const mappingFor = (headerRow, company) => {
+    const saved = savedMappings[company];
+    const guessed = guessColumns(headerRow);
+    if (!saved) return guessed;
+    const byName = Object.fromEntries(
+      Object.entries(saved)
+        .map(([field, name]) => [field, headerRow.findIndex((header) => String(header) === name)])
+        .filter(([, index]) => index >= 0),
+    );
+    return { ...guessed, ...byName };
+  };
+
   const load = useCatch(async (selected) => {
     setFile(selected);
     setResult(null);
@@ -97,8 +127,13 @@ const FuelImportDialog = ({ onClose, onImported }) => {
     }
     const all = await readSheet(selected);
     setRows(all);
-    setMapping(guessColumns(all[0] || []));
+    setMapping(mappingFor(all[0] || [], provider));
   });
+
+  const chooseProvider = (company) => {
+    setProvider(company);
+    if (rows) setMapping(mappingFor(rows[0] || [], company));
+  };
 
   const headers = rows?.[0] || [];
   const transactions = useMemo(
@@ -112,7 +147,7 @@ const FuelImportDialog = ({ onClose, onImported }) => {
     setImporting(true);
     try {
       const client = getFleetClient();
-      const source = provider.trim() || null;
+      const source = provider || null;
       // Skip transactions this provider already sent.
       const ids = valid.map((tx) => tx.external_id).filter(Boolean);
       let known = new Set();
@@ -150,7 +185,20 @@ const FuelImportDialog = ({ onClose, onImported }) => {
       for (let i = 0; i < payload.length; i += 500) {
         unwrap(await client.from('fuel_transactions').insert(payload.slice(i, i + 500)));
       }
+      if (source) {
+        // The next file of this company maps itself (by column name).
+        const named = Object.fromEntries(
+          Object.entries(mapping).map(([field, index]) => [field, String(headers[index] ?? '')]),
+        );
+        await client
+          .from('fuel_import_profiles')
+          .upsert(
+            { org_id: profile.org_id, provider: source, mapping: named },
+            { onConflict: 'org_id,provider' },
+          );
+      }
       setResult({
+        batch,
         imported: payload.length,
         duplicates: valid.length - fresh.length,
         invalid: transactions.length - valid.length,
@@ -159,6 +207,15 @@ const FuelImportDialog = ({ onClose, onImported }) => {
     } finally {
       setImporting(false);
     }
+  });
+
+  // The whole file comes out again, by its batch.
+  const undo = useCatch(async () => {
+    unwrap(
+      await getFleetClient().from('fuel_transactions').delete().eq('import_batch', result.batch),
+    );
+    setResult({ ...result, undone: true });
+    onImported();
   });
 
   return (
@@ -171,10 +228,18 @@ const FuelImportDialog = ({ onClose, onImported }) => {
           </Typography>
           <div className={classes.mapping}>
             <TextField
+              select
               label={t('fleetFuelProvider')}
               value={provider}
-              onChange={(event) => setProvider(event.target.value)}
-            />
+              onChange={(event) => chooseProvider(event.target.value)}
+              helperText={savedMappings[provider] ? t('fleetFuelMappingSaved') : undefined}
+            >
+              {FUEL_PROVIDERS.map((company) => (
+                <MenuItem key={company} value={company}>
+                  {t(`fleetFuelProvider${pascalCase(company)}`)}
+                </MenuItem>
+              ))}
+            </TextField>
             <FileInput
               placeholder={t('fleetFuelFile')}
               value={file}
@@ -243,9 +308,14 @@ const FuelImportDialog = ({ onClose, onImported }) => {
                         <TableCell>{money(tx.total)}</TableCell>
                         <TableCell>
                           <span className={classes.flags}>
-                            {tx.errors.length > 0 && (
-                              <Chip size="small" color="error" label={t('fleetFuelRowInvalid')} />
-                            )}
+                            {tx.errors.map((error) => (
+                              <Chip
+                                key={error}
+                                size="small"
+                                color="error"
+                                label={t(`fleetFuelRowInvalid${pascalCase(error)}`)}
+                              />
+                            ))}
                             {tx.flags.map((flag) => (
                               <Chip
                                 key={flag}
@@ -264,14 +334,24 @@ const FuelImportDialog = ({ onClose, onImported }) => {
               </div>
             </>
           )}
-          {result && (
-            <Alert severity="success">
+          {result && !result.undone && (
+            <Alert
+              severity="success"
+              action={
+                result.imported > 0 && (
+                  <Button color="inherit" size="small" onClick={undo}>
+                    {t('fleetFuelUndoImport')}
+                  </Button>
+                )
+              }
+            >
               {t('fleetFuelImported')
                 .replace('{0}', String(result.imported))
                 .replace('{1}', String(result.duplicates))
                 .replace('{2}', String(result.invalid))}
             </Alert>
           )}
+          {result?.undone && <Alert severity="info">{t('fleetFuelImportUndone')}</Alert>}
         </div>
       </DialogContent>
       <DialogActions>
