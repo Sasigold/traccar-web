@@ -51,6 +51,7 @@ import {
   whatsappLink,
 } from '../common/fleet/dispatch';
 import FleetNotice from './components/FleetNotice';
+import RoutePlanDialog from './components/RoutePlanDialog';
 import {
   camel,
   cleanPayload,
@@ -449,6 +450,7 @@ const DispatchPage = () => {
   const [tracking, setTracking] = useState(null);
   // ADM-20: a row's menu (duplicate, cancel).
   const [rowMenu, setRowMenu] = useState(null);
+  const [planning, setPlanning] = useState(false);
   const confirm = useConfirm();
   const cancelJob = useCatch(async (job) => {
     if (
@@ -572,9 +574,14 @@ const DispatchPage = () => {
             exportHandler={canRead ? handleExport : undefined}
             actions={
               canWrite && (
-                <Button variant="contained" size="small" onClick={() => setEditing(emptyJob())}>
-                  {t('fleetJobAdd')}
-                </Button>
+                <>
+                  <Button size="small" variant="outlined" onClick={() => setPlanning(true)}>
+                    {t('fleetRoutePlan')}
+                  </Button>
+                  <Button variant="contained" size="small" onClick={() => setEditing(emptyJob())}>
+                    {t('fleetJobAdd')}
+                  </Button>
+                </>
               )
             }
           />
@@ -671,6 +678,17 @@ const DispatchPage = () => {
           )}
         </TableBody>
       </DataTable>
+      {planning && (
+        <RoutePlanDialog
+          jobs={jobs || []}
+          positions={positions}
+          onClose={() => setPlanning(false)}
+          onApplied={() => {
+            setPlanning(false);
+            reload();
+          }}
+        />
+      )}
       <Menu anchorEl={rowMenu?.anchor} open={Boolean(rowMenu)} onClose={() => setRowMenu(null)}>
         <MenuItem
           onClick={() => {

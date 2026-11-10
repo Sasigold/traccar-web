@@ -199,6 +199,8 @@ const DriverJobsCard = ({ driverId }) => {
           .eq('driver_id', driverId)
           .in('status', ['planned', 'assigned', 'en_route', 'arrived'])
           .lte('scheduled_at', dayjs().endOf('day').toISOString())
+          // OPS-03: a planned route first, in its order; the rest by time.
+          .order('route_order', { ascending: true, nullsFirst: false })
           .order('scheduled_at'),
       ) || [],
     );

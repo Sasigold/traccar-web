@@ -56,3 +56,39 @@ test('late jobs stand out, and a row is duplicated or cancelled', async ({ page,
     .poll(() => fleet.tables.dispatch_jobs.find((row) => row.id === 'j1').status)
     .toBe('cancelled');
 });
+
+// OPS-03: a vehicle's stops in a good order, saved for the driver's list.
+test('a route is planned for a vehicle and its order saved', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the same dialog on a phone');
+  await writeMode(page);
+  const at = (east) => ({ latitude: 51.5, longitude: 0.1 + east * 0.02 });
+  const stop = (id, east) => ({
+    ...job(id, `עצירה ${id}`, 'assigned', 5),
+    vehicle_id: 'v1',
+    ...at(east),
+  });
+  const fleet = await fakeFleet(page, {
+    users: { 1: dispatcher },
+    rpc: { fleet_features: ['dispatch'] },
+    tables: {
+      dispatch_jobs: [stop('c', 3), stop('a', 1), stop('b', 2)],
+      pois: [],
+      vehicles: [{ id: 'v1', org_id: 'o1', plate_number: '12-345-67', traccar_device_id: 1 }],
+      drivers: [],
+    },
+  });
+  await gotoReady(page, '/fleet/dispatch');
+  await page.getByRole('button', { name: 'תכנון מסלול' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('listitem')).toHaveText([
+    /1\. עצירה a/,
+    /2\. עצירה b/,
+    /3\. עצירה c/,
+  ]);
+  await dialog.getByRole('button', { name: 'החלת הסדר' }).click();
+  await expect
+    .poll(() =>
+      Object.fromEntries(fleet.tables.dispatch_jobs.map((row) => [row.id, row.route_order])),
+    )
+    .toEqual({ a: 1, b: 2, c: 3 });
+});
