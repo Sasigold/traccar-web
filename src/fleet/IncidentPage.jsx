@@ -64,6 +64,7 @@ import { DateField, DateTimeField } from '../common/components/pickers';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import InsuranceFileDialog from './components/InsuranceFileDialog';
 import VehicleSelect from '../common/components/VehicleSelect';
+import { takePendingFiles } from '../common/util/pendingFiles';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -150,7 +151,8 @@ const IncidentPage = () => {
   const [photos, setPhotos] = useState([]);
   // SAF-04: the file for the insurer.
   const [insuranceFile, setInsuranceFile] = useState(false);
-  const [newPhotos, setNewPhotos] = useState([]);
+  // LIV-17: a frame from the live video arrives with a new report.
+  const [newPhotos, setNewPhotos] = useState(() => (id ? [] : takePendingFiles('incident')));
   const [saving, setSaving] = useState(false);
   const [locating, setLocating] = useState(false);
 
