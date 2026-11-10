@@ -54,6 +54,8 @@ import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import exportExcel from '../common/util/exportExcel';
 import { deviceEquality } from '../common/util/deviceEquality';
+import VehicleCell from './components/VehicleCell';
+import { vehicleName, vehicleTitle } from './common/vehicle';
 
 const columnsArray = [
   ['startTime', 'reportStartTime'],
@@ -212,7 +214,7 @@ const TripReportPage = () => {
     filteredItems.forEach((item) => {
       // One sheet per vehicle, keyed by id: two vehicles with the same name stay apart.
       if (!sheets.has(item.deviceId)) {
-        sheets.set(item.deviceId, { title: devices[item.deviceId].name, rows: [] });
+        sheets.set(item.deviceId, { title: vehicleTitle(devices, item.deviceId), rows: [] });
       }
       const row = {};
       columns.forEach((key) => {
@@ -304,7 +306,7 @@ const TripReportPage = () => {
     sort,
     toggle: toggleSort,
   } = useReportSort('trips', filteredItems, (item, key) =>
-    key === 'deviceId' ? devices[item.deviceId]?.name : item[key],
+    key === 'deviceId' ? vehicleName(devices, item.deviceId) : item[key],
   );
 
   const formatValue = (item, key) => {
@@ -314,7 +316,7 @@ const TripReportPage = () => {
     const value = item[key];
     switch (key) {
       case 'deviceId':
-        return devices[value].name;
+        return vehicleName(devices, value);
       case 'business':
         return t(value ? 'positionBusiness' : 'reportPrivate');
       case 'startTime':
@@ -462,7 +464,9 @@ const TripReportPage = () => {
                         </IconButton>
                       </div>
                     </TableCell>
-                    <TableCell>{devices[item.deviceId].name}</TableCell>
+                    <TableCell>
+                      <VehicleCell deviceId={item.deviceId} />
+                    </TableCell>
                     {columns.map((key) => (
                       <TableCell key={key}>{formatValue(item, key)}</TableCell>
                     ))}

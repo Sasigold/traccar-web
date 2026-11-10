@@ -20,6 +20,8 @@ import fetchOrThrow from '../common/util/fetchOrThrow';
 import SelectField from '../common/components/SelectField';
 import exportExcel from '../common/util/exportExcel';
 import { deviceEquality } from '../common/util/deviceEquality';
+import VehicleCell from './components/VehicleCell';
+import { vehicleTitle } from './common/vehicle';
 
 const columnsArray = [
   ['geofenceId', 'sharedGeofence'],
@@ -81,7 +83,7 @@ const GeofenceReportPage = () => {
     items.forEach((item) => {
       // One sheet per vehicle, keyed by id: two vehicles with the same name stay apart.
       if (!sheets.has(item.deviceId)) {
-        sheets.set(item.deviceId, { title: devices[item.deviceId].name, rows: [] });
+        sheets.set(item.deviceId, { title: vehicleTitle(devices, item.deviceId), rows: [] });
       }
       const row = {};
       columns.forEach((key) => {
@@ -148,7 +150,9 @@ const GeofenceReportPage = () => {
               <TableRow
                 key={`${item.deviceId}_${item.geofenceId}_${item.startTime}_${item.endTime}`}
               >
-                <TableCell>{devices[item.deviceId]?.name || item.deviceId}</TableCell>
+                <TableCell>
+                  <VehicleCell deviceId={item.deviceId} />
+                </TableCell>
                 {columns.map((key) => (
                   <TableCell key={key}>{formatValue(item, key)}</TableCell>
                 ))}

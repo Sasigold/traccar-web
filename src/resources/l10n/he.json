@@ -3454,5 +3454,6 @@
     "alertResponseCount": "טופלו",
     "alertResponseMenuDescription": "כמה מהר מטפלים בהתראות, ומי",
     "reportFilterChanged": "הסינון השתנה, והתוצאות שעל המסך הן של הסינון הקודם.",
-    "reportUpdate": "עדכון התוצאות"
+    "reportUpdate": "עדכון התוצאות",
+    "reportPlate": "לוחית רישוי"
 }

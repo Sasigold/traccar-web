@@ -30,6 +30,8 @@ import { privateCombined } from '../common/fleet/privacyData';
 import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import { deviceEquality } from '../common/util/deviceEquality';
+import VehicleCell from './components/VehicleCell';
+import { vehicleName } from './common/vehicle';
 
 const columnsArray = [
   ['eventTime', 'positionFixTime'],
@@ -135,7 +137,7 @@ const CombinedReportPage = () => {
                 {items.map((item) => (
                   <MapRouteCoordinates
                     key={item.deviceId}
-                    name={devices[item.deviceId].name}
+                    name={vehicleName(devices, item.deviceId)}
                     coordinates={item.route}
                     deviceId={item.deviceId}
                   />
@@ -197,7 +199,7 @@ const CombinedReportPage = () => {
                           ))) ||
                           ''}
                       </TableCell>
-                      <TableCell>{index ? '' : devices[item.deviceId].name}</TableCell>
+                      <TableCell>{index ? '' : <VehicleCell deviceId={item.deviceId} />}</TableCell>
                       {columns.map((key) => (
                         <TableCell key={key}>{formatValue(item, event, key)}</TableCell>
                       ))}

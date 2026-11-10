@@ -3454,5 +3454,6 @@
     "alertResponseCount": "Taken",
     "alertResponseMenuDescription": "How fast alerts are handled, and by whom",
     "reportFilterChanged": "The filter changed; the results on screen are for the previous filter.",
-    "reportUpdate": "Update results"
+    "reportUpdate": "Update results",
+    "reportPlate": "Plate number"
 }

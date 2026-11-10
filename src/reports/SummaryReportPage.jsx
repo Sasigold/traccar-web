@@ -47,6 +47,7 @@ import scheduleReport from './common/scheduleReport';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import exportExcel from '../common/util/exportExcel';
 import { deviceEquality } from '../common/util/deviceEquality';
+import { plateOf, vehicleName } from './common/vehicle';
 
 const columnsArray = [
   ['startTime', 'reportStartDate'],
@@ -119,7 +120,10 @@ const SummaryReportPage = () => {
     const rows = [];
     const deviceHeader = t('sharedDevice');
     items.forEach((item) => {
-      const row = { [deviceHeader]: devices[item.deviceId].name };
+      const row = {
+        [deviceHeader]: vehicleName(devices, item.deviceId),
+        [t('reportPlate')]: plateOf(devices[item.deviceId]),
+      };
       columns.forEach((key) => {
         const header = t(columnsMap.get(key));
         row[header] = formatValue(item, key);
@@ -185,14 +189,14 @@ const SummaryReportPage = () => {
     sort,
     toggle: toggleSort,
   } = useReportSort('summary', items, (item, sortKey) =>
-    sortKey === 'deviceId' ? devices[item.deviceId]?.name : item[sortKey],
+    sortKey === 'deviceId' ? vehicleName(devices, item.deviceId) : item[sortKey],
   );
 
   const formatValue = (item, key) => {
     const value = item[key];
     switch (key) {
       case 'deviceId':
-        return devices[value].name;
+        return vehicleName(devices, value);
       case 'startTime':
         return formatTime(value, 'date');
       case 'startOdometer':
@@ -272,9 +276,9 @@ const SummaryReportPage = () => {
                     component={RouterLink}
                     to={summaryTripsLink(item, daily)}
                     underline="hover"
-                    aria-label={`${t('reportShowTrips')}: ${devices[item.deviceId]?.name || ''}`}
+                    aria-label={`${t('reportShowTrips')}: ${vehicleName(devices, item.deviceId)}`}
                   >
-                    {devices[item.deviceId]?.name}
+                    {vehicleName(devices, item.deviceId)}
                   </Link>
                 </TableCell>
                 {columns.map((key) => (
