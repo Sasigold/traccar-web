@@ -85,6 +85,7 @@ const NetworkPage = lazy(() => import('./other/NetworkPage'));
 const EventReportPage = lazy(() => import('./reports/EventReportPage'));
 const GeofenceReportPage = lazy(() => import('./reports/GeofenceReportPage'));
 const ReplayPage = lazy(() => import('./other/ReplayPage'));
+const FollowWallPage = lazy(() => import('./other/FollowWallPage'));
 const TripReportPage = lazy(() => import('./reports/TripReportPage'));
 const StopReportPage = lazy(() => import('./reports/StopReportPage'));
 const SummaryReportPage = lazy(() => import('./reports/SummaryReportPage'));
@@ -243,6 +244,7 @@ const Navigation = () => {
           <Route path="event/:id" element={<EventPage />} />
           <Route element={<ReportVisits />}>
             <Route path="replay" element={<ReplayPage />} />
+            <Route path="follow" element={<FollowWallPage />} />
           </Route>
           <Route path="geofences" element={<GeofencesPage />} />
           <Route path="emulator" element={<EmulatorPage />} />

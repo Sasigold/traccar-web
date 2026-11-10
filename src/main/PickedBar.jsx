@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import {
   Button,
   Dialog,
@@ -47,6 +48,7 @@ const PickedBar = ({ shown }) => {
   const theme = useTheme();
   const t = useTranslation();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const deviceReadonly = useRestriction('deviceReadonly');
   const picked = useSelector((state) => state.devices.picked);
   const devices = useSelector((state) => state.devices.items);
@@ -118,6 +120,22 @@ const PickedBar = ({ shown }) => {
           {t('pickedToGroup')}
         </Button>
       )}
+      {/* LIV-28: follow up to four of them side by side. */}
+      <Button
+        size="small"
+        variant="outlined"
+        disabled={!chosen.length}
+        onClick={() =>
+          navigate(
+            `/follow?ids=${chosen
+              .slice(0, 4)
+              .map((device) => device.id)
+              .join(',')}`,
+          )
+        }
+      >
+        {t('followPicked')}
+      </Button>
       <Button size="small" onClick={() => dispatch(devicesActions.stopPicking())}>
         {t('pickedDone')}
       </Button>
