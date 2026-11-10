@@ -58,6 +58,7 @@ import VehicleCell from './components/VehicleCell';
 import { vehicleName, vehicleTitle } from './common/vehicle';
 import useSelectedRow from './common/useSelectedRow';
 import { litersPer100 } from './common/reportRules';
+import { alignOf, NUMERIC_COLUMNS } from './common/numericColumns';
 
 const columnsArray = [
   ['startTime', 'reportStartTime'],
@@ -455,7 +456,13 @@ const TripReportPage = () => {
                   {t('sharedDevice')}
                 </SortCell>
                 {columns.map((key) => (
-                  <SortCell key={key} sortKey={key} sort={sort} onSort={toggleSort}>
+                  <SortCell
+                    key={key}
+                    sortKey={key}
+                    sort={sort}
+                    onSort={toggleSort}
+                    align={alignOf(key)}
+                  >
                     {t(columnsMap.get(key))}
                   </SortCell>
                 ))}
@@ -505,7 +512,9 @@ const TripReportPage = () => {
                       <VehicleCell deviceId={item.deviceId} />
                     </TableCell>
                     {columns.map((key) => (
-                      <TableCell key={key}>{formatValue(item, key)}</TableCell>
+                      <TableCell key={key} align={alignOf(key)}>
+                        {formatValue(item, key)}
+                      </TableCell>
                     ))}
                   </TableRow>
                 ))
@@ -515,6 +524,7 @@ const TripReportPage = () => {
             </TableBody>
             {!loading && (
               <ReportTotalsRow
+                numeric={NUMERIC_COLUMNS}
                 leading={2}
                 columns={columns}
                 spec={TOTALS}

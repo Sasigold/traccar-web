@@ -51,6 +51,7 @@ import fetchOrThrow from '../common/util/fetchOrThrow';
 import exportExcel from '../common/util/exportExcel';
 import { deviceEquality } from '../common/util/deviceEquality';
 import { plateOf, vehicleName } from './common/vehicle';
+import { alignOf, NUMERIC_COLUMNS } from './common/numericColumns';
 
 const columnsArray = [
   ['startTime', 'reportStartDate'],
@@ -291,7 +292,13 @@ const SummaryReportPage = () => {
               {t('sharedDevice')}
             </SortCell>
             {columns.map((key) => (
-              <SortCell key={key} sortKey={key} sort={sort} onSort={toggleSort}>
+              <SortCell
+                key={key}
+                sortKey={key}
+                sort={sort}
+                onSort={toggleSort}
+                align={alignOf(key)}
+              >
                 {t(columnsMap.get(key))}
               </SortCell>
             ))}
@@ -319,7 +326,7 @@ const SummaryReportPage = () => {
                       ? delta(item[key], previous.get(item.deviceId)?.[key])
                       : null;
                   return (
-                    <TableCell key={key}>
+                    <TableCell key={key} align={alignOf(key)}>
                       {formatValue(item, key)}
                       {change && (
                         <span
@@ -343,6 +350,7 @@ const SummaryReportPage = () => {
         </TableBody>
         {!loading && (
           <ReportTotalsRow
+            numeric={NUMERIC_COLUMNS}
             leading={1}
             columns={columns}
             spec={TOTALS}
