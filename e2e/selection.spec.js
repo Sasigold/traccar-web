@@ -102,3 +102,23 @@ test('hovering a vehicle on the map shows its card', async ({ page, isMobile }) 
   expect(found).toBe(true);
   await expect(page.getByRole('tooltip')).toContainText(/מחובר|מנותק|לא ידוע/);
 });
+
+// LIV-14: the card leaves with a short exit before it closes.
+test('the vehicle card plays its exit before closing', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the list is folded on a phone');
+  await gotoReady(page, '/');
+  await page.locator('[data-row="0"]').click();
+  const close = page.getByRole('region').getByRole('button', { name: 'סגירה' }).first();
+  await expect(close).toBeVisible();
+  await page.evaluate(() => {
+    window.vfAnimations = [];
+    document.addEventListener('animationstart', (event) =>
+      window.vfAnimations.push(event.animationName),
+    );
+  });
+  await close.click();
+  await expect(close).toBeHidden();
+  const names = await page.evaluate(() => window.vfAnimations);
+  // The style library renames keyframes; what matters is that one ran on closing.
+  expect(names.length).toBeGreaterThan(0);
+});
