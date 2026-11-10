@@ -28,6 +28,8 @@ const useStyles = makeStyles()((theme) => ({
     },
     '& > tbody > tr > td, & > tfoot > tr > td, & > tfoot > tr > th': {
       display: 'flex',
+      // A right-aligned (numeric) cell is row-reverse in MUI: on a card the label stays first.
+      flexDirection: 'row !important',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: theme.spacing(1.5),
