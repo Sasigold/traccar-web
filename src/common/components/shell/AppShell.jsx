@@ -13,20 +13,18 @@ import NavRail from './NavRail';
 import TopBar from './TopBar';
 import MobileTabs from './MobileTabs';
 import ShortcutsDialog from './ShortcutsDialog';
+import CommandPalette from './CommandPalette';
 import AlertBanner from './AlertBanner';
 import ImpersonationBanner from './ImpersonationBanner';
 import { useAiAvailable } from '../../fleet/useAi';
 
 // AI-01: loaded the first time it is opened.
 const AssistantPanel = lazy(() => import('../assistant/AssistantPanel'));
-// PRF-04: the search window and the alerts list are not in the first load, and the alerts list
-// listens to the store only from the first time it is opened.
-const loadPalette = () => import('./CommandPalette');
+// PRF-04: the alerts list is not in the first load, and listens to the store only from the first
+// time it is opened. The search window (4 KB) is in it, so the first Ctrl+K opens at once and
+// keeps what is typed; it is mounted once the app is idle, or when first opened.
 const loadEvents = () => import('./EventsDrawer');
-const CommandPalette = lazy(loadPalette);
 const EventsDrawer = lazy(loadEvents);
-// Fetched once the app is idle; then the search window is mounted (closed), so the first Ctrl+K
-// opens at once and keeps what is typed.
 const whenIdle = (run) => {
   if (typeof window.requestIdleCallback === 'function') {
     const handle = window.requestIdleCallback(run, { timeout: 3000 });
@@ -114,17 +112,16 @@ const AppShell = ({ children }) => {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [eventsOpen, setEventsOpen] = useState(false);
-  const [panelsLoaded, setPanelsLoaded] = useState(false);
+  const [idle, setIdle] = useState(false);
   useEffect(
     () =>
       whenIdle(() => {
-        Promise.all([loadPalette(), loadEvents()])
-          .then(() => setPanelsLoaded(true))
-          .catch(() => {});
+        setIdle(true);
+        loadEvents().catch(() => {});
       }),
     [],
   );
-  const paletteMounted = useOpenedOnce(paletteOpen) || panelsLoaded;
+  const paletteMounted = useOpenedOnce(paletteOpen) || idle;
   const eventsMounted = useOpenedOnce(eventsOpen);
   const [railCollapsed, setRailCollapsed] = usePersistedState('navRailCollapsed', false);
   const aiAvailable = useAiAvailable();
@@ -263,11 +260,7 @@ const AppShell = ({ children }) => {
             }
           />
         )}
-        {paletteMounted && (
-          <Suspense fallback={null}>
-            <CommandPalette open={paletteOpen} onClose={closePalette} />
-          </Suspense>
-        )}
+        {paletteMounted && <CommandPalette open={paletteOpen} onClose={closePalette} />}
         <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
         {assistant && aiAvailable && (
           <Suspense fallback={null}>
