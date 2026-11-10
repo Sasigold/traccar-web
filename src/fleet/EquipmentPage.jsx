@@ -30,6 +30,9 @@ import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import FleetNotice from './components/FleetNotice';
 import { camel, cleanPayload, toNumber, useFleetVehicles } from './fleetRows';
 import { keepOnBackdrop } from '../common/util/formDialog';
+import { useSelector } from 'react-redux';
+import { formatTime } from '../common/util/formatter';
+import { reportState, whereIsTag } from '../common/fleet/assetTracking';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -61,8 +64,18 @@ const emptyAsset = {
   year: '',
   attached_vehicle_id: '',
   notes: '',
+  ble_tag: '',
+  report_interval_hours: '',
 };
-const assetKeys = ['asset_kind', 'plate_number', 'serial_number', 'make', 'model', 'notes'];
+const assetKeys = [
+  'asset_kind',
+  'plate_number',
+  'serial_number',
+  'make',
+  'model',
+  'notes',
+  'ble_tag',
+];
 
 const AssetDialog = ({ asset, vehicles, onClose, onSaved }) => {
   const { classes } = useStyles();
@@ -74,6 +87,7 @@ const AssetDialog = ({ asset, vehicles, onClose, onSaved }) => {
     const payload = {
       ...cleanPayload(form, assetKeys),
       year: toNumber(form.year),
+      report_interval_hours: toNumber(form.report_interval_hours),
       attached_vehicle_id: form.attached_vehicle_id || null,
     };
     const client = getFleetClient();
@@ -117,6 +131,13 @@ const AssetDialog = ({ asset, vehicles, onClose, onSaved }) => {
           {field('year', 'fleetModelYear', { type: 'number', ...ltr })}
           {field('make', 'fleetMake')}
           {field('model', 'fleetVehicleModel')}
+          {/* OPS-08: a BLE tag a vehicle's tracker sees, or a battery tracker's interval. */}
+          {field('ble_tag', 'fleetAssetBleTag', { ...ltr, helperText: t('fleetAssetBleTagHelp') })}
+          {field('report_interval_hours', 'fleetAssetReportInterval', {
+            type: 'number',
+            helperText: t('fleetAssetReportIntervalHelp'),
+            ...ltr,
+          })}
           <TextField
             select
             className={classes.wide}
@@ -155,6 +176,30 @@ const EquipmentPage = () => {
   const [search, setSearch] = useState('');
   const [kind, setKind] = useState('all');
   const [editing, setEditing] = useState(null);
+  const devices = useSelector((state) => state.devices.items);
+  const positions = useSelector((state) => state.session.positions);
+  // OPS-08: its own tracker (late only after twice its interval), or the vehicle that saw its tag.
+  const lastSeen = (asset) => {
+    const device = asset.traccar_device_id && devices[asset.traccar_device_id];
+    if (device) {
+      const state = reportState(device.lastUpdate, asset.report_interval_hours);
+      return (
+        <>
+          {device.lastUpdate ? formatTime(device.lastUpdate, 'minutes') : '—'}
+          {state === 'late' && (
+            <Chip size="small" color="warning" label={t('fleetAssetLate')} sx={{ ms: 1 }} />
+          )}
+        </>
+      );
+    }
+    const found = asset.ble_tag && whereIsTag(asset.ble_tag, positions);
+    if (found) {
+      return t('fleetAssetSeenBy')
+        .replace('{0}', devices[found.deviceId]?.name || `#${found.deviceId}`)
+        .replace('{1}', formatTime(found.position.fixTime, 'minutes'));
+    }
+    return '—';
+  };
 
   const vehicles = useMemo(
     () => (rows || []).filter((row) => (row.asset_kind || 'vehicle') === 'vehicle'),
@@ -219,12 +264,13 @@ const EquipmentPage = () => {
             <TableCell>{t('fleetMake')}</TableCell>
             <TableCell>{t('fleetAssetSerial')}</TableCell>
             <TableCell>{t('fleetAssetAttached')}</TableCell>
+            <TableCell>{t('fleetAssetLastSeen')}</TableCell>
             {canWrite && <TableCell className={classes.action} />}
           </TableRow>
         </TableHead>
         <TableBody>
           {canRead && !rows ? (
-            <TableShimmer columns={canWrite ? 6 : 5} />
+            <TableShimmer columns={canWrite ? 7 : 6} />
           ) : (
             assets.map((asset) => (
               <TableRow key={asset.id} hover>
@@ -239,6 +285,7 @@ const EquipmentPage = () => {
                 <TableCell>
                   <span dir="ltr">{plateOf[asset.attached_vehicle_id] || ''}</span>
                 </TableCell>
+                <TableCell>{lastSeen(asset)}</TableCell>
                 {canWrite && (
                   <TableCell className={classes.action}>
                     <Tooltip title={t('sharedEdit')}>
