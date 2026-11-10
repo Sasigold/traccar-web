@@ -10,6 +10,8 @@ import { useOutboxSync } from './common/fleet/useOutbox';
 import './fleet/driverOutbox';
 
 const REFRESH_INTERVAL_MS = 30 * 60 * 1000;
+// ADM-21: a failed connection is tried again soon, not only at the next refresh.
+export const RETRY_DELAYS_MS = [5000, 15000, 60000];
 
 // Keeps a Viper Fleet session alive for the logged-in Traccar user.
 // ensureFleetSession is a no-op while the current JWT is still fresh.
@@ -33,10 +35,13 @@ const FleetController = () => {
     }
 
     let cancelled = false;
+    let attempt = 0;
+    let retryTimer;
     const connect = async () => {
       try {
         const session = await ensureFleetSession(userId);
         if (!cancelled) {
+          attempt = 0;
           dispatch(
             fleetActions.ready({ profile: session.profile, permissions: session.permissions }),
           );
@@ -56,6 +61,11 @@ const FleetController = () => {
       } catch (error) {
         if (!cancelled) {
           dispatch(fleetActions.failed(error.message));
+          if (attempt < RETRY_DELAYS_MS.length) {
+            clearTimeout(retryTimer);
+            retryTimer = setTimeout(connect, RETRY_DELAYS_MS[attempt]);
+            attempt += 1;
+          }
         }
       }
     };
@@ -66,6 +76,7 @@ const FleetController = () => {
     return () => {
       cancelled = true;
       clearInterval(interval);
+      clearTimeout(retryTimer);
     };
   }, [userId, temporary, dispatch]);
 

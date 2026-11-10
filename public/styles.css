@@ -175,3 +175,9 @@ html.dark body {
     display: none !important;
   }
 }
+
+/* ADM-21: a page the user cannot use shows only its state (FleetNotice), not an empty table,
+   a toolbar or an export after it. */
+.vf-blocked ~ * {
+  display: none !important;
+}
