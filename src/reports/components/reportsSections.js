@@ -1,3 +1,4 @@
+import BlurOnRoundedIcon from '@mui/icons-material/BlurOnRounded';
 import { useMemo } from 'react';
 import ViewTimelineRoundedIcon from '@mui/icons-material/ViewTimelineRounded';
 import DonutLargeRoundedIcon from '@mui/icons-material/DonutLargeRounded';
@@ -137,6 +138,15 @@ export const useReportsSections = () => {
               icon: StarRoundedIcon,
               path: '/reports/combined',
               match: exact('/reports/combined'),
+              carry: true,
+            },
+            {
+              id: 'heatmap',
+              descriptionKey: 'reportHeatmapDescription',
+              titleKey: 'reportHeatmap',
+              icon: BlurOnRoundedIcon,
+              path: '/reports/heatmap',
+              match: exact('/reports/heatmap'),
               carry: true,
             },
             {
