@@ -3675,5 +3675,20 @@
     "dashboardTargetHelp": "A dashed line on a chart, a mark on a meter, and \"against target\" on a figure. Empty = no target.",
     "dashboardTvUpdated": "Updated {0}",
     "dashboardTvRotation": "Next board every",
-    "dashboardTvSeconds": "{0} seconds"
+    "dashboardTvSeconds": "{0} seconds",
+    "dashboardTplSafety": "Safety and drivers",
+    "dashboardTplSafetyDesc": "Driver scores, speeding, after-hours trips and accidents",
+    "dashboardTplFuelCosts": "Fuel and costs",
+    "dashboardTplFuelCostsDesc": "Fuel use, costs by kind, and cost per vehicle over the month",
+    "dashboardTplMonthly": "Monthly management summary",
+    "dashboardTplMonthlyDesc": "Last month at a glance: activity, validity, costs and safety",
+    "dashboardShareLink": "Copy a share link",
+    "dashboardShareCopied": "Link copied. Whoever opens it gets their own copy of the dashboard, over their own vehicles.",
+    "dashboardShareInvalid": "The dashboard link is not valid",
+    "dashboardShareImportTitle": "Add the dashboard '{0}'?",
+    "dashboardShareImportMessage": "A copy of your own is added. It shows your vehicles, and you can change it.",
+    "dashboardShareImport": "Add",
+    "dashboardWidgetRemoved": "Widget removed",
+    "dashboardTemplates": "Templates",
+    "dashboardBringBack": "Bring back"
 }

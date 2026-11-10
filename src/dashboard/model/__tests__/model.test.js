@@ -166,3 +166,19 @@ describe('widget targets (REP-18)', () => {
     expect(normalizeDoc(original).dashboards[0].widgets[id].target).toBeUndefined();
   });
 });
+
+describe('share links (REP-19)', () => {
+  it('carry a dashboard and bring back a normalized copy', async () => {
+    const { readShareParam, shareParam } = await import('../shareLink');
+    const dashboard = normalizeDoc(doc()).dashboards[1];
+    const param = shareParam(dashboard);
+    expect(param).toMatch(/^[\w-]+$/);
+    const back = readShareParam(param);
+    // Row and cell ids are made again; the layout is the same.
+    const shape = (rows) =>
+      rows.map((row) => row.cells.map((cell) => [cell.w, cell.items.map((item) => item.id)]));
+    expect(shape(back.rows)).toEqual(shape(dashboard.rows));
+    expect(Object.keys(back.widgets)).toEqual(Object.keys(dashboard.widgets));
+    expect(readShareParam('not-a-dashboard')).toBeNull();
+  });
+});

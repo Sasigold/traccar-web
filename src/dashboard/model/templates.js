@@ -38,6 +38,35 @@ export const TEMPLATES = {
       [5, [4, 'workOrdersStatus'], [4, 'incidentsBySeverity'], [4, 'costPerVehicle']],
     ],
   },
+  // REP-19: three more starting points.
+  safety: {
+    nameKey: 'dashboardTplSafety',
+    period: 'last30',
+    rows: [
+      [6, [6, 'safetyScores'], [6, 'overspeedByVehicle']],
+      [6, [6, 'distanceByDriver'], [6, 'afterHoursByDriver']],
+      [6, [8, 'eventsTrend'], [4, 'incidentsBySeverity']],
+    ],
+  },
+  fuelCosts: {
+    nameKey: 'dashboardTplFuelCosts',
+    period: 'thisMonth',
+    rows: [
+      [3, [12, 'efficiencyKpis']],
+      [6, [6, 'fuelByVehicle'], [6, 'costsByCategory']],
+      [6, [8, 'costsTrend'], [4, 'costPerVehicle']],
+    ],
+  },
+  monthly: {
+    nameKey: 'dashboardTplMonthly',
+    period: 'lastMonth',
+    rows: [
+      [3, [12, 'activityKpis']],
+      [3, [12, 'fleetOpsKpis']],
+      [6, [8, 'distanceTrend'], [4, 'costsByCategory']],
+      [6, [6, 'safetyScores'], [6, 'workOrdersStatus']],
+    ],
+  },
 };
 
 export const TEMPLATE_KEYS = Object.keys(TEMPLATES);

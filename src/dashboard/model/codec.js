@@ -161,3 +161,7 @@ export const fitsRemote = (encoded, attributes = {}) => {
   delete others[ATTRIBUTE];
   return JSON.stringify({ ...others, [ATTRIBUTE]: encoded }).length <= MAX_ATTRIBUTES_CHARS;
 };
+
+// REP-19: one dashboard, as it travels in a share link.
+export const encodeDashboardValue = (dashboard) => encodeDashboard(dashboard);
+export const decodeDashboardValue = (value) => decodeDashboard(value);

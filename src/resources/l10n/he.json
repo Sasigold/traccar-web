@@ -3675,5 +3675,20 @@
     "dashboardTargetHelp": "קו מקווקו בגרף, סימון במד, ו\"מול יעד\" במספר. ריק = בלי יעד.",
     "dashboardTvUpdated": "עודכן {0}",
     "dashboardTvRotation": "מעבר לוח כל",
-    "dashboardTvSeconds": "{0} שניות"
+    "dashboardTvSeconds": "{0} שניות",
+    "dashboardTplSafety": "בטיחות ונהגים",
+    "dashboardTplSafetyDesc": "ציוני נהגים, חריגות מהירות, נסיעות מחוץ לשעות ותאונות",
+    "dashboardTplFuelCosts": "דלק ועלויות",
+    "dashboardTplFuelCostsDesc": "צריכת דלק, עלויות לפי סוג, ועלות לרכב לאורך החודש",
+    "dashboardTplMonthly": "סיכום חודשי להנהלה",
+    "dashboardTplMonthlyDesc": "החודש הקודם במבט אחד: פעילות, תוקפים, עלויות ובטיחות",
+    "dashboardShareLink": "העתקת קישור שיתוף",
+    "dashboardShareCopied": "הקישור הועתק. מי שיפתח אותו יקבל עותק משלו של הדשבורד, עם הרכבים שלו.",
+    "dashboardShareInvalid": "קישור הדשבורד לא תקין",
+    "dashboardShareImportTitle": "להוסיף את הדשבורד '{0}'?",
+    "dashboardShareImportMessage": "יתווסף עותק משלכם. הוא יציג את הרכבים שלכם, ואפשר לשנות אותו.",
+    "dashboardShareImport": "הוספה",
+    "dashboardWidgetRemoved": "הרכיב הוסר",
+    "dashboardTemplates": "תבניות",
+    "dashboardBringBack": "החזרה"
 }

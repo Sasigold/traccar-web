@@ -1,3 +1,4 @@
+import { useConfirm } from '../common/components/confirm/ConfirmProvider';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
@@ -5,6 +6,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { keyframes } from 'tss-react';
 import usePersistedState from '../common/util/usePersistedState';
 import TvHeader from './components/TvHeader';
+import TemplateGallery from './components/TemplateGallery';
+import { readShareParam, shareUrl } from './model/shareLink';
 import {
   Button,
   Dialog,
@@ -18,9 +21,11 @@ import {
   ListItemText,
   Menu,
   MenuItem,
+  Snackbar,
   Tooltip,
   useMediaQuery,
 } from '@mui/material';
+import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
 import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
@@ -265,6 +270,28 @@ const DashboardPage = () => {
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [naming, setNaming] = useState(null); // 'rename' | 'duplicate'
   const [confirm, setConfirm] = useState(null); // 'delete' | 'reset' | 'publish'
+  // REP-19: "the widget was removed · undo".
+  const [removed, setRemoved] = useState(null);
+  // REP-19: a dashboard shared by link (?import=…) is offered as a copy of the user's own.
+  const confirmDialog = useConfirm();
+  const importParam = searchParams.get('import');
+  useEffect(() => {
+    if (!importParam) return;
+    const shared = readShareParam(importParam);
+    setSearchParams({}, { replace: true });
+    if (!shared) {
+      dispatch(messagesActions.push(t('dashboardShareInvalid')));
+      return;
+    }
+    confirmDialog({
+      title: t('dashboardShareImportTitle').replace('{0}', dashboardName(shared, t)),
+      message: t('dashboardShareImportMessage'),
+      confirmLabel: t('dashboardShareImport'),
+    }).then((yes) => {
+      if (yes) store.importCopy(shared);
+    });
+    // eslint-disable-next-line @eslint-react/exhaustive-deps -- once per link
+  }, [importParam]);
 
   useEffect(() => {
     if (!highlightId) {
@@ -321,13 +348,15 @@ const DashboardPage = () => {
     () => ({
       onSettings: setSettingsId,
       onFocusView: setFocusId,
-      onRemove: (id) =>
+      onRemove: (id) => {
+        setRemoved(id);
         update((current) => {
           const widgets = { ...current.widgets };
           const next = removeWidget(current.rows, id, minOfFor(current.widgets));
           delete widgets[id];
           return { ...current, rows: next, widgets };
-        }),
+        });
+      },
       onDuplicate: (id) => {
         const copyId = uid('w');
         update((current) => {
@@ -472,7 +501,8 @@ const DashboardPage = () => {
   // ─── header ──────────────────────────────────────────────────────────────
   const actions = editing ? (
     <div className={classes.actions}>
-      {desktop && (
+      {/* REP-19: undo and redo on every width (a removal on a phone could not be taken back). */}
+      {
         <>
           <Tooltip title={t('dashboardUndo')}>
             <span>
@@ -497,11 +527,11 @@ const DashboardPage = () => {
             </span>
           </Tooltip>
         </>
-      )}
+      }
       <Button variant="outlined" startIcon={<AddRoundedIcon />} onClick={() => setCatalog(true)}>
         {t('dashboardAddWidget')}
       </Button>
-      {desktop && <Button onClick={store.cancelEdit}>{t('sharedCancel')}</Button>}
+      <Button onClick={store.cancelEdit}>{t('sharedCancel')}</Button>
       <Button variant="contained" startIcon={<CheckRoundedIcon />} onClick={store.finishEdit}>
         {t('dashboardDone')}
       </Button>
@@ -580,6 +610,20 @@ const DashboardPage = () => {
             <ListItemText>{t('dashboardPublish')}</ListItemText>
           </MenuItem>
         )}
+        <MenuItem
+          onClick={async () => {
+            setMenuAnchor(null);
+            await navigator.clipboard?.writeText(shareUrl(dashboard));
+            dispatch(
+              messagesActions.push({ message: t('dashboardShareCopied'), severity: 'success' }),
+            );
+          }}
+        >
+          <ListItemIcon>
+            <ShareRoundedIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>{t('dashboardShareLink')}</ListItemText>
+        </MenuItem>
         <Divider />
         <MenuItem
           onClick={() => {
@@ -667,18 +711,24 @@ const DashboardPage = () => {
               title={t('dashboardEmpty')}
               description={t('dashboardEmptyDescription')}
               action={
-                <Button
-                  variant="contained"
-                  startIcon={<AddRoundedIcon />}
-                  onClick={() => {
-                    if (!editing) {
-                      store.startEdit();
-                    }
-                    setCatalog(true);
-                  }}
-                >
-                  {t('dashboardAddWidget')}
-                </Button>
+                <>
+                  <TemplateGallery
+                    available={(key) => templateCoverage(key, available) >= 0.5}
+                    onPick={(key) => store.add(key)}
+                  />
+                  <Button
+                    variant="contained"
+                    startIcon={<AddRoundedIcon />}
+                    onClick={() => {
+                      if (!editing) {
+                        store.startEdit();
+                      }
+                      setCatalog(true);
+                    }}
+                  >
+                    {t('dashboardAddWidget')}
+                  </Button>
+                </>
               }
             />
           )}
@@ -714,6 +764,25 @@ const DashboardPage = () => {
         onClose={() => setFocusId(null)}
       />
       <DrillDialog drill={drill} onClose={() => setDrill(null)} />
+      <Snackbar
+        open={Boolean(removed)}
+        autoHideDuration={6000}
+        onClose={(_, reason) => reason !== 'clickaway' && setRemoved(null)}
+        message={t('dashboardWidgetRemoved')}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        action={
+          <Button
+            color="inherit"
+            size="small"
+            onClick={() => {
+              setRemoved(null);
+              store.undo();
+            }}
+          >
+            {t('dashboardBringBack')}
+          </Button>
+        }
+      />
       <VehiclePeriodDialog vehicle={vehiclePeriod} onClose={() => setVehiclePeriod(null)} />
     </DashboardDataProvider>
   );

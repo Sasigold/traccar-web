@@ -72,7 +72,7 @@ test.describe('dashboard', () => {
 
   test('a period change reaches the activity widgets and the table view', async ({ page }) => {
     await page.getByRole('button', { name: 'דשבורד חדש' }).click();
-    await page.getByRole('menuitem', { name: /פעילות/ }).click();
+    await page.getByRole('menuitem', { name: /^פעילות/ }).click();
     await expect(page.getByRole('combobox', { name: 'תקופה' })).toContainText('7 הימים האחרונים');
     const trend = widget(page, 'ק"מ לאורך זמן');
     await trend.hover();
@@ -182,7 +182,7 @@ test('loading widgets show their shape, not the brand loader', async ({ page }) 
   });
   await gotoReady(page, '/dashboard');
   await page.getByRole('button', { name: 'דשבורד חדש' }).click();
-  await page.getByRole('menuitem', { name: /פעילות/ }).click();
+  await page.getByRole('menuitem', { name: /^פעילות/ }).click();
   await expect(page.locator('[data-widget-id] [role="status"]').first()).toBeVisible();
   await expect(page.locator('[data-widget-id] .vf-loader')).toHaveCount(0);
 });

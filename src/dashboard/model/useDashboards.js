@@ -303,6 +303,21 @@ const useDashboards = ({ available }) => {
     [persist],
   );
 
+  // REP-19: a dashboard shared by link comes in as a copy of its own.
+  const importCopy = useCallback(
+    (dashboard) => {
+      const copy = copyDashboard(dashboard);
+      if (!copy) return null;
+      persist({
+        ...docRef.current,
+        activeId: copy.id,
+        dashboards: [...docRef.current.dashboards, copy],
+      });
+      return copy;
+    },
+    [persist],
+  );
+
   const remove = useCallback(
     (id) => {
       const dashboards = docRef.current.dashboards.filter((item) => item.id !== id);
@@ -381,6 +396,7 @@ const useDashboards = ({ available }) => {
     add,
     rename,
     duplicate,
+    importCopy,
     remove,
     reset,
     publishDefault,
