@@ -1,10 +1,9 @@
 // @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { useState } from 'react';
 import { kml } from '@tmcw/togeojson';
-import gcoord from 'gcoord';
 import { useTheme } from '@mui/material/styles';
 import { map } from '../core/MapView';
-import { getCoordinateSystem } from '../core/mapState';
+import { getCoordinateSystem, getGcoord } from '../core/mapState';
 import useMapLayer from '../core/useMapLayer';
 import { useAsyncTask } from '../../reactHelper';
 import { usePreference } from '../../common/util/preferences';
@@ -62,8 +61,8 @@ const PoiMap = () => {
       const dom = new DOMParser().parseFromString(await file.text(), 'text/xml');
       const parsed = kml(dom);
       const collection =
-        getCoordinateSystem() === 'gcj02'
-          ? gcoord.transform(parsed, gcoord.WGS84, gcoord.GCJ02)
+        getCoordinateSystem() === 'gcj02' && getGcoord()
+          ? getGcoord().transform(parsed, getGcoord().WGS84, getGcoord().GCJ02)
           : parsed;
       setData(collection);
       const hrefs = [

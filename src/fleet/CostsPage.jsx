@@ -59,7 +59,7 @@ const useStyles = makeStyles()((theme) => ({
 const views = ['summary', 'fuel', 'expenses'];
 const periods = [1, 3, 6, 12];
 
-// Roadmap stage 2: fuel and other costs per vehicle, the fuel company import and expenses.
+// Fuel and other costs per vehicle, the fuel company import and expenses.
 const CostsPage = () => {
   const { classes } = useStyles();
   const theme = useTheme();

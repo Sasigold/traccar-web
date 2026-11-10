@@ -1,4 +1,4 @@
-// Roadmap stage 2: fuel company file import (pure, unit-tested).
+// Fuel company file import (pure, unit-tested).
 // Fuel companies send CSV / Excel files with their own headers; the importer guesses which
 // column is which, lets the person correct it, matches vehicles by plate and flags anomalies.
 

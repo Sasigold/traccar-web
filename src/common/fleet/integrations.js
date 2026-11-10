@@ -1,5 +1,5 @@
 import { pascalCase } from '../util/stringUtils';
-// Roadmap stage 5: organization API keys and webhooks (pure, tested).
+// Organization API keys and webhooks (pure, tested).
 
 export const API_SCOPES = ['read', 'write'];
 

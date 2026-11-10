@@ -47,7 +47,7 @@ const useStyles = makeStyles()(() => ({
 const ISSUE_STATUSES = ['open', 'in_progress', 'resolved', 'wont_fix'];
 const severityColor = { low: 'default', medium: 'warning', high: 'error', critical: 'error' };
 
-// Roadmap stage 2: filled inspections, checklist templates and the open issues they raise.
+// Filled inspections, checklist templates and the open issues they raise.
 const InspectionsPage = () => {
   const { classes } = useStyles();
   const t = useTranslation();

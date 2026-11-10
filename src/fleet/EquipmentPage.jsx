@@ -28,7 +28,7 @@ import { useCatch } from '../reactHelper';
 import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import FleetNotice from './components/FleetNotice';
-import { camel, cleanPayload, toNumber, useFleetVehicles } from './stage5Data';
+import { camel, cleanPayload, toNumber, useFleetVehicles } from './fleetRows';
 import { keepOnBackdrop } from '../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
@@ -144,7 +144,7 @@ const AssetDialog = ({ asset, vehicles, onClose, onSaved }) => {
   );
 };
 
-// Roadmap stage 5 (4.8): trailers and equipment without a GPS device, attached to a vehicle.
+// Trailers and equipment without a GPS device, attached to a vehicle.
 const EquipmentPage = () => {
   const { classes } = useStyles();
   const t = useTranslation();

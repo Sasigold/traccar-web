@@ -161,7 +161,7 @@ const ProofDialog = ({ job, status, onClose, onSaved }) => {
   );
 };
 
-// Roadmap stage 5: today's jobs in the driver portal, moved forward by the driver.
+// Today's jobs in the driver portal, moved forward by the driver.
 const DriverJobsCard = ({ driverId }) => {
   const { classes } = useStyles();
   const t = useTranslation();

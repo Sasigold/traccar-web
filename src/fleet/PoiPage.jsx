@@ -39,7 +39,7 @@ import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import { circleArea, pairVisits, visitTotals } from '../common/fleet/visits';
 import FleetNotice from './components/FleetNotice';
-import { camel, cleanPayload, toNumber, useFleetRows } from './stage5Data';
+import { camel, cleanPayload, toNumber, useFleetRows } from './fleetRows';
 import { keepOnBackdrop } from '../common/util/formDialog';
 import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
 import ImportDialog from './components/ImportDialog';
@@ -215,7 +215,7 @@ const PoiDialog = ({ poi, onClose, onSaved }) => {
 
 const views = ['points', 'visits'];
 
-// Roadmap stage 5: points of interest (customers, depots, suppliers) and customer visits.
+// Points of interest (customers, depots, suppliers) and customer visits.
 const PoiPage = () => {
   const { classes } = useStyles();
   const theme = useTheme();

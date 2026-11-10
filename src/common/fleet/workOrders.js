@@ -1,4 +1,4 @@
-// Roadmap stage 2: work order helpers (pure, unit-tested).
+// Work order helpers (pure, unit-tested).
 
 export const WORK_ORDER_STATUSES = ['planned', 'open', 'in_shop', 'done', 'cancelled'];
 export const WORK_ORDER_TYPES = [

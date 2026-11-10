@@ -123,7 +123,7 @@ const emptyItem = () => ({
   unit_price: 0,
 });
 
-// Roadmap stage 2: one work order with its lines. Closing it can also reset the vehicle's
+// One work order with its lines. Closing it can also reset the vehicle's
 // Traccar maintenance counter, so the next service is counted from now.
 const WorkOrderPage = () => {
   const { classes } = useStyles();

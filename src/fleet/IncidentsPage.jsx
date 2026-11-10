@@ -24,7 +24,7 @@ export const IncidentStatusChip = ({ status }) => {
   return <Chip size="small" color={statusColor[status]} label={t(incidentKey('Status', status))} />;
 };
 
-// Roadmap stage 2: damage and accident reports, newest first.
+// Damage and accident reports, newest first.
 const IncidentsPage = () => {
   const t = useTranslation();
   const canWrite = useFleetPermission('incidents.write');

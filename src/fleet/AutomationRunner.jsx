@@ -13,7 +13,7 @@ import {
 } from '../common/fleet/automations';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import { messagesActions } from '../store';
-import { useFleetRows } from './stage5Data';
+import { useFleetRows } from './fleetRows';
 
 const FRESH = 10 * 60000;
 

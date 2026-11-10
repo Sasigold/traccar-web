@@ -1,4 +1,4 @@
-// Roadmap stage 2: costs per vehicle (pure, unit-tested).
+// Costs per vehicle (pure, unit-tested).
 
 // vehicle_monthly_costs rows -> one line per vehicle with fuel / maintenance / other / total,
 // most expensive first, plus the fleet totals.

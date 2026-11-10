@@ -1,6 +1,6 @@
 // @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { fieldError } from '../util/israeliFields';
-// Roadmap stage 0: structured vehicle and driver details kept in the Traccar `attributes`
+// Structured vehicle and driver details kept in the Traccar `attributes`
 // JSON, so they work without the fleet database. Stage 1 migrates these keys into the
 // `vehicles` / `drivers` tables; keep the keys stable until then.
 //

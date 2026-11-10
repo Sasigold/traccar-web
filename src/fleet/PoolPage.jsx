@@ -30,7 +30,7 @@ import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import { useInvalidateFleet } from '../common/data/fleetQuery';
 import { keepOnBackdrop } from '../common/util/formDialog';
 import FleetNotice from './components/FleetNotice';
-import { useFleetRows } from './stage5Data';
+import { useFleetRows } from './fleetRows';
 
 const STATUS_COLOR = {
   requested: 'warning',

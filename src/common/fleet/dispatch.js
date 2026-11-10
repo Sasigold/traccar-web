@@ -1,4 +1,4 @@
-// Roadmap stage 5: dispatch jobs, ETA and customer tracking links (pure, tested).
+// Dispatch jobs, ETA and customer tracking links (pure, tested).
 
 export const JOB_STATUSES = [
   'planned',

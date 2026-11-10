@@ -7,3 +7,11 @@ export const getCoordinateSystem = () => coordinateSystem;
 export const setCoordinateSystem = (value) => {
   coordinateSystem = value || null;
 };
+
+// FND-10: gcoord (Chinese map coordinates) is loaded only when such a map style is chosen.
+let gcoordModule = null;
+export const getGcoord = () => gcoordModule;
+export const loadGcoord = async () => {
+  if (!gcoordModule) gcoordModule = (await import('gcoord')).default;
+  return gcoordModule;
+};

@@ -1,4 +1,4 @@
-// Roadmap stage 2: damage and accident helpers (pure, unit-tested).
+// Damage and accident helpers (pure, unit-tested).
 
 export const INCIDENT_TYPES = ['accident', 'damage', 'theft', 'vandalism', 'glass', 'other'];
 export const INCIDENT_SEVERITIES = ['minor', 'moderate', 'severe'];

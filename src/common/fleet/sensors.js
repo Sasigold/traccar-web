@@ -1,4 +1,4 @@
-// Roadmap stage 5: EV battery and cold chain temperature from position attributes (pure, tested).
+// EV battery and cold chain temperature from position attributes (pure, tested).
 
 // temp1, temp2, ... and plain "temp"; "deviceTemp" (the tracker itself) is left out.
 export const temperatureReadings = (attributes = {}) =>

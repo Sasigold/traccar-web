@@ -1,0 +1,31 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "vite": false,
+  "vitest": false,
+  "entry": [
+    "src/index.jsx",
+    "src/**/__tests__/**/*.{js,jsx}",
+    "src/test/**/*.{js,jsx}",
+    "demo/*.js",
+    "website/src/main.jsx",
+    "e2e/**/*.js",
+    "tools/*.mjs",
+    "vite.config.js"
+  ],
+  "project": [
+    "src/**/*.{js,jsx}",
+    "demo/**/*.js",
+    "website/**/*.{js,jsx}",
+    "e2e/**/*.js",
+    "tools/**/*.mjs"
+  ],
+  "ignore": [
+    "supabase/**",
+    "build/**",
+    "build-demo/**"
+  ],
+  "ignoreDependencies": [
+    "@mapbox/mapbox-gl-rtl-text",
+    "express"
+  ]
+}

@@ -88,7 +88,7 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-// Roadmap stage 2: fill in a checklist for a vehicle (or view a filled one).
+// Fill in a checklist for a vehicle (or view a filled one).
 // Failed items open issues; the inspection fails when any item fails.
 // driverMode (/driver/check, ADM-09): the driver and the assigned vehicle are filled in and locked,
 // the controls are large, and sending ends on a confirmation instead of the manager's list.

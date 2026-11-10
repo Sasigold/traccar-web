@@ -159,7 +159,7 @@ const SettingsDialog = ({ settings, onClose, onSaved }) => {
   );
 };
 
-// Roadmap stage 4: driver scores, driving hours, compliance and violations.
+// Driver scores, driving hours, compliance and violations.
 const SafetyPage = () => {
   const { classes } = useStyles();
   const theme = useTheme();

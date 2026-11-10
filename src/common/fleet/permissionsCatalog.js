@@ -1,5 +1,5 @@
 import { capitalize, pascalCase } from '../util/stringUtils';
-// Roadmap stage 3: fleet permission keys by area, and the effective role matrix (pure, tested).
+// Fleet permission keys by area, and the effective role matrix (pure, tested).
 
 export const PERMISSION_AREAS = [
   { area: 'vehicles', keys: ['vehicles.read', 'vehicles.write', 'assignments.write'] },

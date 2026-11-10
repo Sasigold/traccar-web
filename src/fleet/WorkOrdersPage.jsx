@@ -32,7 +32,7 @@ export const WorkOrderStatusChip = ({ status }) => {
   );
 };
 
-// Roadmap stage 2: work orders across the fleet, open ones first.
+// Work orders across the fleet, open ones first.
 const WorkOrdersPage = () => {
   const t = useTranslation();
   const canWrite = useFleetPermission('maintenance.write');

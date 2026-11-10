@@ -26,6 +26,8 @@ jobs:
     - run: npm run lint
     # ARC-11: JSDoc and the generated database types (tsconfig.json).
     - run: npm run typecheck
+    # FND-10: no dependency that is not used, none used that is not listed.
+    - run: npm run knip
 
   unit:
     runs-on: ubuntu-latest

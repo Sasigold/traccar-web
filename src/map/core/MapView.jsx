@@ -10,7 +10,7 @@ import MapSwitcher from '../control/MapSwitcher';
 import { useAttributePreference, usePreference } from '../../common/util/preferences';
 import usePersistedState from '../../common/util/usePersistedState';
 import preloadImages, { mapImages } from './preloadImages';
-import { setCoordinateSystem } from './mapState';
+import { getGcoord, loadGcoord, setCoordinateSystem } from './mapState';
 import useMapStyles from './useMapStyles';
 import { localizeStyle } from './mapLanguage';
 import { brandStyle } from './brandStyle';
@@ -123,6 +123,7 @@ const MapView = ({ children }) => {
   const selectedStyleId = dark ? darkStyleId : lightStyleId;
   const setSelectedStyleId = dark ? setDarkStyleId : setLightStyleId;
   const maxZoom = useAttributePreference('web.maxZoom');
+  const [gcoordReady, setGcoordReady] = useState(() => Boolean(getGcoord()));
   // LIV-12: while the map style loads, a loader; if it fails, a way to retry or switch layers.
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -177,6 +178,14 @@ const MapView = ({ children }) => {
       setSelectedStyleId(styles[0].id);
       return;
     }
+    // A Chinese map needs gcoord first (loaded on demand); the style is set once it is there.
+    if (style.coordinateSystem && !gcoordReady) {
+      let cancelled = false;
+      loadGcoord().then(() => !cancelled && setGcoordReady(true));
+      return () => {
+        cancelled = true;
+      };
+    }
     updateReadyValue(false);
     setCoordinateSystem(style.coordinateSystem);
     map.setStyle(style.style, {
@@ -201,7 +210,7 @@ const MapView = ({ children }) => {
     };
     map.once('styledata', waiting);
     return () => clearTimeout(timeoutId);
-  }, [styles, selectedStyleId, setSelectedStyleId, language, dark]);
+  }, [styles, selectedStyleId, setSelectedStyleId, language, dark, gcoordReady]);
 
   useLayoutEffect(() => {
     const currentEl = containerRef.current;
