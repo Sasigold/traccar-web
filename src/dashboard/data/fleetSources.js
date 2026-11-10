@@ -62,12 +62,23 @@ export const loadIncidents = async () => {
 };
 
 // Driver safety scores for the period (same scoring as /fleet/safety).
+// SAF-01: the events dismissed in the safety inbox, which leave the score like on the safety page.
+const loadDismissed = async (from) => {
+  const { data } = await getFleetClient()
+    .from('safety_event_reviews')
+    .select('traccar_event_id')
+    .eq('status', 'dismissed')
+    .gte('occurred_at', from.toISOString());
+  return new Set((data || []).map((row) => Number(row.traccar_event_id)));
+};
+
 export const loadSafety = async (deviceIds, from, to, signal) => {
-  const [{ trips, events }, settings] = await Promise.all([
+  const [{ trips, events }, settings, excluded] = await Promise.all([
     loadDriving(deviceIds, from.toDate(), to.toDate(), signal),
     loadSafetySettings(),
+    loadDismissed(from.toDate()).catch(() => new Set()),
   ]);
-  return scoreDrivers(trips, events, { weights: settings.weights }).map((item) => ({
+  return scoreDrivers(trips, events, { weights: settings.weights, excluded }).map((item) => ({
     driverUniqueId: item.driver,
     score: item.score,
     events: item.events,
