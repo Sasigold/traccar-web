@@ -17,6 +17,7 @@ export const FEATURE_TABLES = {
   integrations: 'api_keys',
   privacy: 'privacy_policies',
   alertCases: 'alert_cases',
+  pool: 'pool_bookings',
 };
 
 // PostgREST: a missing function is PGRST202, a missing table PGRST205 or 42P01.

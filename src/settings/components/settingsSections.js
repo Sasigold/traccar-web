@@ -24,6 +24,7 @@ import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
+import EventSeatRoundedIcon from '@mui/icons-material/EventSeatRounded';
 import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
 import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
 import HandymanRoundedIcon from '@mui/icons-material/HandymanRounded';
@@ -298,6 +299,15 @@ const useSectionCatalog = () => {
             path: '/fleet/dispatch',
             match: (pathname) => pathname.startsWith('/fleet/dispatch'),
             visible: fleetDispatch && has('dispatch'),
+          },
+          {
+            id: 'pool',
+            titleKey: 'poolTitle',
+            descriptionKey: 'poolDescription',
+            icon: EventSeatRoundedIcon,
+            path: '/fleet/pool',
+            match: (pathname) => pathname.startsWith('/fleet/pool'),
+            visible: has('pool'),
           },
           {
             id: 'workOrders',
