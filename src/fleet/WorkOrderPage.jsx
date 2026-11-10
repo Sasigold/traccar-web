@@ -80,6 +80,7 @@ import { capitalize } from '../common/util/stringUtils';
 import DocumentPrintHeader from '../common/components/print/DocumentPrintHeader';
 import { formatTime } from '../common/util/formatter';
 import VehicleSelect from '../common/components/VehicleSelect';
+import InvoiceCheckPanel from './components/InvoiceCheckPanel';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -586,6 +587,7 @@ const WorkOrderPage = () => {
             <Typography className={classes.total}>
               {t('fleetWorkOrderTotal')}: {money(vat.total)}
             </Typography>
+            <InvoiceCheckPanel order={order} items={items} />
             <div className={classes.grid}>
               {canWrite && (
                 <ScanDocumentButton

@@ -32,6 +32,8 @@ import ValidatedField from '../common/components/ValidatedField';
 import { keepOnBackdrop } from '../common/util/formDialog';
 import WazeButton from '../common/components/WazeButton';
 import { capitalize } from '../common/util/stringUtils';
+import RequestQuoteRoundedIcon from '@mui/icons-material/RequestQuoteRounded';
+import VendorPricesDialog from './components/VendorPricesDialog';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -188,6 +190,7 @@ const VendorsPage = () => {
   const vendors = useVendors(canRead, reloadKey);
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState(null);
+  const [prices, setPrices] = useState(null);
 
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -249,6 +252,16 @@ const VendorsPage = () => {
               </TableCell>
               {canWrite && (
                 <TableCell className={classes.action}>
+                  {/* ISR-13: the supplier's agreed prices, for the invoice check. */}
+                  <Tooltip title={t('vendorPricesOpen')}>
+                    <IconButton
+                      size="small"
+                      aria-label={`${t('vendorPricesOpen')}: ${vendor.name}`}
+                      onClick={() => setPrices(vendor)}
+                    >
+                      <RequestQuoteRoundedIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                   <Tooltip title={t('sharedEdit')}>
                     <IconButton
                       size="small"
@@ -264,6 +277,7 @@ const VendorsPage = () => {
           ))}
         </TableBody>
       </DataTable>
+      {prices && <VendorPricesDialog vendor={prices} onClose={() => setPrices(null)} />}
       {editing && (
         <VendorDialog
           vendor={editing}
