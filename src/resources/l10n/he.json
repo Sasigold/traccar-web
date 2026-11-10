@@ -3584,5 +3584,9 @@
     "insuranceFileSpeedBefore": "מהירות מרבית לפני",
     "insuranceFileBraking": "הבלימה החזקה ביותר",
     "insuranceFilePhotos": "תמונות",
-    "insuranceFilePrint": "הדפסה או שמירה כ-PDF"
+    "insuranceFilePrint": "הדפסה או שמירה כ-PDF",
+    "settingsThemeMode": "ערכת צבעים",
+    "settingsThemeLight": "בהיר",
+    "settingsThemeDark": "כהה",
+    "settingsThemeSystem": "לפי המערכת"
 }

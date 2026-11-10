@@ -3584,5 +3584,9 @@
     "insuranceFileSpeedBefore": "Top speed before",
     "insuranceFileBraking": "Hardest braking",
     "insuranceFilePhotos": "Photos",
-    "insuranceFilePrint": "Print or save as PDF"
+    "insuranceFilePrint": "Print or save as PDF",
+    "settingsThemeMode": "Color theme",
+    "settingsThemeLight": "Light",
+    "settingsThemeDark": "Dark",
+    "settingsThemeSystem": "System"
 }
