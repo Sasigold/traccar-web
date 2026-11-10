@@ -89,3 +89,16 @@ test('a driver who is not linked can call the dispatcher', async ({ page }) => {
     'https://wa.me/972501234567',
   );
 });
+
+// A11-10: the driver's screens in Arabic, right to left.
+test('the driver portal reads in Arabic', async ({ page }) => {
+  await page.addInitScript(() => window.localStorage.setItem('language', JSON.stringify('ar')));
+  await writeMode(page);
+  await setup(page, {});
+  await gotoReady(page, '/driver');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await expect(page.getByText('الفحص الصباحي: لم يُنجز بعد')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'التواصل مع المُرسِل' })).toBeVisible();
+  await page.screenshot({ path: `test-results/driver-ar-${test.info().project.name}.png` });
+});

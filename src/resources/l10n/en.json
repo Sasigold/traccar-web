@@ -430,6 +430,7 @@
     "positionHybridSystemCurrent": "Hybrid System Current",
     "positionFuelType": "Fuel Type",
     "positionGnssStatus": "GNSS Status",
+    "positionNetwork": "Network",
     "positionNetworkType": "Network Type",
     "positionInstantMovement": "Instant Movement",
     "positionAxlCalibration": "Accelerometer Calibration",

@@ -117,10 +117,26 @@ export const LocalizationProvider = ({ children }) => {
 
 export const useLocalization = () => use(LocalizationContext);
 
+// A11-10: a key with no text anywhere shows as nothing; in development it is said once.
+const warned = new Set();
+const warnMissing = (key) => {
+  if (import.meta.env.DEV && key && !warned.has(key)) {
+    warned.add(key);
+    console.warn(`Missing translation: ${key}`);
+  }
+};
+
 export const useTranslation = () => {
   const context = use(LocalizationContext);
   const { data, fallback } = context.languages[context.language];
-  return useMemo(() => (key) => data[key] ?? fallback?.[key], [data, fallback]);
+  return useMemo(
+    () => (key) => {
+      const text = data[key] ?? fallback?.[key];
+      if (text === undefined) warnMissing(key);
+      return text;
+    },
+    [data, fallback],
+  );
 };
 
 export const useTranslationKeys = (predicate) => {

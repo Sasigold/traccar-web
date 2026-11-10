@@ -430,6 +430,7 @@
     "positionHybridSystemCurrent": "זרם מערכת היברידית",
     "positionFuelType": "סוג דלק",
     "positionGnssStatus": "סטטוס GNSS",
+    "positionNetwork": "רשת",
     "positionNetworkType": "סוג רשת",
     "positionInstantMovement": "תנועה רגעית",
     "positionAxlCalibration": "כיול מד תאוצה",
