@@ -25,6 +25,8 @@ import { makeStyles } from 'tss-react/mui';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
 import KeyRoundedIcon from '@mui/icons-material/KeyRounded';
+import WebhookTemplates from './components/WebhookTemplates';
+import { webhookFromTemplate } from '../common/fleet/webhookTemplates';
 import WebhookRoundedIcon from '@mui/icons-material/WebhookRounded';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
@@ -562,6 +564,13 @@ const IntegrationsPage = () => {
           </>
         )}
       </DataTable>
+      {view === 'webhooks' && canManage && (
+        <WebhookTemplates
+          onUse={(template) =>
+            setDialog({ type: 'webhook', value: webhookFromTemplate(template, t) })
+          }
+        />
+      )}
       {view === 'keys' && canManage && (
         <Alert
           severity="info"
