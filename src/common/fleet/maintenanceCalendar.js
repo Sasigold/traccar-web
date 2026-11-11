@@ -17,6 +17,7 @@ const HOURS_TYPES = new Set(['hours']);
  * @returns {Record<number, { distance: number, hours: number }>} meters and ms per day
  */
 export const dailyRates = (summary, days) => {
+  /** @type {Record<number, { distance: number, hours: number }>} */
   const rates = {};
   if (!(days > 0)) {
     return rates;

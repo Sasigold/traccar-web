@@ -18,6 +18,7 @@ const loadHeatPoints = async ({ kind, deviceIds = [], groupIds = [], from, to, s
       deviceIds: [...deviceIds, ...rows.map((row) => row.deviceId)],
       from,
       to,
+      times: undefined,
     });
     return stopPoints(shown, kind);
   }

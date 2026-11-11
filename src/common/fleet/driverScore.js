@@ -45,6 +45,7 @@ export const scoreCard = (
   const weekTrips = trips.filter((trip) => time(trip.startTime) >= weekStart.getTime());
   const weekEvents = counted.filter((event) => time(event.eventTime) >= weekStart.getTime());
   const km = Math.round(weekTrips.reduce((sum, trip) => sum + (trip.distance || 0), 0) / 100) / 10;
+  /** @type {Record<string, number>} */
   const counts = {};
   weekEvents.forEach((event) => {
     const category = eventCategory(event);

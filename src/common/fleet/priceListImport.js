@@ -25,7 +25,7 @@ const HINTS = {
   valid_to: ['בתוקף עד', 'עד תאריך', 'valid to', 'until', 'to'],
 };
 
-export const guessPriceColumns = (headers) => guessColumns(headers, HINTS);
+export const guessPriceColumns = (headers) => guessColumns(headers, /** @type {any} */ (HINTS));
 
 const KIND_WORDS = {
   labor: ['עבודה', 'שעת עבודה', 'שעות', 'labor', 'labour', 'work'],
