@@ -15,6 +15,7 @@ export const useDockStyles = makeStyles()((theme) => ({
     bottom: theme.spacing(7),
     display: 'flex',
     justifyContent: 'center',
+    gap: theme.spacing(1),
     pointerEvents: 'none',
     zIndex: 3,
     [theme.breakpoints.down('md')]: {
@@ -23,7 +24,7 @@ export const useDockStyles = makeStyles()((theme) => ({
   },
 }));
 
-const useStyles = makeStyles()((theme) => ({
+export const useToggleStyles = makeStyles()((theme) => ({
   toggle: {
     pointerEvents: 'auto',
     backgroundColor: theme.palette.background.paper,
@@ -33,8 +34,9 @@ const useStyles = makeStyles()((theme) => ({
 }));
 
 // LIV-26: the button that opens the fleet rewind; the slider loads only when it is opened.
-const RewindToggle = ({ deviceIds, onRewind, startPadding = 0 }) => {
-  const { classes } = useStyles();
+// `extra`: more buttons in the same dock (the heat layer), hidden while the rewind is open.
+const RewindToggle = ({ deviceIds, onRewind, startPadding = 0, extra = null }) => {
+  const { classes } = useToggleStyles();
   const { classes: dock } = useDockStyles();
   const t = useTranslation();
   const [open, setOpen] = useState(false);
@@ -62,6 +64,7 @@ const RewindToggle = ({ deviceIds, onRewind, startPadding = 0 }) => {
           <HistoryRoundedIcon />
         </IconButton>
       </Tooltip>
+      {extra}
     </div>
   );
 };

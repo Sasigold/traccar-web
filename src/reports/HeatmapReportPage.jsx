@@ -10,9 +10,8 @@ import MapView from '../map/core/MapView';
 import MapCamera from '../map/MapCamera';
 import MapScale from '../map/MapScale';
 import MapHeatmap from '../map/MapHeatmap';
-import fetchOrThrow from '../common/util/fetchOrThrow';
-import { privateCombined, privateRows } from '../common/fleet/privacyData';
-import { HEATMAP_KINDS, eventPoints, stopPoints } from './common/heatmapPoints';
+import { HEATMAP_KINDS } from './common/heatmapPoints';
+import loadHeatPoints from './common/heatmapLoad';
 import { capitalize } from '../common/util/stringUtils';
 
 // LIV-27: where things happen, as a density map: stops, idling, harsh driving or speeding, for
@@ -27,28 +26,9 @@ const HeatmapReportPage = () => {
 
   const onShow = useRunCallback(
     async ({ deviceIds, groupIds, from, to, signal }) => {
-      const query = new URLSearchParams({ from, to });
-      deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
-      groupIds.forEach((groupId) => query.append('groupId', groupId));
       setLoading(true);
       try {
-        if (kind === 'stops' || kind === 'idle') {
-          const response = await fetchOrThrow(`api/reports/stops?${query}`, {
-            signal,
-            headers: { Accept: 'application/json' },
-          });
-          const rows = await response.json();
-          const { rows: shown } = await privateRows(rows, {
-            deviceIds: [...deviceIds, ...rows.map((row) => row.deviceId)],
-            from,
-            to,
-          });
-          setPoints(stopPoints(shown, kind));
-        } else {
-          const response = await fetchOrThrow(`api/reports/combined?${query}`, { signal });
-          const { items } = await privateCombined(await response.json(), { deviceIds, from, to });
-          setPoints(eventPoints(items, kind));
-        }
+        setPoints(await loadHeatPoints({ kind, deviceIds, groupIds, from, to, signal }));
       } finally {
         setLoading(false);
       }

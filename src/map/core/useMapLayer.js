@@ -17,9 +17,11 @@ const useMapLayer = ({ source, layers, layersDeps, data, dataDeps = [] }) => {
       isGeoJson ? { type: 'geojson', data: data ?? emptyFeatureCollection, ...source } : source,
     );
     layers.forEach((layer) => {
-      const { on, key, ...spec } = layer;
+      // `beforeId` (a function, read when the layer is added) puts the layer under another one.
+      const { on, key, beforeId, ...spec } = layer;
       const layerId = key ? `${id}-${key}` : id;
-      map.addLayer({ ...spec, id: layerId, source: id });
+      const before = typeof beforeId === 'function' ? beforeId() : beforeId;
+      map.addLayer({ ...spec, id: layerId, source: id }, before || undefined);
       if (on) {
         Object.entries(on).forEach(([type, listener]) => map.on(type, layerId, listener));
       }

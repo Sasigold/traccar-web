@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useDispatch } from 'react-redux';
@@ -26,7 +26,13 @@ import MapSelectedTrail from '../map/main/MapSelectedTrail';
 import MapHoverCard from './MapHoverCard';
 import useFeatures from '../common/util/useFeatures';
 import { useStableArray } from '../common/util/stableArray';
-import RewindToggle from './RewindToggle';
+import RewindToggle, { useToggleStyles } from './RewindToggle';
+import MapHeatmap from '../map/MapHeatmap';
+import { IconButton, Tooltip } from '@mui/material';
+import WhatshotRoundedIcon from '@mui/icons-material/WhatshotRounded';
+import { useTranslation } from '../common/components/LocalizationProvider';
+
+const HeatLayerPanel = lazy(() => import('./HeatLayerPanel'));
 
 const MainMap = ({ filteredPositions, selectedPosition }) => {
   const theme = useTheme();
@@ -47,6 +53,11 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
   // LIV-26: the fleet at a past moment, or null for live.
   const [rewound, setRewound] = useState(null);
   const [geofenceTarget, setGeofenceTarget] = useState(null);
+  // LIV-27: the heat layer: open or not, and its points once loaded.
+  const t = useTranslation();
+  const { classes: toggle } = useToggleStyles();
+  const [heatOpen, setHeatOpen] = useState(false);
+  const [heatPoints, setHeatPoints] = useState(null);
 
   const deviceIds = useStableArray(
     useMemo(() => filteredPositions.map((position) => position.deviceId), [filteredPositions]),
@@ -91,6 +102,7 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
       <MapView>
         <MapOverlay />
         <MapGeofence onGeofenceClick={setGeofenceTarget} />
+        {heatOpen && heatPoints?.length > 0 && <MapHeatmap points={heatPoints} underLabels />}
         {/* LIV-12: the accuracy circle only for the selected vehicle. */}
         <MapAccuracy positions={selectedPosition ? [selectedPosition] : []} />
         {!rewound && <MapLiveRoutes deviceIds={deviceIds} />}
@@ -120,9 +132,42 @@ const MainMap = ({ filteredPositions, selectedPosition }) => {
       <MapContextMenu />
       <GeofenceInside target={geofenceTarget} onClose={() => setGeofenceTarget(null)} />
       <MapHoverCard hover={hover} />
+      {heatOpen && (
+        <Suspense fallback={null}>
+          <HeatLayerPanel
+            deviceIds={deviceIds}
+            onPoints={setHeatPoints}
+            startPadding={
+              desktop && !features.disableDeviceList
+                ? theme.dimensions.devicePanelWidth + 2 * theme.dimensions.panelGap
+                : 0
+            }
+            onClose={() => {
+              setHeatOpen(false);
+              setHeatPoints(null);
+            }}
+          />
+        </Suspense>
+      )}
       <RewindToggle
         deviceIds={deviceIds}
         onRewind={(positions) => setRewound(positions)}
+        extra={
+          <Tooltip title={t('heatLayerTitle')}>
+            <IconButton
+              className={toggle.toggle}
+              aria-label={t('heatLayerTitle')}
+              aria-pressed={heatOpen}
+              color={heatOpen ? 'primary' : 'default'}
+              onClick={() => {
+                setHeatOpen((open) => !open);
+                setHeatPoints(null);
+              }}
+            >
+              <WhatshotRoundedIcon />
+            </IconButton>
+          </Tooltip>
+        }
         startPadding={
           desktop && !features.disableDeviceList
             ? theme.dimensions.devicePanelWidth + 2 * theme.dimensions.panelGap
