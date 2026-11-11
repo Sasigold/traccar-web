@@ -22,6 +22,7 @@ import { useAsyncTask, useCatch } from '../../reactHelper';
 import { getFleetClient, unwrap } from '../../common/fleet/client';
 import { useFleetPermission, useFleetProfile } from '../../common/fleet/useFleet';
 import { money } from '../fleetData';
+import PriceListImport from './PriceListImport';
 
 const useStyles = makeStyles()((theme) => ({
   add: {
@@ -182,6 +183,9 @@ const VendorPricesDialog = ({ vendor, onClose }) => {
               {t('sharedAdd')}
             </Button>
           </div>
+        )}
+        {canWrite && rows && (
+          <PriceListImport vendor={vendor} orgId={profile.org_id} existing={rows} onDone={reload} />
         )}
       </DialogContent>
       <DialogActions>
