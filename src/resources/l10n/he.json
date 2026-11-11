@@ -3771,6 +3771,7 @@
     "mapRetry": "נסו שוב",
     "mapSwitchLayer": "החלפת שכבה",
     "mapSearchNotFound": "לא נמצא מקום בשם הזה",
+    "mapSearchFor": "חיפוש \"{0}\"",
     "cardNoVideo": "המכשיר הזה לא תומך בווידאו חי",
     "cardNoPosition": "לרכב הזה עדיין אין מיקום. הוא יופיע במפה אחרי הדיווח הראשון של המכשיר.",
     "shellVehicleActions": "פעולות על {0}",

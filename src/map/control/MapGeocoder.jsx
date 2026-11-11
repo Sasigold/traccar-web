@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   useTheme,
   Popover,
@@ -10,6 +10,7 @@ import {
   IconButton,
   Tooltip,
   ListItemText,
+  ListItemIcon,
   Skeleton,
   Box,
   InputAdornment,
@@ -19,11 +20,18 @@ import { createRoot } from 'react-dom/client';
 import TravelExploreIcon from '@mui/icons-material/TravelExploreRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import NearMeRoundedIcon from '@mui/icons-material/NearMeRounded';
+import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import { glass } from '../../common/theme/surfaces';
 import { map } from '../core/MapView';
 import { toMapCoordinates } from '../core/mapUtil';
 import { messagesActions } from '../../store';
 import { useTranslation } from '../../common/components/LocalizationProvider';
+import {
+  DEFAULT_GEOCODER,
+  formatAddress,
+  geocodeAddress,
+  searchStreets,
+} from '../../common/util/addressSearch';
 
 const useStyles = makeStyles()((theme) => ({
   button: {
@@ -65,38 +73,84 @@ const MapGeocoder = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
+  // ISR-10: while typing, streets from the official list; the geocoder only runs on a choice.
+  const [streets, setStreets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(null);
+  const geocoderUrl = useSelector((state) => state.session.server?.attributes?.['web.geocoderUrl']);
 
   useEffect(() => {
-    if (!query.trim()) {
-      setResults([]);
-      setLoading(false);
-      return;
+    const text = query.trim();
+    if (text.length < 2) {
+      setStreets([]);
+      return undefined;
     }
     const controller = new AbortController();
     const timeoutId = setTimeout(async () => {
-      setLoading(true);
       try {
-        // LIV-12: Hebrew names first, and places in Israel.
-        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=geojson&addressdetails=1&accept-language=he,en&countrycodes=il`;
-        const response = await fetch(url, { signal: controller.signal });
-        const data = await response.json();
-        setResults(data.features || []);
-        setSearched(query);
-      } catch (e) {
-        if (e.name !== 'AbortError') {
-          dispatch(messagesActions.push(e.message));
-        }
-      } finally {
-        setLoading(false);
+        setStreets(await searchStreets(text, { signal: controller.signal }));
+      } catch {
+        // no suggestions this time
       }
     }, 300);
     return () => {
       controller.abort();
       clearTimeout(timeoutId);
     };
-  }, [query, dispatch]);
+  }, [query]);
+
+  // A free search (a place, a business, a city) on Enter or from the first row: one geocoder
+  // request per search, as Nominatim's usage policy asks, through `web.geocoderUrl` when set.
+  const search = async (text = query) => {
+    if (!text.trim()) return;
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        q: text,
+        format: 'geojson',
+        addressdetails: '1',
+        // LIV-12: Hebrew names first, and places in Israel.
+        'accept-language': 'he,en',
+        countrycodes: 'il',
+      });
+      const response = await fetch(`${geocoderUrl || DEFAULT_GEOCODER}?${params}`);
+      const data = await response.json();
+      setResults(data.features || []);
+      setSearched(text);
+    } catch (e) {
+      dispatch(messagesActions.push(e.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const close = () => {
+    setAnchorEl(null);
+    setQuery('');
+    setResults([]);
+    setStreets([]);
+    setSearched(null);
+  };
+
+  // A street from the list: its coordinates from the geocoder, else a free search for it.
+  const onStreet = async (street) => {
+    const address = formatAddress(street);
+    setLoading(true);
+    try {
+      const point = await geocodeAddress(address, { url: geocoderUrl });
+      if (point) {
+        map.flyTo({ center: toMapCoordinates(point.longitude, point.latitude), zoom: 16 });
+        close();
+        return;
+      }
+    } catch {
+      // fall back to a free search
+    } finally {
+      setLoading(false);
+    }
+    setQuery(address);
+    search(address);
+  };
 
   useEffect(() => {
     let element;
@@ -127,18 +181,25 @@ const MapGeocoder = () => {
   }, [theme.direction, classes.button, cx, t]);
 
   const onSelect = (feature) => {
-    const [minX, minY, maxX, maxY] = feature.bbox;
-    map.fitBounds([toMapCoordinates(minX, minY), toMapCoordinates(maxX, maxY)], { padding: 40 });
-    setAnchorEl(null);
-    setQuery('');
-    setResults([]);
+    if (feature.bbox) {
+      const [minX, minY, maxX, maxY] = feature.bbox;
+      map.fitBounds([toMapCoordinates(minX, minY), toMapCoordinates(maxX, maxY)], {
+        padding: 40,
+      });
+    } else {
+      const [longitude, latitude] = feature.geometry.coordinates;
+      map.flyTo({ center: toMapCoordinates(longitude, latitude), zoom: 16 });
+    }
+    close();
   };
+
+  const showResults = searched != null && searched === query;
 
   return (
     <Popover
       anchorEl={anchorEl}
       open={Boolean(anchorEl)}
-      onClose={() => setAnchorEl(null)}
+      onClose={close}
       anchorOrigin={{
         vertical: 'bottom',
         horizontal: theme.direction === 'rtl' ? 'left' : 'right',
@@ -158,6 +219,12 @@ const MapGeocoder = () => {
             placeholder={t('sharedSearch')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                search();
+              }
+            }}
             slotProps={{
               input: {
                 startAdornment: (
@@ -176,39 +243,61 @@ const MapGeocoder = () => {
                   <ListItemText primary={<Skeleton width="100%" />} />
                 </ListItemButton>
               ))
-            : results.map((feature) => (
-                <ListItem
-                  key={feature.properties.place_id}
-                  disablePadding
-                  secondaryAction={
-                    // LIV-21: who is closest to this address.
-                    <Tooltip title={t('mapNearbyVehicles')}>
-                      <IconButton
-                        edge="end"
-                        size="small"
-                        aria-label={`${t('mapNearbyVehicles')}: ${feature.properties.display_name}`}
-                        onClick={() => {
-                          const [longitude, latitude] = feature.geometry.coordinates;
-                          onSelect(feature);
-                          map.fire('vf-nearby', {
-                            latitude,
-                            longitude,
-                            name: feature.properties.display_name,
-                          });
-                        }}
+            : !showResults
+              ? query.trim().length > 1 && (
+                  <>
+                    <ListItemButton onClick={() => search()}>
+                      <ListItemIcon>
+                        <SearchRoundedIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText primary={t('mapSearchFor').replace('{0}', query.trim())} />
+                    </ListItemButton>
+                    {streets.map((street) => (
+                      <ListItemButton
+                        key={`${street.street}|${street.city}`}
+                        onClick={() => onStreet(street)}
                       >
-                        <NearMeRoundedIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  }
-                >
-                  <ListItemButton onClick={() => onSelect(feature)}>
-                    <ListItemText primary={feature.properties.display_name} />
-                  </ListItemButton>
-                </ListItem>
-              ))}
+                        <ListItemIcon>
+                          <PlaceOutlinedIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText primary={formatAddress(street)} />
+                      </ListItemButton>
+                    ))}
+                  </>
+                )
+              : results.map((feature) => (
+                  <ListItem
+                    key={feature.properties.place_id}
+                    disablePadding
+                    secondaryAction={
+                      // LIV-21: who is closest to this address.
+                      <Tooltip title={t('mapNearbyVehicles')}>
+                        <IconButton
+                          edge="end"
+                          size="small"
+                          aria-label={`${t('mapNearbyVehicles')}: ${feature.properties.display_name}`}
+                          onClick={() => {
+                            const [longitude, latitude] = feature.geometry.coordinates;
+                            onSelect(feature);
+                            map.fire('vf-nearby', {
+                              latitude,
+                              longitude,
+                              name: feature.properties.display_name,
+                            });
+                          }}
+                        >
+                          <NearMeRoundedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    }
+                  >
+                    <ListItemButton onClick={() => onSelect(feature)}>
+                      <ListItemText primary={feature.properties.display_name} />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
           {/* LIV-12: a search that found nothing says so. */}
-          {!loading && query.trim().length > 2 && searched === query && !results.length && (
+          {!loading && showResults && !results.length && (
             <ListItemText
               role="status"
               sx={{ px: 2, py: 1, color: 'text.secondary' }}

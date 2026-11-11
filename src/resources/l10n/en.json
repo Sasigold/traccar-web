@@ -3771,6 +3771,7 @@
     "mapRetry": "Try again",
     "mapSwitchLayer": "Switch layer",
     "mapSearchNotFound": "No place by that name",
+    "mapSearchFor": "Search for \"{0}\"",
     "cardNoVideo": "This device does not support live video",
     "cardNoPosition": "This vehicle has no location yet. It appears on the map after the device's first report.",
     "shellVehicleActions": "Actions on {0}",
