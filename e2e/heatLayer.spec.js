@@ -12,11 +12,16 @@ test('the live map shows a heat layer over a chosen period', async ({ page }) =>
   await expect(panel.getByRole('status')).toHaveText(/\d+ נקודות/);
 
   // Another period asks again, for 30 days.
-  const month = page.waitForRequest((request) => request.url().includes('/api/reports/stops'));
+  // The vehicle list can ask again for 7 days meanwhile; wait for the 30-day request itself.
+  const spanDays = (request) => {
+    const query = new URL(request.url()).searchParams;
+    return Math.round((Date.parse(query.get('to')) - Date.parse(query.get('from'))) / 86400000);
+  };
+  const month = page.waitForRequest(
+    (request) => request.url().includes('/api/reports/stops') && spanDays(request) === 30,
+  );
   await panel.getByRole('button', { name: '30 ימים' }).click();
-  const query = new URL((await month).url()).searchParams;
-  const days = (Date.parse(query.get('to')) - Date.parse(query.get('from'))) / 86400000;
-  expect(Math.round(days)).toBe(30);
+  expect(spanDays(await month)).toBe(30);
   await expect(panel.getByRole('button', { name: '30 ימים' })).toHaveAttribute(
     'aria-pressed',
     'true',
