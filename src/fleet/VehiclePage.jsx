@@ -53,6 +53,7 @@ import { workOrderStatusKey } from './WorkOrdersPage';
 import { incidentKey } from './IncidentsPage';
 import { capitalize } from '../common/util/stringUtils';
 import EvCard from './components/EvCard';
+import LeaseCard from './components/LeaseCard';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -489,6 +490,7 @@ const VehiclePage = () => {
         )}
 
         {tab === 'overview' && <EvCard device={device} position={position} />}
+        {tab === 'overview' && <LeaseCard device={device} position={position} />}
 
         {tab === 'maintenance' && (
           <>

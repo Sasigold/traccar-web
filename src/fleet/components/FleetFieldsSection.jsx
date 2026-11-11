@@ -228,7 +228,9 @@ const FleetFieldsSection = ({
 
   return (
     <FormSection title={title} description={description} icon={icon} actions={actions}>
-      <div className={classes.grid}>{fields.map(renderField)}</div>
+      <div className={classes.grid}>
+        {fields.filter((field) => !field.when || field.when(values)).map(renderField)}
+      </div>
     </FormSection>
   );
 };
