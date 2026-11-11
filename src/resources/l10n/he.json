@@ -1683,6 +1683,7 @@
     "fleetExpenseCategoryOther": "אחר",
     "fleetInspectionsPage": "בדיקות רכב",
     "fleetInspectionsPageDescription": "צ׳ק-ליסטים, בדיקות בוקר ותקלות שעלו מהן",
+    "inspectionMissedTitle": "נסעו היום בלי בדיקת בוקר ({0})",
     "fleetInspectionsViewInspections": "בדיקות",
     "fleetInspectionsViewTemplates": "תבניות",
     "fleetInspectionsViewIssues": "תקלות פתוחות",

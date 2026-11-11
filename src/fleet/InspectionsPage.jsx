@@ -26,6 +26,7 @@ import { formatTime } from '../common/util/formatter';
 import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetPermission } from '../common/fleet/useFleet';
 import FleetNotice from './components/FleetNotice';
+import MissedChecks from './components/MissedChecks';
 import InspectionTemplateDialog, { frequencyKey } from './components/InspectionTemplateDialog';
 import { readAllRows } from '../common/data/fleetQuery';
 import { pascalCase } from '../common/util/stringUtils';
@@ -150,6 +151,7 @@ const InspectionsPage = () => {
       description={t('fleetInspectionsPageDescription')}
     >
       <FleetNotice permission="inspections.read" />
+      {canRead && view === 'inspections' && <MissedChecks />}
       <DataTable
         toolbar={
           <TableToolbar

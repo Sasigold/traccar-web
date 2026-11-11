@@ -1683,6 +1683,7 @@
     "fleetExpenseCategoryOther": "Other",
     "fleetInspectionsPage": "Vehicle inspections",
     "fleetInspectionsPageDescription": "Checklists, morning checks and the issues they raise",
+    "inspectionMissedTitle": "Drove today without a morning check ({0})",
     "fleetInspectionsViewInspections": "Inspections",
     "fleetInspectionsViewTemplates": "Templates",
     "fleetInspectionsViewIssues": "Open issues",
