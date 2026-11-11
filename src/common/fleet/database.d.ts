@@ -2916,6 +2916,66 @@ export type Database = {
         };
         Relationships: [];
       };
+      toll_charges: {
+        Row: {
+          id: string;
+          org_id: string;
+          vehicle_id: string | null;
+          traccar_device_id: number | null;
+          plate: string;
+          charged_at: string;
+          amount: number;
+          operator: string | null;
+          place: string | null;
+          driver_unique_id: string | null;
+          status: string;
+          private: boolean;
+          cost_center: string | null;
+          statement: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          vehicle_id?: string | null;
+          traccar_device_id?: number | null;
+          plate: string;
+          charged_at: string;
+          amount: number;
+          operator?: string | null;
+          place?: string | null;
+          driver_unique_id?: string | null;
+          status?: string;
+          private?: boolean;
+          cost_center?: string | null;
+          statement?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          vehicle_id?: string | null;
+          traccar_device_id?: number | null;
+          plate?: string;
+          charged_at?: string;
+          amount?: number;
+          operator?: string | null;
+          place?: string | null;
+          driver_unique_id?: string | null;
+          status?: string;
+          private?: boolean;
+          cost_center?: string | null;
+          statement?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       training_courses: {
         Row: {
           id: string;

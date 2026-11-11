@@ -64,3 +64,45 @@ export const toCharges = (rows, mapping, parseDate, parseNumber) =>
       place: mapping.place != null ? row[mapping.place] : null,
     }))
     .filter((charge) => charge.time && charge.plate && Number.isFinite(charge.amount));
+
+// A charge is the same charge when the plate, the time and the amount are (toll_charges' key).
+export const chargeKey = (row) =>
+  `${digits(row.plate)}|${new Date(row.time).getTime()}|${Number(row.amount).toFixed(2)}`;
+
+const round = (value) => Math.round(value * 100) / 100;
+
+// The month's totals: what the company pays per driver and per cost center, and the private
+// charges each driver pays. `costCenterOf(row)` names a row's cost center (or null).
+export const chargeTotals = (rows, costCenterOf = (row) => row.costCenter || null) => {
+  const drivers = new Map();
+  const centers = new Map();
+  let company = 0;
+  let privateTotal = 0;
+  rows.forEach((row) => {
+    const amount = Number(row.amount) || 0;
+    const driver = row.driver || 'unknown';
+    const entry = drivers.get(driver) || { driver, amount: 0, private: 0 };
+    if (row.private) {
+      entry.private += amount;
+      privateTotal += amount;
+    } else {
+      entry.amount += amount;
+      company += amount;
+      const center = costCenterOf(row) || '';
+      centers.set(center, (centers.get(center) || 0) + amount);
+    }
+    drivers.set(driver, entry);
+  });
+  return {
+    byDriver: [...drivers.values()].map((entry) => ({
+      ...entry,
+      amount: round(entry.amount),
+      private: round(entry.private),
+    })),
+    byCostCenter: [...centers.entries()]
+      .map(([costCenter, amount]) => ({ costCenter, amount: round(amount) }))
+      .sort((a, b) => b.amount - a.amount),
+    company: round(company),
+    private: round(privateTotal),
+  };
+};
