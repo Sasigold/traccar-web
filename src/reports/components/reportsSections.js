@@ -30,6 +30,7 @@ import TollRoundedIcon from '@mui/icons-material/TollRounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import HandshakeRoundedIcon from '@mui/icons-material/HandshakeRounded';
 import SummarizeRoundedIcon from '@mui/icons-material/SummarizeRounded';
+import AcUnitRoundedIcon from '@mui/icons-material/AcUnitRounded';
 
 const singleDevicePaths = ['/reports/chart', '/reports/route', '/replay'];
 
@@ -66,6 +67,7 @@ export const useReportsSections = () => {
   const fleetCosts = useFleetPermission('costs.read');
   const fleetPoi = useFleetPermission('poi.read');
   const fleetDispatch = useFleetPermission('dispatch.read');
+  const fleetVehicles = useFleetPermission('vehicles.read');
 
   return useMemo(
     () =>
@@ -312,6 +314,17 @@ export const useReportsSections = () => {
           titleKey: 'reportsGroupTools',
           items: [
             {
+              // REP-23: the temperature limits of the sensors page, over a period.
+              id: 'coldChain',
+              descriptionKey: 'reportColdChainDescription',
+              titleKey: 'reportColdChain',
+              icon: AcUnitRoundedIcon,
+              path: '/reports/cold-chain',
+              match: exact('/reports/cold-chain'),
+              carry: true,
+              visible: fleetVehicles,
+            },
+            {
               // REP-16, REP-23: the month on one page, to print.
               id: 'management',
               descriptionKey: 'reportManagementDescription',
@@ -370,7 +383,7 @@ export const useReportsSections = () => {
       ]
         .map((group) => ({ ...group, items: group.items.filter((item) => item.visible !== false) }))
         .filter((group) => group.items.length > 0),
-    [admin, readonly, fleetSafety, fleetCosts, fleetPoi, fleetDispatch],
+    [admin, readonly, fleetSafety, fleetCosts, fleetPoi, fleetDispatch, fleetVehicles],
   );
 };
 

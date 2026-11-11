@@ -100,3 +100,40 @@ test('the management summary weighs the month against the one before', async ({ 
   await expect(main.getByRole('heading', { name: 'הכי הרבה ק"מ' })).toBeVisible();
   await expect(main.getByRole('button', { name: 'הדפסה / PDF' })).toBeEnabled();
 });
+
+// REP-23: the cold chain against the limits of the sensors page.
+test('the cold chain report counts the excursions out of range', async ({ page }) => {
+  const { from, query } = day();
+  const at = (minutes, temp1) => ({
+    id: minutes,
+    deviceId: 1,
+    fixTime: new Date(from.getTime() + (8 * 60 + minutes) * 60000).toISOString(),
+    latitude: 51.5,
+    longitude: -0.12,
+    attributes: { temp1 },
+  });
+  await page.route('**/api/reports/route?*', (route) =>
+    route.fulfill({ json: [at(0, 3), at(10, 9), at(40, 4), at(50, 12), at(55, 5)] }),
+  );
+  await writeMode(page);
+  await fakeFleet(page, {
+    users: {
+      1: { profile: { id: 'p1', org_id: 'o1', role: 'manager' }, permissions: ['vehicles.read'] },
+    },
+    tables: {
+      vehicles: [
+        { id: 'v1', plate_number: '11-111-11', traccar_device_id: 1, temp_min: 2, temp_max: 8 },
+        { id: 'v2', plate_number: '22-222-22', traccar_device_id: 2 },
+      ],
+    },
+  });
+  await gotoReady(page, `/reports/cold-chain?deviceId=1&deviceId=2&${query}`);
+  await page.getByRole('button', { name: 'הצג', exact: true }).click();
+  const main = page.getByRole('main');
+  const row = main.getByRole('row', { name: /Delivery Van/ });
+  // Two excursions, 30 + 5 minutes, between 3° and 12°.
+  await expect(row).toContainText('2° – 8°');
+  await expect(row).toContainText('12°');
+  await expect(row.getByRole('cell').nth(2)).toHaveText('2');
+  await expect(main.getByRole('row', { name: /Service Van/ })).toHaveCount(0);
+});
