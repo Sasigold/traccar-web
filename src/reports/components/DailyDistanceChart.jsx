@@ -41,6 +41,8 @@ const DailyDistanceChart = ({ points }) => {
             width={width}
             height={HEIGHT}
             view={{ kind: 'timeseries', points, format }}
+            currentLabel={t('reportCurrentPeriod')}
+            previousLabel={t('reportPreviousPeriod')}
           />
         )}
       </div>

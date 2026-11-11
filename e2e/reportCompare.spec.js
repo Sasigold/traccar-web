@@ -64,3 +64,36 @@ test('the events tiles show the change from the previous period', async ({ page 
   await expect(page.getByText('▼ 25% מהתקופה הקודמת')).toBeVisible();
   await expect(page.getByText('▲ 100% מהתקופה הקודמת')).toBeVisible();
 });
+
+test('the summary chart draws the period before as a dashed line', async ({ page }) => {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - 2);
+  const end = new Date(start.getTime() + 3 * 86400000 - 1);
+  await page.route('**/api/reports/summary?*', (route) => {
+    const params = new URL(route.request().url()).searchParams;
+    const from = Date.parse(params.get('from'));
+    const base = from >= start.getTime() ? 0 : 3 * 86400000;
+    if (params.get('daily') !== 'true') {
+      return route.fulfill({
+        json: [{ deviceId: 1, startTime: params.get('from'), distance: 90000 }],
+      });
+    }
+    return route.fulfill({
+      json: [0, 1, 2].map((offset) => ({
+        deviceId: 1,
+        startTime: new Date(start.getTime() - base + offset * 86400000 + 6 * 3600000).toISOString(),
+        distance: 30000,
+      })),
+    });
+  });
+  await gotoReady(
+    page,
+    `/reports/summary?deviceId=1&from=${encodeURIComponent(start.toISOString())}&to=${encodeURIComponent(end.toISOString())}`,
+  );
+  await page.getByLabel('השוואה לתקופה הקודמת').check();
+  await page.getByRole('button', { name: 'הצג' }).first().click();
+  const chart = page.getByRole('figure', { name: /מרחק ליום/ });
+  await expect(chart.getByText('התקופה הקודמת')).toBeVisible();
+  await expect(chart.locator('path[stroke-dasharray="5 4"]')).toHaveCount(1);
+});

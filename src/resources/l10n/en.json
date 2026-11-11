@@ -3870,6 +3870,8 @@
     "reportViewSaved": "The view was saved on the reports page",
     "reportSavedViews": "Saved views",
     "reportComparePrevious": "Compare with the previous period",
+    "reportCurrentPeriod": "Selected period",
+    "reportPreviousPeriod": "Previous period",
     "reportChangeFromPrevious": "Change from the previous period: {0}",
     "reportChangeShort": "{0} from the previous period",
     "reportShowAllAddresses": "Show all addresses",

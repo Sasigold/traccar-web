@@ -166,7 +166,8 @@ const SummaryReportPage = () => {
               : null,
           })),
         );
-        setDays(dailyRows && span > 1 && span <= 93 ? distancePerDay(dailyRows, from, to) : null);
+        let points =
+          dailyRows && span > 1 && span <= 93 ? distancePerDay(dailyRows, from, to) : null;
         if (compare && !daily) {
           const before = previousRange(from, to);
           query.set('from', before.from);
@@ -177,9 +178,26 @@ const SummaryReportPage = () => {
           });
           const previousRows = await previousResponse.json();
           setPrevious(new Map(previousRows.map((row) => [row.deviceId, row])));
+          if (points) {
+            // The period before, day by day, as a dashed line under the same days.
+            query.set('daily', 'true');
+            const earlier = distancePerDay(
+              await fetchOrThrow(`api/reports/summary?${query.toString()}`, {
+                signal,
+                headers: { Accept: 'application/json' },
+              }).then((result) => result.json()),
+              before.from,
+              before.to,
+            );
+            points = points.map((point, index) => ({
+              ...point,
+              previous: earlier[index]?.value ?? null,
+            }));
+          }
         } else {
           setPrevious(null);
         }
+        setDays(points);
       } finally {
         setLoading(false);
         setQueried(true);

@@ -4,7 +4,9 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  ComposedChart,
   LabelList,
+  Line,
   ReferenceLine,
   Tooltip,
   XAxis,
@@ -30,6 +32,8 @@ const ColumnChart = ({
   partialNote,
   target,
   targetLabel,
+  currentLabel,
+  previousLabel,
 }) => {
   const chart = useChartTheme();
   const timeline = view.kind === 'timeseries';
@@ -44,7 +48,11 @@ const ColumnChart = ({
       })),
     [timeline, view, series],
   );
-  const legendHeight = series ? LEGEND_HEIGHT : 0;
+  // REP-09: a time series whose points carry `previous` gets a dashed line for the period
+  // before, laid over the columns day by day.
+  const withPrevious = timeline && !series && data.some((item) => item.previous != null);
+  const Chart = withPrevious ? ComposedChart : BarChart;
+  const legendHeight = series || withPrevious ? LEGEND_HEIGHT : 0;
   const chartHeight = Math.max(60, height - legendHeight);
   const showAxis = size !== 'xs' && size !== 'sm';
   const max = Math.max(...data.map((item) => item.value ?? 0));
@@ -68,14 +76,31 @@ const ColumnChart = ({
             text: view.format(item.values[entry.key]),
             label: entry.label,
           }))
-      : [{ key: item.key, color: item.color ?? chart.single, text: item.full }];
+      : [
+          {
+            key: item.key,
+            color: item.color ?? chart.single,
+            text: item.full ?? view.format(item.value),
+            label: withPrevious ? currentLabel : undefined,
+          },
+          ...(withPrevious && item.previous != null
+            ? [
+                {
+                  key: 'previous',
+                  color: chart.textSecondary,
+                  text: view.format(item.previous),
+                  label: previousLabel,
+                },
+              ]
+            : []),
+        ];
     return <TooltipCard title={item.label} rows={rows} note={item.partial ? partialNote : null} />;
   };
 
   return (
     <div style={{ width, height }}>
       <div dir="ltr" style={{ width, height: chartHeight }}>
-        <BarChart
+        <Chart
           width={width}
           height={chartHeight}
           data={data}
@@ -184,7 +209,7 @@ const ColumnChart = ({
                         fontWeight={600}
                         fontFamily={chart.fontFamily}
                       >
-                        {data[index].text}
+                        {data[index].text ?? view.format(value)}
                       </text>
                     ) : null
                   }
@@ -192,7 +217,20 @@ const ColumnChart = ({
               )}
             </Bar>
           )}
-        </BarChart>
+          {withPrevious && (
+            <Line
+              dataKey="previous"
+              type="monotone"
+              stroke={chart.textSecondary}
+              strokeWidth={1.5}
+              strokeDasharray="5 4"
+              dot={false}
+              activeDot={{ r: 3, fill: chart.textSecondary, stroke: chart.surface }}
+              isAnimationActive={animate}
+              animationDuration={chart.motion.duration.slow}
+            />
+          )}
+        </Chart>
       </div>
       {series && (
         <div style={{ height: legendHeight, display: 'flex', alignItems: 'flex-end' }}>
@@ -202,6 +240,21 @@ const ColumnChart = ({
               label: entry.label,
               color: entry.color,
             }))}
+          />
+        </div>
+      )}
+      {withPrevious && (
+        <div style={{ height: legendHeight, display: 'flex', alignItems: 'flex-end' }}>
+          <ChartLegend
+            items={[
+              { key: 'current', label: currentLabel, color: chart.single },
+              {
+                key: 'previous',
+                label: previousLabel,
+                color: chart.textSecondary,
+                shape: 'dashed',
+              },
+            ]}
           />
         </div>
       )}
