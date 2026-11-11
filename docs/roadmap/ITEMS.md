@@ -1404,7 +1404,7 @@ P2 · שיפור · פיצ'ר חדש · השפעה בינונית · מאמץ ק
 
 ### 🟡 ISR-10: כתובות בעברית: השלמה אוטומטית וחיפוש מדויק
 
-P2 · שיפור · פיצ'ר חדש · השפעה בינונית · מאמץ בינוני · עד שבוע · **בוצע:** `1760ab8`, `3a25ed2b` (in the dispatch job and point-of-interest dialogs; the map search, the street synonyms list, and GovMap or an own geocoder in web.geocoderUrl instead of public Nominatim are left)
+P2 · שיפור · פיצ'ר חדש · השפעה בינונית · מאמץ בינוני · עד שבוע · **בוצע:** `1760ab8`, `3a25ed2b`, `451173d6` (in the dispatch job and point-of-interest dialogs and the map search; the street synonyms list, and GovMap or an own geocoder in web.geocoderUrl instead of public Nominatim, wait on the owner)
 
 - **מה יש היום:** חיפוש הכתובות במפה והגיאוקודינג נשענים על ספק כללי, ואיכות הכתובות בעברית לא ידועה.
 - **מה להוסיף:** השלמה אוטומטית של כתובות בעברית לפי רשימת הרחובות הרשמית של רשות האוכלוסין (כולל שמות נרדפים, ב-data.gov.il) ו-API הכתובות של GovMap (דורש רישום), עם מטמון. שימושי במשימות שיגור, בנקודות עניין ובחיפוש במפה.
