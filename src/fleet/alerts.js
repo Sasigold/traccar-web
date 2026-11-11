@@ -26,7 +26,7 @@ export const acknowledgeAlerts = async (ids, profileId) =>
       .in('id', ids),
   );
 
-export const alertKinds = ['document_expiry', 'maintenance', 'report'];
+export const alertKinds = ['document_expiry', 'missed_check', 'maintenance', 'report'];
 export const alertChannels = ['whatsapp', 'sms', 'email'];
 
 // WhatsApp and SMS need an international number (+972...), email a plausible address.

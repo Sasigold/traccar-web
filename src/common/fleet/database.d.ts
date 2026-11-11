@@ -2001,6 +2001,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      missed_check_alerts: {
+        Row: {
+          id: string;
+          org_id: string;
+          vehicle_id: string;
+          driver_id: string | null;
+          day: string;
+          taken_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          org_id: string;
+          vehicle_id: string;
+          driver_id?: string | null;
+          day: string;
+          taken_at: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          org_id?: string;
+          vehicle_id?: string;
+          driver_id?: string | null;
+          day?: string;
+          taken_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       notification_deliveries: {
         Row: {
           id: string;
@@ -3934,6 +3964,13 @@ export type Database = {
       generate_document_alerts: {
         Args: {
           p_today?: string;
+        };
+        Returns: number;
+      };
+      generate_missed_check_alerts: {
+        Args: {
+          p_now?: string;
+          p_grace?: string;
         };
         Returns: number;
       };

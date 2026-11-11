@@ -58,6 +58,11 @@ const MissedChecks = () => {
           </Link>
         </span>
       ))}
+      <div>
+        <Link component={RouterLink} to="/fleet/alerts">
+          {t('inspectionMissedNotify')}
+        </Link>
+      </div>
     </Alert>
   );
 };

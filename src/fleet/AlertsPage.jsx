@@ -83,7 +83,7 @@ const useStyles = makeStyles()((theme) => ({
 
 // document_expiry -> fleetAlertKindDocumentExpiry
 // The alert kinds that something produces today (ADM-08); the others are offered as "soon".
-const WORKING_KINDS = ['document_expiry'];
+const WORKING_KINDS = ['document_expiry', 'missed_check'];
 
 const kindKey = (kind) => `fleetAlertKind${pascalCase(kind)}`;
 const emptyRecipient = {
