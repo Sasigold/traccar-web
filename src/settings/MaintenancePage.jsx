@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import dayjs from 'dayjs';
 import {
+  Chip,
+  Stack,
+  Typography,
   TextField,
   FormControl,
   FormHelperText,
@@ -21,6 +24,36 @@ import usePositionAttributes from '../common/attributes/usePositionAttributes';
 import SettingsMenu from './components/SettingsMenu';
 import { DateField } from '../common/components/pickers';
 import FormSection from './components/FormSection';
+
+const DAY = 86400000;
+const KM = 1000;
+const HOUR = 3600000;
+
+// ADM-31: the common plans, ready to fill in a new maintenance. Traccar keeps distances in
+// meters, engine hours in milliseconds and dates as times; a yearly plan starts today, and the
+// others are due first after one interval.
+export const MAINTENANCE_TEMPLATES = [
+  {
+    key: 'service10k',
+    nameKey: 'maintenanceTemplate10k',
+    type: 'totalDistance',
+    period: 10000 * KM,
+  },
+  {
+    key: 'service15k',
+    nameKey: 'maintenanceTemplate15k',
+    type: 'totalDistance',
+    period: 15000 * KM,
+  },
+  { key: 'yearly', nameKey: 'maintenanceTemplateYearly', type: 'fixTime', period: 365 * DAY },
+  { key: 'hours250', nameKey: 'maintenanceTemplateHours', type: 'hours', period: 250 * HOUR },
+  {
+    key: 'brakes',
+    nameKey: 'maintenanceTemplateBrakes',
+    type: 'totalDistance',
+    period: 30000 * KM,
+  },
+];
 
 const MaintenancePage = () => {
   const t = useTranslation();
@@ -83,6 +116,34 @@ const MaintenancePage = () => {
       {item && (
         <>
           <FormSection title={t('formSectionBasic')}>
+            {!item.id && (
+              <Stack spacing={1}>
+                <Typography variant="body2" color="textSecondary">
+                  {t('maintenanceTemplates')}
+                </Typography>
+                <Stack direction="row" useFlexGap spacing={1} sx={{ flexWrap: 'wrap' }}>
+                  {MAINTENANCE_TEMPLATES.map((template) => (
+                    <Chip
+                      key={template.key}
+                      label={t(template.nameKey)}
+                      variant="outlined"
+                      onClick={() =>
+                        setItem({
+                          ...item,
+                          name: t(template.nameKey),
+                          type: template.type,
+                          // The first service one interval in (the same plan as from zero).
+                          start: template.type.endsWith('Time')
+                            ? dayjs().startOf('day').valueOf()
+                            : template.period,
+                          period: template.period,
+                        })
+                      }
+                    />
+                  ))}
+                </Stack>
+              </Stack>
+            )}
             <TextField
               value={item.name || ''}
               onChange={(e) => setItem({ ...item, name: e.target.value })}
