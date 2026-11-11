@@ -4120,6 +4120,7 @@
     "fleetSafetyDrivingLeft": "{0} of driving left",
     "fleetSafetyNoDrivingLeft": "Driving limit reached",
     "fleetListPrice": "List price (₪)",
+    "fleetCostCenter": "Cost center",
     "fleetMonthlyBenefit": "Monthly taxable benefit",
     "fleetMonthlyBenefitHint": "estimate by 2026 values, to confirm with an accountant",
     "reportWorkHours": "Work hours",

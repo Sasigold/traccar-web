@@ -4120,6 +4120,7 @@
     "fleetSafetyDrivingLeft": "נותרו {0} נהיגה",
     "fleetSafetyNoDrivingLeft": "הגיע למגבלת הנהיגה",
     "fleetListPrice": "מחיר מחירון (₪)",
+    "fleetCostCenter": "מרכז עלות",
     "fleetMonthlyBenefit": "שווי שימוש לחודש",
     "fleetMonthlyBenefitHint": "הערכה לפי ערכי 2026, לאימות מול רו\"ח",
     "reportWorkHours": "שעות עבודה",

@@ -42,6 +42,7 @@ export const vehicleRow = (device) => {
     fuel_type: text(a.fuelType),
     ownership: text(a.ownership),
     leasing_end_date: date(a.leaseEndDate),
+    cost_center: text(a.costCenter),
     notes: text(a.fleetNotes),
   };
 };
@@ -103,6 +104,7 @@ export const vehicleAttributes = (attributes, row, documents = []) => {
     put(result, 'fuelType', row.fuel_type);
     put(result, 'ownership', row.ownership);
     put(result, 'leaseEndDate', row.leasing_end_date);
+    put(result, 'costCenter', row.cost_center);
     put(result, 'fleetNotes', row.notes);
   }
   const expiries = latestExpiries(documents);

@@ -67,6 +67,8 @@ export const vehicleFields = [
     money: true,
     when: leased,
   },
+  // ISR-06: the cost center the vehicle's tolls, parking and costs are charged to.
+  { key: 'costCenter', labelKey: 'fleetCostCenter', type: 'text' },
   // ISR-05: the list price ("מחיר מחירון"), for the taxable benefit of a company car.
   { key: 'listPrice', labelKey: 'fleetListPrice', type: 'number', ltr: true, money: true },
   // ISR-12: a vehicle new drivers should not get (a truck, a passenger van).
