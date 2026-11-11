@@ -217,3 +217,31 @@ test('an employee’s data is exported, then erased after typing the name', asyn
     'privacy_erase_driver',
   ]);
 });
+
+// SEC-17: the owner finds the files no record points to and deletes them through Storage.
+test('files no record points to are found and deleted', async ({ page }) => {
+  await writeMode(page);
+  const orphans = Array.from({ length: 120 }, (_, index) => ({
+    name: `o1/expenses/orphan-${index}.pdf`,
+    size: 1024 * 1024,
+    created_at: '2026-09-01T10:00:00Z',
+  }));
+  const fleet = await fakeFleet(page, {
+    users: {
+      1: { profile: { id: 'p1', org_id: 'o1', role: 'owner' }, permissions: ['privacy.manage'] },
+    },
+    rpc: { fleet_orphan_files: orphans },
+    tables: { privacy_policies: [], privacy_notices: [], drivers: [] },
+  });
+  await gotoReady(page, '/fleet/privacy');
+  await page.getByRole('button', { name: 'חיפוש קבצים כאלה' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'נמצאו 120 קבצים' })).toContainText(
+    '120 MB',
+  );
+  await page.getByRole('button', { name: 'מחיקת 120 הקבצים' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'הסרה' }).click();
+  await expect(page.getByRole('status').filter({ hasText: '120 קבצים נמחקו' })).toBeVisible();
+  // In two requests of at most 100 paths.
+  expect(fleet.removedFiles).toHaveLength(120);
+  expect(fleet.requests.filter((request) => request.method === 'DELETE')).toHaveLength(2);
+});

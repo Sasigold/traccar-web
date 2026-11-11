@@ -32,6 +32,7 @@ import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import SettingsMenu from '../settings/components/SettingsMenu';
 import FormSection from '../settings/components/FormSection';
+import OrphanFilesSection from './components/OrphanFilesSection';
 import { useAsyncTask, useCatch } from '../reactHelper';
 import { formatTime } from '../common/util/formatter';
 import { getFleetClient, unwrap } from '../common/fleet/client';
@@ -608,6 +609,7 @@ const PrivacyPage = () => {
   const { classes } = useStyles();
   const t = useTranslation();
   const allowed = useFleetPermission('privacy.manage');
+  const profile = useFleetProfile();
   const [reloadKey, reload] = useReducer((key) => key + 1, 0);
   const [data, setData] = useState(null);
 
@@ -665,6 +667,7 @@ const PrivacyPage = () => {
           <PeriodsSection periods={data.periods} onSaved={reload} />
           <ViewLogSection log={data.log} />
           <EmployeeRequestsSection drivers={data.drivers} policy={data.policy} onDone={reload} />
+          {['owner', 'admin'].includes(profile?.role) && <OrphanFilesSection />}
         </div>
       )}
     </PageLayout>

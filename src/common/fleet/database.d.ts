@@ -4010,6 +4010,16 @@ export type Database = {
         };
         Returns: boolean;
       };
+      fleet_orphan_files: {
+        Args: {
+          p_min_age?: string;
+        };
+        Returns: Json[];
+      };
+      fleet_referenced_paths: {
+        Args: Record<PropertyKey, never>;
+        Returns: string[];
+      };
       fleet_save: {
         Args: {
           p_kind: string;
