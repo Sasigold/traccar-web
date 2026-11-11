@@ -15,6 +15,7 @@ const MapPositionMarkers = ({
   positions,
   onMapClick,
   onMarkerClick,
+  onMarkerHover,
   showStatus,
   selectedPosition,
   titleField,
@@ -82,6 +83,10 @@ const MapPositionMarkers = ({
         latitude: position.latitude,
         longitude: position.longitude,
         image: `${iconKey}-${color}`,
+        // LIV-29: counted by the clusters (their ring shows the state of most of their vehicles).
+        status: device.status || 'unknown',
+        // LIV-29: a vehicle whose latest position carries an alarm marks its cluster.
+        alert: position.attributes?.alarm ? 1 : 0,
         title,
         fixTime: position.fixTime,
         rotation: position.course,
@@ -145,6 +150,7 @@ const MapPositionMarkers = ({
         direction
         cluster={mapCluster}
         onClick={onClick}
+        onHover={onMarkerHover}
         disabled={disabled}
         smooth={glide}
       />

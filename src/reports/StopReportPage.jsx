@@ -29,11 +29,13 @@ import PageLayout from '../common/components/PageLayout';
 import ReportsMenu from './components/ReportsMenu';
 import ColumnSelect from './components/ColumnSelect';
 import ReportKpis from './components/ReportKpis';
+import CompareSwitch from './components/CompareSwitch';
+import { changeHint, fetchPrevious } from './common/previousPeriod';
 import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
 import PauseCircleRoundedIcon from '@mui/icons-material/PauseCircleRounded';
 import ResizeHandle from './components/ResizeHandle';
 import usePersistedState from '../common/util/usePersistedState';
-import { useCatch, useCatchCallback } from '../reactHelper';
+import { useCatch, useRunCallback } from '../reactHelper';
 import useReportStyles from './common/useReportStyles';
 import MapMarkers from '../map/MapMarkers';
 import MapView from '../map/core/MapView';
@@ -62,6 +64,7 @@ import { vehicleName, vehicleTitle } from './common/vehicle';
 import useSelectedRow from './common/useSelectedRow';
 import { STOP_MINIMUMS, filterStops } from './common/reportRules';
 import SelectField from '../common/components/SelectField';
+import { alignOf, NUMERIC_COLUMNS } from './common/numericColumns';
 
 const columnsArray = [
   ['startTime', 'reportStartTime'],
@@ -109,29 +112,38 @@ const StopReportPage = () => {
   const selectedRowRef = useSelectedRow(selectedItem);
   const [hiddenRows, setHiddenRows] = useState(0);
 
-  const onShow = useCatchCallback(async ({ deviceIds, groupIds, from, to }) => {
-    const query = new URLSearchParams({ from, to });
-    deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
-    groupIds.forEach((groupId) => query.append('groupId', groupId));
-    setLoading(true);
-    try {
-      const response = await fetchOrThrow(`api/reports/stops?${query.toString()}`, {
-        headers: { Accept: 'application/json' },
-      });
-      // Places in hidden time (outside working hours, private periods) are taken out.
-      const rows = await response.json();
-      const result = await privateRows(rows, {
-        deviceIds: [...deviceIds, ...rows.map((row) => row.deviceId)],
-        from,
-        to,
-      });
-      setAllItems(result.rows);
-      setHiddenRows(result.hidden);
-    } finally {
-      setLoading(false);
-      setQueried(true);
-    }
-  }, []);
+  // REP-09: the stops of the period right before, for the change in the tiles.
+  const [compare, setCompare] = usePersistedState('stopsCompare', false);
+  const [previous, setPrevious] = useState(null);
+
+  const onShow = useRunCallback(
+    async ({ deviceIds, groupIds, from, to, signal }) => {
+      const query = new URLSearchParams({ from, to });
+      deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
+      groupIds.forEach((groupId) => query.append('groupId', groupId));
+      setLoading(true);
+      try {
+        const response = await fetchOrThrow(`api/reports/stops?${query.toString()}`, {
+          signal,
+          headers: { Accept: 'application/json' },
+        });
+        // Places in hidden time (outside working hours, private periods) are taken out.
+        const rows = await response.json();
+        const result = await privateRows(rows, {
+          deviceIds: [...deviceIds, ...rows.map((row) => row.deviceId)],
+          from,
+          to,
+        });
+        setAllItems(result.rows);
+        setHiddenRows(result.hidden);
+        setPrevious(compare ? await fetchPrevious('stops', query, from, to, signal) : null);
+      } finally {
+        setLoading(false);
+        setQueried(true);
+      }
+    },
+    [compare],
+  );
 
   const onExport = useCatch(async () => {
     const sheets = new Map();
@@ -166,22 +178,27 @@ const StopReportPage = () => {
     if (!items.length) {
       return [];
     }
-    const duration = items.reduce((total, item) => total + (item.duration || 0), 0);
+    const durationOf = (rows) => rows.reduce((total, item) => total + (item.duration || 0), 0);
+    const duration = durationOf(items);
+    // The period before, through the same filters.
+    const before = previous ? filterStops(previous, { minMinutes, idleOnly }) : null;
     return [
       {
         key: 'count',
         label: t('reportStops'),
         value: items.length,
+        hint: before ? changeHint(t, items.length, before.length) : undefined,
         icon: <PauseCircleRoundedIcon />,
       },
       {
         key: 'duration',
         label: `${t('sharedTotal')} · ${t('reportDuration')}`,
         value: formatNumericHours(duration, t),
+        hint: before ? changeHint(t, duration, durationOf(before)) : undefined,
         icon: <TimerRoundedIcon />,
       },
     ];
-  }, [items, t]);
+  }, [items, previous, minMinutes, idleOnly, t]);
 
   const {
     sorted: sortedItems,
@@ -277,6 +294,7 @@ const StopReportPage = () => {
                 />
               </div>
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
+              <CompareSwitch checked={compare} onChange={setCompare} />
               <AllAddressesButton
                 className={classes.filterItem}
                 points={columns.includes('address') ? items : []}
@@ -292,7 +310,13 @@ const StopReportPage = () => {
                   {t('sharedDevice')}
                 </SortCell>
                 {columns.map((key) => (
-                  <SortCell key={key} sortKey={key} sort={sort} onSort={toggleSort}>
+                  <SortCell
+                    key={key}
+                    sortKey={key}
+                    sort={sort}
+                    onSort={toggleSort}
+                    align={alignOf(key)}
+                  >
                     {t(columnsMap.get(key))}
                   </SortCell>
                 ))}
@@ -306,7 +330,7 @@ const StopReportPage = () => {
               {!loading ? (
                 sortedItems.map((item) => (
                   <TableRow
-                    key={item.positionId}
+                    key={`${item.deviceId}-${item.positionId}-${item.startTime}`}
                     ref={selectedItem === item ? selectedRowRef : undefined}
                     className={selectedItem === item ? classes.selectedRow : undefined}
                   >
@@ -334,7 +358,9 @@ const StopReportPage = () => {
                       <VehicleCell deviceId={item.deviceId} />
                     </TableCell>
                     {columns.map((key) => (
-                      <TableCell key={key}>{formatValue(item, key)}</TableCell>
+                      <TableCell key={key} align={alignOf(key)}>
+                        {formatValue(item, key)}
+                      </TableCell>
                     ))}
                     <TableCell className={classes.columnAction} padding="none">
                       {/* REP-07: replay from ten minutes before the stop to ten after. */}
@@ -356,6 +382,7 @@ const StopReportPage = () => {
             </TableBody>
             {!loading && (
               <ReportTotalsRow
+                numeric={NUMERIC_COLUMNS}
                 leading={2}
                 trailing={1}
                 columns={columns}

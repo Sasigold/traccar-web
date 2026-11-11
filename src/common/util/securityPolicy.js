@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 // The browser security policy of the app (SEC-10). Pure: used by vite.config.js, which puts the
 // Content-Security-Policy in index.html at build time, and by deploy/security-headers, the
 // reverse-proxy configuration with the headers a <meta> tag cannot carry.

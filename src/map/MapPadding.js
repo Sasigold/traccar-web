@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { useEffect } from 'react';
 
 import { map, useMapReady } from './core/MapView';

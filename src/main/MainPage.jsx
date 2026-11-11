@@ -15,7 +15,6 @@ import ActiveFilters from './components/ActiveFilters';
 import DeviceListShimmer from './components/DeviceListShimmer';
 import FilterAltOffRoundedIcon from '@mui/icons-material/FilterAltOffRounded';
 import { rememberDevice } from '../common/util/recentDevices';
-import StatusCard from '../common/components/StatusCard';
 import EmptyState from '../common/components/table/EmptyState';
 import { devicesActions } from '../store';
 import usePersistedState from '../common/util/usePersistedState';
@@ -30,6 +29,15 @@ import FleetStats from './components/FleetStats';
 import ExpiryTiles from '../fleet/components/ExpiryTiles';
 import { decodeView } from './savedViews';
 import { fitView } from './components/SavedViews';
+
+// Loaded only when used: picking vehicles (LIV-25) and weather alerts (SAF-07).
+const PickedBar = lazy(() => import('./PickedBar'));
+const MainShortcuts = lazy(() => import('./MainShortcuts'));
+const WeatherBanner = lazy(() => import('./WeatherBanner'));
+
+// PRF-06: the vehicle card (with react-rnd and the telemetry gauges) loads when a vehicle is
+// first selected, not with the map.
+const StatusCard = lazy(() => import('../common/components/StatusCard'));
 
 const MainMap = lazy(() => import('./MainMap'));
 
@@ -173,6 +181,8 @@ const MainPage = () => {
   const readonly = useRestriction('readonly');
 
   const mapOnSelect = useAttributePreference('mapOnSelect', true);
+  const weatherAlerts = useAttributePreference('weatherAlerts', false);
+  const picking = useSelector((state) => state.devices.picked != null);
 
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
   const cardHidden = useSelector((state) => state.devices.cardHidden);
@@ -284,6 +294,9 @@ const MainPage = () => {
 
   return (
     <div className={classes.root}>
+      <Suspense fallback={null}>
+        <MainShortcuts devices={filteredDevices} />
+      </Suspense>
       {desktop && (
         <Suspense fallback={null}>
           <MainMap filteredPositions={filteredPositions} selectedPosition={selectedPosition} />
@@ -391,7 +404,18 @@ const MainPage = () => {
                       }
                     />
                   ) : (
-                    <DeviceList devices={filteredDevices} keyword={keyword} favorites={favorites} />
+                    <>
+                      <Suspense fallback={null}>
+                        {weatherAlerts && <WeatherBanner />}
+                        {picking && <PickedBar shown={filteredDevices} />}
+                      </Suspense>
+                      <DeviceList
+                        devices={filteredDevices}
+                        grouped={filterSort === 'group'}
+                        keyword={keyword}
+                        favorites={favorites}
+                      />
+                    </>
                   )}
                 </div>
               )}
@@ -400,13 +424,15 @@ const MainPage = () => {
         )}
       </div>
       {selectedDeviceId && !cardHidden && !features.disableStatusCard && (
-        <StatusCard
-          deviceId={selectedDeviceId}
-          position={selectedPosition}
-          privacy={hiddenPositions[selectedDeviceId]}
-          onClose={() => dispatch(devicesActions.hideCard())}
-          desktopPadding={panelOffset}
-        />
+        <Suspense fallback={null}>
+          <StatusCard
+            deviceId={selectedDeviceId}
+            position={selectedPosition}
+            privacy={hiddenPositions[selectedDeviceId]}
+            onClose={() => dispatch(devicesActions.hideCard())}
+            desktopPadding={panelOffset}
+          />
+        </Suspense>
       )}
     </div>
   );

@@ -36,7 +36,7 @@ test('a view is saved, switched to and shared as a link', async ({ page, context
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'שמירת התצוגה' }).click();
   await page.getByLabel('שם התצוגה').fill('מחוברים בלבד');
-  await page.getByRole('button', { name: 'שמירה' }).click();
+  await page.getByRole('button', { name: 'שמירה', exact: true }).click();
   const view = page.getByRole('listitem').filter({ hasText: 'מחוברים בלבד' });
   await expect(view).toBeVisible();
 

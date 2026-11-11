@@ -55,4 +55,34 @@ test.describe('live video', () => {
     await page.getByRole('button', { name: 'עצירה' }).click();
     await expect(page.getByText('בחרו ערוץ ולחצו הפעלה')).toBeVisible();
   });
+
+  // LIV-17: the four channels at once, two by two.
+  test('four channels start together in a grid', async ({ page }) => {
+    const commands = [];
+    await page.route('**/api/commands/send', async (route) => {
+      commands.push(JSON.parse(route.request().postData()));
+      await route.fulfill({ json: {} });
+    });
+    await page.route('**/api/stream/**', () => {});
+    await gotoReady(page, '/stream?deviceId=1');
+    await page
+      .getByRole('group', { name: 'תצוגה' })
+      .getByRole('button', { name: 'ארבעה ערוצים' })
+      .click();
+    await expect(page.getByRole('radiogroup', { name: 'ערוץ מצלמה' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'הפעלה' }).click();
+    for (const index of [1, 2, 3, 4]) {
+      await expect(page.getByRole('group', { name: `ערוץ ${index}` })).toBeVisible();
+    }
+    await expect
+      .poll(() =>
+        commands
+          .filter((c) => c.type === 'videoStart')
+          .map((c) => c.attributes.index)
+          .sort(),
+      )
+      .toEqual([1, 2, 3, 4]);
+    await page.getByRole('button', { name: 'עצירה' }).click();
+    await expect.poll(() => commands.filter((c) => c.type === 'videoStop').length).toBe(4);
+  });
 });

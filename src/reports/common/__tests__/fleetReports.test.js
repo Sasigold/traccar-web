@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { costPerKmByVehicle, deviceHealth, usageByVehicle } from '../fleetReports';
+import {
+  costPerKmByVehicle,
+  deviceHealth,
+  engineHoursPerDay,
+  groupComparison,
+  usageByVehicle,
+} from '../fleetReports';
 
 const devices = [
   { id: 1, name: 'Van', lastUpdate: '2026-11-10T07:00:00Z' },
@@ -100,5 +106,29 @@ describe('a smaller fleet (OPS-04)', () => {
     expect(result.savings).toBe(3200);
     expect(underusedVehicles(rows).savings).toBeNull();
     expect(underusedVehicles([{ utilization: 90 }]).vehicles).toEqual([]);
+  });
+});
+
+describe('engine hours and the group (OPS-04)', () => {
+  it('gives engine hours per active day', () => {
+    const summary = [
+      { deviceId: 1, engineHours: 3 * 3600000 },
+      { deviceId: 1, engineHours: 3 * 3600000 },
+      { deviceId: 2, engineHours: 3600000 },
+    ];
+    expect(engineHoursPerDay(summary, 1, 3)).toBe(2);
+    expect(engineHoursPerDay(summary, 2, 0)).toBeNull();
+  });
+
+  it('compares each vehicle with the median of its group', () => {
+    const rows = [
+      { deviceId: 1, distance: 100 },
+      { deviceId: 2, distance: 200 },
+      { deviceId: 3, distance: 300 },
+      { deviceId: 4, distance: 50 },
+      { deviceId: 5, distance: 80 },
+    ];
+    const groupOf = (id) => ({ 1: 'a', 2: 'a', 3: 'a', 4: 'b' })[id];
+    expect(groupComparison(rows, groupOf)).toEqual([50, 100, 150, null, null]);
   });
 });

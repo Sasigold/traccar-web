@@ -57,6 +57,7 @@ const useStyles = makeStyles()((theme) => ({
     backgroundColor: theme.palette.surface.tint,
     color: theme.palette.text.primary,
     fontFamily: theme.tokens.font.mono,
+    fontVariantNumeric: 'tabular-nums',
     fontSize: 13,
     lineHeight: 1.6,
     overflowX: 'auto',
@@ -66,6 +67,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   inline: {
     fontFamily: theme.tokens.font.mono,
+    fontVariantNumeric: 'tabular-nums',
     fontSize: 13,
     wordBreak: 'break-all',
   },

@@ -11,7 +11,7 @@ test('a vehicle plate is checked, formatted and not taken twice', async ({ page 
   await plate.fill('123');
   await plate.blur();
   await expect(page.getByText('מספר רישוי לא תקין: 7 או 8 ספרות')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'שמירה' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'שמירה', exact: true })).toBeDisabled();
 
   // Delivery Van (device 1) has 12-345-67.
   await plate.fill('1234567');
@@ -23,7 +23,7 @@ test('a vehicle plate is checked, formatted and not taken twice', async ({ page 
   await plate.blur();
   await expect(plate).toHaveValue('76-543-21');
   await expect(page.getByText(/כבר קיים/)).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'שמירה' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'שמירה', exact: true })).toBeEnabled();
 });
 
 test('a driver ID number and phone are checked and normalized', async ({ page }) => {

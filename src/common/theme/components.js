@@ -111,20 +111,28 @@ export default {
   },
   MuiDialog: {
     styleOverrides: {
+      // ADM-29: on a phone a form dialog is a bottom sheet.
+      container: ({ theme }) => ({
+        [theme.breakpoints.down('sm')]: {
+          '&:has(> .MuiDialog-paperFullWidth)': {
+            alignItems: 'flex-end',
+          },
+        },
+      }),
       paper: ({ theme }) => ({
         borderRadius: radius.xl,
         boxShadow: tokenShadows(theme).xl,
         backgroundImage: 'none',
-        // ADM-24: on a phone a form dialog (fullWidth) takes the whole screen, so the keyboard
-        // does not hide its buttons; short confirmations stay as cards.
+        // ADM-24, ADM-29: on a phone a form dialog (fullWidth) is a bottom sheet across the
+        // screen, as tall as it needs up to the top, its buttons kept in view; short
+        // confirmations stay as cards.
         [theme.breakpoints.down('sm')]: {
           '&.MuiDialog-paperFullWidth': {
             margin: 0,
             width: '100%',
             maxWidth: '100%',
-            height: '100%',
-            maxHeight: '100%',
-            borderRadius: 0,
+            maxHeight: 'calc(100dvh - 24px)',
+            borderRadius: `${radius.xl}px ${radius.xl}px 0 0`,
           },
           '&.MuiDialog-paperFullWidth > .MuiDialogActions-root': {
             position: 'sticky',

@@ -1,0 +1,187 @@
+import { test, expect, axe, formatViolations, gotoReady } from './fixtures';
+import { fakeFleet, writeMode } from './fakeFleet';
+
+// ADM-20: on the way is normal, late is a warning; a job is duplicated or cancelled from its
+// row; a failed job says why.
+const dispatcher = {
+  profile: { id: 'p1', org_id: 'o1', role: 'dispatcher' },
+  permissions: ['dispatch.read', 'dispatch.write', 'vehicles.read', 'drivers.read', 'poi.read'],
+};
+const hour = 3600000;
+const job = (id, title, status, windowEnd, extra = {}) => ({
+  id,
+  org_id: 'o1',
+  number: id.length,
+  title,
+  type: 'delivery',
+  priority: 'normal',
+  status,
+  scheduled_at: new Date(Date.now() - 2 * hour).toISOString(),
+  window_end: new Date(Date.now() + windowEnd * hour).toISOString(),
+  ...extra,
+});
+
+test('late jobs stand out, and a row is duplicated or cancelled', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the row menu is the same on a phone card');
+  await writeMode(page);
+  const fleet = await fakeFleet(page, {
+    users: { 1: dispatcher },
+    rpc: { fleet_features: ['dispatch'] },
+    tables: {
+      dispatch_jobs: [
+        job('j1', 'משלוח לחיפה', 'en_route', -1),
+        job('j22', 'משלוח לנתניה', 'en_route', 2, { customer_name: 'שלמה' }),
+      ],
+      pois: [],
+      vehicles: [],
+      drivers: [],
+    },
+  });
+  await gotoReady(page, '/fleet/dispatch');
+  const late = page.getByRole('row', { name: /משלוח לחיפה/ });
+  const onTime = page.getByRole('row', { name: /משלוח לנתניה/ });
+  await expect(late).toContainText('באיחור');
+  await expect(onTime).not.toContainText('באיחור');
+
+  await onTime.getByRole('button', { name: 'פעולות' }).click();
+  await page.getByRole('menuitem', { name: 'שכפול' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('textbox', { name: 'משימה' })).toHaveValue('משלוח לנתניה');
+  await dialog.getByRole('button', { name: 'ביטול' }).click();
+
+  await late.getByRole('button', { name: 'פעולות' }).click();
+  await page.getByRole('menuitem', { name: 'ביטול המשימה' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'ביטול המשימה' }).click();
+  await expect
+    .poll(() => fleet.tables.dispatch_jobs.find((row) => row.id === 'j1').status)
+    .toBe('cancelled');
+});
+
+// OPS-03: a vehicle's stops in a good order, saved for the driver's list.
+test('a route is planned for a vehicle and its order saved', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the same dialog on a phone');
+  await writeMode(page);
+  const at = (east) => ({ latitude: 51.5, longitude: 0.1 + east * 0.02 });
+  const stop = (id, east) => ({
+    ...job(id, `עצירה ${id}`, 'assigned', 5),
+    vehicle_id: 'v1',
+    ...at(east),
+  });
+  const fleet = await fakeFleet(page, {
+    users: { 1: dispatcher },
+    rpc: { fleet_features: ['dispatch'] },
+    tables: {
+      dispatch_jobs: [stop('c', 3), stop('a', 1), stop('b', 2)],
+      pois: [],
+      vehicles: [{ id: 'v1', org_id: 'o1', plate_number: '12-345-67', traccar_device_id: 1 }],
+      drivers: [],
+    },
+  });
+  await gotoReady(page, '/fleet/dispatch');
+  await page.getByRole('button', { name: 'תכנון מסלול' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('listitem')).toHaveText([
+    /1\. עצירה a/,
+    /2\. עצירה b/,
+    /3\. עצירה c/,
+  ]);
+  await dialog.getByRole('button', { name: 'החלת הסדר' }).click();
+  await expect
+    .poll(() =>
+      Object.fromEntries(fleet.tables.dispatch_jobs.map((row) => [row.id, row.route_order])),
+    )
+    .toEqual({ a: 1, b: 2, c: 3 });
+});
+
+// ISR-10: an address from the official street list, with its coordinates filled in.
+test('a Hebrew address is completed and located', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the same field on a phone');
+  await writeMode(page);
+  await fakeFleet(page, {
+    users: { 1: dispatcher },
+    rpc: { fleet_features: ['dispatch'] },
+    tables: { dispatch_jobs: [], pois: [], vehicles: [], drivers: [] },
+  });
+  await page.route('https://data.gov.il/**', (route) =>
+    route.fulfill({
+      json: { result: { records: [{ שם_רחוב: 'הרצל', שם_ישוב: 'רמת גן' }] } },
+    }),
+  );
+  const geocoded = [];
+  await page.route('https://nominatim.openstreetmap.org/**', (route) => {
+    geocoded.push(new URL(route.request().url()).searchParams.get('q'));
+    return route.fulfill({ json: [{ lat: '32.0823', lon: '34.8106' }] });
+  });
+  await gotoReady(page, '/fleet/dispatch');
+  await page.getByRole('button', { name: 'משימה חדשה' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('combobox', { name: 'כתובת' }).fill('הרצל 12');
+  await page.getByRole('option', { name: 'הרצל 12, רמת גן' }).click();
+  await expect(dialog.getByLabel('קו רוחב')).toHaveValue('32.0823');
+  await expect(dialog.getByLabel('קו אורך')).toHaveValue('34.8106');
+  expect(geocoded).toEqual(['הרצל 12, רמת גן']);
+});
+
+// ADM-20: the jobs on a map and as each driver's day.
+test('the jobs are shown on a map and per driver', async ({ page }) => {
+  await writeMode(page);
+  await fakeFleet(page, {
+    users: { 1: dispatcher },
+    rpc: { fleet_features: ['dispatch'] },
+    tables: {
+      dispatch_jobs: [
+        job('j1', 'משלוח לחיפה', 'assigned', 3, {
+          driver_id: 'd1',
+          drivers: { full_name: 'דנה לוי' },
+          latitude: 32.79,
+          longitude: 34.99,
+        }),
+        job('j2', 'איסוף בגבעתיים', 'planned', 5, { latitude: 32.07, longitude: 34.81 }),
+      ],
+      drivers: [{ id: 'd1', org_id: 'o1', full_name: 'דנה לוי' }],
+      pois: [],
+      vehicles: [],
+    },
+  });
+  await gotoReady(page, '/fleet/dispatch?filter=all');
+  const views = page.getByRole('group', { name: 'תצוגה' });
+  await views.getByRole('button', { name: 'לפי נהג' }).click();
+  await expect(page).toHaveURL(/view=schedule/);
+  await expect(page.getByRole('region', { name: 'דנה לוי' })).toContainText('משלוח לחיפה');
+  await expect(page.getByRole('region', { name: 'בלי נהג' })).toContainText('איסוף בגבעתיים');
+  await views.getByRole('button', { name: 'מפה' }).click();
+  await expect(page).toHaveURL(/view=map/);
+  await expect(page.locator('.maplibregl-canvas')).toBeVisible();
+});
+
+// ADM-20: a job's place picked on a map: the pin stays on the center, a click moves the map there.
+test('a job place is picked on the map', async ({ page }) => {
+  await writeMode(page);
+  await fakeFleet(page, {
+    users: { 1: dispatcher },
+    rpc: { fleet_features: ['dispatch'] },
+    tables: { dispatch_jobs: [], pois: [], vehicles: [], drivers: [] },
+  });
+  await gotoReady(page, '/fleet/dispatch');
+  await page.getByRole('button', { name: 'משימה חדשה' }).first().click();
+  const form = page.getByRole('dialog', { name: 'משימה חדשה' });
+  await form.getByRole('spinbutton', { name: 'קו רוחב' }).fill('31.5');
+  await form.getByRole('spinbutton', { name: 'קו אורך' }).fill('34.9');
+  await form.getByRole('button', { name: 'בחירה במפה' }).click();
+
+  const picker = page.getByRole('dialog', { name: 'בחירת מקום במפה' });
+  await expect(picker.getByText('31.500000, 34.900000')).toBeVisible();
+  const { violations } = await axe(page).include('[role="dialog"]').analyze();
+  expect(formatViolations(violations)).toBe('');
+  const map = picker.getByTestId('map-point-picker');
+  const box = await map.boundingBox();
+  // A place above the pin is further north.
+  await map.click({ position: { x: box.width / 2, y: box.height / 4 } });
+  await expect(picker.getByText('31.500000, 34.900000')).toHaveCount(0);
+  await picker.getByRole('button', { name: 'בחירת המקום' }).click();
+  await expect(picker).toHaveCount(0);
+  await expect
+    .poll(async () => Number(await form.getByRole('spinbutton', { name: 'קו רוחב' }).inputValue()))
+    .toBeGreaterThan(31.5);
+  await expect(form.getByRole('spinbutton', { name: 'קו אורך' })).toHaveValue(/^34\.9/);
+});

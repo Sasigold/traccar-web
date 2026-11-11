@@ -28,6 +28,7 @@ import { useAsyncTask, useCatch } from '../reactHelper';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import { messagesActions } from '../store';
 import { getFleetClient, unwrap } from '../common/fleet/client';
+import { loadIncident } from './api/incidents';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import {
   CLAIM_STATUSES,
@@ -62,6 +63,8 @@ import { fleetSave, withUploadedFile } from '../common/fleet/fleetSave';
 import { DateField, DateTimeField } from '../common/components/pickers';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import InsuranceFileDialog from './components/InsuranceFileDialog';
+import VehicleSelect from '../common/components/VehicleSelect';
+import { takePendingFiles } from '../common/util/pendingFiles';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -148,7 +151,8 @@ const IncidentPage = () => {
   const [photos, setPhotos] = useState([]);
   // SAF-04: the file for the insurer.
   const [insuranceFile, setInsuranceFile] = useState(false);
-  const [newPhotos, setNewPhotos] = useState([]);
+  // LIV-17: a frame from the live video arrives with a new report.
+  const [newPhotos, setNewPhotos] = useState(() => (id ? [] : takePendingFiles('incident')));
   const [saving, setSaving] = useState(false);
   const [locating, setLocating] = useState(false);
 
@@ -167,28 +171,20 @@ const IncidentPage = () => {
       });
       return;
     }
-    const client = getFleetClient();
-    const row = unwrap(
-      await client
-        .from('incidents')
-        .select('*, vehicles(traccar_device_id), drivers(traccar_driver_id)')
-        .eq('id', id)
-        .single(),
-    );
-    const [partyRows, claimRow, photoRows] = await Promise.all([
-      client.from('incident_parties').select('*').eq('incident_id', id),
-      client.from('insurance_claims').select('*').eq('incident_id', id).maybeSingle(),
-      client.from('incident_photos').select('*').eq('incident_id', id).order('created_at'),
-    ]);
+    const {
+      incident: row,
+      parties: partyRows,
+      claim: claimRow,
+      photos: stored,
+    } = await loadIncident(getFleetClient(), id);
     setIncident({ ...row, occurred_at: toLocalInput(row.occurred_at) });
     setDeviceId(String(row.vehicles?.traccar_device_id || ''));
     setDriverId(String(row.drivers?.traccar_driver_id || ''));
-    setParties((unwrap(partyRows) || []).map((party) => ({ ...party, key: party.id })));
+    setParties(partyRows.map((party) => ({ ...party, key: party.id })));
     setClaim({
       ...emptyClaim,
-      ...Object.fromEntries(Object.entries(unwrap(claimRow) || {}).filter(([, v]) => v != null)),
+      ...Object.fromEntries(Object.entries(claimRow || {}).filter(([, v]) => v != null)),
     });
-    const stored = unwrap(photoRows) || [];
     setPhotos(
       await Promise.all(
         stored.map(async (photo) => ({ ...photo, url: await fleetFileUrl(photo.storage_path) })),
@@ -196,18 +192,6 @@ const IncidentPage = () => {
     );
   }, [id, canRead]);
 
-  const deviceOptions = useMemo(
-    () =>
-      Object.values(devices)
-        .map((device) => ({
-          id: String(device.id),
-          name: device.attributes?.plateNumber
-            ? `${device.name} · ${device.attributes.plateNumber}`
-            : device.name,
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [devices],
-  );
   const driverList = useMemo(
     () => Object.values(drivers).sort((a, b) => a.name.localeCompare(b.name)),
     [drivers],
@@ -266,7 +250,8 @@ const IncidentPage = () => {
     Boolean(incident),
   );
 
-  const handleSave = useCatch(async () => {
+  // ADM-14: a new incident can be saved and kept open (the address becomes its own).
+  const handleSave = useCatch(async (stay = false) => {
     setSaving(true);
     try {
       const client = getFleetClient();
@@ -341,7 +326,20 @@ const IncidentPage = () => {
         );
       }
       discardUnsavedChanges();
-      navigate('/fleet/incidents');
+      dispatch(
+        messagesActions.push({
+          message: t('fleetSavedNamed').replace(
+            '{0}',
+            `${t('fleetIncident')} ${incident.number || ''}`.trim(),
+          ),
+          severity: 'success',
+        }),
+      );
+      if (stay === true && !id) {
+        navigate(`/fleet/incident/${savedId}`, { replace: true });
+      } else {
+        navigate('/fleet/incidents');
+      }
     } finally {
       setSaving(false);
     }
@@ -392,9 +390,11 @@ const IncidentPage = () => {
         canWrite && (
           <SaveBar
             onCancel={() => leave(() => goBack(navigate))}
-            onSave={handleSave}
+            onSave={() => handleSave(false)}
+            onSaveAndContinue={id ? undefined : () => handleSave(true)}
             saving={saving}
             disabled={!valid}
+            disabledHint={incident ? t('sharedSaveNeedsRequired') : undefined}
           />
         )
       }
@@ -404,19 +404,9 @@ const IncidentPage = () => {
         <>
           <FormSection title={t('fleetIncidentEvent')} icon={<CarCrashRoundedIcon />}>
             <div className={classes.grid}>
-              <TextField
-                select
-                label={t('fleetEntityVehicle')}
-                value={deviceId}
-                onChange={(event) => setDeviceId(event.target.value)}
-              >
-                {deviceOptions.map((option) => (
-                  <MenuItem key={option.id} value={option.id}>
-                    {option.name}
-                  </MenuItem>
-                ))}
-              </TextField>
+              <VehicleSelect required value={deviceId} onChange={setDeviceId} />
               <DateTimeField
+                required
                 label={t('fleetIncidentOccurred')}
                 value={incident.occurred_at}
                 onChange={(event) => set({ occurred_at: event.target.value })}

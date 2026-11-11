@@ -7,10 +7,13 @@ import { useCatch } from '../../reactHelper';
 import { formatAddress } from '../util/formatter';
 import { usePreference } from '../util/preferences';
 import fetchOrThrow from '../util/fetchOrThrow';
+import { useFleetPermission, useFleetStatus } from '../fleet/useFleet';
+import { useFleetQuery } from '../data/fleetQuery';
 import {
   addressKey,
   cachedAddress,
   geofenceAt,
+  poiAt,
   requestAddress,
   subscribeAddress,
 } from '../util/addressCache';
@@ -21,7 +24,8 @@ export const geocode = async (latitude, longitude) => {
   return response.text();
 };
 
-// REP-13: the address of a point. Inside a geofence, its name; otherwise the stored address,
+// REP-13: the address of a point. At one of the fleet's points of interest or inside a
+// geofence, its name; otherwise the stored address,
 // the address found earlier in this session, or a link to look it up (shared by every row with
 // that point).
 const AddressValue = ({ latitude, longitude, originalAddress }) => {
@@ -30,6 +34,15 @@ const AddressValue = ({ latitude, longitude, originalAddress }) => {
   const addressEnabled = useSelector((state) => state.session.server.geocoderEnabled);
   const geofences = useSelector((state) => state.geofences.items);
   const coordinateFormat = usePreference('coordinateFormat');
+  // The fleet's points of interest, read once for every row (shared cache).
+  const poiAllowed = useFleetPermission('poi.read');
+  const fleetReady = useFleetStatus() === 'ready';
+  const { data: pois } = useFleetQuery(
+    'pois',
+    ['address-names'],
+    (client) => client.from('pois').select('id, name, latitude, longitude, radius_m'),
+    { enabled: poiAllowed && fleetReady },
+  );
 
   const [address, setAddress] = useState(
     () => originalAddress || cachedAddress(latitude, longitude),
@@ -48,7 +61,10 @@ const AddressValue = ({ latitude, longitude, originalAddress }) => {
     await requestAddress(latitude, longitude, geocode);
   });
 
-  const place = latitude != null ? geofenceAt(geofences, latitude, longitude) : null;
+  const place =
+    latitude != null
+      ? poiAt(pois, latitude, longitude) || geofenceAt(geofences, latitude, longitude)
+      : null;
   if (place && !address) {
     return place.name;
   }

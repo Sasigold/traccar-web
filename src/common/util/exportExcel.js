@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { saveAs } from 'file-saver';
 import logoUrl from '../../../brand/logos/sync-point-midnight-aqua-primary.png';
 import store from '../../store';

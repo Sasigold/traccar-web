@@ -250,3 +250,52 @@ test('a garage invoice becomes the work order lines', async ({ page }) => {
   await expect(page.locator('input[value="עבודה"]')).toBeVisible();
   await expect(page.getByLabel('מספר חשבונית')).toHaveValue('A-77');
 });
+
+// AI-01: an answer about speeding becomes an alert rule, with the speed the question named.
+test('an answer turns into an alert rule', async ({ page }) => {
+  await writeMode(page);
+  const period = { from: '2026-11-01T00:00:00.000Z', to: '2026-11-08T00:00:00.000Z' };
+  let calls = 0;
+  await fakeFleet(page, {
+    users: {
+      1: {
+        ...manager,
+        permissions: [...manager.permissions, 'alerts.read', 'alerts.manage'],
+      },
+    },
+    rpc: { fleet_features: ['ai'] },
+    tables: { automation_rules: [] },
+    functions: {
+      'fleet-ai/ask': () => {
+        calls += 1;
+        if (calls === 1) {
+          return {
+            stop_reason: 'tool_use',
+            content: [
+              {
+                type: 'tool_use',
+                id: 't1',
+                name: 'events',
+                input: { period, types: ['deviceOverspeed'] },
+              },
+            ],
+          };
+        }
+        return {
+          stop_reason: 'end_turn',
+          content: [{ type: 'text', text: 'Courier עבר 100 קמ"ש פעמיים.' }],
+        };
+      },
+    },
+  });
+  await gotoReady(page, '/');
+  await page.keyboard.press('Control+k');
+  await page.keyboard.type('מי עבר 100 קמ"ש השבוע?');
+  await page.getByRole('option', { name: /שאלה ל-AI/ }).click();
+  const panel = page.getByRole('dialog', { name: 'שאלה על הצי' });
+  await expect(panel.getByText('Courier עבר 100 קמ"ש פעמיים.')).toBeVisible();
+  await panel.getByRole('link', { name: 'הפיכה להתראה' }).click();
+  await expect(page).toHaveURL(/\/fleet\/automations\?template=overspeed/);
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('textbox').first()).toHaveValue('100');
+});

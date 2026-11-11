@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import dayjs from 'dayjs';
@@ -6,6 +7,7 @@ import { deviceSearchFields, matchDevice, tokenizeSearch } from '../common/util/
 import { sameItems } from '../common/util/stableArray';
 import { byImportance } from './importance';
 import { pinFavorites } from './savedViews';
+import { sortByGroup } from './groupRows';
 
 export default (
   keyword,
@@ -73,13 +75,23 @@ export default (
       case 'name':
         filtered.sort((device1, device2) => device1.name.localeCompare(device2.name));
         break;
-      case 'lastUpdate':
-        filtered.sort((device1, device2) => {
-          const time1 = device1.lastUpdate ? dayjs(device1.lastUpdate).valueOf() : 0;
-          const time2 = device2.lastUpdate ? dayjs(device2.lastUpdate).valueOf() : 0;
-          return time2 - time1;
-        });
+      case 'group': {
+        // LIV-22: by group, for the list's group headers.
+        const byGroup = sortByGroup(filtered, groups);
+        filtered.splice(0, filtered.length, ...byGroup);
         break;
+      }
+      case 'lastUpdate': {
+        // PRF-04: each date parsed once, not twice per comparison.
+        const times = new Map(
+          filtered.map((device) => [
+            device.id,
+            device.lastUpdate ? dayjs(device.lastUpdate).valueOf() : 0,
+          ]),
+        );
+        filtered.sort((device1, device2) => times.get(device2.id) - times.get(device1.id));
+        break;
+      }
       default:
         // Without a chosen order: the best match first when searching, otherwise what needs
         // attention first (LIV-11).
@@ -95,7 +107,8 @@ export default (
         break;
     }
     // LIV-22: favorites on top, except while searching (the best match comes first then).
-    const ordered = tokens.length ? filtered : pinFavorites(filtered, favorites);
+    const ordered =
+      tokens.length || filterSort === 'group' ? filtered : pinFavorites(filtered, favorites);
     if (!sameItems(lastDevicesRef.current, ordered)) {
       lastDevicesRef.current = ordered;
       setFilteredDevices(ordered);

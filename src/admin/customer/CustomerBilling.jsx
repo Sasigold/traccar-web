@@ -15,6 +15,7 @@ import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import { useLocalization, useTranslation } from '../../common/components/LocalizationProvider';
+import { formatTime } from '../../common/util/formatter';
 import { useAsyncTask, useCatch } from '../../reactHelper';
 import FormSection from '../../settings/components/FormSection';
 import EmptyState from '../../common/components/table/EmptyState';
@@ -342,7 +343,7 @@ const CustomerBilling = ({ customer, directory, editable }) => {
                         </span>
                       </TableCell>
                       <TableCell className={classes.number}>
-                        <span dir="ltr">{invoice.due_date}</span>
+                        <span dir="ltr">{formatTime(invoice.due_date, 'date')}</span>
                       </TableCell>
                       <TableCell className={classes.number}>{money(invoice.total)}</TableCell>
                       <TableCell>

@@ -27,13 +27,19 @@ export default (key, defaultValue) => {
     return () => listeners.get(key).delete(setValue);
   }, [key]);
 
+  // The value as read on mount is not news to the others; broadcasting it would also undo a
+  // change a child made in the same commit (REP-09: a saved view's columns).
+  const mountedRef = useRef(false);
   useEffect(() => {
     if (value !== defaultRef.current) {
       window.localStorage.setItem(key, JSON.stringify(value));
     } else {
       window.localStorage.removeItem(key);
     }
-    broadcast(key, value);
+    if (mountedRef.current) {
+      broadcast(key, value);
+    }
+    mountedRef.current = true;
   }, [key, value]);
 
   return [value, setValue];

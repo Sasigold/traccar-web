@@ -1,4 +1,4 @@
-import { Typography } from '@mui/material';
+import KpiTile from '../../common/components/KpiTile';
 import { makeStyles } from 'tss-react/mui';
 
 const useStyles = makeStyles()((theme) => ({
@@ -15,52 +15,9 @@ const useStyles = makeStyles()((theme) => ({
       margin: theme.spacing(0, 0, 2),
     },
   },
-  tile: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1.5),
-    padding: theme.spacing(1.5, 2),
-    borderRadius: theme.tokens.radius.lg,
-    border: '1px solid transparent',
-    backgroundColor: theme.palette.surface.tint,
-    minWidth: 0,
-  },
-  icon: {
-    width: 38,
-    height: 38,
-    flexShrink: 0,
-    borderRadius: theme.tokens.radius.md,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.palette.background.paper,
-    color: theme.palette.primary.main,
-    '& svg': {
-      fontSize: 20,
-    },
-  },
-  text: {
-    minWidth: 0,
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  value: {
-    fontWeight: 600,
-    fontVariantNumeric: 'tabular-nums',
-    letterSpacing: '-0.01em',
-    lineHeight: 1.2,
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-  },
-  label: {
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-  },
 }));
 
-// Row of summary tiles above a report table. items: [{ key, label, value, icon }]
+// Row of summary tiles above a report table (ADM-29: the shared KpiTile). items: [{ key, label, value, icon, hint }]
 const ReportKpis = ({ items }) => {
   const { classes } = useStyles();
   const visible = items.filter((item) => item.value != null && item.value !== '');
@@ -70,17 +27,15 @@ const ReportKpis = ({ items }) => {
   return (
     <div className={classes.root}>
       {visible.map((item) => (
-        <div key={item.key} className={classes.tile}>
-          {item.icon && <span className={classes.icon}>{item.icon}</span>}
-          <div className={classes.text}>
-            <Typography variant="h6" className={classes.value}>
-              {item.value}
-            </Typography>
-            <Typography variant="caption" color="textSecondary" className={classes.label}>
-              {item.label}
-            </Typography>
-          </div>
-        </div>
+        <KpiTile
+          key={item.key}
+          layout="inline"
+          size="sm"
+          icon={item.icon}
+          label={item.label}
+          value={item.value}
+          hint={item.hint}
+        />
       ))}
     </div>
   );

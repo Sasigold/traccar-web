@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocalization, useTranslation } from '../../common/components/LocalizationProvider';
@@ -39,14 +40,14 @@ export default () => {
 
   const googleKey = useAttributePreference('googleKey');
   const mapTilerKey = useAttributePreference('mapTilerKey');
-  const locationIqKey =
-    useAttributePreference('locationIqKey') || 'pk.0f147952a41c555a5b70614039fd148b';
+  // ARC-13: no fallback keys. Traccar's public demo keys belong to another organization, with
+  // its rate limits and terms; a map that needs a key is offered once one is set.
+  const locationIqKey = useAttributePreference('locationIqKey');
   const bingMapsKey = useAttributePreference('bingMapsKey');
   const tomTomKey = useAttributePreference('tomTomKey');
   const hereKey = useAttributePreference('hereKey');
   const mapboxAccessToken = useAttributePreference('mapboxAccessToken');
-  const ordnanceSurveyKey =
-    useAttributePreference('ordnanceSurveyKey') || 'EAZ8p83u72FTGiLjLC2MsTAl1ko6XQHC';
+  const ordnanceSurveyKey = useAttributePreference('ordnanceSurveyKey');
   const customMapUrl = useSelector((state) => state.session.server.mapUrl);
 
   return useMemo(
@@ -70,13 +71,15 @@ export default () => {
         id: 'locationIqStreets',
         title: t('mapLocationIqStreets'),
         style: `https://tiles.locationiq.com/v3/streets/vector.json?key=${locationIqKey}`,
-        available: true,
+        available: Boolean(locationIqKey),
+        attribute: 'locationIqKey',
       },
       {
         id: 'locationIqDark',
         title: t('mapLocationIqDark'),
         style: `https://tiles.locationiq.com/v3/dark/vector.json?key=${locationIqKey}`,
-        available: true,
+        available: Boolean(locationIqKey),
+        attribute: 'locationIqKey',
       },
       {
         id: 'osm',
@@ -302,7 +305,8 @@ export default () => {
         transformRequest: (url) => ({
           url: `${url}&srs=3857`,
         }),
-        available: true,
+        available: Boolean(ordnanceSurveyKey),
+        attribute: 'ordnanceSurveyKey',
       },
       {
         id: 'mapboxStreets',

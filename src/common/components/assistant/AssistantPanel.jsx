@@ -25,6 +25,8 @@ import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import { useTranslation } from '../LocalizationProvider';
 import { aiErrorKey } from '../../fleet/ai';
 import useAssistant from './useAssistant';
+import { ruleLink } from '../../fleet/alertLinks';
+import { useFleetPermission } from '../../fleet/useFleet';
 
 const useStyles = makeStyles()((theme) => ({
   paper: {
@@ -113,6 +115,7 @@ const AssistantPanel = ({ open, onClose, initialQuestion }) => {
   const t = useTranslation();
   const phone = useMediaQuery(theme.breakpoints.down('md'));
   const { turns, busy, ask, reset } = useAssistant();
+  const canAutomate = useFleetPermission('alerts.manage');
   const [draft, setDraft] = useState('');
   const bodyRef = useRef(null);
   const askedRef = useRef(null);
@@ -208,10 +211,20 @@ const AssistantPanel = ({ open, onClose, initialQuestion }) => {
                 </Table>
               </div>
             ))}
-            {turn.link && (
-              <Link component={RouterLink} to={turn.link} onClick={onClose}>
-                {t('assistantOpenReport')}
-              </Link>
+            {(turn.link || (turn.rule && canAutomate)) && (
+              <div className={classes.chips}>
+                {turn.link && (
+                  <Link component={RouterLink} to={turn.link} onClick={onClose}>
+                    {t('assistantOpenReport')}
+                  </Link>
+                )}
+                {/* AI-01: the question as a rule that alerts from now on. */}
+                {turn.rule && canAutomate && (
+                  <Link component={RouterLink} to={ruleLink(turn.rule)} onClick={onClose}>
+                    {t('assistantMakeAlert')}
+                  </Link>
+                )}
+              </div>
             )}
             {index === turns.length - 1 && turn.followups?.length > 0 && (
               <div className={classes.chips}>

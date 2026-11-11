@@ -49,3 +49,104 @@ test('a pool vehicle is booked, approved and returned', async ({ page }) => {
   await page.getByRole('button', { name: 'רכבי המאגר: 76-543-21' }).click();
   await expect.poll(() => fleet.tables.vehicles[1].pool).toBe(true);
 });
+
+// OPS-06: the week calendar shows each pool vehicle's bookings by day, and an approved booking
+// leads to the morning check before the keys are handed over.
+test('the pool week calendar opens a booking and its handover check', async ({ page }) => {
+  const at = (hour) => {
+    const date = new Date();
+    date.setHours(hour, 0, 0, 0);
+    return date.toISOString();
+  };
+  await writeMode(page);
+  await fakeFleet(page, {
+    users: {
+      1: {
+        profile: { id: 'p1', org_id: 'o1', role: 'manager', full_name: 'דנה' },
+        permissions: ['vehicles.read', 'pool.manage'],
+      },
+    },
+    rpc: { fleet_features: ['pool'] },
+    tables: {
+      vehicles: [
+        { id: 'v1', org_id: 'o1', plate_number: '12-345-67', pool: true, traccar_device_id: 1 },
+      ],
+      pool_bookings: [
+        {
+          id: 'b1',
+          org_id: 'o1',
+          vehicle_id: 'v1',
+          requested_by: 'p1',
+          status: 'approved',
+          starts_at: at(8),
+          ends_at: at(12),
+          destination: 'חיפה',
+        },
+      ],
+      profiles: [{ id: 'p1', org_id: 'o1', full_name: 'דנה' }],
+    },
+  });
+  await gotoReady(page, '/fleet/pool');
+  await page.getByRole('button', { name: 'לוח שבועי' }).click();
+  await expect(page).toHaveURL(/view=calendar/);
+  const calendar = page.getByRole('table', { name: 'לוח שבועי' });
+  await expect(calendar.getByRole('rowheader', { name: '12-345-67' })).toBeVisible();
+  // Today's column is marked, and the booking sits in it.
+  await expect(calendar.locator('[aria-current="date"]')).toHaveCount(1);
+  await calendar.getByRole('button', { name: /12-345-67: דנה, 08:00–12:00/ }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('חיפה');
+  await dialog.getByRole('link', { name: 'בדיקה לפני מסירה' }).click();
+  await expect(page).toHaveURL(/\/fleet\/inspection\?deviceId=1/);
+});
+
+// ISR-05: the month's nights with a pool car go to payroll, with the benefit to charge.
+test('the pool nights of the month are exported for payroll', async ({ page }) => {
+  const day = (offset, hour) => {
+    const date = new Date();
+    date.setDate(1 + offset);
+    date.setHours(hour, 0, 0, 0);
+    return date.toISOString();
+  };
+  await writeMode(page);
+  await fakeFleet(page, {
+    users: {
+      1: {
+        profile: { id: 'p1', org_id: 'o1', role: 'manager', full_name: 'דנה' },
+        permissions: ['vehicles.read', 'pool.manage'],
+      },
+    },
+    rpc: { fleet_features: ['pool'] },
+    tables: {
+      vehicles: [
+        { id: 'v1', org_id: 'o1', plate_number: '12-345-67', pool: true, traccar_device_id: 1 },
+      ],
+      pool_bookings: [
+        {
+          id: 'b1',
+          org_id: 'o1',
+          vehicle_id: 'v1',
+          requested_by: 'p1',
+          status: 'returned',
+          starts_at: day(0, 16),
+          ends_at: day(2, 8),
+        },
+      ],
+      profiles: [{ id: 'p1', org_id: 'o1', full_name: 'דנה' }],
+    },
+  });
+  await gotoReady(page, '/fleet/pool');
+  await page.getByRole('button', { name: 'ייצוא לשכר' }).click();
+  const download = page.waitForEvent('download');
+  await page.getByRole('menuitem', { name: 'חודש נוכחי' }).click();
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(/pool-payroll-\d{4}-\d{2}.*\.xlsx$/);
+  const { default: ExcelJS } = await import('exceljs');
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(await file.path());
+  const values = [];
+  workbook.worksheets[0].eachRow((row) => values.push(row.values.filter(Boolean).join('|')));
+  // Two nights with the car, for Dana.
+  expect(values.some((line) => line.includes('דנה') && line.includes('|2'))).toBe(true);
+  expect(workbook.worksheets[1].rowCount).toBeGreaterThan(1);
+});

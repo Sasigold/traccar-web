@@ -30,6 +30,7 @@ import CustomerSelect from './components/CustomerSelect';
 import AssignCustomerDialog from './components/AssignCustomerDialog';
 import { useAdminAccess, useAdminDirectory, useTraccarList } from './useAdmin';
 import { assignDevices } from './adminApi';
+import { capitalize } from '../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   filters: {
@@ -58,6 +59,14 @@ const useStyles = makeStyles()((theme) => ({
 
 export const NO_CUSTOMER = 'none';
 
+// BIZ-05: a device that reported before but not for days: a SIM out of credit, a cut wire or a
+// vehicle off the road. Never reported is a new installation, not silent.
+export const SILENT_DAYS = 3;
+export const isSilent = (device, now = Date.now()) =>
+  Boolean(device.lastUpdate) &&
+  now - Date.parse(device.lastUpdate) > SILENT_DAYS * 86400000 &&
+  !device.disabled;
+
 const AdminDevicesPage = () => {
   const { classes } = useStyles();
   const t = useTranslation();
@@ -81,7 +90,9 @@ const AdminDevicesPage = () => {
         if (customerFilter === NO_CUSTOMER && owner) return false;
         if (customerFilter && customerFilter !== NO_CUSTOMER && owner !== customerFilter)
           return false;
-        if (statusFilter !== 'all' && device.status !== statusFilter) return false;
+        if (statusFilter === 'silent') {
+          if (!isSilent(device)) return false;
+        } else if (statusFilter !== 'all' && device.status !== statusFilter) return false;
         if (!needle) return true;
         return [device.name, device.uniqueId, device.phone, device.model]
           .filter(Boolean)
@@ -137,16 +148,20 @@ const AdminDevicesPage = () => {
                     />
                   </div>
                 )}
-                {['all', 'online', 'offline'].map((status) => (
+                {['all', 'online', 'offline', 'silent'].map((status) => (
                   <Chip
                     key={status}
                     size="small"
                     clickable
-                    label={t(
-                      status === 'all'
-                        ? 'fleetFilterAll'
-                        : `deviceStatus${status.charAt(0).toUpperCase()}${status.slice(1)}`,
-                    )}
+                    label={
+                      status === 'silent'
+                        ? t('adminDevicesSilent').replace('{0}', String(SILENT_DAYS))
+                        : t(
+                            status === 'all'
+                              ? 'fleetFilterAll'
+                              : `deviceStatus${status.charAt(0).toUpperCase()}${status.slice(1)}`,
+                          )
+                    }
                     color={statusFilter === status ? 'primary' : 'default'}
                     variant={statusFilter === status ? 'filled' : 'outlined'}
                     onClick={() => setStatusFilter(status)}
@@ -251,9 +266,7 @@ const AdminDevicesPage = () => {
                   <TableCell>
                     <StateChip
                       state={device.status || 'unknown'}
-                      label={t(
-                        `deviceStatus${(device.status || 'unknown').replace(/^\w/, (c) => c.toUpperCase())}`,
-                      )}
+                      label={t(`deviceStatus${capitalize(device.status || 'unknown')}`)}
                     />
                     {device.lastUpdate && (
                       <Typography

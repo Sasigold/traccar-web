@@ -24,6 +24,10 @@ jobs:
     - run: npm ci
     - run: npm ci --prefix demo
     - run: npm run lint
+    # ARC-11: JSDoc and the generated database types (tsconfig.json).
+    - run: npm run typecheck
+    # FND-10: no dependency that is not used, none used that is not listed.
+    - run: npm run knip
 
   unit:
     runs-on: ubuntu-latest
@@ -53,6 +57,8 @@ jobs:
       env:
         VITE_FLEET_URL: https://fleet.ci.invalid
         VITE_FLEET_ANON_KEY: ci
+    # PRF-06: the first load stays within its budget (tools/size-budget.mjs).
+    - run: npm run size
     - run: npm run build -- --mode staging
       env:
         VITE_FLEET_URL: https://fleet.ci.invalid
@@ -72,6 +78,15 @@ jobs:
     - run: npm ci --prefix demo
     - run: npx playwright install --with-deps chromium
     - run: npm run test:e2e -- --trace off
+    # BRD-07: light and dark screenshots of the main screens, to look at in the pull request.
+    - run: npx playwright test e2e/screens.spec.js --project desktop --project mobile --trace off
+      env:
+        SCREENS: '1'
+    - uses: actions/upload-artifact@v7
+      with:
+        name: screens
+        path: screens
+        retention-days: 14
     - uses: actions/upload-artifact@v7
       if: failure()
       with:
@@ -101,4 +116,14 @@ jobs:
       PGPASSWORD: postgres
     steps:
     - uses: actions/checkout@v7
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+        cache-dependency-path: package-lock.json
+    - run: npm ci
     - run: sh supabase/tests/run.sh
+    # ARC-11: src/common/fleet/database.d.ts must match the migrations.
+    - run: sh tools/db-types.sh --check
+      env:
+        SKIP_MIGRATE: 1

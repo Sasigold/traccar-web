@@ -5,7 +5,7 @@ test('a refused save says why in Hebrew and keeps the server text under details'
 }) => {
   // The demo is read-only: every change is refused with 403.
   await gotoReady(page, '/settings/device/1');
-  await page.getByRole('button', { name: 'שמירה' }).click();
+  await page.getByRole('button', { name: 'שמירה', exact: true }).click();
   const alert = page.getByRole('alert').filter({ hasText: 'אין לך הרשאה' }).last();
   await expect(alert).toBeVisible();
   await expect(alert).not.toContainText('read-only');

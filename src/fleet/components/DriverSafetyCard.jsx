@@ -7,6 +7,7 @@ import { useAsyncTask, useCatch } from '../../reactHelper';
 import { formatTime } from '../../common/util/formatter';
 import { getFleetClient, unwrap } from '../../common/fleet/client';
 import { openFleetFile } from '../fleetData';
+import { capitalize } from '../../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   card: {
@@ -62,8 +63,7 @@ const MeetingToSign = ({ review, onSigned }) => {
   return (
     <div className={classes.meeting}>
       <Typography variant="body2" fontWeight={600}>
-        {t(`fleetReviewKind${review.kind.replace(/^\w/, (c) => c.toUpperCase())}`)} ·{' '}
-        {formatTime(review.held_at, 'date')}
+        {t(`fleetReviewKind${capitalize(review.kind)}`)} · {formatTime(review.held_at, 'date')}
       </Typography>
       {review.summary && (
         <Typography variant="body2" className={classes.text}>

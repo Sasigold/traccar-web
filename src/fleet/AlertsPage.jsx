@@ -28,7 +28,7 @@ import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
-import { useFleetRows } from './stage5Data';
+import { useFleetRows } from './fleetRows';
 import ValidityTabs from './components/ValidityTabs';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
@@ -59,6 +59,7 @@ import {
 } from './alerts';
 import { useConfirm } from '../common/components/confirm/ConfirmProvider';
 import { keepOnBackdrop } from '../common/util/formDialog';
+import { capitalize, pascalCase } from '../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   row: {
@@ -80,13 +81,11 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const capital = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
 // document_expiry -> fleetAlertKindDocumentExpiry
 // The alert kinds that something produces today (ADM-08); the others are offered as "soon".
 const WORKING_KINDS = ['document_expiry'];
 
-const kindKey = (kind) =>
-  `fleetAlertKind${capital(kind.replace(/_(\w)/g, (_, c) => c.toUpperCase()))}`;
+const kindKey = (kind) => `fleetAlertKind${pascalCase(kind)}`;
 const emptyRecipient = {
   name: '',
   channel: 'whatsapp',
@@ -232,7 +231,7 @@ const AlertsPage = () => {
     <Chip
       key={key}
       size="small"
-      label={t(`fleetAlertsView${capital(key)}`)}
+      label={t(`fleetAlertsView${capitalize(key)}`)}
       color={view === key ? 'primary' : 'default'}
       variant={view === key ? 'filled' : 'outlined'}
       onClick={() => {
@@ -377,7 +376,7 @@ const AlertsPage = () => {
               {rows?.map((row) => (
                 <TableRow key={row.id} hover>
                   <TableCell>{row.name}</TableCell>
-                  <TableCell>{t(`fleetChannel${capital(row.channel)}`)}</TableCell>
+                  <TableCell>{t(`fleetChannel${capitalize(row.channel)}`)}</TableCell>
                   <TableCell>
                     <span dir="ltr">{row.address}</span>
                   </TableCell>
@@ -444,7 +443,7 @@ const AlertsPage = () => {
                   <TableCell className={classes.nowrap}>
                     {formatTime(row.created_at, 'minutes')}
                   </TableCell>
-                  <TableCell>{t(`fleetChannel${capital(row.channel)}`)}</TableCell>
+                  <TableCell>{t(`fleetChannel${capitalize(row.channel)}`)}</TableCell>
                   <TableCell>
                     <span dir="ltr">{row.address}</span>
                   </TableCell>
@@ -454,7 +453,7 @@ const AlertsPage = () => {
                       <Chip
                         size="small"
                         color={deliveryColor[row.status]}
-                        label={t(`fleetDelivery${capital(row.status)}`)}
+                        label={t(`fleetDelivery${capitalize(row.status)}`)}
                       />
                     </Tooltip>
                   </TableCell>
@@ -487,7 +486,7 @@ const AlertsPage = () => {
               >
                 {alertChannels.map((channel) => (
                   <MenuItem key={channel} value={channel}>
-                    {t(`fleetChannel${capital(channel)}`)}
+                    {t(`fleetChannel${capitalize(channel)}`)}
                   </MenuItem>
                 ))}
               </TextField>

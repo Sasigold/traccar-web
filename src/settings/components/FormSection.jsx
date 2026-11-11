@@ -1,3 +1,5 @@
+import { useId, useState } from 'react';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import { Paper, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
@@ -116,13 +118,44 @@ const useStyles = makeStyles()((theme, { tone }) => {
   };
 });
 
-// A titled card that groups related form fields.
-const FormSection = ({ id, title, description, icon, actions, tone = 'default', children }) => {
+// A titled card that groups related form fields. ADM-16: `collapsible` folds it shut under its
+// title (advanced settings most people never need); it opens when the title is pressed.
+const FormSection = ({
+  id,
+  title,
+  description,
+  icon,
+  actions,
+  tone = 'default',
+  collapsible = false,
+  defaultOpen = false,
+  children,
+}) => {
   const { classes } = useStyles({ tone });
+  const bodyId = useId();
+  const [open, setOpen] = useState(!collapsible || defaultOpen);
   return (
     <Paper id={id} elevation={0} className={classes.root} component="section">
       {(title || actions) && (
-        <div className={classes.header}>
+        <div
+          className={classes.header}
+          {...(collapsible
+            ? {
+                role: 'button',
+                tabIndex: 0,
+                'aria-expanded': open,
+                'aria-controls': bodyId,
+                onClick: () => setOpen(!open),
+                onKeyDown: (event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    setOpen(!open);
+                  }
+                },
+                style: { cursor: 'pointer' },
+              }
+            : {})}
+        >
           {icon && <span className={classes.icon}>{icon}</span>}
           <div className={classes.titles}>
             {title && (
@@ -137,9 +170,25 @@ const FormSection = ({ id, title, description, icon, actions, tone = 'default', 
             )}
           </div>
           {actions}
+          {collapsible && (
+            <ExpandMoreRoundedIcon
+              color="action"
+              style={{
+                transform: open ? 'rotate(180deg)' : undefined,
+                transition: 'transform 0.2s',
+              }}
+            />
+          )}
         </div>
       )}
-      <div className={classes.body}>{children}</div>
+      <div
+        id={bodyId}
+        className={classes.body}
+        hidden={!open}
+        style={open ? undefined : { display: 'none' }}
+      >
+        {children}
+      </div>
     </Paper>
   );
 };

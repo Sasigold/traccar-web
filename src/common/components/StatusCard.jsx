@@ -247,6 +247,21 @@ const useStyles = makeStyles()((theme, { desktopPadding }) => ({
       to: { opacity: 1 },
     },
   },
+  // LIV-14: it leaves over 160ms (only fading with reduced motion), then closes.
+  exit: {
+    animation: 'vf-card-out 160ms cubic-bezier(0.4, 0, 1, 1) forwards',
+    '@keyframes vf-card-out': {
+      from: { opacity: 1, transform: 'none' },
+      to: { opacity: 0, transform: 'translateY(16px)' },
+    },
+    '@media (prefers-reduced-motion: reduce)': {
+      animation: 'vf-card-fade-out 160ms linear forwards',
+    },
+    '@keyframes vf-card-fade-out': {
+      from: { opacity: 1 },
+      to: { opacity: 0 },
+    },
+  },
   sheetRoot: {
     [theme.breakpoints.down('md')]: {
       left: 0,
@@ -273,6 +288,13 @@ const StatusCard = ({
   const { classes, cx, theme } = useStyles({ desktopPadding });
   const phone = useMediaQuery(theme.breakpoints.down('md'));
   const [dragKey, setDragKey] = useState(0);
+  // LIV-14: closing plays the exit first.
+  const [closing, setClosing] = useState(false);
+  const close = () => {
+    if (closing) return;
+    setClosing(true);
+    setTimeout(onClose, 160);
+  };
   const navigate = useNavigate();
   const t = useTranslation();
 
@@ -352,7 +374,7 @@ const StatusCard = ({
           </Typography>
         </div>
       </div>
-      <IconButton aria-label={t('a11yClose')} color="inherit" onClick={onClose}>
+      <IconButton aria-label={t('a11yClose')} color="inherit" onClick={close}>
         <CloseRoundedIcon fontSize="small" />
       </IconButton>
     </div>
@@ -519,7 +541,11 @@ const StatusCard = ({
             // status and the actions, then half and full height for the details.
             <Card
               elevation={0}
-              className={cx(classes.card, classes.sheetCard, classes.enter)}
+              className={cx(
+                classes.card,
+                classes.sheetCard,
+                closing ? classes.exit : classes.enter,
+              )}
               role="region"
               aria-label={device.name}
             >
@@ -549,7 +575,7 @@ const StatusCard = ({
             >
               <Card
                 elevation={0}
-                className={cx(classes.card, classes.enter)}
+                className={cx(classes.card, closing ? classes.exit : classes.enter)}
                 ref={setStatusCardElement}
                 role="region"
                 aria-label={device.name}

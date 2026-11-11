@@ -20,6 +20,19 @@ export default (t) =>
         name: t('attributeFuelCapacity'),
         type: 'number',
       },
+      // OPS-09: an electric vehicle's battery, consumption and electricity price.
+      evCapacityKwh: {
+        name: t('attributeEvCapacityKwh'),
+        type: 'number',
+      },
+      evKwhPer100Km: {
+        name: t('attributeEvKwhPer100Km'),
+        type: 'number',
+      },
+      evPricePerKwh: {
+        name: t('attributeEvPricePerKwh'),
+        type: 'number',
+      },
       deviceImage: {
         name: t('attributeDeviceImage'),
         type: 'string',

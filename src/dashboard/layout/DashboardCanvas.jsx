@@ -33,6 +33,10 @@ const useStyles = makeStyles()((theme) => ({
     display: 'grid',
     gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
     flexShrink: 0,
+    // REP-16: on paper a row of widgets is not cut between pages.
+    '@media print': {
+      breakInside: 'avoid',
+    },
   },
   cell: {
     position: 'relative',
@@ -481,7 +485,11 @@ const DashboardCanvas = ({ rows, widgets, editing, api, onRows, highlightId }) =
   const physicalOffset = (logical) => (rtl ? { right: logical } : { left: logical });
 
   return (
-    <div ref={setRefs} className={cx(classes.canvas, editing && classes.editing)} style={{ gap }}>
+    <div
+      ref={setRefs}
+      className={cx(classes.canvas, 'vf-dashboard-canvas', editing && classes.editing)}
+      style={{ gap }}
+    >
       {visual.map((line, lineIndex) => {
         const savedRow = rows.find((row) => row.id === line.rowId);
         return (

@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import {
   createContext,
   use,
@@ -17,7 +18,8 @@ import { DATASETS, liveRow } from './datasets';
 import { reduceMeasure } from './aggregate';
 import { bucketFor, periodRange, previousRange } from './periods';
 import { createQueryCache } from './queryCache';
-import { scopeDeviceIds, scopeKey } from './scope';
+import { driverDeviceIds, scopeDeviceIds, scopeKey } from './scope';
+import { useFleetQuery } from '../../common/data/fleetQuery';
 
 // One cache for the whole app, so data survives leaving and reopening the dashboard.
 const cache = createQueryCache();
@@ -119,11 +121,6 @@ export const DashboardDataProvider = ({ filters, onFilters, refresh = 0, childre
   const groups = useSelector((state) => state.groups.items);
   const speedUnit = useAttributePreference('speedUnit', 'kmh');
 
-  const ids = scopeDeviceIds(devices, groups, filters.groupIds);
-  const key = scopeKey(ids);
-  // eslint-disable-next-line @eslint-react/exhaustive-deps
-  const deviceIds = useMemo(() => ids, [key]);
-
   // "Today" moves on at midnight; the clock ticks every minute.
   const [clock, setClock] = useState(() => dayjs());
   useEffect(() => {
@@ -142,6 +139,40 @@ export const DashboardDataProvider = ({ filters, onFilters, refresh = 0, childre
     [filters.period, range],
   );
   const bucket = bucketFor(range);
+
+  // REP-05: a driver narrows the scope to the vehicles they had during the period.
+  const driverId = filters.driverId || null;
+  const { data: assignments } = useFleetQuery(
+    'vehicle_driver_assignments',
+    ['driver', driverId],
+    (client) =>
+      client
+        .from('vehicle_driver_assignments')
+        .select('starts_at, ends_at, vehicles(traccar_device_id)')
+        .eq('driver_id', driverId),
+    { enabled: Boolean(driverId) },
+  );
+  const driverScope = useMemo(
+    () =>
+      driverId
+        ? driverDeviceIds(
+            (assignments || []).map((row) => ({
+              traccarDeviceId: row.vehicles?.traccar_device_id,
+              start: row.starts_at,
+              end: row.ends_at,
+            })),
+            range,
+          )
+        : null,
+    [driverId, assignments, range],
+  );
+
+  const grouped = scopeDeviceIds(devices, groups, filters.groupIds);
+  const ids = driverScope ? grouped.filter((id) => driverScope.has(id)) : grouped;
+  const key = scopeKey(ids) + (driverId ? `:d${driverId}` : '');
+  // eslint-disable-next-line @eslint-react/exhaustive-deps
+  const deviceIds = useMemo(() => ids, [key]);
+  const scoped = Boolean(filters.groupIds.length || driverId);
 
   // Auto refresh while the page is visible; "refresh now" reloads everything.
   const [token, setToken] = useState(0);
@@ -165,12 +196,12 @@ export const DashboardDataProvider = ({ filters, onFilters, refresh = 0, childre
   const liveHistory = useLiveHistory(key, live.rows, live.time);
   const { rows: expiryRows } = useExpiries();
   const scopedExpiries = useMemo(() => {
-    if (!filters.groupIds.length) {
+    if (!scoped) {
       return expiryRows;
     }
     const inScope = new Set(deviceIds);
     return expiryRows.filter((row) => row.entity !== 'vehicle' || inScope.has(row.entityId));
-  }, [expiryRows, deviceIds, filters.groupIds.length]);
+  }, [expiryRows, deviceIds, scoped]);
 
   const value = useMemo(
     () => ({
@@ -179,6 +210,7 @@ export const DashboardDataProvider = ({ filters, onFilters, refresh = 0, childre
       previous,
       bucket,
       deviceIds,
+      scoped,
       scope: key,
       liveRows: live.rows,
       liveTime: live.time,
@@ -197,6 +229,7 @@ export const DashboardDataProvider = ({ filters, onFilters, refresh = 0, childre
       previous,
       bucket,
       deviceIds,
+      scoped,
       key,
       live,
       liveHistory,
@@ -237,7 +270,7 @@ export const useLastSynced = () => {
   const { cache: store, liveTime, token } = useDashboardData();
   const [time, setTime] = useState(0);
   useEffect(() => {
-    const update = () => setTime(Math.max(store.latestUpdate(), liveTime));
+    const update = () => setTime(store.latestUpdate() || liveTime);
     update();
     const interval = setInterval(update, 5000);
     return () => clearInterval(interval);

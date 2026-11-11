@@ -28,6 +28,8 @@ const useStyles = makeStyles()((theme) => ({
     },
     '& > tbody > tr > td, & > tfoot > tr > td, & > tfoot > tr > th': {
       display: 'flex',
+      // A right-aligned (numeric) cell is row-reverse in MUI: on a card the label stays first.
+      flexDirection: 'row !important',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: theme.spacing(1.5),
@@ -163,7 +165,9 @@ const ResponsiveTable = ({ responsive = true, className, style, ref: externalRef
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => labelCells(table));
     });
-    observer.observe(table, { childList: true, subtree: true, characterData: true });
+    // PRF-08: rows and cells coming and going, not every change of text (live tables change
+    // text all the time; a cell that gets its first text gets a new text node, a child).
+    observer.observe(table, { childList: true, subtree: true });
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();

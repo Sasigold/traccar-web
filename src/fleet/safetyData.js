@@ -61,8 +61,9 @@ export const assignmentResolver = (assignments, driversById) => (deviceId, momen
 export const loadSafetySettings = async () => {
   const { data } = await getFleetClient().from('org_safety_settings').select('*').maybeSingle();
   return {
-    weights: { ...DEFAULT_SCORE_WEIGHTS, ...(data?.score_weights || {}) },
-    rules: { ...DEFAULT_HOURS_RULES, ...(data?.hours_rules || {}) },
+    // jsonb columns: objects by the table's own check.
+    weights: { ...DEFAULT_SCORE_WEIGHTS, .../** @type {object} */ (data?.score_weights || {}) },
+    rules: { ...DEFAULT_HOURS_RULES, .../** @type {object} */ (data?.hours_rules || {}) },
   };
 };
 

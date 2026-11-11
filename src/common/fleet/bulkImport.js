@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 // ADM-13: setting up a fleet from a spreadsheet: vehicles, drivers and points of interest.
 // Pure, unit-tested. The file is read and the columns guessed as in the fuel import; each row is
 // checked with the same Israeli field checks as the forms (ADM-06), and rows that already exist

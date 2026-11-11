@@ -1,4 +1,7 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import AccessibilityNewRoundedIcon from '@mui/icons-material/AccessibilityNewRounded';
+import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
+import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded';
 import SavingsRoundedIcon from '@mui/icons-material/SavingsRounded';
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
 import PrivacyTipRoundedIcon from '@mui/icons-material/PrivacyTipRounded';
@@ -471,6 +474,15 @@ const useSectionCatalog = () => {
             visible: fleetCosts && has('costs'),
           },
           {
+            id: 'fuelCards',
+            titleKey: 'fuelCardsTitle',
+            descriptionKey: 'fuelCardsDescription',
+            icon: CreditCardRoundedIcon,
+            path: '/fleet/fuel-cards',
+            match: (pathname) => pathname.startsWith('/fleet/fuel-cards'),
+            visible: fleetVehicles,
+          },
+          {
             id: 'fuelChecks',
             titleKey: 'fuelChecksTitle',
             descriptionKey: 'fuelChecksDescription',
@@ -505,6 +517,16 @@ const useSectionCatalog = () => {
             path: '/fleet/safety-officer',
             match: (pathname) => pathname.startsWith('/fleet/safety-officer'),
             visible: fleetSafety && has('safetyOfficer'),
+          },
+          {
+            // AI-10: short courses from the company's procedures.
+            id: 'courses',
+            titleKey: 'coursesPage',
+            descriptionKey: 'coursesPageDescription',
+            icon: SchoolRoundedIcon,
+            path: '/fleet/courses',
+            match: (pathname) => pathname.startsWith('/fleet/courses'),
+            visible: fleetSafety && has('safety'),
           },
         ],
       },

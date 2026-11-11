@@ -1,29 +1,37 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { parse, stringify } from 'wellknown';
 import turfCircle from '@turf/circle';
-import gcoord from 'gcoord';
-import { getCoordinateSystem } from './mapState';
+import { getCoordinateSystem, getGcoord } from './mapState';
+
+// A coordinate system other than WGS84 is set only once gcoord is loaded (MapView loads it
+// before choosing such a style), so getGcoord() is there whenever it is needed.
+const converting = () => Boolean(getCoordinateSystem() && getGcoord());
 
 const coordinateSystem = (id) => {
-  switch (id) {
-    case 'gcj02':
-      return gcoord.GCJ02;
-    default:
-      return gcoord.WGS84;
-  }
+  const gcoord = getGcoord();
+  return id === 'gcj02' ? gcoord.GCJ02 : gcoord.WGS84;
 };
 
 export const toMapCoordinates = (longitude, latitude) =>
-  getCoordinateSystem()
-    ? gcoord.transform([longitude, latitude], gcoord.WGS84, coordinateSystem(getCoordinateSystem()))
+  converting()
+    ? getGcoord().transform(
+        [longitude, latitude],
+        getGcoord().WGS84,
+        coordinateSystem(getCoordinateSystem()),
+      )
     : [longitude, latitude];
 
 export const fromMapCoordinates = (longitude, latitude) =>
-  getCoordinateSystem()
-    ? gcoord.transform([longitude, latitude], coordinateSystem(getCoordinateSystem()), gcoord.WGS84)
+  converting()
+    ? getGcoord().transform(
+        [longitude, latitude],
+        coordinateSystem(getCoordinateSystem()),
+        getGcoord().WGS84,
+      )
     : [longitude, latitude];
 
 const transformGeometry = (geometry, from, to) =>
-  gcoord.transform(structuredClone(geometry), from, to);
+  getGcoord().transform(structuredClone(geometry), from, to);
 
 export const loadImage = (url) =>
   new Promise((imageLoaded) => {
@@ -111,8 +119,12 @@ export const geofenceToFeature = (theme, item) => {
     geometry = polygon.geometry;
   } else {
     geometry = reverseCoordinates(parse(item.area));
-    if (getCoordinateSystem()) {
-      geometry = transformGeometry(geometry, gcoord.WGS84, coordinateSystem(getCoordinateSystem()));
+    if (converting()) {
+      geometry = transformGeometry(
+        geometry,
+        getGcoord().WGS84,
+        coordinateSystem(getCoordinateSystem()),
+      );
     }
   }
   return {
@@ -129,8 +141,8 @@ export const geofenceToFeature = (theme, item) => {
 };
 
 export const geometryToArea = (geometry) => {
-  const normalized = getCoordinateSystem()
-    ? transformGeometry(geometry, coordinateSystem(getCoordinateSystem()), gcoord.WGS84)
+  const normalized = converting()
+    ? transformGeometry(geometry, coordinateSystem(getCoordinateSystem()), getGcoord().WGS84)
     : geometry;
   return stringify(reverseCoordinates(normalized));
 };

@@ -50,3 +50,80 @@ export const sendDamageReport = async (item, mark) => {
 };
 
 registerOutboxKind('damage', sendDamageReport);
+
+// ADM-18: the driver's fueling. The receipt goes up first (a fixed path, so a retry finds it),
+// then the database books the fueling on the driver's current vehicle, once per id.
+export const receiptPath = (orgId, item, file) =>
+  `${orgId}/fuel/${item.id}-${file.id}-${safeName(file.name)}`;
+
+export const sendFueling = async (item, mark) => {
+  const { fueling } = item.payload;
+  let path = null;
+  const [file] = item.files;
+  if (file) {
+    path = receiptPath(fueling.org_id, item, file);
+    if (!file.done) {
+      const { error } = await getFleetClient()
+        .storage.from(FILES_BUCKET)
+        .upload(path, file.blob, { contentType: file.type || 'image/jpeg', upsert: false });
+      if (error && !fileExists(error)) {
+        throw error;
+      }
+      file.done = true;
+      await mark({ files: item.files });
+    }
+  }
+  const { error } = await getFleetClient().rpc('driver_report_fueling', {
+    p_id: fueling.id,
+    p_occurred_at: fueling.occurred_at,
+    p_total: fueling.total,
+    p_liters: fueling.liters,
+    p_odometer: fueling.odometer,
+    p_station: fueling.station,
+    p_receipt_path: path,
+  });
+  if (error) throw error;
+  await mark({ saved: true });
+};
+
+registerOutboxKind('fuel', sendFueling);
+
+// ADM-10: the driver's morning check. The inspection, its items and the issues it raises carry
+// ids made in the phone; each photo or signature has a fixed path. Any step can be repeated.
+export const inspectionFilePath = (orgId, item, file) =>
+  `${orgId}/inspections/${item.id}-${file.id}-${safeName(file.name)}`;
+
+export const sendInspection = async (item, mark) => {
+  const { inspection, items, issues } = item.payload;
+  if (!item.saved) {
+    await insertOnce('inspections', inspection);
+    await mark({ saved: true });
+  }
+  await sendFiles(item, mark, async (file) => {
+    const { error } = await getFleetClient()
+      .storage.from(FILES_BUCKET)
+      .upload(inspectionFilePath(inspection.org_id, item, file), file.blob, {
+        contentType: file.type || 'image/jpeg',
+        upsert: false,
+      });
+    if (error && !fileExists(error)) {
+      throw error;
+    }
+  });
+  if (!item.itemsSaved) {
+    const pathOf = Object.fromEntries(
+      item.files.map((file) => [file.itemIndex, inspectionFilePath(inspection.org_id, item, file)]),
+    );
+    await insertOnce(
+      'inspection_items',
+      items.map((row, index) => ({ ...row, photo_path: pathOf[index] ?? null })),
+    );
+    await mark({ itemsSaved: true });
+  }
+  if (issues.length && !item.issuesSaved) {
+    await insertOnce('issues', issues);
+    await mark({ issuesSaved: true });
+  }
+};
+
+registerOutboxKind('inspection', sendInspection);

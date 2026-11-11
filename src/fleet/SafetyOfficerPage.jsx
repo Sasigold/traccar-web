@@ -53,6 +53,8 @@ import { openLetterWindow } from './components/printTransferLetter';
 import printQuarterReport from './components/printQuarterReport';
 import { ensureDriver, ensureVehicle, openFleetFile, uploadFleetFile } from './fleetData';
 import { keepOnBackdrop } from '../common/util/formDialog';
+import { capitalize } from '../common/util/stringUtils';
+import VehicleSelect from '../common/components/VehicleSelect';
 
 const useStyles = makeStyles()((theme) => ({
   number: {
@@ -93,7 +95,6 @@ const useStyles = makeStyles()((theme) => ({
 const FILTERS = ['all', 'overdue', 'soon'];
 const STATUS_COLOR = { overdue: 'error', soon: 'warning', ok: 'default' };
 const RULE_KEYS = Object.keys(DEFAULT_OFFICER_RULES);
-const capital = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
 const yearAgo = () => new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString();
 
 // The frequencies of the work plan, per organization.
@@ -128,7 +129,7 @@ const RulesDialog = ({ rules, onClose, onSaved }) => {
               key={key}
               type="number"
               size="small"
-              label={t(`safetyRule${capital(key)}`)}
+              label={t(`safetyRule${capitalize(key)}`)}
               value={values[key]}
               onChange={(event) => setValues({ ...values, [key]: Number(event.target.value) })}
               slotProps={{ htmlInput: { dir: 'ltr', min: 1 } }}
@@ -252,20 +253,10 @@ const TachographDialog = ({ initial, onClose, onSaved }) => {
             <MenuItem value="card">{t('safetyTachographCard')}</MenuItem>
           </TextField>
           {form.kind === 'vehicle' ? (
-            <TextField
-              select
-              label={t('fleetEntityVehicle')}
+            <VehicleSelect
               value={form.deviceId}
-              onChange={set('deviceId')}
-            >
-              {Object.values(devices)
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map((device) => (
-                  <MenuItem key={device.id} value={String(device.id)}>
-                    {device.name}
-                  </MenuItem>
-                ))}
-            </TextField>
+              onChange={(deviceId) => set('deviceId')({ target: { value: deviceId } })}
+            />
           ) : (
             <TextField
               select
@@ -346,7 +337,7 @@ const ProcedureDialog = ({ onClose, onSaved }) => {
           >
             {['procedure', 'form', 'template', 'regulation'].map((category) => (
               <MenuItem key={category} value={category}>
-                {t(`safetyProcedure${capital(category)}`)}
+                {t(`safetyProcedure${capitalize(category)}`)}
               </MenuItem>
             ))}
           </TextField>
@@ -391,7 +382,7 @@ const ProceduresDialog = ({ procedures, canWrite, onAdd, onClose }) => {
             <Typography variant="body2">
               {procedure.title}
               {' · '}
-              {t(`safetyProcedure${capital(procedure.category)}`)}
+              {t(`safetyProcedure${capitalize(procedure.category)}`)}
               {procedure.version && ` · ${procedure.version}`}
               {procedure.published_at && ` · ${formatTime(procedure.published_at, 'date')}`}
             </Typography>
@@ -595,7 +586,7 @@ const SafetyOfficerPage = () => {
         'tachographs',
         'overdue',
         'soon',
-      ].map((key) => [t(`safetyQuarter${capital(key)}`), summary[key]]);
+      ].map((key) => [t(`safetyQuarter${capitalize(key)}`), summary[key]]);
       printQuarterReport(
         win,
         {
@@ -618,7 +609,7 @@ const SafetyOfficerPage = () => {
           tasks: tasks
             .filter((task) => task.status !== 'ok')
             .map((task) => [
-              t(`safetyTask${capital(task.kind)}`),
+              t(`safetyTask${capitalize(task.kind)}`),
               typeof subject(task) === 'string'
                 ? subject(task)
                 : driversById[task.driverId]?.full_name || t('fleetIncidentsPage'),
@@ -661,7 +652,7 @@ const SafetyOfficerPage = () => {
     <Chip
       key={key}
       size="small"
-      label={`${t(`safetyFilter${capital(key)}`)} · ${counts[key]}`}
+      label={`${t(`safetyFilter${capitalize(key)}`)} · ${counts[key]}`}
       color={filter === key ? 'primary' : 'default'}
       variant={filter === key ? 'filled' : 'outlined'}
       onClick={() => setFilter(key)}
@@ -749,9 +740,9 @@ const SafetyOfficerPage = () => {
               hover
             >
               <TableCell>
-                {t(`safetyTask${capital(task.kind)}`)}
+                {t(`safetyTask${capitalize(task.kind)}`)}
                 {task.kind === 'tachograph' &&
-                  ` · ${t(`safetyTachograph${capital(task.tachographKind)}`)}`}
+                  ` · ${t(`safetyTachograph${capitalize(task.tachographKind)}`)}`}
                 {task.unsigned && (
                   <Chip
                     size="small"
@@ -777,7 +768,7 @@ const SafetyOfficerPage = () => {
               {canWrite && (
                 <TableCell>
                   <Button size="small" onClick={() => act(task)}>
-                    {t(`safetyAct${capital(task.kind)}`)}
+                    {t(`safetyAct${capitalize(task.kind)}`)}
                   </Button>
                 </TableCell>
               )}

@@ -77,3 +77,11 @@ describe('run keys (AI-05)', () => {
     expect(key).not.toBe(runKey({ deviceId: 4, startTime: '2026-11-10T06:00:00Z' }));
   });
 });
+
+describe('the Shabbat and holiday rule (ISR-09)', () => {
+  const rule = { template: 'restDay', params: {} };
+  it('fires for a trip on Shabbat, not on a weekday', () => {
+    expect(matches(rule, { startTime: '2026-11-14T09:00:00Z' })).toBe(true);
+    expect(matches(rule, { startTime: '2026-11-12T09:00:00Z' })).toBe(false);
+  });
+});

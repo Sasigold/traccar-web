@@ -1,3 +1,4 @@
+import { Link as RouterLink } from 'react-router-dom';
 import { Fab } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 
@@ -13,12 +14,20 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const BaseFab = ({ children, color = 'primary', onClick, label }) => {
+// With `to`, the button is a link to that page (ADM-29: "add" opens the new item's page).
+const BaseFab = ({ children, color = 'primary', onClick, label, pressed, to }) => {
   const { classes } = useStyles();
 
   return (
     <div className={classes.fab}>
-      <Fab size="medium" color={color} onClick={onClick} aria-label={label}>
+      <Fab
+        size="medium"
+        color={color}
+        onClick={onClick}
+        aria-label={label}
+        aria-pressed={pressed}
+        {...(to && { component: RouterLink, to })}
+      >
         {children}
       </Fab>
     </div>

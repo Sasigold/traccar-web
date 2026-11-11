@@ -1,4 +1,4 @@
-// Roadmap stage 2: work order helpers (pure, unit-tested).
+// Work order helpers (pure, unit-tested).
 
 export const WORK_ORDER_STATUSES = ['planned', 'open', 'in_shop', 'done', 'cancelled'];
 export const WORK_ORDER_TYPES = [
@@ -39,4 +39,17 @@ export const isOpenStatus = (status) => status !== 'done' && status !== 'cancell
 export const odometerKm = (position) => {
   const meters = position?.attributes?.totalDistance ?? position?.attributes?.odometer;
   return typeof meters === 'number' ? Math.round(meters / 1000) : null;
+};
+
+// ADM-19: Israeli VAT (18% since January 2025). A garage's prices may or may not include it;
+// the order shows the subtotal, the VAT and the total either way.
+export const VAT_RATE = 0.18;
+export const vatBreakdown = (amount, includesVat = true, rate = VAT_RATE) => {
+  const value = Number(amount) || 0;
+  if (includesVat) {
+    const subtotal = round(value / (1 + rate));
+    return { subtotal, vat: round(value - subtotal), total: round(value) };
+  }
+  const vat = round(value * rate);
+  return { subtotal: round(value), vat, total: round(value + vat) };
 };

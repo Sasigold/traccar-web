@@ -1,4 +1,4 @@
-// Roadmap stage 1: map the stage 0 Traccar attributes to the fleet database and back.
+// Map the stage 0 Traccar attributes to the fleet database and back.
 // Pure functions only; the Supabase calls live in src/fleet/fleetRecords.js.
 
 // Validity dates become documents (without a file) of these types.

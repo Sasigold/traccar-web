@@ -45,10 +45,13 @@ test('a fill-up while the vehicle drove and one over the tank are found; checks 
     page.getByRole('cell', { name: 'התדלוק לא היה במקום של הרכב' }).first(),
   ).toBeVisible();
   await expect(page.getByRole('cell', { name: /הרכב היה בנסיעה/ }).first()).toBeVisible();
-  await expect(page.getByRole('link', { name: 'איפה הרכב היה' }).first()).toHaveAttribute(
-    'href',
-    /\/replay\?deviceId=1&from=/,
-  );
+  // Other vehicles' links can come first; this vehicle's one is there.
+  await expect(
+    page
+      .getByRole('link', { name: 'איפה הרכב היה' })
+      .and(page.locator('[href*="/replay?deviceId=1&from="]'))
+      .first(),
+  ).toBeVisible();
 
   await page.getByRole('button', { name: 'הבדיקות' }).click();
   await page.getByRole('switch', { name: /יותר מנפח המכל/ }).click();

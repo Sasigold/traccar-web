@@ -57,6 +57,8 @@ test('a form dialog fills the phone, with a file button and shekels', async ({
   const box = await dialog.boundingBox();
   const viewport = page.viewportSize();
   expect(Math.round(box.width)).toBe(viewport.width);
+  // ADM-29: a bottom sheet, on the bottom edge.
+  expect(Math.round(box.y + box.height)).toBe(viewport.height);
   await expect(dialog.getByRole('button', { name: 'קבלה' })).toBeVisible();
   await expect(dialog.getByText('₪')).toBeVisible();
   await expect(dialog.getByText('כולל מע"מ')).toBeVisible();
@@ -74,6 +76,6 @@ test('saving a vehicle names it', async ({ page, isMobile }) => {
     .click();
   await expect(page).toHaveURL(/\/settings\/device\/1$/);
   await page.getByLabel('שם', { exact: true }).fill('Delivery Van 2');
-  await page.getByRole('button', { name: 'שמירה' }).click();
+  await page.getByRole('button', { name: 'שמירה', exact: true }).click();
   await expect(page.getByText('Delivery Van 2 נשמר')).toBeVisible();
 });

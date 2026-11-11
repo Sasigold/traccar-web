@@ -29,6 +29,7 @@ import FormSection from '../../settings/components/FormSection';
 import EmptyState from '../../common/components/table/EmptyState';
 import StateChip from '../components/StateChip';
 import { assignDevices, saveRegistry } from '../adminApi';
+import { capitalize } from '../../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   table: {
@@ -48,8 +49,7 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const statusLabel = (status, t) =>
-  t(`deviceStatus${(status || 'unknown').replace(/^\w/, (c) => c.toUpperCase())}`);
+const statusLabel = (status, t) => t(`deviceStatus${capitalize(status || 'unknown')}`);
 
 const CustomerDevices = ({ customer, devices, directory, editable }) => {
   const { classes } = useStyles();

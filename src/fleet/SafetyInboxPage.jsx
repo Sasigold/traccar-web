@@ -34,6 +34,7 @@ import { coachingEffect, countByStatus, inboxItems } from '../common/fleet/safet
 import { loadDriving } from './safetyData';
 import FleetNotice from './components/FleetNotice';
 import { keepOnBackdrop } from '../common/util/formDialog';
+import { capitalize, pascalCase } from '../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   stats: {
@@ -71,7 +72,6 @@ const useStyles = makeStyles()((theme) => ({
 }));
 
 const DAYS = 30;
-const capital = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
 const time = (value) => Date.parse(value);
 
 // SAF-01: the safety inbox. Every event waits here until someone decides what it is; the goal
@@ -183,7 +183,7 @@ const SafetyInboxPage = () => {
       key={key}
       size="small"
       label={
-        key === 'all' ? t('fleetFilterAll') : `${t(`safetyInbox${capital(key)}`)} ${counts[key]}`
+        key === 'all' ? t('fleetFilterAll') : `${t(`safetyInbox${capitalize(key)}`)} ${counts[key]}`
       }
       color={filter === key ? 'primary' : 'default'}
       variant={filter === key ? 'filled' : 'outlined'}
@@ -258,7 +258,7 @@ const SafetyInboxPage = () => {
               <TableCell>{devices[item.deviceId]?.name}</TableCell>
               <TableCell>{driverName(item.driver)}</TableCell>
               <TableCell>
-                {t(`fleetSafetyEvent${capital(item.category)}`)}
+                {t(`fleetSafetyEvent${capitalize(item.category)}`)}
                 {item.severity === 'severe' && (
                   <Chip
                     size="small"
@@ -269,13 +269,11 @@ const SafetyInboxPage = () => {
                 )}
               </TableCell>
               <TableCell>
-                {t(`safetyStatus${capital(item.status)}`)}
+                {t(`safetyStatus${capitalize(item.status)}`)}
                 {item.review?.self_review && (
                   <Typography variant="caption" display="block" color="textSecondary">
                     {item.review.driver_ack_at
-                      ? t(
-                          `safetyAnswer${capital(item.review.driver_answer.replace(/_(\w)/g, (_, c) => c.toUpperCase()))}`,
-                        )
+                      ? t(`safetyAnswer${pascalCase(item.review.driver_answer)}`)
                       : t('safetyInboxSentToDriver')}
                   </Typography>
                 )}

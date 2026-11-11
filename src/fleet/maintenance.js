@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { useSelector } from 'react-redux';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import usePositionAttributes from '../common/attributes/usePositionAttributes';

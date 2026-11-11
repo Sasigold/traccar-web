@@ -58,3 +58,77 @@ test.describe('selecting and following a vehicle', () => {
     await expect(page.getByRole('button', { name: 'פקודה', exact: true })).toHaveCount(0);
   });
 });
+
+// LIV-15: single keys: J/K move through the list, R opens today's replay of the selected one.
+test('J and K move between vehicles, R opens the replay', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'a keyboard on the desktop');
+  await gotoReady(page, '/');
+  await page.keyboard.press('j');
+  const pressed = page.locator('[data-row][aria-pressed="true"]');
+  await expect(pressed).toHaveCount(1);
+  const first = await pressed.getAttribute('data-row');
+  await page.keyboard.press('j');
+  await expect(pressed).not.toHaveAttribute('data-row', first);
+  await page.keyboard.press('k');
+  await expect(pressed).toHaveAttribute('data-row', first);
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('j');
+  await page.keyboard.press('r');
+  await expect(page).toHaveURL(/\/replay\?deviceId=\d+/);
+});
+
+// LIV-12: a short hover on a vehicle shows who it is.
+test('hovering a vehicle on the map shows its card', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'hover is a desktop gesture');
+  test.setTimeout(120_000);
+  await gotoReady(page, '/');
+  // Selecting a vehicle centers the map on it; closing the card leaves it there.
+  await page.locator('[data-row="0"]').click();
+  await page.waitForTimeout(1500);
+  await page.keyboard.press('Escape');
+  const canvas = page.locator('.maplibregl-canvas');
+  const box = await canvas.boundingBox();
+  const panel = await page.locator('[data-row="0"]').boundingBox();
+  // The middle of the map that the list does not cover.
+  const visibleWidth = panel.x > box.x + box.width / 2 ? panel.x - box.x : box.width;
+  const cx = box.x + visibleWidth / 2;
+  const cy = box.y + box.height / 2;
+  let found = false;
+  for (let dy = -60; dy <= 60 && !found; dy += 15) {
+    for (let dx = -120; dx <= 120 && !found; dx += 30) {
+      await page.mouse.move(cx + dx, cy + dy);
+      found = await canvas.evaluate((node) => node.style.cursor === 'pointer');
+    }
+  }
+  expect(found).toBe(true);
+  await expect(page.getByRole('tooltip')).toContainText(/מחובר|מנותק|לא ידוע/);
+});
+
+// LIV-14: the card leaves with a short exit before it closes.
+test('the vehicle card plays its exit before closing', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the list is folded on a phone');
+  await gotoReady(page, '/');
+  await page.locator('[data-row="0"]').click();
+  const close = page.getByRole('region').getByRole('button', { name: 'סגירה' }).first();
+  await expect(close).toBeVisible();
+  // Right after the click, before the card goes, something around the button plays another
+  // animation: the exit.
+  const animating = await close.evaluate(async (button) => {
+    const names = () => {
+      const list = [];
+      for (let node = button; node; node = node.parentElement) {
+        list.push(getComputedStyle(node).animationName);
+      }
+      return list;
+    };
+    const before = names();
+    button.click();
+    // React applies the click's update right after it; the card closes 160 ms later.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const after = names();
+    // The enter animation keeps its name after it ends; the exit puts on another.
+    return after.some((name, index) => name !== 'none' && name !== before[index]);
+  });
+  expect(animating).toBe(true);
+  await expect(close).toBeHidden();
+});

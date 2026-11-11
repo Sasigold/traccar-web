@@ -1,4 +1,4 @@
-// Roadmap stage 2: fuel company file import (pure, unit-tested).
+// Fuel company file import (pure, unit-tested).
 // Fuel companies send CSV / Excel files with their own headers; the importer guesses which
 // column is which, lets the person correct it, matches vehicles by plate and flags anomalies.
 
@@ -244,3 +244,24 @@ export const fuelMismatch = (vehicleFuel, product) => {
   }
   return matched[0] !== vehicleFuel;
 };
+
+// ADM-18: plates the file names that match no vehicle, once each, in the file's order.
+export const unknownPlates = (transactions) => [
+  ...new Set(
+    transactions
+      .filter((tx) => !tx.vehicle && tx.plate_number)
+      .map((tx) => normalizePlate(tx.plate_number)),
+  ),
+];
+
+// The vehicles with the plates someone mapped by hand ({ normalized plate: vehicle id }) added
+// as further plates of those vehicles.
+export const withPlateAliases = (vehicles, aliases = {}) => [
+  ...vehicles,
+  ...Object.entries(aliases)
+    .map(([plate, id]) => {
+      const vehicle = vehicles.find((item) => String(item.id) === String(id));
+      return vehicle ? { ...vehicle, plate } : null;
+    })
+    .filter(Boolean),
+];

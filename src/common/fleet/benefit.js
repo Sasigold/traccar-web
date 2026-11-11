@@ -25,3 +25,47 @@ export const monthlyBenefit = (listPrice, propulsion = 'fuel', rules = BENEFIT_2
 // Pool cars: the benefit is charged for the days a driver took the car home.
 export const poolBenefit = (monthly, nightsHome, daysInMonth) =>
   monthly == null || !daysInMonth ? null : Math.round((monthly * nightsHome) / daysInMonth);
+
+// ISR-05: the pool cars' night log for a month: every night a booking held the car at 02:00
+// (the car slept with the driver), from approved or returned bookings. Returns the nights one by
+// one ({ date 'YYYY-MM-DD', personId, vehicleId }) and per person and vehicle ({ personId,
+// vehicleId, nights }). `month` is any moment in the month; local time.
+export const poolNights = (bookings, month) => {
+  const first = new Date(new Date(month).getFullYear(), new Date(month).getMonth(), 1);
+  const days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+  const log = [];
+  (bookings || [])
+    .filter((booking) => ['approved', 'returned'].includes(booking.status))
+    .forEach((booking) => {
+      const start = Date.parse(booking.starts_at);
+      const end = Date.parse(booking.ends_at);
+      for (let day = 1; day <= days; day += 1) {
+        const night = new Date(first.getFullYear(), first.getMonth(), day, 2).getTime();
+        if (night >= start && night < end) {
+          const date = new Date(first.getFullYear(), first.getMonth(), day);
+          const pad = (n) => String(n).padStart(2, '0');
+          log.push({
+            date: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(day)}`,
+            personId: booking.requested_by,
+            vehicleId: booking.vehicle_id,
+          });
+        }
+      }
+    });
+  const totals = new Map();
+  log.forEach((night) => {
+    const key = `${night.personId}|${night.vehicleId}`;
+    const row = totals.get(key) || {
+      personId: night.personId,
+      vehicleId: night.vehicleId,
+      nights: 0,
+    };
+    row.nights += 1;
+    totals.set(key, row);
+  });
+  return {
+    days,
+    log: log.sort((a, b) => a.date.localeCompare(b.date)),
+    totals: [...totals.values()],
+  };
+};

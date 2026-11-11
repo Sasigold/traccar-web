@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { filterStops, litersPer100, overspeedText, visitDuration } from '../reportRules';
+import {
+  byGeofence,
+  filterStops,
+  litersPer100,
+  overspeedText,
+  visitDuration,
+} from '../reportRules';
 
 // REP-14: rules for single reports.
 describe('stops', () => {
@@ -58,5 +64,39 @@ describe('speeding against the road limit (SAF-06)', () => {
     expect(speedingBand(80, null)).toBeNull();
     expect(overspeedBand({ speed: 60.48, speedLimit: 48.6 })).toBe('severe');
     expect(overspeedBand({ speed: 60.48 })).toBeNull();
+  });
+});
+
+describe('the geofences report by geofence (REP-14)', () => {
+  it('adds up visits, vehicles and time, with the open visits up to now', () => {
+    const now = Date.parse('2026-11-10T12:00:00Z');
+    const rows = byGeofence(
+      [
+        {
+          geofenceId: 1,
+          deviceId: 1,
+          startTime: '2026-11-10T08:00:00Z',
+          endTime: '2026-11-10T09:00:00Z',
+        },
+        {
+          geofenceId: 1,
+          deviceId: 2,
+          startTime: '2026-11-10T10:00:00Z',
+          endTime: '2026-11-10T11:00:00Z',
+        },
+        { geofenceId: 1, deviceId: 1, startTime: '2026-11-10T11:00:00Z' },
+        {
+          geofenceId: 2,
+          deviceId: 3,
+          startTime: '2026-11-10T08:00:00Z',
+          endTime: '2026-11-10T08:30:00Z',
+        },
+      ],
+      now,
+    );
+    expect(rows[0]).toMatchObject({ geofenceId: 1, visits: 3, vehicles: 2, inside: 1 });
+    expect(rows[0].total).toBe(3 * 3600000);
+    expect(rows[0].average).toBe(3600000);
+    expect(rows[1]).toMatchObject({ geofenceId: 2, visits: 1, vehicles: 1, inside: 0 });
   });
 });

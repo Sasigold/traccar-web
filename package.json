@@ -13,8 +13,8 @@
     "@mapbox/mapbox-gl-rtl-text": "^0.4.0",
     "@material-symbols/svg-600": "^0.48.2",
     "@mui/icons-material": "^9.5.0",
-    "@mui/lab": "^9.0.0-beta.10",
     "@mui/material": "^9.5.0",
+    "@mui/utils": "^9.5.0",
     "@reduxjs/toolkit": "^2.13.0",
     "@supabase/supabase-js": "^2.119.0",
     "@tanstack/react-query": "^5.107.1",
@@ -27,7 +27,6 @@
     "gcoord": "^1.0.7",
     "hls.js": "^1.7.4",
     "maplibre-gl": "^6.16.0",
-    "maplibre-google-maps": "^1.1.0",
     "pmtiles": "^4.5.0",
     "react": "^19.3.1",
     "react-country-flag": "3.1.0",
@@ -57,10 +56,13 @@
     "build": "vite build",
     "generate-pwa-assets": "pwa-assets-generator --preset minimal public/logo.svg",
     "lint": "eslint --max-warnings 0 . && node tools/brand-css-guard.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "size": "node tools/size-budget.mjs build",
     "lint:fix": "eslint --fix --max-warnings 0 .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "knip": "knip --dependencies"
   },
   "browserslist": {
     "production": [
@@ -74,15 +76,18 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
+    "@babel/core": "^7.29.13",
     "@eslint-react/eslint-plugin": "^5.28.8",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.63.0",
+    "@rolldown/plugin-babel": "^0.3.1",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.8",
     "@vite-pwa/assets-generator": "^2.0.0",
-    "@vitejs/plugin-react-swc": "^4.3.3",
+    "@vitejs/plugin-react": "^6.3.0",
+    "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import-x": "^4.17.1",
@@ -90,6 +95,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",
     "jsdom": "^31.0.0",
+    "knip": "^5.88.1",
     "prettier": "^3.9.10",
     "typescript": "^6.0.3",
     "vite": "^8.3.5",
@@ -106,5 +112,8 @@
     "@swc/core@1.16.1": true,
     "fsevents@2.3.3": true,
     "unrs-resolver@1.12.2": true
+  },
+  "engines": {
+    "node": ">=22 <23"
   }
 }

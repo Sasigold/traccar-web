@@ -139,3 +139,20 @@ describe('regulation 168, the rest of it (ISR-07)', () => {
     expect(allowance.leftMinutes).toBeLessThanOrEqual(30);
   });
 });
+
+describe('Mobileye warnings (ISR-08)', () => {
+  const alarm = (name) => eventCategory({ type: 'alarm', attributes: { alarm: name } });
+  it('count in the score under their own categories', () => {
+    expect(alarm('laneChange')).toBe('laneDeparture');
+    expect(alarm('fcw')).toBe('forwardCollision');
+    expect(alarm('hmw')).toBe('headwayWarning');
+    expect(alarm('pcw')).toBe('pedestrianCollision');
+  });
+
+  it('lower the score more for a collision warning than for a lane departure', () => {
+    const km = 100;
+    expect(safetyScore({ forwardCollision: 1 }, km)).toBeLessThan(
+      safetyScore({ laneDeparture: 1 }, km),
+    );
+  });
+});

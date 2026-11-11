@@ -40,6 +40,9 @@ import { odometerKm } from '../common/fleet/workOrders';
 import FleetNotice from './components/FleetNotice';
 import SignaturePad from './components/SignaturePad';
 import { ensureDriver, ensureVehicle, openFleetFile, uploadFleetFile } from './fleetData';
+import { enqueue, newId, sendItem, shrinkImage } from '../common/fleet/outbox';
+import './driverOutbox';
+import VehicleSelect from '../common/components/VehicleSelect';
 
 const useStyles = makeStyles()((theme) => ({
   top: {
@@ -88,7 +91,7 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-// Roadmap stage 2: fill in a checklist for a vehicle (or view a filled one).
+// Fill in a checklist for a vehicle (or view a filled one).
 // Failed items open issues; the inspection fails when any item fails.
 // driverMode (/driver/check, ADM-09): the driver and the assigned vehicle are filled in and locked,
 // the controls are large, and sending ends on a confirmation instead of the manager's list.
@@ -211,6 +214,70 @@ const InspectionPage = ({ driverMode = false }) => {
   const answer = (itemId, changes) =>
     setAnswers((current) => ({ ...current, [itemId]: { ...current[itemId], ...changes } }));
 
+  // ADM-10: the driver's check goes through the outbox, so it is kept in the phone without a
+  // line and sent once there is one.
+  const saveThroughOutbox = async () => {
+    const position = positions[selectedDeviceId];
+    const inspectionId = newId();
+    const files = [];
+    const rows = [];
+    for (const [index, item] of items.entries()) {
+      const value = answers[item.id] || {};
+      if (value.photo || value.signature) {
+        const blob = value.photo
+          ? await shrinkImage(value.photo)
+          : new File([value.signature], 'signature.png', { type: 'image/png' });
+        files.push({ blob, name: blob.name, type: blob.type, itemIndex: index });
+      }
+      rows.push({
+        id: newId(),
+        org_id: profile.org_id,
+        inspection_id: inspectionId,
+        template_item_id: item.id,
+        label: item.label,
+        type: item.type,
+        critical: item.critical,
+        value: value.value == null ? null : String(value.value),
+        passed: evaluateItem(item, value.value),
+        comment: value.comment?.trim() || null,
+        sort_order: index,
+      });
+    }
+    const item = await enqueue(
+      'inspection',
+      {
+        inspection: {
+          id: inspectionId,
+          org_id: profile.org_id,
+          vehicle_id: assigned.vehicle_id,
+          driver_id: driverContext.driver.id,
+          template_id: template.id,
+          template_name: template.name,
+          finished_at: new Date().toISOString(),
+          odometer_km: odometerKm(position),
+          latitude: position?.latitude ?? null,
+          longitude: position?.longitude ?? null,
+          result: inspectionResult(items, answers),
+          notes: notes.trim() || null,
+          created_by: profile.id,
+        },
+        items: rows,
+        issues: issuesFromFailures(items, answers).map((issue) => ({
+          ...issue,
+          id: newId(),
+          org_id: profile.org_id,
+          vehicle_id: assigned.vehicle_id,
+          inspection_id: inspectionId,
+          reported_by: profile.id,
+        })),
+      },
+      files,
+      { ownerId: profile.id },
+    );
+    const result = await sendItem(item);
+    setDone({ time: new Date(), queued: !result.sent });
+  };
+
   const handleSave = useCatch(async () => {
     if (remaining) {
       setShowMissing(true);
@@ -218,70 +285,70 @@ const InspectionPage = ({ driverMode = false }) => {
     }
     setSaving(true);
     try {
-      const client = getFleetClient();
-      let vehicleId;
-      let driverRowId;
       if (driverMode) {
-        vehicleId = assigned.vehicle_id;
-        driverRowId = driverContext.driver.id;
+        await saveThroughOutbox();
       } else {
-        vehicleId = await ensureVehicle(devices[deviceId], profile);
+        const client = getFleetClient();
+        const vehicleId = await ensureVehicle(devices[deviceId], profile);
         const driver = Object.values(drivers).find((it) => String(it.id) === driverId);
-        driverRowId = driver ? await ensureDriver(driver, profile) : null;
-      }
-      const position = positions[selectedDeviceId];
-      const result = inspectionResult(items, answers);
-      const inspection = unwrap(
-        await client
-          .from('inspections')
-          .insert({
+        const driverRowId = driver ? await ensureDriver(driver, profile) : null;
+        const position = positions[selectedDeviceId];
+        const result = inspectionResult(items, answers);
+        const inspection = unwrap(
+          await client
+            .from('inspections')
+            .insert({
+              org_id: profile.org_id,
+              vehicle_id: vehicleId,
+              driver_id: driverRowId,
+              template_id: template.id,
+              template_name: template.name,
+              finished_at: new Date().toISOString(),
+              odometer_km: odometerKm(position),
+              latitude: position?.latitude ?? null,
+              longitude: position?.longitude ?? null,
+              result,
+              notes: notes.trim() || null,
+              created_by: profile.id,
+            })
+            .select('id')
+            .single(),
+        );
+        const rows = [];
+        for (const [index, item] of items.entries()) {
+          const value = answers[item.id] || {};
+          const file =
+            value.photo ||
+            (value.signature &&
+              new File([value.signature], 'signature.png', { type: 'image/png' }));
+          const photoPath = file
+            ? await uploadFleetFile(profile.org_id, 'inspections', file)
+            : null;
+          rows.push({
             org_id: profile.org_id,
-            vehicle_id: vehicleId,
-            driver_id: driverRowId,
-            template_id: template.id,
-            template_name: template.name,
-            finished_at: new Date().toISOString(),
-            odometer_km: odometerKm(position),
-            latitude: position?.latitude ?? null,
-            longitude: position?.longitude ?? null,
-            result,
-            notes: notes.trim() || null,
-            created_by: profile.id,
-          })
-          .select('id')
-          .single(),
-      );
-      const rows = [];
-      for (const [index, item] of items.entries()) {
-        const value = answers[item.id] || {};
-        const file =
-          value.photo ||
-          (value.signature && new File([value.signature], 'signature.png', { type: 'image/png' }));
-        const photoPath = file ? await uploadFleetFile(profile.org_id, 'inspections', file) : null;
-        rows.push({
+            inspection_id: inspection.id,
+            template_item_id: item.id,
+            label: item.label,
+            type: item.type,
+            critical: item.critical,
+            value: value.value == null ? null : String(value.value),
+            passed: evaluateItem(item, value.value),
+            photo_path: photoPath,
+            comment: value.comment?.trim() || null,
+            sort_order: index,
+          });
+        }
+        unwrap(await client.from('inspection_items').insert(rows));
+        const issues = issuesFromFailures(items, answers).map((issue) => ({
+          ...issue,
           org_id: profile.org_id,
+          vehicle_id: vehicleId,
           inspection_id: inspection.id,
-          template_item_id: item.id,
-          label: item.label,
-          type: item.type,
-          critical: item.critical,
-          value: value.value == null ? null : String(value.value),
-          passed: evaluateItem(item, value.value),
-          photo_path: photoPath,
-          comment: value.comment?.trim() || null,
-          sort_order: index,
-        });
-      }
-      unwrap(await client.from('inspection_items').insert(rows));
-      const issues = issuesFromFailures(items, answers).map((issue) => ({
-        ...issue,
-        org_id: profile.org_id,
-        vehicle_id: vehicleId,
-        inspection_id: inspection.id,
-        reported_by: profile.id,
-      }));
-      if (issues.length) {
-        unwrap(await client.from('issues').insert(issues));
+          reported_by: profile.id,
+        }));
+        if (issues.length) {
+          unwrap(await client.from('issues').insert(issues));
+        }
       }
       try {
         window.localStorage.removeItem(draftKey);
@@ -289,9 +356,7 @@ const InspectionPage = ({ driverMode = false }) => {
         // nothing to remove
       }
       setStopped(failedCritical(items, answers));
-      if (driverMode) {
-        setDone(new Date());
-      } else {
+      if (!driverMode) {
         navigate('/fleet/inspections');
       }
     } finally {
@@ -452,7 +517,11 @@ const InspectionPage = ({ driverMode = false }) => {
             <div>{t('fleetInspectionDoNotDriveHelp')}</div>
           </Alert>
         ) : (
-          <DriverDoneCard titleKey="driverCheckSent" time={done} />
+          <DriverDoneCard
+            titleKey={done.queued ? 'driverCheckQueued' : 'driverCheckSent'}
+            time={done.time}
+            pending={done.queued}
+          />
         )}
       </FormPage>
     );
@@ -490,22 +559,7 @@ const InspectionPage = ({ driverMode = false }) => {
           </Typography>
         )}
         <div className={classes.top}>
-          {!driverMode && (
-            <TextField
-              select
-              label={t('fleetEntityVehicle')}
-              value={deviceId}
-              onChange={(event) => setDeviceId(event.target.value)}
-            >
-              {Object.values(devices)
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map((device) => (
-                  <MenuItem key={device.id} value={String(device.id)}>
-                    {device.name}
-                  </MenuItem>
-                ))}
-            </TextField>
-          )}
+          {!driverMode && <VehicleSelect value={deviceId} onChange={setDeviceId} />}
           {(!driverMode || templates.length > 1) && (
             <TextField
               select

@@ -1,5 +1,6 @@
 // AI-05: automation rules from templates: each reads as a sentence and is tested on the last week
 // before it is turned on. Pure.
+import { isRestTime } from '../util/israeliCalendar';
 
 export const TEMPLATES = {
   afterHours: { source: 'trips', defaults: { after: '20:00', before: '06:00' } },
@@ -7,6 +8,8 @@ export const TEMPLATES = {
   geofenceEnter: { source: 'events', defaults: { geofenceId: null } },
   criticalFault: { source: 'events', defaults: {} },
   idling: { source: 'stops', defaults: { minutes: 15 } },
+  // ISR-09: a trip on Shabbat or a holiday (from candle lighting to nightfall).
+  restDay: { source: 'trips', defaults: {} },
 };
 
 export const ACTIONS = ['notify', 'workOrder', 'outOfService', 'messageDriver'];
@@ -52,6 +55,8 @@ export const matches = (rule, row) => {
       return row.type === 'alarm' && FAULT_ALARMS.includes(row.attributes?.alarm);
     case 'idling':
       return (Number(row.engineHours) || 0) >= Number(params.minutes) * 60000;
+    case 'restDay':
+      return isRestTime(Date.parse(row.startTime));
     default:
       return false;
   }
@@ -94,6 +99,8 @@ export const sentence = (rule, names = {}) => {
       return { key: 'autoSentenceFault', values: [] };
     case 'idling':
       return { key: 'autoSentenceIdling', values: [params.minutes] };
+    case 'restDay':
+      return { key: 'autoSentenceRestDay', values: [] };
     default:
       return { key: 'autoSentenceUnknown', values: [] };
   }

@@ -57,3 +57,66 @@ test('copying the coordinates of a point', async ({ page, context }) => {
   const text = await page.evaluate(() => navigator.clipboard.readText());
   expect(text).toMatch(/^-?\d+\.\d{6}, -?\d+\.\d{6}$/);
 });
+
+// LIV-21: "measure from here" starts the ruler; a search result asks who is closest to it.
+test('the map menu measures from a point, and a found address shows nearby vehicles', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'right click and the address search are desktop controls here');
+  await page.route('https://nominatim.openstreetmap.org/**', (route) =>
+    route.fulfill({
+      json: {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            bbox: [-0.13, 51.5, -0.11, 51.51],
+            geometry: { type: 'Point', coordinates: [-0.12, 51.505] },
+            properties: { place_id: 1, display_name: 'Waterloo, London' },
+          },
+        ],
+      },
+    }),
+  );
+  await gotoReady(page, '/');
+  await page.locator('.maplibregl-canvas').click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'מדידה מכאן' }).click();
+  await expect(page.getByRole('button', { name: 'מרחק' })).toHaveAttribute('aria-pressed', 'true');
+
+  await page.locator('.maplibregl-ctrl').getByRole('button', { name: 'חיפוש' }).click();
+  const search = page.getByRole('presentation').getByPlaceholder('חיפוש');
+  await search.fill('Waterloo');
+  // ISR-10: the geocoder runs on Enter, not on every key.
+  await search.press('Enter');
+  await page.getByRole('button', { name: 'רכבים קרובים: Waterloo, London' }).click();
+  const dialog = page.getByRole('dialog', { name: 'רכבים קרובים' });
+  await expect(dialog).toContainText('Waterloo, London');
+});
+
+// ISR-10: typing suggests streets from the official list, and no geocoder request is made until
+// a street is chosen.
+test('the map search suggests streets while typing', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the address search is a desktop control here');
+  const geocoded = [];
+  await page.route('https://data.gov.il/**', (route) =>
+    route.fulfill({
+      json: { result: { records: [{ שם_רחוב: 'הרצל', שם_ישוב: 'רמת גן' }] } },
+    }),
+  );
+  await page.route('https://nominatim.openstreetmap.org/**', (route) => {
+    geocoded.push(route.request().url());
+    return route.fulfill({ json: [{ lat: '32.08', lon: '34.81' }] });
+  });
+  await gotoReady(page, '/');
+  await page.locator('.maplibregl-ctrl').getByRole('button', { name: 'חיפוש' }).click();
+  await page.getByRole('presentation').getByPlaceholder('חיפוש').fill('הרצל 12');
+  await expect(page.getByRole('button', { name: 'חיפוש "הרצל 12"' })).toBeVisible();
+  const street = page.getByRole('button', { name: 'הרצל 12, רמת גן' });
+  await expect(street).toBeVisible();
+  expect(geocoded).toHaveLength(0);
+  await street.click();
+  await expect(page.getByRole('presentation').getByPlaceholder('חיפוש')).toHaveCount(0);
+  expect(geocoded).toHaveLength(1);
+  expect(new URL(geocoded[0]).searchParams.get('q')).toBe('הרצל 12, רמת גן');
+});

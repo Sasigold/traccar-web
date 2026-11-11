@@ -26,6 +26,7 @@ import PageLayout from '../common/components/PageLayout';
 import SettingsMenu from '../settings/components/SettingsMenu';
 import FleetDocumentsSection from '../settings/components/FleetDocumentsSection';
 import HistorySection from './components/HistorySection';
+import TiresSection from './components/TiresSection';
 import useActivityText, { toneColor } from '../common/components/useActivityText';
 import { useAsyncTask } from '../reactHelper';
 import fetchOrThrow from '../common/util/fetchOrThrow';
@@ -50,6 +51,9 @@ import { money } from './fleetData';
 import { monthlyBenefit, propulsionOf } from '../common/fleet/benefit';
 import { workOrderStatusKey } from './WorkOrdersPage';
 import { incidentKey } from './IncidentsPage';
+import { capitalize } from '../common/util/stringUtils';
+import EvCard from './components/EvCard';
+import LeaseCard from './components/LeaseCard';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -193,7 +197,7 @@ const useFleetFacts = (deviceId) => {
       return;
     }
     const rows = (result) => result.data || [];
-    const [assignment, workOrders, incidents, inspections, costs] = await Promise.all([
+    const [assignment, workOrders, incidents, inspections, costs, handovers] = await Promise.all([
       client.from('current_assignments').select('*').eq('vehicle_id', vehicle.id).limit(1),
       client
         .from('work_orders')
@@ -218,6 +222,13 @@ const useFleetFacts = (deviceId) => {
         .select('month, category, amount')
         .eq('vehicle_id', vehicle.id)
         .gte('month', periodStart(6)),
+      // ISR-11: the handovers and returns, signed.
+      client
+        .from('vehicle_handovers')
+        .select('id, kind, created_at, odometer_km, drivers(full_name)')
+        .eq('vehicle_id', vehicle.id)
+        .order('created_at', { ascending: false })
+        .limit(20),
     ]);
     const current = rows(assignment)[0] || null;
     const driver = current?.driver_id
@@ -231,6 +242,7 @@ const useFleetFacts = (deviceId) => {
       incidents: rows(incidents),
       inspections: rows(inspections),
       costs: rows(costs),
+      handovers: rows(handovers),
     });
   }, [ready, deviceId]);
   return facts;
@@ -408,9 +420,7 @@ const VehiclePage = () => {
             value={maintenance ? maintenance.maintenance.name : dash}
             hint={
               maintenance && maintenance.state.status !== 'unknown'
-                ? t(
-                    `vehicleMaintenance${maintenance.state.status.replace(/^\w/, (c) => c.toUpperCase())}`,
-                  )
+                ? t(`vehicleMaintenance${capitalize(maintenance.state.status)}`)
                 : undefined
             }
           />
@@ -434,11 +444,7 @@ const VehiclePage = () => {
           aria-label={device.name}
         >
           {TABS.map((key) => (
-            <Tab
-              key={key}
-              value={key}
-              label={t(`vehicleTab${key.replace(/^\w/, (c) => c.toUpperCase())}`)}
-            />
+            <Tab key={key} value={key} label={t(`vehicleTab${capitalize(key)}`)} />
           ))}
         </Tabs>
 
@@ -483,6 +489,9 @@ const VehiclePage = () => {
           </Paper>
         )}
 
+        {tab === 'overview' && <EvCard device={device} position={position} />}
+        {tab === 'overview' && <LeaseCard device={device} position={position} />}
+
         {tab === 'maintenance' && (
           <>
             <RowsTable
@@ -495,9 +504,7 @@ const VehiclePage = () => {
                     <TableCell>{item.name}</TableCell>
                     <TableCell>
                       {state && state.status !== 'unknown'
-                        ? t(
-                            `vehicleMaintenance${state.status.replace(/^\w/, (c) => c.toUpperCase())}`,
-                          )
+                        ? t(`vehicleMaintenance${capitalize(state.status)}`)
                         : dash}
                     </TableCell>
                   </TableRow>
@@ -520,6 +527,7 @@ const VehiclePage = () => {
                 </TableRow>
               ))}
             />
+            <TiresSection device={device} position={position} />
           </>
         )}
 
@@ -572,6 +580,26 @@ const VehiclePage = () => {
                     )}
                   />
                 </TableCell>
+              </TableRow>
+            ))}
+          />
+        )}
+        {tab === 'inspections' && (fleet?.handovers || []).length > 0 && (
+          <RowsTable
+            head={['fleetExpenseDate', 'driverHandover', 'sharedDriver', 'driverHandoverKm']}
+            empty="vehicleNoInspections"
+            rows={fleet.handovers.map((handover) => (
+              <TableRow key={handover.id} hover>
+                <TableCell>
+                  <Link component={RouterLink} to={`/fleet/handover/${handover.id}`}>
+                    {formatTime(handover.created_at, 'minutes')}
+                  </Link>
+                </TableCell>
+                <TableCell>
+                  {t(handover.kind === 'return' ? 'driverHandoverReturn' : 'driverHandoverTake')}
+                </TableCell>
+                <TableCell>{handover.drivers?.full_name || '—'}</TableCell>
+                <TableCell>{handover.odometer_km ?? '—'}</TableCell>
               </TableRow>
             ))}
           />

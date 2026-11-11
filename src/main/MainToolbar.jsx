@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
   IconButton,
@@ -26,6 +26,7 @@ import { makeStyles } from 'tss-react/mui';
 import { useTheme, alpha } from '@mui/material/styles';
 import MapOutlinedIcon from '@mui/icons-material/MapRounded';
 import ViewListRoundedIcon from '@mui/icons-material/ViewListRounded';
+import ChecklistRoundedIcon from '@mui/icons-material/ChecklistRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
@@ -35,6 +36,7 @@ import { useDeviceReadonly } from '../common/util/permissions';
 import DeviceRow from './DeviceRow';
 import { tokenizeSearch } from '../common/util/deviceSearch';
 import SavedViews from './components/SavedViews';
+import { devicesActions } from '../store';
 
 const useStyles = makeStyles()((theme) => ({
   toolbar: {
@@ -135,6 +137,9 @@ const MainToolbar = ({
   filterMap,
   setFilterMap,
 }) => {
+  'use memo'; // PRF-04
+  const dispatch = useDispatch();
+  const picking = useSelector((state) => state.devices.picked != null);
   const { classes, cx } = useStyles();
   const theme = useTheme();
   const navigate = useNavigate();
@@ -345,6 +350,7 @@ const MainToolbar = ({
               <MenuItem value="">{' '}</MenuItem>
               <MenuItem value="name">{t('sharedName')}</MenuItem>
               <MenuItem value="lastUpdate">{t('deviceLastUpdate')}</MenuItem>
+              <MenuItem value="group">{t('sortByGroup')}</MenuItem>
             </Select>
           </FormControl>
           <FormGroup>
@@ -365,6 +371,19 @@ const MainToolbar = ({
           />
         </div>
       </Popover>
+      {/* LIV-25: pick several vehicles for one action. */}
+      <Tooltip title={t(picking ? 'pickedDone' : 'pickedStart')}>
+        <IconButton
+          className={classes.tonal}
+          onClick={() =>
+            dispatch(picking ? devicesActions.stopPicking() : devicesActions.startPicking())
+          }
+          aria-pressed={picking}
+          aria-label={t(picking ? 'pickedDone' : 'pickedStart')}
+        >
+          <ChecklistRoundedIcon />
+        </IconButton>
+      </Tooltip>
       <Tooltip
         open={!deviceReadonly && devicesLoaded && Object.keys(devices).length === 0}
         title={t('deviceRegisterFirst')}

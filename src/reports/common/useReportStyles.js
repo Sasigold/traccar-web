@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { makeStyles } from 'tss-react/mui';
 
 export default makeStyles()((theme) => ({
@@ -183,6 +184,25 @@ export default makeStyles()((theme) => ({
   },
   chartBody: {
     height: 200,
+  },
+  // REP-14: the summary's distance per day, above the table.
+  dailyChart: {
+    margin: theme.spacing(0, 3, 2),
+    padding: theme.spacing(1.5, 1, 1),
+    borderRadius: theme.tokens.radius.xl,
+    border: `1px solid ${theme.palette.surface.border}`,
+    backgroundColor: theme.palette.background.paper,
+    '& figcaption': {
+      ...theme.typography.subtitle2,
+      paddingInline: theme.spacing(1.5),
+      marginBottom: theme.spacing(0.5),
+    },
+    [theme.breakpoints.down('md')]: {
+      margin: theme.spacing(0, 1, 2),
+    },
+    '@media print': {
+      breakInside: 'avoid',
+    },
   },
   chartLoading: {
     display: 'flex',

@@ -37,7 +37,7 @@ test('events wait in the inbox; a dismissed one leaves it, coaching names a pers
   await expect(dialog.getByRole('checkbox')).toBeDisabled();
   await dialog.getByLabel('באחריות').click();
   await page.getByRole('option', { name: 'רונית הממונה' }).click();
-  await dialog.getByRole('button', { name: 'שמירה' }).click();
+  await dialog.getByRole('button', { name: 'שמירה', exact: true }).click();
   await expect(pending).toContainText(String(before - 2));
   expect(fleet.tables.safety_event_reviews[1]).toMatchObject({
     status: 'coaching',

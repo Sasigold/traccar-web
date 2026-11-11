@@ -25,6 +25,8 @@ import { makeStyles } from 'tss-react/mui';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
 import KeyRoundedIcon from '@mui/icons-material/KeyRounded';
+import WebhookTemplates from './components/WebhookTemplates';
+import { webhookFromTemplate } from '../common/fleet/webhookTemplates';
 import WebhookRoundedIcon from '@mui/icons-material/WebhookRounded';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
@@ -45,7 +47,7 @@ import {
   webhookEventKey,
 } from '../common/fleet/integrations';
 import FleetNotice from './components/FleetNotice';
-import { camel, useFleetRows } from './stage5Data';
+import { camel, useFleetRows } from './fleetRows';
 import { useConfirm } from '../common/components/confirm/ConfirmProvider';
 import { keepOnBackdrop } from '../common/util/formDialog';
 import CopyButton from '../common/components/CopyButton';
@@ -73,6 +75,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   code: {
     fontFamily: theme.tokens.font.mono,
+    fontVariantNumeric: 'tabular-nums',
     wordBreak: 'break-all',
   },
 }));
@@ -304,7 +307,7 @@ const WebhookDialog = ({ webhook, onClose, onSaved }) => {
 const views = ['keys', 'webhooks', 'deliveries'];
 const deliveryColor = { queued: 'default', sending: 'info', sent: 'success', failed: 'error' };
 
-// Roadmap stage 5: API keys and webhooks for the organization's own systems.
+// API keys and webhooks for the organization's own systems.
 const IntegrationsPage = () => {
   const { classes } = useStyles();
   const t = useTranslation();
@@ -562,6 +565,13 @@ const IntegrationsPage = () => {
           </>
         )}
       </DataTable>
+      {view === 'webhooks' && canManage && (
+        <WebhookTemplates
+          onUse={(template) =>
+            setDialog({ type: 'webhook', value: webhookFromTemplate(template, t) })
+          }
+        />
+      )}
       {view === 'keys' && canManage && (
         <Alert
           severity="info"

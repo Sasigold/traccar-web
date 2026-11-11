@@ -76,6 +76,7 @@ const LogsPage = () => {
                     <IconButton
                       color="error"
                       size="small"
+                      aria-label={`${t('loginRegister')} ${item.uniqueId}`}
                       onClick={() => registerDevice(item.uniqueId)}
                     >
                       <HelpOutlineIcon fontSize="small" />
@@ -95,6 +96,7 @@ const LogsPage = () => {
         color={autoScroll ? 'primary' : 'default'}
         onClick={() => setAutoScroll(!autoScroll)}
         label={t('logsAutoScroll')}
+        pressed={autoScroll}
       >
         <VerticalAlignBottomIcon />
       </BaseFab>

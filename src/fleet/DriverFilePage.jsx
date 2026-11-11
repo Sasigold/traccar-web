@@ -27,6 +27,8 @@ import SafetyRecordDialog from './components/SafetyRecordDialog';
 import { violationKey } from './components/ViolationDialog';
 import { incidentKey } from './IncidentsPage';
 import { money } from './fleetData';
+import { capitalize } from '../common/util/stringUtils';
+import DocumentPrintHeader from '../common/components/print/DocumentPrintHeader';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -47,6 +49,10 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: theme.spacing(2),
+    // On paper the shared document header (BRD-08) takes its place.
+    '@media print': {
+      display: 'none',
+    },
   },
   section: {
     padding: theme.spacing(2, 2.5),
@@ -97,8 +103,6 @@ const Section = ({ title, children }) => {
     </Paper>
   );
 };
-
-const capital = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
 
 // Roadmap 4.7: the driver file for the transport safety officer, printable as a PDF.
 const DriverFilePage = () => {
@@ -191,6 +195,12 @@ const DriverFilePage = () => {
       <FleetNotice permission="safety.read" />
       {file && (
         <div className={classes.root}>
+          <DocumentPrintHeader
+            kind="DRIVER FILE"
+            portrait
+            title={`${t('fleetDriverFile')}: ${file.traccar.name}`}
+            lines={[t('fleetDriverFilePrinted').replace('{0}', formatTime(producedAt, 'minutes'))]}
+          />
           <div className={classes.header}>
             <div>
               <Typography variant="h5" component="h1" fontWeight={700}>
@@ -213,7 +223,7 @@ const DriverFilePage = () => {
             {canWrite &&
               ['check', 'training', 'review'].map((kind) => (
                 <Button key={kind} variant="outlined" onClick={() => setDialog(kind)}>
-                  {t(`fleetSafetyAdd${capital(kind)}`)}
+                  {t(`fleetSafetyAdd${capitalize(kind)}`)}
                 </Button>
               ))}
           </div>
@@ -344,7 +354,7 @@ const DriverFilePage = () => {
                           <TableCell className={classes.nowrap}>
                             {formatTime(row.held_at, 'date')}
                           </TableCell>
-                          <TableCell>{t(`fleetReviewKind${capital(row.kind)}`)}</TableCell>
+                          <TableCell>{t(`fleetReviewKind${capitalize(row.kind)}`)}</TableCell>
                           <TableCell>{row.summary}</TableCell>
                           <TableCell>{row.decisions}</TableCell>
                         </TableRow>

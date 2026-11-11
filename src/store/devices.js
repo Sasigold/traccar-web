@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { createSlice } from '@reduxjs/toolkit';
 
 const { reducer, actions } = createSlice({
@@ -9,6 +10,8 @@ const { reducer, actions } = createSlice({
     // following it. Selecting a vehicle (again) shows the card.
     cardHidden: false,
     loaded: false,
+    // LIV-25: several vehicles picked in the list for one action; null when not picking.
+    picked: null,
   },
   reducers: {
     refresh(state, action) {
@@ -26,6 +29,22 @@ const { reducer, actions } = createSlice({
     },
     hideCard(state) {
       state.cardHidden = true;
+    },
+    startPicking(state) {
+      state.picked = [];
+    },
+    stopPicking(state) {
+      state.picked = null;
+    },
+    togglePicked(state, action) {
+      if (!state.picked) return;
+      const id = action.payload;
+      state.picked = state.picked.includes(id)
+        ? state.picked.filter((item) => item !== id)
+        : [...state.picked, id];
+    },
+    setPicked(state, action) {
+      state.picked = action.payload;
     },
     // Stop following the selected vehicle (the map is about to show something else, such as
     // where an alert happened); "back to vehicle" brings the lock back.

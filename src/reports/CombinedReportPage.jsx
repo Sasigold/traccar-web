@@ -8,7 +8,7 @@ import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import ReportsMenu from './components/ReportsMenu';
 import ResizeHandle from './components/ResizeHandle';
-import { useCatchCallback } from '../reactHelper';
+import { useRunCallback } from '../reactHelper';
 import MapView from '../map/core/MapView';
 import useReportStyles from './common/useReportStyles';
 import TableShimmer from '../common/components/TableShimmer';
@@ -78,14 +78,14 @@ const CombinedReportPage = () => {
       })),
   );
 
-  const onShow = useCatchCallback(async ({ deviceIds, groupIds, from, to }) => {
+  const onShow = useRunCallback(async ({ deviceIds, groupIds, from, to, signal }) => {
     const query = new URLSearchParams({ from, to });
     deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
     groupIds.forEach((groupId) => query.append('groupId', groupId));
     setSelected(null);
     setLoading(true);
     try {
-      const response = await fetchOrThrow(`api/reports/combined?${query.toString()}`);
+      const response = await fetchOrThrow(`api/reports/combined?${query.toString()}`, { signal });
       // A vehicle whose period touches hidden time shows no route; its hidden events no place.
       const result = await privateCombined(await response.json(), { deviceIds, from, to });
       setItems(result.items);
@@ -159,7 +159,7 @@ const CombinedReportPage = () => {
         )}
         <div className={classes.containerMain}>
           <div className={classes.header}>
-            <ReportFilter onShow={onShow} deviceType="multiple" loading={loading}>
+            <ReportFilter autoRun={false} onShow={onShow} deviceType="multiple" loading={loading}>
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
             </ReportFilter>
           </div>

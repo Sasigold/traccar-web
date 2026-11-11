@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
 import useMapLayer from './core/useMapLayer';
@@ -47,7 +48,11 @@ const MapRoutePath = ({ positions }) => {
       properties: {
         color:
           reportColor ||
-          getSpeedColor(positions[i + 1].speed, minSpeed, maxSpeed, { dark, limit: speedLimit }),
+          getSpeedColor(positions[i + 1].speed, minSpeed, maxSpeed, {
+            dark,
+            // SAF-06: the road's limit where Traccar knows it, else the vehicle's.
+            limit: Number(positions[i + 1].attributes?.speedLimit) || speedLimit,
+          }),
         width: mapLineWidth,
         opacity: mapLineOpacity,
       },

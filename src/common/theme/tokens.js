@@ -143,6 +143,8 @@ export const dataviz = {
     grid: surfaces.light.border,
     axis: surfaces.light.textSecondary,
     areaOpacity: 0.1,
+    // LIV-27: one continuous scale for density maps, within the brand: ice, aqua, navy.
+    heatmap: [brandColors.ice, aqua[600], brandColors.navy],
   },
   dark: {
     categorical: [brandColors.aqua, aqua[800], aqua[200], aqua[700], brandColors.paper, navy[500]],
@@ -153,6 +155,7 @@ export const dataviz = {
     grid: surfaces.dark.border,
     axis: surfaces.dark.textSecondary,
     areaOpacity: 0.14,
+    heatmap: [navy[600], aqua[700], brandColors.aqua],
   },
 };
 
@@ -209,7 +212,9 @@ export const motion = {
 export const type = {
   fontFamily: '"Sora Variable", Sora, "Assistant Brand", Assistant, "Segoe UI", Arial, sans-serif',
   hebrew: '"Assistant Brand", Assistant, "Segoe UI", Arial, sans-serif',
-  mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+  // ADM-29: codes, keys and identifiers stay in Sora (with tabular digits where they are set),
+  // not a monospace font outside the brand.
+  mono: '"Sora Variable", Sora, "Segoe UI", Arial, sans-serif',
   // Brand weights are 400 / 500 / 600 / 700 only.
   // [fontSize, fontWeight, lineHeight]
   scale: {

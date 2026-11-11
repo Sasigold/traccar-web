@@ -33,7 +33,7 @@ import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
 import ReportsMenu from './components/ReportsMenu';
 import usePositionAttributes from '../common/attributes/usePositionAttributes';
-import { useCatch, useCatchCallback } from '../reactHelper';
+import { useCatch, useRunCallback } from '../reactHelper';
 import useAttributeUnits from '../common/util/useAttributeUnits';
 import { attributeUnitString, formatAttributeNumber } from '../common/util/attributeUnits';
 import { speedToKnots } from '../common/util/converter';
@@ -110,13 +110,14 @@ const ChartReportPage = () => {
     await exportExcel(t('reportChart'), 'chart.xlsx', new Map([[t('reportChart'), rows]]), theme);
   });
 
-  const onShow = useCatchCallback(
-    async ({ deviceIds, from, to }) => {
+  const onShow = useRunCallback(
+    async ({ deviceIds, from, to, signal }) => {
       setLoading(true);
       try {
         const query = new URLSearchParams({ from, to });
         deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
         const response = await fetchOrThrow(`api/reports/route?${query.toString()}`, {
+          signal,
           headers: { Accept: 'application/json' },
         });
         const { positions, hidden: hiddenCount } = await privatePositions(await response.json(), {
@@ -187,6 +188,7 @@ const ChartReportPage = () => {
         )}
         <div className={cx(classes.container, classes.containerMain)}>
           <ReportFilter
+            autoRun={false}
             onShow={onShow}
             onExport={onExport}
             deviceType="single"

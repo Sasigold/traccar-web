@@ -26,8 +26,10 @@ import { formatTime } from '../common/util/formatter';
 import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetPermission } from '../common/fleet/useFleet';
 import FleetNotice from './components/FleetNotice';
+import MissedChecks from './components/MissedChecks';
 import InspectionTemplateDialog, { frequencyKey } from './components/InspectionTemplateDialog';
 import { readAllRows } from '../common/data/fleetQuery';
+import { pascalCase } from '../common/util/stringUtils';
 
 const useStyles = makeStyles()(() => ({
   row: {
@@ -43,11 +45,10 @@ const useStyles = makeStyles()(() => ({
   },
 }));
 
-const camel = (value) => value.replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase());
 const ISSUE_STATUSES = ['open', 'in_progress', 'resolved', 'wont_fix'];
 const severityColor = { low: 'default', medium: 'warning', high: 'error', critical: 'error' };
 
-// Roadmap stage 2: filled inspections, checklist templates and the open issues they raise.
+// Filled inspections, checklist templates and the open issues they raise.
 const InspectionsPage = () => {
   const { classes } = useStyles();
   const t = useTranslation();
@@ -122,7 +123,7 @@ const InspectionsPage = () => {
     <Chip
       key={key}
       size="small"
-      label={t(`fleetInspectionsView${camel(key)}`)}
+      label={t(`fleetInspectionsView${pascalCase(key)}`)}
       color={view === key ? 'primary' : 'default'}
       variant={view === key ? 'filled' : 'outlined'}
       onClick={() => setView(key)}
@@ -150,6 +151,7 @@ const InspectionsPage = () => {
       description={t('fleetInspectionsPageDescription')}
     >
       <FleetNotice permission="inspections.read" />
+      {canRead && view === 'inspections' && <MissedChecks />}
       <DataTable
         toolbar={
           <TableToolbar
@@ -161,7 +163,7 @@ const InspectionsPage = () => {
         empty={rows != null && rows.length === 0}
         emptyState={{
           icon: <FactCheckRoundedIcon />,
-          title: t(`fleetInspectionsNone${camel(view)}`),
+          title: t(`fleetInspectionsNone${pascalCase(view)}`),
         }}
       >
         {view === 'inspections' && (
@@ -282,7 +284,7 @@ const InspectionsPage = () => {
                       size="small"
                       variant="outlined"
                       color={severityColor[row.severity]}
-                      label={t(`fleetIssueSeverity${camel(row.severity)}`)}
+                      label={t(`fleetIssueSeverity${pascalCase(row.severity)}`)}
                     />
                   </TableCell>
                   <TableCell>
@@ -296,12 +298,12 @@ const InspectionsPage = () => {
                       >
                         {ISSUE_STATUSES.map((status) => (
                           <MenuItem key={status} value={status}>
-                            {t(`fleetIssueStatus${camel(status)}`)}
+                            {t(`fleetIssueStatus${pascalCase(status)}`)}
                           </MenuItem>
                         ))}
                       </TextField>
                     ) : (
-                      t(`fleetIssueStatus${camel(row.status)}`)
+                      t(`fleetIssueStatus${pascalCase(row.status)}`)
                     )}
                   </TableCell>
                   {canFixIssues && (
@@ -309,7 +311,7 @@ const InspectionsPage = () => {
                       <Button
                         size="small"
                         component={RouterLink}
-                        to={`/fleet/work-order?deviceId=${row.vehicles?.traccar_device_id || ''}`}
+                        to={`/fleet/work-order?issue=${row.id}`}
                       >
                         {t('fleetWorkOrderAdd')}
                       </Button>

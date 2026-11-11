@@ -46,7 +46,7 @@ test('a recipient is added with a local number and tested', async ({ page }) => 
   await phone.fill('050');
   await expect(dialog.getByText('מספר טלפון לא תקין')).toBeVisible();
   await phone.fill('050-1234567');
-  await dialog.getByRole('button', { name: 'שמירה' }).click();
+  await dialog.getByRole('button', { name: 'שמירה', exact: true }).click();
   await expect.poll(() => fleet.tables.alert_recipients.length).toBe(1);
   expect(fleet.tables.alert_recipients[0]).toMatchObject({
     name: 'יוסי כהן',

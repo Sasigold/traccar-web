@@ -35,6 +35,8 @@ import {
 } from '../../common/fleet/violations';
 import printTransferLetter, { openLetterWindow } from './printTransferLetter';
 import { keepOnBackdrop } from '../../common/util/formDialog';
+import { pascalCase } from '../../common/util/stringUtils';
+import VehicleSelect from '../../common/components/VehicleSelect';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -72,8 +74,7 @@ export const VIOLATION_TYPES = [
   'other',
 ];
 export const VIOLATION_STATUSES = ['open', 'assigned', 'transferred', 'paid', 'appealed', 'closed'];
-const camel = (value) => value.replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase());
-export const violationKey = (group, value) => `fleetViolation${group}${camel(value)}`;
+export const violationKey = (group, value) => `fleetViolation${group}${pascalCase(value)}`;
 
 const OPEN_STATUSES = ['open', 'assigned'];
 
@@ -294,20 +295,10 @@ const ViolationDialog = ({ violation, onClose, onSaved }) => {
       <DialogTitle>{t(violation ? 'fleetViolationEdit' : 'fleetViolationAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>
-          <TextField
-            select
-            label={t('fleetEntityVehicle')}
+          <VehicleSelect
             value={form.deviceId}
-            onChange={set('deviceId')}
-          >
-            {Object.values(devices)
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((device) => (
-                <MenuItem key={device.id} value={String(device.id)}>
-                  {device.name}
-                </MenuItem>
-              ))}
-          </TextField>
+            onChange={(deviceId) => set('deviceId')({ target: { value: deviceId } })}
+          />
           <DateTimeField
             label={t('fleetIncidentOccurred')}
             value={form.occurred_at}

@@ -8,6 +8,7 @@ import NewDriverChip from './NewDriverChip';
 import MoneyField from '../../common/components/MoneyField';
 import { DateField } from '../../common/components/pickers';
 import { FIELD_KINDS, fieldError } from '../../common/util/israeliFields';
+import { capitalize } from '../../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -32,9 +33,7 @@ const useStyles = makeStyles()((theme) => ({
 }));
 
 const optionLabel = (t, field, option) =>
-  field.optionPrefix
-    ? t(`${field.optionPrefix}${option.replace(/^\w/, (c) => c.toUpperCase())}`)
-    : option;
+  field.optionPrefix ? t(`${field.optionPrefix}${capitalize(option)}`) : option;
 
 // Renders structured fleet fields (see common/fleet/fleetFields.js) that live in `attributes`.
 // ADM-06: a field with a `kind` gets the right keyboard on phones, is normalized and checked when
@@ -229,7 +228,9 @@ const FleetFieldsSection = ({
 
   return (
     <FormSection title={title} description={description} icon={icon} actions={actions}>
-      <div className={classes.grid}>{fields.map(renderField)}</div>
+      <div className={classes.grid}>
+        {fields.filter((field) => !field.when || field.when(values)).map(renderField)}
+      </div>
     </FormSection>
   );
 };

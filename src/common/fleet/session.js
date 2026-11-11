@@ -7,7 +7,16 @@ import { countEvent, counterName } from '../telemetry/metrics';
 
 const STORAGE_KEY = 'fleetSession';
 const REFRESH_MARGIN_MS = 5 * 60 * 1000;
-const TRACCAR_TOKEN_TTL_MS = 10 * 60 * 1000;
+// SEC-20: the Traccar token is only carried to traccar-auth, once: a minute is plenty, and it is
+// revoked right after the exchange.
+const TRACCAR_TOKEN_TTL_MS = 60 * 1000;
+
+const revokeTraccarToken = (token) =>
+  fetchOrThrow('api/session/token/revoke', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ token }).toString(),
+  }).catch(() => {});
 
 // The fleet JWT lives in sessionStorage (this tab only, gone when the tab closes) and is cleared
 // on logout, so the next person at a shared PC can't reuse it. Older versions kept it in
@@ -117,10 +126,12 @@ export const ensureFleetSession = async (traccarUserId, { force = false } = {}) 
           Authorization: `Bearer ${fleetConfig.anonKey}`,
         },
         body: JSON.stringify({ token: traccarToken }),
-      }).catch((error) => {
-        countEvent('token_failure.network');
-        throw error;
-      });
+      })
+        .catch((error) => {
+          countEvent('token_failure.network');
+          throw error;
+        })
+        .finally(() => revokeTraccarToken(traccarToken));
       if (!response.ok) {
         countEvent(counterName('token_failure', response.status));
         let detail = '';

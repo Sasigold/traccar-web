@@ -151,14 +151,19 @@ existing brand token values only, ordered with a color-blind safety validator. S
 (online / offline, expired / expiring, overdue / due) use the status colors with a label; single-series
 charts use one hue (navy in light mode, aqua in dark mode).
 
-**Saving** (`model/`). The dashboards are a compact JSON string in the user attribute
-`web.dashboard` (at most 3000 characters; the whole attributes column holds about 4000), saved 1.2 s
-after the last change and merged into the latest user object. A copy is always kept in localStorage
-(`dashboard:<userId>`), which is all that read-only users and the demo get. An administrator can publish
-the current dashboard as the organization default (server attribute `web.dashboardDefault`); users
-without a dashboard of their own start from it, and "Reset" returns to it. Built-in templates:
-Operations (the default), Activity, and Maintenance & costs. Both attributes are hidden from the raw
-attribute editors.
+**Saving** (`model/`, ARC-09). When the fleet database has the `dashboards` area
+(`20261116100000_dashboards.sql`), each person's dashboards are one row of `dashboards` (only that
+person reads and writes it) and the organization default is one row of `dashboard_defaults` (every
+member reads it; publishing needs `users.manage`, and is audited). The first save moves the old Traccar
+copy into the database and then removes the `web.dashboard` attribute. Without that area the
+dashboards stay in the user attribute `web.dashboard` (at most 3000 characters; the whole attributes
+column holds about 4000) and the default in the server attribute `web.dashboardDefault`, which a
+Traccar administrator publishes; every save reads the latest user or server settings first and changes
+only that one attribute (`model/remote.js`). Either way a save goes out 1.2 s after the last change,
+and a copy is always kept in localStorage (`dashboard:<userId>`), which is all that read-only Traccar
+users without the fleet database and the demo get. Users without a dashboard of their own start from
+the organization default, and "Reset" returns to it. Built-in templates: Operations (the default),
+Activity, and Maintenance & costs. Both attributes are hidden from the raw attribute editors.
 
 **Adding a preset**: add an entry to `PRESETS` in `widgets/catalog.js` (a chart preset is a query plus a
 default form and size), add `dashboardW<Id>` and `dashboardW<Id>Desc` to both `he.json` and `en.json`,

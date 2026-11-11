@@ -1,4 +1,4 @@
-// Roadmap stage 5: dispatch jobs, ETA and customer tracking links (pure, tested).
+// Dispatch jobs, ETA and customer tracking links (pure, tested).
 
 export const JOB_STATUSES = [
   'planned',
@@ -114,3 +114,55 @@ export const nearbyVehicles = (positions, devices, point, limit = 8) =>
     }))
     .sort((a, b) => a.km - b.km)
     .slice(0, limit);
+
+// ADM-20: why a job failed, from a list (the database checks the same list).
+export const FAILURE_REASONS = [
+  'customer_absent',
+  'wrong_address',
+  'refused',
+  'no_access',
+  'damaged',
+  'other',
+];
+
+// A job still open after its arrival window (or its planned time, without a window) is late.
+// Being on the way is normal and not a warning; being late is.
+export const isLateJob = (job, now = new Date()) => {
+  if (!isOpenJob(job.status)) return false;
+  const due = job.window_end || job.scheduled_at;
+  return Boolean(due) && new Date(due) < now && job.status !== 'arrived';
+};
+
+// ADM-20: the map's marker color for a job: done green, failed or late red, under way blue,
+// waiting grey.
+export const jobMarkerColor = (job, now = new Date()) => {
+  if (job.status === 'done') return 'success';
+  if (job.status === 'failed' || isLateJob(job, now)) return 'error';
+  if (['assigned', 'en_route', 'arrived'].includes(job.status)) return 'info';
+  return 'neutral';
+};
+
+// ADM-20: the day per driver: one group per driver (by name), jobs in time order, the jobs with
+// no driver last. [{ driverId, name, jobs }]. Pure.
+export const scheduleByDriver = (jobs) => {
+  const groups = new Map();
+  jobs.forEach((job) => {
+    const key = job.driver_id || '';
+    if (!groups.has(key)) {
+      groups.set(key, {
+        driverId: job.driver_id || null,
+        name: job.drivers?.full_name || null,
+        jobs: [],
+      });
+    }
+    groups.get(key).jobs.push(job);
+  });
+  const time = (job) => (job.scheduled_at ? Date.parse(job.scheduled_at) : Infinity);
+  return [...groups.values()]
+    .map((group) => ({ ...group, jobs: group.jobs.sort((a, b) => time(a) - time(b)) }))
+    .sort((a, b) => {
+      if (!a.driverId) return 1;
+      if (!b.driverId) return -1;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+};

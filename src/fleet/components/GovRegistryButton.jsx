@@ -23,6 +23,7 @@ import {
   validPlate,
 } from '../../common/fleet/govRegistry';
 import { formatTime } from '../../common/util/formatter';
+import { capitalize } from '../../common/util/stringUtils';
 
 const FIELDS = Object.fromEntries(
   [...vehicleFields, ...vehicleExpiryFields].map((field) => [field.key, field]),
@@ -37,7 +38,7 @@ const display = (t, key, value) => {
     return formatTime(value, 'date');
   }
   if (field?.optionPrefix) {
-    return t(`${field.optionPrefix}${String(value).replace(/^\w/, (c) => c.toUpperCase())}`);
+    return t(`${field.optionPrefix}${capitalize(String(value))}`);
   }
   return String(value);
 };

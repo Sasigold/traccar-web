@@ -33,6 +33,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   url: {
     fontFamily: theme.tokens.font.mono,
+    fontVariantNumeric: 'tabular-nums',
     fontSize: 13,
     wordBreak: 'break-all',
   },

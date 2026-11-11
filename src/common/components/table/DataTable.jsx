@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Paper, TableContainer } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import EmptyState from './EmptyState';
@@ -71,9 +72,14 @@ const DataTable = ({
   className,
   // ADM-28: rows being reloaded stay on screen, dimmed.
   refreshing = false,
+  // A11-08: the table's name for screen readers; by default the page's title.
+  label,
 }) => {
   const { classes, cx } = useStyles();
   const card = variant === 'card';
+  // Only when the page has a title to point at.
+  const [titled, setTitled] = useState(false);
+  useEffect(() => setTitled(Boolean(document.getElementById('page-title'))), []);
   const Root = card ? Paper : 'div';
   return (
     <Root
@@ -88,6 +94,7 @@ const DataTable = ({
           size="small"
           className={cx(classes.table, !card && classes.flush, refreshing && classes.refreshing)}
           aria-busy={refreshing || undefined}
+          {...(label ? { 'aria-label': label } : titled && { 'aria-labelledby': 'page-title' })}
           style={minWidth ? { minWidth } : undefined}
         >
           {children}

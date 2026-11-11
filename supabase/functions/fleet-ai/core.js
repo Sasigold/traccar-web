@@ -2,6 +2,8 @@ import {
   ASK_SYSTEM,
   ASK_TOOLS,
   ASK_TOOL_NAMES,
+  COURSE_SCHEMA,
+  COURSE_SYSTEM,
   DTC_SCHEMA,
   DTC_SYSTEM,
   EXTRACT_KINDS,
@@ -16,6 +18,7 @@ import {
 //                                        the tools the model asks for and sends their results
 //   POST /dtc      {codes}               fault codes explained (library first, then the model)
 //   POST /extract  {kind, media_type, data}  fields read from a photo of a document
+//   POST /course   {media_type, data}    a short Hebrew course and quiz from a procedure (AI-10)
 //
 // Every call needs the user's fleet JWT; deps.begin(jwt, kind) checks the organization's switch
 // and daily limit in the database and returns the organization. deps: { begin, recordTokens,
@@ -229,6 +232,79 @@ const extract = async (body, deps, org) => {
   };
 };
 
+// A course is checked before it reaches anyone: whole questions with 4 options and an answer
+// among them, sections with points; anything else is dropped.
+export const cleanCourse = (course) => {
+  const text = (value, max) =>
+    String(value ?? '')
+      .trim()
+      .slice(0, max);
+  const sections = (course?.sections || [])
+    .map((section) => ({
+      heading: text(section.heading, 120),
+      points: (section.points || [])
+        .map((point) => text(point, 400))
+        .filter(Boolean)
+        .slice(0, 8),
+    }))
+    .filter((section) => section.heading && section.points.length)
+    .slice(0, 8);
+  const quiz = (course?.quiz || [])
+    .map((item) => ({
+      question: text(item.question, 300),
+      options: (item.options || []).map((option) => text(option, 200)),
+      answer: Number(item.answer),
+      explanation: text(item.explanation, 400),
+    }))
+    .filter(
+      (item) =>
+        item.question &&
+        item.options.length === 4 &&
+        item.options.every(Boolean) &&
+        Number.isInteger(item.answer) &&
+        item.answer >= 0 &&
+        item.answer < 4,
+    )
+    .slice(0, 10);
+  return { title: text(course?.title, 120), summary: text(course?.summary, 600), sections, quiz };
+};
+
+const course = async (body, deps, org) => {
+  const { media_type: mediaType, data } = body;
+  if (mediaType !== 'application/pdf') throw new AiError(400, 'invalid_media_type');
+  if (
+    typeof data !== 'string' ||
+    !data.length ||
+    data.length > MAX_IMAGE ||
+    /[^A-Za-z0-9+/=]/.test(data)
+  ) {
+    throw new AiError(400, 'invalid_file');
+  }
+  const message = await deps.claude.beta.messages.create({
+    model: deps.model || MODEL,
+    max_tokens: 8000,
+    system: COURSE_SYSTEM,
+    output_config: { effort: 'medium', format: { type: 'json_schema', schema: COURSE_SCHEMA } },
+    messages: [
+      {
+        role: 'user',
+        content: [
+          { type: 'document', source: { type: 'base64', media_type: mediaType, data } },
+          { type: 'text', text: 'Build the training from this procedure.' },
+        ],
+      },
+    ],
+    ...FALLBACK,
+  });
+  await deps.recordTokens(org, 'course', message.usage);
+  checkStop(message);
+  const result = cleanCourse(JSON.parse(textOf(message)));
+  if (!result.sections.length || result.quiz.length < 3) {
+    throw new AiError(422, 'not_a_procedure', 'This document does not read as a procedure.');
+  }
+  return result;
+};
+
 export const handle = async (request, deps) => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
   if (request.method !== 'POST') return fail(405, 'method_not_allowed');
@@ -251,6 +327,8 @@ export const handle = async (request, deps) => {
         return json(200, await dtc(body, deps, begin));
       case 'extract':
         return json(200, await extract(body, deps, await begin('extract')));
+      case 'course':
+        return json(200, await course(body, deps, await begin('course')));
       default:
         return fail(404, 'not_found');
     }

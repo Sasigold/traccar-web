@@ -7,6 +7,8 @@ import {
   parseCsv,
   parseDate,
   parseNumber,
+  unknownPlates,
+  withPlateAliases,
 } from '../fuelImport';
 
 describe('fuel import parsing', () => {
@@ -101,5 +103,22 @@ describe('fuel transactions', () => {
     expect(fuelMismatch('hybrid', 'סולר')).toBe(false);
     expect(fuelMismatch('electric', 'סולר')).toBe(true);
     expect(fuelMismatch('diesel', 'שטיפה')).toBe(false);
+  });
+});
+
+describe('plates mapped by hand (ADM-18)', () => {
+  it('lists each unknown plate once and matches it once mapped', () => {
+    const vehicles = [{ id: 1, plate: '12-345-67', fuelCapacity: 60 }];
+    const mapping = { occurred_at: 0, plate_number: 1, liters: 2, total: 3 };
+    const rows = [
+      ['2026-11-01 08:00', '99-888-77', '40', '280'],
+      ['2026-11-02 08:00', '99-888-77', '30', '210'],
+      ['2026-11-03 08:00', '12-345-67', '30', '210'],
+    ];
+    const before = buildTransactions(rows, mapping, vehicles);
+    expect(unknownPlates(before)).toEqual(['9988877']);
+    const after = buildTransactions(rows, mapping, withPlateAliases(vehicles, { 9988877: 1 }));
+    expect(unknownPlates(after)).toEqual([]);
+    expect(after[0].vehicle).toMatchObject({ id: 1, fuelCapacity: 60 });
   });
 });

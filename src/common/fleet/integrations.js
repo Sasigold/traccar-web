@@ -1,4 +1,5 @@
-// Roadmap stage 5: organization API keys and webhooks (pure, tested).
+import { pascalCase } from '../util/stringUtils';
+// Organization API keys and webhooks (pure, tested).
 
 export const API_SCOPES = ['read', 'write'];
 
@@ -14,8 +15,7 @@ export const WEBHOOK_SOURCES = [
 ];
 export const WEBHOOK_ACTIONS = ['insert', 'status', 'update'];
 
-export const webhookEventKey = (source) =>
-  `fleetWebhookSource${source.replace(/(^|_)(\w)/g, (_, __, c) => c.toUpperCase())}`;
+export const webhookEventKey = (source) => `fleetWebhookSource${pascalCase(source)}`;
 
 const toHex = (bytes) => Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
 

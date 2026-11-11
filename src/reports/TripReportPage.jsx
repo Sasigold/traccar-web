@@ -1,8 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
-import { IconButton, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import {
+  IconButton,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  useMediaQuery,
+} from '@mui/material';
 import GpsFixedIcon from '@mui/icons-material/GpsFixedRounded';
 import LocationSearchingIcon from '@mui/icons-material/LocationSearchingRounded';
 import RouteIcon from '@mui/icons-material/RouteRounded';
@@ -27,7 +34,9 @@ import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
 import PlayCircleRoundedIcon from '@mui/icons-material/PlayCircleRounded';
 import ResizeHandle from './components/ResizeHandle';
 import usePersistedState from '../common/util/usePersistedState';
-import { useCatch, useCatchCallback, useAsyncTask } from '../reactHelper';
+import { changeHint, fetchPrevious } from './common/previousPeriod';
+import CompareSwitch from './components/CompareSwitch';
+import { useCatch, useAsyncTask, useRunCallback } from '../reactHelper';
 import { useFleetReady } from '../common/fleet/useFleet';
 import { assignmentResolver, loadAssignments } from '../fleet/safetyData';
 import { tripDriverKey } from '../common/fleet/checkin';
@@ -48,7 +57,8 @@ import MapCamera from '../map/MapCamera';
 import MapGeofence from '../map/MapGeofence';
 import scheduleReport from './common/scheduleReport';
 import MapScale from '../map/MapScale';
-import { privateRows } from '../common/fleet/privacyData';
+import { loadPrivacy, privateRows } from '../common/fleet/privacyData';
+import { tripTiming } from './common/tripTiming';
 import { isPlaceField } from '../common/fleet/privacy';
 import PrivacyNote from '../common/components/PrivacyNote';
 import fetchOrThrow from '../common/util/fetchOrThrow';
@@ -58,6 +68,7 @@ import VehicleCell from './components/VehicleCell';
 import { vehicleName, vehicleTitle } from './common/vehicle';
 import useSelectedRow from './common/useSelectedRow';
 import { litersPer100 } from './common/reportRules';
+import { alignOf, NUMERIC_COLUMNS } from './common/numericColumns';
 
 const columnsArray = [
   ['startTime', 'reportStartTime'],
@@ -74,6 +85,9 @@ const columnsArray = [
   ['litersPer100', 'reportLitersPer100'],
   ['driverName', 'sharedDriver'],
   ['business', 'sharedType'],
+  // REP-14: trips that started outside working hours, or on Shabbat or a holiday.
+  ['outsideHours', 'usageAfterHours'],
+  ['restDay', 'reportRestDay'],
 ];
 const columnsMap = new Map(columnsArray);
 
@@ -94,6 +108,7 @@ const TripReportPage = () => {
   const { classes } = useReportStyles();
   const t = useTranslation();
   const theme = useTheme();
+  const desktop = useMediaQuery(theme.breakpoints.up('md'));
 
   const devices = useSelector((state) => state.devices.items, deviceEquality(['id', 'name']));
 
@@ -129,7 +144,6 @@ const TripReportPage = () => {
     const assignments = await loadAssignments().catch(() => []);
     setResolve(() => assignmentResolver(assignments, byId));
   }, [fleetReady, traccarDrivers]);
-  const unassigned = (item) => !tripDriverKey(item, resolve);
 
   // REP-05: the drivers who drove in the result, to show one driver's trips.
   const driverOptions = useMemo(() => {
@@ -149,11 +163,31 @@ const TripReportPage = () => {
   // A driver who is not in a new result stops filtering it.
   const activeDriver = driverOptions.some((option) => option.id === driver) ? driver : null;
 
-  const filteredItems = items.filter(
+  const keep = useCallback(
     (item) =>
       (!tripType || item.business === (tripType === 'business')) &&
       (!activeDriver ||
-        (activeDriver === NO_DRIVER ? unassigned(item) : item.driverUniqueId === activeDriver)),
+        (activeDriver === NO_DRIVER
+          ? !tripDriverKey(item, resolve)
+          : item.driverUniqueId === activeDriver)),
+    [tripType, activeDriver, resolve],
+  );
+  const filteredItems = useMemo(() => items.filter(keep), [items, keep]);
+
+  // REP-11: on a desktop, with results and no trip chosen, the map shows where each trip started
+  // (grouped when close); a point chooses its trip, and its row scrolls into view.
+  const overview = useMemo(
+    () =>
+      filteredItems
+        .map((item, index) => ({ item, index }))
+        .filter(({ item }) => item.startLat != null && item.startLon != null && !item.privacy)
+        .map(({ item, index }) => ({
+          latitude: item.startLat,
+          longitude: item.startLon,
+          image: 'start-success',
+          index,
+        })),
+    [filteredItems],
   );
 
   const markers = selectedItem && [
@@ -189,29 +223,39 @@ const TripReportPage = () => {
     [selectedItem],
   );
 
-  const onShow = useCatchCallback(async ({ deviceIds, groupIds, from, to }) => {
-    const query = new URLSearchParams({ from, to });
-    deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
-    groupIds.forEach((groupId) => query.append('groupId', groupId));
-    setLoading(true);
-    try {
-      const response = await fetchOrThrow(`api/reports/trips?${query.toString()}`, {
-        headers: { Accept: 'application/json' },
-      });
-      // Places in hidden time (outside working hours, private periods) are taken out.
-      const rows = await response.json();
-      const result = await privateRows(rows, {
-        deviceIds: [...deviceIds, ...rows.map((row) => row.deviceId)],
-        from,
-        to,
-      });
-      setItems(result.rows);
-      setHiddenRows(result.hidden);
-    } finally {
-      setLoading(false);
-      setQueried(true);
-    }
-  }, []);
+  // REP-09: the trips of the period right before, for the change in the tiles.
+  const [compare, setCompare] = usePersistedState('tripsCompare', false);
+  const [previous, setPrevious] = useState(null);
+
+  const onShow = useRunCallback(
+    async ({ deviceIds, groupIds, from, to, signal }) => {
+      const query = new URLSearchParams({ from, to });
+      deviceIds.forEach((deviceId) => query.append('deviceId', deviceId));
+      groupIds.forEach((groupId) => query.append('groupId', groupId));
+      setLoading(true);
+      try {
+        const response = await fetchOrThrow(`api/reports/trips?${query.toString()}`, {
+          signal,
+          headers: { Accept: 'application/json' },
+        });
+        // Places in hidden time (outside working hours, private periods) are taken out.
+        const policy = (await loadPrivacy(from, to).catch(() => null))?.policy;
+        const rows = (await response.json()).map((row) => ({ ...row, ...tripTiming(row, policy) }));
+        const result = await privateRows(rows, {
+          deviceIds: [...deviceIds, ...rows.map((row) => row.deviceId)],
+          from,
+          to,
+        });
+        setItems(result.rows);
+        setHiddenRows(result.hidden);
+        setPrevious(compare ? await fetchPrevious('trips', query, from, to, signal) : null);
+      } finally {
+        setLoading(false);
+        setQueried(true);
+      }
+    },
+    [compare],
+  );
 
   const onExport = useCatch(async () => {
     const sheets = new Map();
@@ -275,25 +319,32 @@ const TripReportPage = () => {
     if (!filteredItems.length) {
       return [];
     }
-    const sum = (key) => filteredItems.reduce((total, item) => total + (item[key] || 0), 0);
+    const sumOf = (rows, key) => rows.reduce((total, item) => total + (item[key] || 0), 0);
+    const sum = (key) => sumOf(filteredItems, key);
     const maxSpeed = Math.max(0, ...filteredItems.map((item) => item.maxSpeed || 0));
+    // REP-09: the change from the period before, under the tile.
+    const before = previous ? previous.filter(keep) : null;
+    const change = (current, earlier) => (before ? changeHint(t, current, earlier) : undefined);
     return [
       {
         key: 'count',
         label: t('reportTrips'),
         value: filteredItems.length,
+        hint: change(filteredItems.length, before?.length),
         icon: <PlayCircleRoundedIcon />,
       },
       {
         key: 'distance',
         label: `${t('sharedTotal')} · ${t('sharedDistance')}`,
         value: formatDistance(sum('distance'), distanceUnit, t),
+        hint: change(sum('distance'), before && sumOf(before, 'distance')),
         icon: <RouteIcon />,
       },
       {
         key: 'duration',
         label: `${t('sharedTotal')} · ${t('reportDuration')}`,
         value: formatNumericHours(sum('duration'), t),
+        hint: change(sum('duration'), before && sumOf(before, 'duration')),
         icon: <TimerRoundedIcon />,
       },
       {
@@ -303,7 +354,7 @@ const TripReportPage = () => {
         icon: <SpeedRoundedIcon />,
       },
     ];
-  }, [filteredItems, distanceUnit, speedUnit, t]);
+  }, [filteredItems, previous, keep, distanceUnit, speedUnit, t]);
 
   const {
     sorted: sortedItems,
@@ -337,6 +388,10 @@ const TripReportPage = () => {
         return formatNumericHours(value, t);
       case 'spentFuel':
         return value > 0 ? formatVolume(value, volumeUnit, t) : null;
+      case 'outsideHours':
+        return value ? t('sharedYes') : null;
+      case 'restDay':
+        return value ? t(value === 'shabbat' ? 'calendarSaturday' : 'reportHoliday') : null;
       case 'litersPer100': {
         // REP-14: consumption, when the device reports fuel.
         const rate = litersPer100(item.spentFuel, item.distance);
@@ -362,16 +417,26 @@ const TripReportPage = () => {
   return (
     <PageLayout menu={<ReportsMenu />} breadcrumbs={['reportTitle', 'reportTrips']}>
       <div className={classes.container}>
-        {selectedItem && (
+        {(selectedItem || (desktop && overview.length > 0)) && (
           <>
             <div className={classes.containerMap}>
               <MapView>
                 <MapGeofence />
-                {route && (
+                {selectedItem && route && (
                   <>
                     <MapRoutePath positions={route} />
                     <MapMarkers markers={markers} />
                     <MapCamera positions={route} />
+                  </>
+                )}
+                {!selectedItem && (
+                  <>
+                    <MapMarkers
+                      markers={overview}
+                      cluster
+                      onClick={(properties) => setSelectedItem(filteredItems[properties.index])}
+                    />
+                    <MapCamera positions={overview} />
                   </>
                 )}
               </MapView>
@@ -420,6 +485,7 @@ const TripReportPage = () => {
                 </div>
               )}
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
+              <CompareSwitch checked={compare} onChange={setCompare} />
               <AllAddressesButton
                 className={classes.filterItem}
                 points={[
@@ -454,7 +520,13 @@ const TripReportPage = () => {
                   {t('sharedDevice')}
                 </SortCell>
                 {columns.map((key) => (
-                  <SortCell key={key} sortKey={key} sort={sort} onSort={toggleSort}>
+                  <SortCell
+                    key={key}
+                    sortKey={key}
+                    sort={sort}
+                    onSort={toggleSort}
+                    align={alignOf(key)}
+                  >
                     {t(columnsMap.get(key))}
                   </SortCell>
                 ))}
@@ -467,7 +539,7 @@ const TripReportPage = () => {
               {!loading ? (
                 sortedItems.map((item) => (
                   <TableRow
-                    key={item.startPositionId}
+                    key={`${item.deviceId}-${item.startPositionId}-${item.startTime}`}
                     ref={selectedItem === item ? selectedRowRef : undefined}
                     className={selectedItem === item ? classes.selectedRow : undefined}
                   >
@@ -504,7 +576,9 @@ const TripReportPage = () => {
                       <VehicleCell deviceId={item.deviceId} />
                     </TableCell>
                     {columns.map((key) => (
-                      <TableCell key={key}>{formatValue(item, key)}</TableCell>
+                      <TableCell key={key} align={alignOf(key)}>
+                        {formatValue(item, key)}
+                      </TableCell>
                     ))}
                   </TableRow>
                 ))
@@ -514,6 +588,7 @@ const TripReportPage = () => {
             </TableBody>
             {!loading && (
               <ReportTotalsRow
+                numeric={NUMERIC_COLUMNS}
                 leading={2}
                 columns={columns}
                 spec={TOTALS}

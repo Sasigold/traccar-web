@@ -122,7 +122,12 @@ const session = async (sandbox, request, response, url, send) => {
     return false;
   }
   if (request.method === 'GET') {
-    const user = DEMO_USERS.find((item) => item.id === sandbox.userId);
+    const user = overlayOne(
+      sandbox,
+      'users',
+      DEMO_USERS.find((item) => item.id === sandbox.userId),
+      sandbox.userId,
+    );
     if (user) {
       send(user);
     } else {
@@ -173,6 +178,12 @@ export const handleSandbox = async (sandbox, request, response, url, send) => {
     return true;
   }
   const body = request.method === 'DELETE' ? {} : await readBody(request);
+  // The server settings (ARC-09 publishes the default dashboard there without a fleet database).
+  if (collection === 'server' && request.method === 'PUT') {
+    sandbox.server = body;
+    send({ ...body, readonly: false });
+    return true;
+  }
   if (request.method === 'POST' && id == null) {
     sandbox.nextId += 1;
     const item = { attributes: {}, ...body, id: sandbox.nextId };

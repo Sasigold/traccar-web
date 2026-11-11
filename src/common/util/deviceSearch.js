@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 // Vehicle search shared by the live list and the quick search (Ctrl+K).
 //
 // Dispatchers look a vehicle up by its plate number, its driver or its group as often as by its

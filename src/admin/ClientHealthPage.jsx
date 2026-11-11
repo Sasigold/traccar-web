@@ -26,7 +26,7 @@ import { release as currentRelease, telemetryStatus } from '../common/telemetry/
 import { formatTime } from '../common/util/formatter';
 import AdminMenu from './components/AdminMenu';
 import AdminGate from './components/AdminGate';
-import KpiTile from './components/KpiTile';
+import KpiTile from '../common/components/KpiTile';
 import { fill, formatDuration, formatVital, releaseHealth, releasesOf } from './clientHealth';
 import { useAdminAccess } from './useAdmin';
 

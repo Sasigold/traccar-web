@@ -8,6 +8,7 @@ import { useFleetSections } from '../settings/components/settingsSections';
 import ExpiryTiles from './components/ExpiryTiles';
 import FleetSyncCard from './components/FleetSyncCard';
 import FleetKpis from './components/FleetKpis';
+import BenchmarkCard from './components/BenchmarkCard';
 import FleetSetupCard from './components/FleetSetupCard';
 
 const useStyles = makeStyles()((theme) => ({
@@ -49,6 +50,7 @@ const FleetHubPage = () => {
         <FleetSetupCard />
         <ExpiryTiles />
         <FleetKpis />
+        <BenchmarkCard />
         {sections.map((section) => (
           <section key={section.id} aria-labelledby={`fleet-hub-${section.id}`}>
             <Typography

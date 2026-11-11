@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 // The record of processing activities (SEC-12): what the organization processes about its
 // employees through viper fleet, why, how long, who else gets it and how it is protected.
 // Pure: built from the privacy policy and the services this build talks to; printed by

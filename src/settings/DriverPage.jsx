@@ -16,7 +16,9 @@ import { saveFleetRecord, useFleetAccess, useFleetOverlay } from '../fleet/fleet
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import FormSection from './components/FormSection';
 import FleetDocumentsSection from './components/FleetDocumentsSection';
-import DriverAssignmentSection from '../fleet/components/DriverAssignmentSection';
+import DriverAssignmentSection, {
+  commitDriverAssignment,
+} from '../fleet/components/DriverAssignmentSection';
 import HistorySection from '../fleet/components/HistorySection';
 import FleetFieldsSection from '../fleet/components/FleetFieldsSection';
 import ScanDocumentButton from '../fleet/components/ScanDocumentButton';
@@ -33,12 +35,19 @@ import {
   splitAttributes,
 } from '../common/fleet/fleetFields';
 
+// A unique identifier for a driver without a tag: "drv-" and 8 random characters.
+export const generatedDriverId = () =>
+  `drv-${Array.from(crypto.getRandomValues(new Uint8Array(8)), (byte) =>
+    'abcdefghjkmnpqrstuvwxyz23456789'.charAt(byte % 31),
+  ).join('')}`;
+
 const DriverPage = () => {
   const t = useTranslation();
 
   const dispatch = useDispatch();
 
   const [item, setItem] = useState();
+  const devices = useSelector((state) => state.devices.items);
 
   const fleet = useFleetAccess('driver');
   const safety = useFleetPermission('safety.read');
@@ -51,6 +60,8 @@ const DriverPage = () => {
       if (fleet.write) {
         await saveFleetRecord('driver', saved, fleet.profile, { withDocuments: fleet.documents });
       }
+      // ADM-14: the vehicle and the user picked in the form are saved with it.
+      await commitDriverAssignment(saved, item.pendingAssignment, fleet.profile, devices);
       const response = await fetchOrThrow('api/drivers');
       dispatch(driversActions.refresh(await response.json()));
     } catch (error) {
@@ -73,8 +84,15 @@ const DriverPage = () => {
         )?.name
       : null;
 
-  const validate = () =>
-    item && item.name && item.uniqueId && fleetFieldsValid(driverFields, item.attributes);
+  // ADM-17: the identifier is the driver's tag or card number, and not every driver has one;
+  // Traccar needs a unique value, so one is made up when it is left empty.
+  const validate = () => item && item.name && fleetFieldsValid(driverFields, item.attributes);
+  const prepare = (input) => {
+    // The vehicle and user picked in the form are not Traccar fields.
+    const value = { ...input };
+    delete value.pendingAssignment;
+    return value.uniqueId?.trim() ? value : { ...value, uniqueId: generatedDriverId() };
+  };
 
   return (
     <EditItemView
@@ -82,6 +100,7 @@ const DriverPage = () => {
       item={item}
       setItem={setItem}
       validate={validate}
+      prepare={prepare}
       onItemSaved={onItemSaved}
       menu={<SettingsMenu />}
       breadcrumbs={['fleetTitle', 'sharedDriver']}
@@ -98,7 +117,8 @@ const DriverPage = () => {
             <TextField
               value={item.uniqueId || ''}
               onChange={(event) => setItem({ ...item, uniqueId: event.target.value })}
-              label={t('deviceIdentifier')}
+              label={t('driverTagNumber')}
+              helperText={t('driverTagNumberHelp')}
             />
           </FormSection>
           <FleetFieldsSection
@@ -143,7 +163,11 @@ const DriverPage = () => {
               {t('fleetDriverFile')}
             </Button>
           )}
-          <DriverAssignmentSection driver={item} />
+          <DriverAssignmentSection
+            driver={item}
+            pending={item.pendingAssignment}
+            onPending={(pendingAssignment) => setItem({ ...item, pendingAssignment })}
+          />
           <FleetDocumentsSection
             entity="driver"
             traccarId={item.id}

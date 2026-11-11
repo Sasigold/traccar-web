@@ -81,6 +81,24 @@ test.describe('dashboard', () => {
     await expectGapless(page);
   });
 
+  // REP-22: the enlarged view exports, and moves between widgets with arrows and arrow keys.
+  test('the enlarged widget exports and moves to the next widget', async ({ page }) => {
+    await page.getByRole('button', { name: 'דשבורד חדש' }).click();
+    await page.getByRole('menuitem', { name: /^פעילות/ }).click();
+    const trend = widget(page, 'ק"מ לאורך זמן');
+    await trend.hover();
+    await trend.getByRole('button', { name: 'הגדלה' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toContainText('ק"מ לאורך זמן');
+    const download = page.waitForEvent('download');
+    await dialog.getByRole('button', { name: 'ייצוא' }).click();
+    await download;
+    await dialog.getByRole('button', { name: "הווידג'ט הבא" }).click();
+    await expect(dialog).not.toContainText('ק"מ לאורך זמן');
+    await page.keyboard.press('ArrowRight');
+    await expect(dialog).toContainText('ק"מ לאורך זמן');
+  });
+
   test('customizing: add, change the form, resize, remove, undo, keep after reload', async ({
     page,
     isMobile,

@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 // Fleet reports (REP-23): usage, cost per km and device health, per vehicle. Pure, unit-tested.
 import {
   DEFAULT_POLICY,
@@ -131,4 +132,38 @@ export const underusedVehicles = (rows, { threshold = 20, monthlyCost } = {}) =>
     vehicles: under,
     savings: under.length && cost > 0 ? cost : null,
   };
+};
+
+// OPS-04: engine hours per active day, from the summary's engine hours (ms).
+export const engineHoursPerDay = (summary, deviceId, activeDays) => {
+  const ms = sum(
+    summary.filter((row) => row.deviceId === deviceId),
+    (row) => row.engineHours,
+  );
+  return activeDays > 0 ? ms / HOUR / activeDays : null;
+};
+
+// OPS-04: each vehicle's distance against the median of its group (100 = like the group's
+// middle vehicle); null for a vehicle alone in its group or without a group.
+export const groupComparison = (rows, groupOf) => {
+  const byGroup = new Map();
+  rows.forEach((row) => {
+    const group = groupOf(row.deviceId);
+    if (!group) return;
+    if (!byGroup.has(group)) byGroup.set(group, []);
+    byGroup.get(group).push(row.distance || 0);
+  });
+  const medians = new Map(
+    [...byGroup.entries()].map(([group, values]) => {
+      const sorted = [...values].sort((a, b) => a - b);
+      const middle = Math.floor(sorted.length / 2);
+      const median = sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+      return [group, { median, size: values.length }];
+    }),
+  );
+  return rows.map((row) => {
+    const entry = medians.get(groupOf(row.deviceId));
+    if (!entry || entry.size < 2 || !entry.median) return null;
+    return Math.round(((row.distance || 0) / entry.median) * 100);
+  });
 };

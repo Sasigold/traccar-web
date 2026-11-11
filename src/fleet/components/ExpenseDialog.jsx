@@ -19,6 +19,8 @@ import { ensureVehicle, uploadFleetFile } from '../fleetData';
 import { DateField } from '../../common/components/pickers';
 import { keepOnBackdrop } from '../../common/util/formDialog';
 import MoneyField from '../../common/components/MoneyField';
+import { capitalize } from '../../common/util/stringUtils';
+import VehicleSelect from '../../common/components/VehicleSelect';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -40,25 +42,36 @@ export const EXPENSE_CATEGORIES = [
   'tires',
   'other',
 ];
-export const expenseCategoryKey = (category) =>
-  `fleetExpenseCategory${category.replace(/^\w/, (c) => c.toUpperCase())}`;
+export const expenseCategoryKey = (category) => `fleetExpenseCategory${capitalize(category)}`;
 
 const today = () => new Date().toISOString().slice(0, 10);
 
 // A single expense (toll, parking, fine, wash ...) with an optional receipt.
-const ExpenseDialog = ({ onClose, onSaved }) => {
+// ADM-18: with `expense`, the row is edited (its vehicle given as `deviceId`, the Traccar id).
+const ExpenseDialog = ({ expense, deviceId, onClose, onSaved }) => {
   const { classes } = useStyles();
   const t = useTranslation();
   const profile = useFleetProfile();
   const devices = useSelector((state) => state.devices.items);
-  const [form, setForm] = useState(() => ({
-    deviceId: '',
-    category: 'toll',
-    occurred_at: today(),
-    amount: '',
-    reference: '',
-    notes: '',
-  }));
+  const [form, setForm] = useState(() =>
+    expense
+      ? {
+          deviceId: deviceId ? String(deviceId) : '',
+          category: expense.category,
+          occurred_at: String(expense.occurred_at).slice(0, 10),
+          amount: String(expense.amount ?? ''),
+          reference: expense.reference || '',
+          notes: expense.notes || '',
+        }
+      : {
+          deviceId: '',
+          category: 'toll',
+          occurred_at: today(),
+          amount: '',
+          reference: '',
+          notes: '',
+        },
+  );
   const [receipt, setReceipt] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -74,21 +87,31 @@ const ExpenseDialog = ({ onClose, onSaved }) => {
       const receiptPath = receipt
         ? await uploadFleetFile(profile.org_id, 'expenses', receipt)
         : null;
-      unwrap(
-        await getFleetClient()
-          .from('vehicle_expenses')
-          .insert({
+      const values = {
+        vehicle_id: vehicleId,
+        category: form.category,
+        occurred_at: form.occurred_at,
+        amount: Number(form.amount),
+        reference: form.reference.trim() || null,
+        notes: form.notes.trim() || null,
+      };
+      const table = getFleetClient().from('vehicle_expenses');
+      if (expense) {
+        unwrap(
+          await table
+            .update({ ...values, ...(receiptPath && { receipt_path: receiptPath }) })
+            .eq('id', expense.id),
+        );
+      } else {
+        unwrap(
+          await table.insert({
+            ...values,
             org_id: profile.org_id,
-            vehicle_id: vehicleId,
-            category: form.category,
-            occurred_at: form.occurred_at,
-            amount: Number(form.amount),
-            reference: form.reference.trim() || null,
-            notes: form.notes.trim() || null,
             receipt_path: receiptPath,
             created_by: profile.id,
           }),
-      );
+        );
+      }
       onSaved();
     } finally {
       setSaving(false);
@@ -99,22 +122,14 @@ const ExpenseDialog = ({ onClose, onSaved }) => {
 
   return (
     <Dialog open onClose={keepOnBackdrop(onClose)} fullWidth maxWidth="xs">
-      <DialogTitle>{t('fleetExpenseAdd')}</DialogTitle>
+      <DialogTitle>{t(expense ? 'fleetExpenseEdit' : 'fleetExpenseAdd')}</DialogTitle>
       <DialogContent>
         <div className={classes.form}>
-          <TextField
-            select
-            label={t('fleetEntityVehicle')}
+          <VehicleSelect
+            devices={options}
             value={form.deviceId}
-            onChange={set('deviceId')}
-          >
-            <MenuItem value="">&nbsp;</MenuItem>
-            {options.map((device) => (
-              <MenuItem key={device.id} value={String(device.id)}>
-                {device.name}
-              </MenuItem>
-            ))}
-          </TextField>
+            onChange={(deviceId) => set('deviceId')({ target: { value: deviceId } })}
+          />
           <TextField
             select
             label={t('fleetExpenseCategory')}

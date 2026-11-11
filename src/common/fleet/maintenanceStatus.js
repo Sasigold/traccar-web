@@ -1,4 +1,4 @@
-// Roadmap stage 0, maintenance status, computed from the vehicle's latest position.
+// Maintenance status, computed from the vehicle's latest position.
 //
 // Traccar raises a `maintenance` event when the tracked value crosses `start`, then every
 // `period` after it. We treat `start` as "the last service", so "mark as done" moves `start` to

@@ -10,17 +10,22 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  Menu,
   MenuItem,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
+  Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
 import ShareLocationRoundedIcon from '@mui/icons-material/ShareLocationRounded';
 import { useLivePositions } from '../common/fleet/usePrivacy';
@@ -35,17 +40,24 @@ import fetchOrThrow from '../common/util/fetchOrThrow';
 import { formatTime } from '../common/util/formatter';
 import exportExcel from '../common/util/exportExcel';
 import { getFleetClient, unwrap } from '../common/fleet/client';
+import { isExceptionJob, onTimeByCustomer } from '../common/fleet/dispatchStats';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import {
   JOB_PRIORITIES,
   JOB_STATUSES,
   JOB_TYPES,
+  FAILURE_REASONS,
   estimateEta,
+  isLateJob,
   isOpenJob,
   trackingExpiry,
   whatsappLink,
 } from '../common/fleet/dispatch';
 import FleetNotice from './components/FleetNotice';
+import RoutePlanDialog from './components/RoutePlanDialog';
+import { DispatchMap, DispatchSchedule } from './components/DispatchViews';
+import AddressField from '../common/components/AddressField';
+import PickOnMapButton from '../map/picker/PickOnMapButton';
 import {
   camel,
   cleanPayload,
@@ -53,12 +65,17 @@ import {
   useFleetDrivers,
   useFleetRows,
   useFleetVehicles,
-} from './stage5Data';
+} from './fleetRows';
 import { DateTimeField } from '../common/components/pickers';
 import { keepOnBackdrop } from '../common/util/formDialog';
 import CopyButton from '../common/components/CopyButton';
+import { useConfirm } from '../common/components/confirm/ConfirmProvider';
 
 const useStyles = makeStyles()((theme) => ({
+  // ADM-20: with the map or the schedule shown, the table's card is only its toolbar.
+  toolbarOnly: {
+    flex: '0 0 auto',
+  },
   form: {
     display: 'grid',
     gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
@@ -67,6 +84,11 @@ const useStyles = makeStyles()((theme) => ({
     [theme.breakpoints.down('sm')]: {
       gridTemplateColumns: '1fr',
     },
+  },
+  chips: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
   },
   wide: {
     gridColumn: '1 / -1',
@@ -89,19 +111,28 @@ const useStyles = makeStyles()((theme) => ({
 
 export const jobKey = (group, value) => `fleetJob${group}${camel(value)}`;
 
+// ADM-20: being on the way is normal (info); only a late job is a warning.
 const statusColor = {
   planned: 'default',
   assigned: 'info',
-  en_route: 'warning',
-  arrived: 'warning',
+  en_route: 'info',
+  arrived: 'info',
   done: 'success',
   failed: 'error',
   cancelled: 'default',
 };
 
-export const JobStatusChip = ({ status }) => {
+export const JobStatusChip = ({ status, late = false }) => {
   const t = useTranslation();
-  return <Chip size="small" color={statusColor[status]} label={t(jobKey('Status', status))} />;
+  return (
+    <Chip
+      size="small"
+      color={late ? 'warning' : statusColor[status]}
+      label={
+        late ? `${t(jobKey('Status', status))} · ${t('fleetJobLate')}` : t(jobKey('Status', status))
+      }
+    />
+  );
 };
 
 const localInput = (value) => (value ? dayjs(value).format('YYYY-MM-DDTHH:mm') : '');
@@ -139,7 +170,29 @@ const jobKeys = [
   'scheduled_at',
   'window_end',
   'notes',
+  'failure_reason',
 ];
+
+// A copy of a job to plan again: the same place and people, a new time, no progress or link.
+const duplicateJob = (job) => ({
+  ...emptyJob(),
+  ...Object.fromEntries(
+    [
+      'title',
+      'type',
+      'priority',
+      'customer_name',
+      'customer_phone',
+      'address',
+      'latitude',
+      'longitude',
+      'notes',
+    ].map((key) => [key, job[key] ?? '']),
+  ),
+  poi_id: job.poi_id || '',
+  vehicle_id: job.vehicle_id || '',
+  driver_id: job.driver_id || '',
+});
 
 const JobDialog = ({ job, pois, vehicles, drivers, onClose, onSaved }) => {
   const { classes } = useStyles();
@@ -249,9 +302,31 @@ const JobDialog = ({ job, pois, vehicles, drivers, onClose, onSaved }) => {
           </TextField>
           {field('customer_name', 'fleetJobCustomer')}
           {field('customer_phone', 'sharedPhone', ltr)}
-          {field('address', 'positionAddress', { className: classes.wide })}
+          <AddressField
+            className={classes.wide}
+            label={t('positionAddress')}
+            value={form.address}
+            onChange={(address) => setForm((current) => ({ ...current, address }))}
+            onPick={(picked) =>
+              setForm((current) => ({
+                ...current,
+                address: picked.address,
+                latitude: picked.latitude ?? current.latitude,
+                longitude: picked.longitude ?? current.longitude,
+              }))
+            }
+          />
           {field('latitude', 'positionLatitude', { type: 'number', ...ltr })}
           {field('longitude', 'positionLongitude', { type: 'number', ...ltr })}
+          {/* ADM-20: the place picked on a map, when there is no address to type. */}
+          <PickOnMapButton
+            className={classes.wide}
+            latitude={form.latitude}
+            longitude={form.longitude}
+            onPick={({ latitude, longitude }) =>
+              setForm((current) => ({ ...current, latitude, longitude }))
+            }
+          />
           {select(
             'vehicle_id',
             'fleetEntityVehicle',
@@ -277,6 +352,24 @@ const JobDialog = ({ job, pois, vehicles, drivers, onClose, onSaved }) => {
               ({ value }) => t(jobKey('Status', value)),
               { className: classes.wide },
             )}
+          {form.status === 'failed' && (
+            <div className={classes.wide}>
+              <Typography variant="subtitle2" gutterBottom>
+                {t('fleetJobFailureReason')}
+              </Typography>
+              <div className={classes.chips}>
+                {FAILURE_REASONS.map((reason) => (
+                  <Chip
+                    key={reason}
+                    label={t(jobKey('Failure', reason))}
+                    color={form.failure_reason === reason ? 'primary' : 'default'}
+                    variant={form.failure_reason === reason ? 'filled' : 'outlined'}
+                    onClick={() => setForm({ ...form, failure_reason: reason })}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
           {field('notes', 'fleetNotes', { multiline: true, minRows: 2, className: classes.wide })}
         </div>
       </DialogContent>
@@ -320,7 +413,9 @@ const TrackingDialog = ({ job, deviceId, eta, onClose, onSaved }) => {
 
   const message = link
     ? [
-        t('fleetJobTrackingGreeting').replace('{0}', job.customer_name || ''),
+        job.customer_name
+          ? t('fleetJobTrackingGreeting').replace('{0}', job.customer_name)
+          : t('fleetJobTrackingGreetingNoName'),
         eta ? t('fleetJobTrackingEta').replace('{0}', eta.minutes) : null,
         t('fleetJobTrackingLink').replace('{0}', link),
       ]
@@ -370,9 +465,11 @@ const TrackingDialog = ({ job, deviceId, eta, onClose, onSaved }) => {
   );
 };
 
-const filters = ['today', 'open', 'all'];
+// OPS-11: "exceptions" shows only what needs someone now: late or failed jobs.
+const filters = ['today', 'open', 'exceptions', 'all'];
+const VIEWS = ['list', 'map', 'schedule'];
 
-// Roadmap stage 5 (4.8): dispatch jobs for vehicles and drivers, live ETA, customer links.
+// Dispatch jobs for vehicles and drivers, live ETA, customer links.
 const DispatchPage = () => {
   const { classes } = useStyles();
   const theme = useTheme();
@@ -381,10 +478,47 @@ const DispatchPage = () => {
   const canWrite = useFleetPermission('dispatch.write');
   const positions = useLivePositions();
 
-  const [filter, setFilter] = useState('today');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [filter, setFilter] = useState(() =>
+    filters.includes(searchParams.get('filter')) ? searchParams.get('filter') : 'today',
+  );
+  const chooseFilter = (value) => {
+    setFilter(value);
+    const next = new URLSearchParams(searchParams);
+    if (value === 'today') next.delete('filter');
+    else next.set('filter', value);
+    setSearchParams(next, { replace: true });
+  };
   const [search, setSearch] = useState('');
+  // ADM-20: the jobs as a list, on a map, or as each driver's day (kept in the address).
+  const view = VIEWS.includes(searchParams.get('view')) ? searchParams.get('view') : 'list';
+  const chooseView = (value) => {
+    if (!value) return;
+    const next = new URLSearchParams(searchParams);
+    if (value === 'list') next.delete('view');
+    else next.set('view', value);
+    setSearchParams(next, { replace: true });
+  };
   const [editing, setEditing] = useState(null);
   const [tracking, setTracking] = useState(null);
+  // ADM-20: a row's menu (duplicate, cancel).
+  const [rowMenu, setRowMenu] = useState(null);
+  const [planning, setPlanning] = useState(false);
+  const confirm = useConfirm();
+  const cancelJob = useCatch(async (job) => {
+    if (
+      !(await confirm({
+        title: t('fleetJobCancelConfirm').replace('{0}', job.title),
+        confirmLabel: t('fleetJobCancel'),
+      }))
+    ) {
+      return;
+    }
+    unwrap(
+      await getFleetClient().from('dispatch_jobs').update({ status: 'cancelled' }).eq('id', job.id),
+    );
+    reload();
+  });
   const [reloadKey, reload] = useReducer((k) => k + 1, 0);
 
   const jobs = useFleetRows('dispatch_jobs', {
@@ -398,7 +532,6 @@ const DispatchPage = () => {
   const drivers = useFleetDrivers(canWrite);
 
   // LIV-21: "send a job" from the map's nearby vehicles opens a new job at that point.
-  const [searchParams, setSearchParams] = useSearchParams();
   useEffect(() => {
     const latitude = searchParams.get('latitude');
     const longitude = searchParams.get('longitude');
@@ -422,6 +555,9 @@ const DispatchPage = () => {
       if (filter === 'open' && !isOpenJob(job.status)) {
         return false;
       }
+      if (filter === 'exceptions' && !isExceptionJob(job)) {
+        return false;
+      }
       return (
         !keyword ||
         [
@@ -436,6 +572,19 @@ const DispatchPage = () => {
       );
     });
   }, [jobs, filter, search]);
+
+  const openJob = (job) =>
+    setEditing({
+      ...job,
+      poi_id: job.poi_id || '',
+      vehicle_id: job.vehicle_id || '',
+      driver_id: job.driver_id || '',
+    });
+
+  const exceptionCount = useMemo(
+    () => (jobs || []).filter((job) => isExceptionJob(job)).length,
+    [jobs],
+  );
 
   const etaOf = (job) => {
     const deviceId = job.vehicles?.traccar_device_id;
@@ -465,6 +614,16 @@ const DispatchPage = () => {
         [t('fleetJobProofName')]: job.proof_name,
       })),
     );
+    // OPS-11: on time per customer, over the jobs shown.
+    sheets.set(
+      t('fleetJobOnTimeSheet'),
+      onTimeByCustomer(filtered).map((row) => ({
+        [t('fleetJobCustomer')]: row.customer,
+        [t('fleetJobOnTimeDone')]: row.done,
+        [t('fleetJobOnTimeFailed')]: row.failed,
+        [t('fleetJobOnTimeShare')]: row.share == null ? '' : Math.round(row.share * 100),
+      })),
+    );
     await exportExcel(t('fleetDispatchPage'), 'dispatch.xlsx', sheets, theme);
   };
 
@@ -476,6 +635,7 @@ const DispatchPage = () => {
     >
       <FleetNotice permission="dispatch.read" />
       <DataTable
+        className={view === 'list' ? undefined : classes.toolbarOnly}
         toolbar={
           <TableToolbar
             search={{ value: search, onChange: setSearch }}
@@ -484,102 +644,189 @@ const DispatchPage = () => {
               <Chip
                 key={key}
                 size="small"
-                label={t(`fleetJobFilter${camel(key)}`)}
+                label={
+                  key === 'exceptions' && exceptionCount
+                    ? `${t('fleetJobFilterExceptions')} · ${exceptionCount}`
+                    : t(`fleetJobFilter${camel(key)}`)
+                }
                 color={filter === key ? 'primary' : 'default'}
                 variant={filter === key ? 'filled' : 'outlined'}
-                onClick={() => setFilter(key)}
+                onClick={() => chooseFilter(key)}
               />
             ))}
             exportHandler={canRead ? handleExport : undefined}
             actions={
-              canWrite && (
-                <Button variant="contained" size="small" onClick={() => setEditing(emptyJob())}>
-                  {t('fleetJobAdd')}
-                </Button>
-              )
+              <>
+                <ToggleButtonGroup
+                  exclusive
+                  size="small"
+                  value={view}
+                  onChange={(_, value) => chooseView(value)}
+                  aria-label={t('poolView')}
+                >
+                  {VIEWS.map((key) => (
+                    <ToggleButton key={key} value={key}>
+                      {t(`fleetJobView${camel(key)}`)}
+                    </ToggleButton>
+                  ))}
+                </ToggleButtonGroup>
+                {canWrite && (
+                  <>
+                    <Button size="small" variant="outlined" onClick={() => setPlanning(true)}>
+                      {t('fleetRoutePlan')}
+                    </Button>
+                    <Button variant="contained" size="small" onClick={() => setEditing(emptyJob())}>
+                      {t('fleetJobAdd')}
+                    </Button>
+                  </>
+                )}
+              </>
             }
           />
         }
-        empty={canRead && jobs && filtered.length === 0}
+        empty={view === 'list' && canRead && jobs && filtered.length === 0}
         emptyState={{ icon: <LocalShippingRoundedIcon />, title: t('fleetJobsNone') }}
       >
-        <TableHead>
-          <TableRow>
-            <TableCell>{t('fleetWorkOrderNumber')}</TableCell>
-            <TableCell>{t('fleetJobScheduled')}</TableCell>
-            <TableCell>{t('fleetJobTitle')}</TableCell>
-            <TableCell>{t('fleetJobCustomer')}</TableCell>
-            <TableCell>{t('fleetEntityVehicle')}</TableCell>
-            <TableCell>{t('sharedDriver')}</TableCell>
-            <TableCell>{t('deviceStatus')}</TableCell>
-            <TableCell>{t('fleetJobEta')}</TableCell>
-            {canWrite && <TableCell className={classes.action} />}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {canRead && !jobs ? (
-            <TableShimmer columns={canWrite ? 9 : 8} />
-          ) : (
-            filtered.map((job) => {
-              const eta = etaOf(job);
-              return (
-                <TableRow key={job.id} hover>
-                  <TableCell className={classes.number}>{job.number}</TableCell>
-                  <TableCell className={classes.number}>
-                    {job.scheduled_at ? formatTime(job.scheduled_at, 'minutes') : ''}
-                  </TableCell>
-                  <TableCell>{job.title}</TableCell>
-                  <TableCell>
-                    {job.customer_name || job.pois?.name}
-                    {job.address && ` · ${job.address}`}
-                  </TableCell>
-                  <TableCell>
-                    <span dir="ltr">{job.vehicles?.plate_number}</span>
-                  </TableCell>
-                  <TableCell>{job.drivers?.full_name}</TableCell>
-                  <TableCell>
-                    <JobStatusChip status={job.status} />
-                  </TableCell>
-                  <TableCell className={classes.number}>
-                    {eta
-                      ? t('fleetJobEtaValue').replace('{0}', eta.minutes).replace('{1}', eta.km)
-                      : ''}
-                  </TableCell>
-                  {canWrite && (
-                    <TableCell className={classes.action}>
-                      <Tooltip title={t('fleetJobTracking')}>
-                        <IconButton
-                          size="small"
-                          aria-label={t('fleetJobTracking')}
-                          onClick={() => setTracking({ job, eta })}
-                        >
-                          <ShareLocationRoundedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={t('sharedEdit')}>
-                        <IconButton
-                          size="small"
-                          aria-label={t('sharedEdit')}
-                          onClick={() =>
-                            setEditing({
-                              ...job,
-                              poi_id: job.poi_id || '',
-                              vehicle_id: job.vehicle_id || '',
-                              driver_id: job.driver_id || '',
-                            })
-                          }
-                        >
-                          <EditRoundedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+        {view === 'list' && (
+          <TableHead>
+            <TableRow>
+              <TableCell>{t('fleetWorkOrderNumber')}</TableCell>
+              <TableCell>{t('fleetJobScheduled')}</TableCell>
+              <TableCell>{t('fleetJobTitle')}</TableCell>
+              <TableCell>{t('fleetJobCustomer')}</TableCell>
+              <TableCell>{t('fleetEntityVehicle')}</TableCell>
+              <TableCell>{t('sharedDriver')}</TableCell>
+              <TableCell>{t('deviceStatus')}</TableCell>
+              <TableCell>{t('fleetJobEta')}</TableCell>
+              {canWrite && <TableCell className={classes.action} />}
+            </TableRow>
+          </TableHead>
+        )}
+        {view === 'list' && (
+          <TableBody>
+            {canRead && !jobs ? (
+              <TableShimmer columns={canWrite ? 9 : 8} />
+            ) : (
+              filtered.map((job) => {
+                const eta = etaOf(job);
+                return (
+                  <TableRow key={job.id} hover>
+                    <TableCell className={classes.number}>{job.number}</TableCell>
+                    <TableCell className={classes.number}>
+                      {job.scheduled_at ? formatTime(job.scheduled_at, 'minutes') : ''}
                     </TableCell>
-                  )}
-                </TableRow>
-              );
-            })
-          )}
-        </TableBody>
+                    <TableCell>{job.title}</TableCell>
+                    <TableCell>
+                      {job.customer_name || job.pois?.name}
+                      {job.address && ` · ${job.address}`}
+                    </TableCell>
+                    <TableCell>
+                      <span dir="ltr">{job.vehicles?.plate_number}</span>
+                    </TableCell>
+                    <TableCell>{job.drivers?.full_name}</TableCell>
+                    <TableCell>
+                      <JobStatusChip status={job.status} late={isLateJob(job)} />
+                      {job.status === 'failed' && job.failure_reason && (
+                        <Typography variant="caption" display="block" color="textSecondary">
+                          {t(jobKey('Failure', job.failure_reason))}
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell className={classes.number}>
+                      {eta
+                        ? t('fleetJobEtaValue').replace('{0}', eta.minutes).replace('{1}', eta.km)
+                        : ''}
+                    </TableCell>
+                    {canWrite && (
+                      <TableCell className={classes.action}>
+                        <Tooltip title={t('fleetJobTracking')}>
+                          <IconButton
+                            size="small"
+                            aria-label={t('fleetJobTracking')}
+                            onClick={() => setTracking({ job, eta })}
+                          >
+                            <ShareLocationRoundedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title={t('sharedEdit')}>
+                          <IconButton
+                            size="small"
+                            aria-label={t('sharedEdit')}
+                            onClick={() =>
+                              setEditing({
+                                ...job,
+                                poi_id: job.poi_id || '',
+                                vehicle_id: job.vehicle_id || '',
+                                driver_id: job.driver_id || '',
+                              })
+                            }
+                          >
+                            <EditRoundedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <IconButton
+                          size="small"
+                          aria-label={t('shellActions')}
+                          onClick={(event) => setRowMenu({ anchor: event.currentTarget, job })}
+                        >
+                          <MoreVertRoundedIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        )}
       </DataTable>
+      {view === 'map' && (
+        <DispatchMap
+          jobs={filtered}
+          positions={positions}
+          onOpen={canWrite ? openJob : undefined}
+        />
+      )}
+      {view === 'schedule' && (
+        <DispatchSchedule
+          jobs={filtered}
+          onOpen={canWrite ? openJob : undefined}
+          StatusChip={JobStatusChip}
+        />
+      )}
+      {planning && (
+        <RoutePlanDialog
+          jobs={jobs || []}
+          positions={positions}
+          onClose={() => setPlanning(false)}
+          onApplied={() => {
+            setPlanning(false);
+            reload();
+          }}
+        />
+      )}
+      <Menu anchorEl={rowMenu?.anchor} open={Boolean(rowMenu)} onClose={() => setRowMenu(null)}>
+        <MenuItem
+          onClick={() => {
+            const { job } = rowMenu;
+            setRowMenu(null);
+            setEditing(duplicateJob(job));
+          }}
+        >
+          {t('fleetJobDuplicate')}
+        </MenuItem>
+        {rowMenu && isOpenJob(rowMenu.job.status) && (
+          <MenuItem
+            onClick={() => {
+              const { job } = rowMenu;
+              setRowMenu(null);
+              cancelJob(job);
+            }}
+          >
+            {t('fleetJobCancel')}
+          </MenuItem>
+        )}
+      </Menu>
       {editing && (
         <JobDialog
           job={editing}

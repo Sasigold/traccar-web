@@ -1,4 +1,5 @@
-// Roadmap stage 5: customer visits from Traccar geofence events (pure, tested).
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
+// Customer visits from Traccar geofence events (pure, tested).
 
 // events: Traccar events of type geofenceEnter / geofenceExit (any order).
 // Returns visits { deviceId, geofenceId, arrived, left, minutes }, newest first. A visit still

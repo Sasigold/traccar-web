@@ -132,6 +132,15 @@ const MapRuler = ({ positions, onActiveChange }) => {
       }
     };
 
+    // LIV-21: "measure from here" in the map's menu starts the ruler at that point.
+    const onMeasureFrom = (event) => {
+      if (!active) toggle();
+      points.length = 0;
+      points.push(toMapCoordinates(event.longitude, event.latitude));
+      render();
+    };
+    map.on('vf-measure-from', onMeasureFrom);
+
     let container;
     let root;
     const control = {
@@ -158,6 +167,7 @@ const MapRuler = ({ positions, onActiveChange }) => {
     map.addControl(control, theme.direction === 'rtl' ? 'top-left' : 'top-right');
 
     return () => {
+      map.off('vf-measure-from', onMeasureFrom);
       if (active) {
         map.off('click', onClick);
         onActiveChangeRef.current(false);

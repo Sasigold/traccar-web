@@ -84,6 +84,7 @@ const useStyles = makeStyles()((theme) => ({
     fontSize: '0.6875rem',
     fontWeight: 700,
     fontFamily: theme.tokens.font.mono,
+    fontVariantNumeric: 'tabular-nums',
     color: theme.palette.text.secondary,
     border: `1px solid ${theme.palette.surface.borderStrong}`,
     backgroundColor: theme.palette.background.paper,

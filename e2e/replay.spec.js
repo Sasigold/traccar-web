@@ -53,3 +53,26 @@ test('an empty period is said quietly, and the quick periods load', async ({ pag
   await page.getByRole('button', { name: 'אתמול' }).click();
   await expect(page).toHaveURL(/period=yesterday/);
 });
+
+// LIV-10: the period's events are marks on the timeline, each named.
+test('events are marked on the timeline', async ({ page }) => {
+  await page.route('**/api/reports/events?*', (route) =>
+    route.fulfill({
+      json: [
+        {
+          id: 91,
+          deviceId: 1,
+          type: 'deviceOverspeed',
+          eventTime: new Date(Date.now() - 5 * 60000).toISOString(),
+          attributes: { speed: 70 },
+        },
+        { id: 92, deviceId: 1, type: 'commandResult', eventTime: new Date().toISOString() },
+      ],
+    }),
+  );
+  await gotoReady(page, '/replay?deviceId=1');
+  const timeline = page.getByRole('slider', { name: 'ציר הזמן של המסלול' });
+  const marks = timeline.locator('[data-part="event"]');
+  await expect(marks).toHaveCount(1);
+  await expect(marks.locator('title')).toHaveText(/חריגת מהירות|מהירות/);
+});

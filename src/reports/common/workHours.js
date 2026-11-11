@@ -5,7 +5,9 @@ const dayKey = (time) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-export const workDays = (trips) => {
+// checkins (OPS-05): [{ driver, time }] from the driver area; a check-in before the first
+// ignition of its day starts the day there, and a day with a check-in and no trips still counts.
+export const workDays = (trips, checkins = []) => {
   const days = new Map();
   trips.forEach((trip) => {
     if (!trip.driverUniqueId) return;
@@ -22,6 +24,21 @@ export const workDays = (trips) => {
     day.start = Math.min(day.start, start);
     day.end = Math.max(day.end, end);
     day.driving += end - start;
+    days.set(key, day);
+  });
+  checkins.forEach((checkin) => {
+    if (!checkin.driver) return;
+    const time = Date.parse(checkin.time);
+    const key = `${checkin.driver}|${dayKey(checkin.time)}`;
+    const day = days.get(key) || {
+      driver: checkin.driver,
+      day: dayKey(checkin.time),
+      start: time,
+      end: time,
+      driving: 0,
+    };
+    day.start = Math.min(day.start, time);
+    day.end = Math.max(day.end, time);
     days.set(key, day);
   });
   return [...days.values()].sort(

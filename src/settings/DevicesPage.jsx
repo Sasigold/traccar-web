@@ -74,12 +74,14 @@ const useStyles = makeStyles()((theme) => ({
   // Plates and identifiers never wrap in the middle ("12-345-" / "67").
   mono: {
     fontFamily: theme.tokens.font.mono,
+    fontVariantNumeric: 'tabular-nums',
     fontSize: '0.8125rem',
     whiteSpace: 'nowrap',
   },
   plate: {
     display: 'block',
     fontFamily: theme.tokens.font.mono,
+    fontVariantNumeric: 'tabular-nums',
     fontSize: '0.75rem',
     fontWeight: 400,
     whiteSpace: 'nowrap',

@@ -1,9 +1,11 @@
 import { uid } from '../layout/model';
 import { normalizeDoc } from './schema';
 
-// Compact wire form of the dashboard document, stored as a JSON string in the user
-// attribute `web.dashboard` (Traccar keeps all attributes in one ~4000 character
-// column), in the server attribute `web.dashboardDefault`, and in localStorage.
+// Compact wire form of the dashboard document. It is stored as JSON in the fleet database
+// (`dashboards`, `dashboard_defaults`, ARC-09) and in localStorage; without the fleet database,
+// as a JSON string in the user attribute `web.dashboard` (Traccar keeps all attributes in one
+// ~4000 character column, hence MAX_REMOTE_CHARS) and in the server attribute
+// `web.dashboardDefault`. See remote.js.
 //
 //   { v, a: activeId, t: updatedAt (s), d: [{ i, n?, k?, f: [period, from?, to?], g, r,
 //     L: [[h, [w, item, ...], ...], ...], W: { id: preset | [preset, viz, query, title, metrics] } }] }
@@ -77,6 +79,9 @@ export const encodeDashboard = (dashboard) => {
       Object.entries(dashboard.widgets).map(([id, widget]) => [id, encodeWidget(widget)]),
     ),
   };
+  if (filters.driverId) {
+    out.v = filters.driverId;
+  }
   if (dashboard.name) {
     out.n = dashboard.name;
   } else if (dashboard.nameKey) {
@@ -111,7 +116,7 @@ const decodeDashboard = (value) => {
     id: value.i,
     name: value.n,
     nameKey: value.k,
-    filters: { period, from, to, offset, groupIds: value.g },
+    filters: { period, from, to, offset, groupIds: value.g, driverId: value.v },
     refresh: value.r,
     rows,
     widgets: Object.fromEntries(

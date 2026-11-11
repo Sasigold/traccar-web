@@ -7,6 +7,12 @@ import { useAsyncTask } from '../reactHelper';
 import DeviceRow from './DeviceRow';
 import fetchOrThrow from '../common/util/fetchOrThrow';
 import { tokenizeSearch } from '../common/util/deviceSearch';
+import usePersistedState from '../common/util/usePersistedState';
+import GroupHeaderRow from './GroupHeaderRow';
+import { groupRows, rowOfDevice } from './groupRows';
+
+const ROW_HEIGHT = 72;
+const HEADER_HEIGHT = 44;
 
 const useStyles = makeStyles()((theme) => ({
   list: {
@@ -18,7 +24,8 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const DeviceList = ({ devices, keyword = '', favorites }) => {
+const DeviceList = ({ devices, keyword = '', favorites, grouped = false }) => {
+  'use memo'; // PRF-04
   const { classes } = useStyles();
   const dispatch = useDispatch();
 
@@ -30,22 +37,41 @@ const DeviceList = ({ devices, keyword = '', favorites }) => {
   const [focusIndex, setFocusIndex] = useState(0);
   const current = Math.min(focusIndex, Math.max(devices.length - 1, 0));
 
+  // LIV-22: by group, with a header per group that folds; folded groups are remembered.
+  const groups = useSelector((state) => state.groups.items);
+  const [collapsed, setCollapsed] = usePersistedState('collapsedGroups', []);
+  const rows = useMemo(
+    () => (grouped ? groupRows(devices, groups, collapsed) : null),
+    [grouped, devices, groups, collapsed],
+  );
+  const toggleGroup = (groupId) =>
+    setCollapsed(
+      collapsed.includes(groupId)
+        ? collapsed.filter((id) => id !== groupId)
+        : [...collapsed, groupId],
+    );
+  // The vehicles the keyboard moves over (not those in a folded group), and their list rows.
+  const visible = rows ? rows.filter((row) => row.type === 'device').map((row) => row.index) : null;
+  const listIndexOf = (deviceIndex) => (rows ? rowOfDevice(rows, deviceIndex) : deviceIndex);
+
   // LIV-30: a roving tab stop. Tab enters the list once; the arrows, Home and End move between
   // rows (scrolling the virtual list so the row exists), Enter or Space selects.
   const onKeyDown = (event) => {
+    const order = visible || devices.map((_, index) => index);
+    const at = Math.max(0, order.indexOf(current));
     const moves = {
-      ArrowDown: current + 1,
-      ArrowUp: current - 1,
+      ArrowDown: at + 1,
+      ArrowUp: at - 1,
       Home: 0,
-      End: devices.length - 1,
-      PageDown: current + 5,
-      PageUp: current - 5,
+      End: order.length - 1,
+      PageDown: at + 5,
+      PageUp: at - 5,
     };
-    if (!(event.key in moves) || !event.target.closest?.('[data-row]')) return;
+    if (!(event.key in moves) || !event.target.closest?.('[data-row]') || !order.length) return;
     event.preventDefault();
-    const next = Math.max(0, Math.min(devices.length - 1, moves[event.key]));
+    const next = order[Math.max(0, Math.min(order.length - 1, moves[event.key]))];
     setFocusIndex(next);
-    listRef.current?.scrollToRow({ index: next, align: 'smart', behavior: 'auto' });
+    listRef.current?.scrollToRow({ index: listIndexOf(next), align: 'smart', behavior: 'auto' });
     requestAnimationFrame(() =>
       listRef.current?.element?.querySelector(`[data-row="${next}"]`)?.focus(),
     );
@@ -60,7 +86,7 @@ const DeviceList = ({ devices, keyword = '', favorites }) => {
     if (!selectedId) {
       return;
     }
-    const index = devices.findIndex((device) => device.id === selectedId);
+    const index = listIndexOf(devices.findIndex((device) => device.id === selectedId));
     if (index >= 0) {
       listRef.current?.scrollToRow({ index, align: 'smart', behavior: 'auto' });
     }
@@ -86,10 +112,16 @@ const DeviceList = ({ devices, keyword = '', favorites }) => {
     <List
       listRef={listRef}
       className={classes.list}
-      rowComponent={DeviceRow}
-      rowCount={devices.length}
-      rowHeight={72}
-      rowProps={{ devices, tokens, favorites, focusIndex: current }}
+      rowComponent={rows ? GroupHeaderRow : DeviceRow}
+      rowCount={rows ? rows.length : devices.length}
+      rowHeight={
+        rows ? (index) => (rows[index].type === 'group' ? HEADER_HEIGHT : ROW_HEIGHT) : ROW_HEIGHT
+      }
+      rowProps={
+        rows
+          ? { devices, tokens, favorites, focusIndex: current, rows, onToggle: toggleGroup }
+          : { devices, tokens, favorites, focusIndex: current }
+      }
       onKeyDown={onKeyDown}
       onFocus={onFocus}
       overscanCount={5}

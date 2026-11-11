@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { Link as RouterLink } from 'react-router-dom';
 import { Button, ButtonBase, Link, Paper, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
@@ -7,13 +5,9 @@ import LightbulbRoundedIcon from '@mui/icons-material/LightbulbRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { useTranslation } from '../common/components/LocalizationProvider';
-import fetchOrThrow from '../common/util/fetchOrThrow';
-import { computeInsights } from '../common/fleet/insights';
 import { glass } from '../common/theme/surfaces';
-import { useRestriction } from '../common/util/permissions';
 import usePersistedState from '../common/util/usePersistedState';
-import { useFleetReady } from '../common/fleet/useFleet';
-import { assignmentResolver, loadAssignments } from '../fleet/safetyData';
+import { todayKey, useInsightText, useMorningFindings } from './morningFindings';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -85,99 +79,17 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const DAY = 86400000;
-const todayKey = () => new Date().toLocaleDateString('en-CA');
-
-// The fleet's last 28 days by day, and yesterday's trips: two report requests, once a day.
-const loadFindings = async (devices, positions, drivers, fleetReady, signal) => {
-  const ids = Object.keys(devices);
-  if (!ids.length) return [];
-  const now = new Date();
-  const today = new Date(now);
-  today.setHours(0, 0, 0, 0);
-  const query = (from, to, extra = {}) => {
-    const params = new URLSearchParams({
-      from: from.toISOString(),
-      to: to.toISOString(),
-      ...extra,
-    });
-    ids.forEach((id) => params.append('deviceId', id));
-    return params;
-  };
-  const get = async (path, params) =>
-    (
-      await fetchOrThrow(`api/reports/${path}?${params}`, {
-        signal,
-        headers: { Accept: 'application/json' },
-      })
-    ).json();
-  const [daily, trips] = await Promise.all([
-    get('summary', query(new Date(today.getTime() - 28 * DAY), now, { daily: 'true' })),
-    get('trips', query(new Date(today.getTime() - DAY), new Date(today.getTime() - 1))),
-  ]);
-  // SAF-02: assigned drivers count as known (fleet database, when there is one).
-  let resolve = null;
-  if (fleetReady) {
-    const byId = Object.fromEntries(Object.values(drivers).map((driver) => [driver.id, driver]));
-    resolve = assignmentResolver(await loadAssignments().catch(() => []), byId);
-  }
-  return computeInsights({ daily, trips, positions, devices, resolve }, now);
-};
-
 // AI-02: up to four findings each morning, beside the map: the title, why, and a link to the
 // evidence. Folded into a pill until opened; hidden for the day on request.
 const MorningInsights = ({ className }) => {
   const { classes, cx } = useStyles();
   const t = useTranslation();
-  const devices = useSelector((state) => state.devices.items);
-  const positions = useSelector((state) => state.session.positions);
-  const drivers = useSelector((state) => state.drivers.items);
-  const fleetReady = useFleetReady();
-  const userId = useSelector((state) => state.session.user?.id);
-  const readonly = useRestriction('readonly');
-  const disableReports = useRestriction('disableReports');
-  const deviceCount = Object.keys(devices).length;
   const [open, setOpen] = usePersistedState('morningInsightsOpen', false);
   const [hiddenOn, setHiddenOn] = usePersistedState('morningInsightsHidden', null);
-  const [findings, setFindings] = useState(null);
-
-  useEffect(() => {
-    if (readonly || disableReports || !deviceCount || hiddenOn === todayKey()) return undefined;
-    const key = `morningInsights:${userId}:${todayKey()}`;
-    const cached = window.sessionStorage.getItem(key);
-    if (cached) {
-      setFindings(JSON.parse(cached));
-      return undefined;
-    }
-    const controller = new AbortController();
-    // After the map has settled: the findings are not urgent.
-    const timer = setTimeout(() => {
-      loadFindings(devices, positions, drivers, fleetReady, controller.signal)
-        .then((result) => {
-          window.sessionStorage.setItem(key, JSON.stringify(result));
-          setFindings(result);
-        })
-        .catch(() => {});
-    }, 2500);
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-    };
-    // Once per day and fleet size, not on every position.
-    // eslint-disable-next-line @eslint-react/exhaustive-deps
-  }, [readonly, disableReports, deviceCount, userId, hiddenOn]);
+  const findings = useMorningFindings({ skip: hiddenOn === todayKey() });
+  const text = useInsightText();
 
   if (!findings?.length || hiddenOn === todayKey()) return null;
-
-  const text = (finding, part) => {
-    // One vehicle reads differently from several ("של X", not "ב-1 רכבים").
-    const one = finding.values.vehicles === 1 ? t(`insight${part}_${finding.kind}One`) : null;
-    let value = one || t(`insight${part}_${finding.kind}`);
-    Object.entries(finding.values).forEach(([name, replacement]) => {
-      value = value.replaceAll(`{${name}}`, replacement);
-    });
-    return value;
-  };
 
   return (
     <section className={cx(classes.root, className)} aria-label={t('insightsTitle')}>

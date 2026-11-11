@@ -17,6 +17,7 @@ import { formatTime } from '../common/util/formatter';
 import { formatHours } from '../dashboard/data/format';
 import { privateRows } from '../common/fleet/privacyData';
 import { buildTimeline } from './common/timeline';
+import { capitalize } from '../common/util/stringUtils';
 
 const MAX_VEHICLES = 60;
 const HOURS = [0, 3, 6, 9, 12, 15, 18, 21, 24];
@@ -132,7 +133,6 @@ const useStyles = makeStyles()((theme) => ({
 }));
 
 const TYPES = ['driving', 'idle', 'parked', 'nodata'];
-const capital = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
 
 // /reports/timeline (REP-23): what every vehicle did across one day, as a bar per vehicle.
 // Driving opens the replay of that trip.
@@ -215,7 +215,7 @@ const TimelineReportPage = () => {
   const describe = (segment) => {
     const range = `${formatTime(segment.start, 'clock')}–${formatTime(segment.end, 'clock')}`;
     const duration = formatHours((segment.end - segment.start) / 3600000);
-    return `${t(`timeline${capital(segment.type)}`)} · ${range} · ${duration}`;
+    return `${t(`timeline${capitalize(segment.type)}`)} · ${range} · ${duration}`;
   };
 
   const open = (device, segment) => {
@@ -256,7 +256,7 @@ const TimelineReportPage = () => {
             {TYPES.map((type) => (
               <span key={type} className={classes.legendItem}>
                 <span className={cx(classes.swatch, classes[type])} />
-                <Typography variant="caption">{t(`timeline${capital(type)}`)}</Typography>
+                <Typography variant="caption">{t(`timeline${capitalize(type)}`)}</Typography>
               </span>
             ))}
           </div>

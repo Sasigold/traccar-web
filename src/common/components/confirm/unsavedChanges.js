@@ -15,14 +15,30 @@ export const setBackSentinel = (value) => {
 export const hasBackSentinel = () => sentinel;
 
 // "Back" from a form (Cancel, or after saving): one step, or two over the guard's extra entry.
-export const goBack = (navigate) => {
+// A form opened directly (a link, a reload) has nothing of the app behind it: going back would
+// leave the app, so it goes to `fallback` (the list) instead. React Router counts the entries
+// it pushed in history.state.idx.
+export const goBack = (navigate, fallback = '/') => {
+  const index = window.history.state?.idx ?? 0;
   if (sentinel) {
     sentinel = false;
-    window.history.go(-2);
-  } else {
+    if (index >= 2) {
+      window.history.go(-2);
+      return;
+    }
+  } else if (index >= 1) {
     navigate(-1);
+    return;
   }
+  navigate(fallback, { replace: true });
 };
+
+// The list a form belongs to: /settings/group/5 → /settings/groups.
+export const listPathOf = (pathname) =>
+  pathname
+    .replace(/\/\d+$/, '')
+    .replace(/\/$/, '')
+    .replace(/([a-z])$/, '$1s');
 
 const notify = () => listeners.forEach((listener) => listener(dirtyForms.size > 0));
 

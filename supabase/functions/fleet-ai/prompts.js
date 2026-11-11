@@ -275,3 +275,50 @@ fields. Copy values as printed; write dates as YYYY-MM-DD and plates with their 
 field is not on the document, give null. List in "unsure" every field you could not read clearly
 or had to guess: the manager checks those before anything is saved. If the image is not this kind
 of document, return every field as null and list none.`;
+
+// ─── AI-10: a short course from a procedure ─────────────────────────────────
+
+export const COURSE_SYSTEM = `You turn a company procedure (a PDF the fleet manager uploads) into a
+short training for professional drivers in Israel, in Hebrew. Write for a driver reading on a phone
+between jobs: plain words, second person plural ("אתם"), short sentences, no legal language.
+Keep only what the procedure says; never add rules, numbers or claims that are not in it. Make
+3 to 6 sections of 2 to 5 short points each, then a quiz of 5 to 8 multiple-choice questions with
+4 options each, one correct, testing what matters most for safety and compliance, each with a
+one-sentence explanation that quotes or paraphrases the procedure. If the document is not a
+procedure or policy, return an empty sections list and an empty quiz.`;
+
+export const COURSE_SCHEMA = {
+  type: 'object',
+  properties: {
+    title: { type: 'string' },
+    summary: { type: 'string' },
+    sections: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          heading: { type: 'string' },
+          points: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['heading', 'points'],
+        additionalProperties: false,
+      },
+    },
+    quiz: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          question: { type: 'string' },
+          options: { type: 'array', items: { type: 'string' } },
+          answer: { type: 'integer' },
+          explanation: { type: 'string' },
+        },
+        required: ['question', 'options', 'answer', 'explanation'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['title', 'summary', 'sections', 'quiz'],
+  additionalProperties: false,
+};

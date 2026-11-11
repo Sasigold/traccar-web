@@ -28,6 +28,7 @@ import ScanDocumentButton from '../fleet/components/ScanDocumentButton';
 import { vehicleValues } from '../common/fleet/documentScan';
 import { looksLikeBadImei, samePlate } from '../common/util/israeliFields';
 import MaintenanceStatusSection from '../fleet/components/MaintenanceStatusSection';
+import VehicleDriverSection from '../fleet/components/VehicleDriverSection';
 import {
   mergeAttributes,
   notesField,
@@ -39,6 +40,7 @@ import {
 } from '../common/fleet/fleetFields';
 import { DateField } from '../common/components/pickers';
 import GovRegistryButton from '../fleet/components/GovRegistryButton';
+import { capitalize } from '../common/util/stringUtils';
 
 // A far-future date (the old placeholder) reads as no limit.
 const serviceExpiry = (value) =>
@@ -198,6 +200,7 @@ const DevicePage = () => {
             }
           />
           {item.id && <MaintenanceStatusSection deviceId={item.id} />}
+          {item.id && <VehicleDriverSection device={item} />}
           <FormSection title={t('formSectionMore')}>
             <SelectField
               value={item.groupId}
@@ -230,7 +233,7 @@ const DevicePage = () => {
               data={deviceCategories
                 .map((category) => ({
                   id: category,
-                  name: t(`category${category.replace(/^\w/, (c) => c.toUpperCase())}`),
+                  name: t(`category${capitalize(category)}`),
                 }))
                 .sort((a, b) => a.name.localeCompare(b.name))}
               label={t('deviceCategory')}

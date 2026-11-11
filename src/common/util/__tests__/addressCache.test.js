@@ -63,3 +63,18 @@ describe('the geofence at a point', () => {
     expect(geofenceAt({ 3: { area: 'POLYGON ((broken' } }, 1, 1)).toBeNull();
   });
 });
+
+describe('points of interest in addresses (REP-13)', () => {
+  it('names the closest point of interest that covers the point', async () => {
+    const { poiAt } = await import('../addressCache');
+    const pois = [
+      { name: 'Depot', latitude: 32.08, longitude: 34.78, radius_m: 300 },
+      { name: 'Shop', latitude: 32.0805, longitude: 34.7805, radius_m: 100 },
+      { name: 'Far', latitude: 31.25, longitude: 34.79, radius_m: 5000 },
+    ];
+    expect(poiAt(pois, 32.0806, 34.7806).name).toBe('Shop');
+    expect(poiAt(pois, 32.0815, 34.78).name).toBe('Depot');
+    expect(poiAt(pois, 32.2, 34.9)).toBeNull();
+    expect(poiAt(null, 32, 34)).toBeNull();
+  });
+});

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link as RouterLink } from 'react-router-dom';
 import { Link, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
@@ -13,6 +13,9 @@ import ReportsMenu from './ReportsMenu';
 import ReportFilter from './ReportFilter';
 import { ReportEmptyRow, ReportTotalsRow, SortCell, useReportSort } from './ReportTableParts';
 import useReportStyles from '../common/useReportStyles';
+import usePersistedState from '../../common/util/usePersistedState';
+import { delta, formatDelta, previousRange } from '../common/compare';
+import CompareSwitch from './CompareSwitch';
 
 // The vehicles a report covers: the chosen ones and those in the chosen groups.
 export const devicesInScope = (devices, deviceIds, groupIds) =>
@@ -36,6 +39,8 @@ const FleetTableReport = ({
   nameLabelKey = 'sharedDevice',
   // A note above the table drawn from the results (OPS-04: the fleet-size recommendation).
   summary,
+  // REP-09: the columns that show the change from the period before, when it is asked for.
+  compared = [],
 }) => {
   const { classes } = useReportStyles();
   const t = useTranslation();
@@ -44,6 +49,11 @@ const FleetTableReport = ({
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [queried, setQueried] = useState(false);
+  const [compare, setCompare] = usePersistedState(`${reportKey}Compare`, false);
+  const [previous, setPrevious] = useState(null);
+  // Reports pass rowKey inline; a ref keeps onShow from changing on every render.
+  const rowKeyRef = useRef(rowKey);
+  rowKeyRef.current = rowKey;
   const { sorted, sort, toggle } = useReportSort(reportKey, items, (item, key) =>
     key === 'name' ? item.name : item[key],
   );
@@ -52,21 +62,24 @@ const FleetTableReport = ({
     async ({ deviceIds, groupIds, from, to }) => {
       setLoading(true);
       try {
-        setItems(
-          await load({
-            devices: devicesInScope(devices, deviceIds, groupIds),
-            deviceIds,
-            groupIds,
-            from,
-            to,
-          }),
-        );
+        const scope = {
+          devices: devicesInScope(devices, deviceIds, groupIds),
+          deviceIds,
+          groupIds,
+        };
+        const withPrevious = compare && compared.length > 0;
+        const [rows, earlier] = await Promise.all([
+          load({ ...scope, from, to }),
+          withPrevious ? load({ ...scope, ...previousRange(from, to) }) : null,
+        ]);
+        setItems(rows);
+        setPrevious(earlier ? new Map(earlier.map((row) => [rowKeyRef.current(row), row])) : null);
       } finally {
         setLoading(false);
         setQueried(true);
       }
     },
-    [devices, load],
+    [devices, load, compare, compared.length],
   );
 
   const onExport = useCatch(async () => {
@@ -109,6 +122,7 @@ const FleetTableReport = ({
               formats={['xlsx']}
             >
               {filterChildren}
+              {compared.length > 0 && <CompareSwitch checked={compare} onChange={setCompare} />}
             </ReportFilter>
           </div>
           {!loading && summary?.(items)}
@@ -145,11 +159,28 @@ const FleetTableReport = ({
                         item.name
                       )}
                     </TableCell>
-                    {keys.map((key) => (
-                      <TableCell key={key} align={align(key)}>
-                        {format(item, key)}
-                      </TableCell>
-                    ))}
+                    {keys.map((key) => {
+                      const change =
+                        previous && compared.includes(key)
+                          ? delta(item[key], previous.get(rowKey(item))?.[key])
+                          : null;
+                      return (
+                        <TableCell key={key} align={align(key)}>
+                          {format(item, key)}
+                          {change && (
+                            <span
+                              className={classes.delta}
+                              aria-label={t('reportChangeFromPrevious').replace(
+                                '{0}',
+                                formatDelta(change),
+                              )}
+                            >
+                              <bdi dir="ltr">{formatDelta(change)}</bdi>
+                            </span>
+                          )}
+                        </TableCell>
+                      );
+                    })}
                   </TableRow>
                 ))
               ) : (

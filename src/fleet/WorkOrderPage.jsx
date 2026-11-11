@@ -1,11 +1,16 @@
-import { useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Alert,
   Button,
   Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControlLabel,
+  Switch,
   IconButton,
   MenuItem,
   TableBody,
@@ -25,6 +30,7 @@ import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import HandymanRoundedIcon from '@mui/icons-material/HandymanRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import BuildRoundedIcon from '@mui/icons-material/BuildRounded';
+import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import FormPage from '../settings/components/FormPage';
 import FormSection from '../settings/components/FormSection';
@@ -32,16 +38,19 @@ import SaveBar from '../settings/components/SaveBar';
 import SettingsMenu from '../settings/components/SettingsMenu';
 import FileInput from '../common/components/FileInput';
 import { useAsyncTask, useCatch } from '../reactHelper';
-import { getFleetClient, unwrap } from '../common/fleet/client';
+import { getFleetClient } from '../common/fleet/client';
+import { linkIssues, loadIssues, loadWorkOrder, openIssuesOf } from './api/workOrders';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import {
   ITEM_KINDS,
   WORK_ORDER_STATUSES,
   WORK_ORDER_TYPES,
+  isOpenStatus,
   itemTotal,
   itemsTotal,
   odometerKm,
   statusChange,
+  vatBreakdown,
 } from '../common/fleet/workOrders';
 import { maintenanceStatus } from '../common/fleet/maintenanceStatus';
 import { garageLicenseIssue } from '../common/fleet/safetyOfficer';
@@ -67,6 +76,12 @@ import { fleetSave, withUploadedFile } from '../common/fleet/fleetSave';
 import { loadMaintenanceLinks, markMaintenanceDone } from './maintenance';
 import { DateField } from '../common/components/pickers';
 import WazeButton from '../common/components/WazeButton';
+import { capitalize } from '../common/util/stringUtils';
+import DocumentPrintHeader from '../common/components/print/DocumentPrintHeader';
+import { formatTime } from '../common/util/formatter';
+import VehicleSelect from '../common/components/VehicleSelect';
+import InvoiceCheckPanel from './components/InvoiceCheckPanel';
+import { messagesActions } from '../store';
 
 const useStyles = makeStyles()((theme) => ({
   grid: {
@@ -92,6 +107,12 @@ const useStyles = makeStyles()((theme) => ({
     paddingInline: theme.spacing(0.5),
     verticalAlign: 'top',
   },
+  closeForm: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(2),
+    paddingTop: theme.spacing(1),
+  },
   total: {
     fontWeight: 700,
     textAlign: 'end',
@@ -107,7 +128,7 @@ const emptyItem = () => ({
   unit_price: 0,
 });
 
-// Roadmap stage 2: one work order with its lines. Closing it can also reset the vehicle's
+// One work order with its lines. Closing it can also reset the vehicle's
 // Traccar maintenance counter, so the next service is counted from now.
 const WorkOrderPage = () => {
   const { classes } = useStyles();
@@ -119,6 +140,7 @@ const WorkOrderPage = () => {
   const canRead = useFleetPermission('maintenance.read');
   const canWrite = useFleetPermission('maintenance.write');
 
+  const dispatch = useDispatch();
   const devices = useSelector((state) => state.devices.items);
   const positions = useSelector((state) => state.session.positions);
 
@@ -136,36 +158,44 @@ const WorkOrderPage = () => {
   const [maintenance, setMaintenance] = useState([]);
   const [resetIds, setResetIds] = useState([]);
   const [saving, setSaving] = useState(false);
+  // ADM-19: the faults this order handles (they close with it), and the closing dialog.
+  const [issues, setIssues] = useState([]);
+  const [closingOpen, setClosingOpen] = useState(false);
+  const [closeRequested, setCloseRequested] = useState(false);
+  const issueIds = searchParams.getAll('issue');
 
   useAsyncTask(async () => {
     if (!canRead) {
       return;
     }
+    const client = getFleetClient();
     if (!id) {
-      // AI-03: a fault card opens a repair order with its title and notes filled in.
+      // AI-03: a fault card opens a repair order with its title and notes filled in. ADM-19: so
+      // does a fault from a check (?issue=<id>, more than one allowed).
+      const faults = await loadIssues(client, issueIds);
+      setIssues(faults);
       setOrder({
-        title: searchParams.get('title') || '',
-        type: searchParams.get('type') === 'repair' ? 'repair' : 'service',
+        title: searchParams.get('title') || faults.map((fault) => fault.title).join(', '),
+        type: searchParams.get('type') === 'repair' || faults.length ? 'repair' : 'service',
         status: 'open',
-        notes: searchParams.get('notes') || '',
+        notes:
+          searchParams.get('notes') ||
+          faults
+            .map((fault) => fault.description)
+            .filter(Boolean)
+            .join('\n'),
       });
+      if (faults[0]?.vehicles?.traccar_device_id) {
+        setDeviceId(String(faults[0].vehicles.traccar_device_id));
+      }
       setItems([emptyItem()]);
       return;
     }
-    const client = getFleetClient();
-    const row = unwrap(
-      await client
-        .from('work_orders')
-        .select('*, vehicles(traccar_device_id)')
-        .eq('id', id)
-        .single(),
-    );
-    const lines = unwrap(
-      await client.from('work_order_items').select('*').eq('work_order_id', id).order('sort_order'),
-    );
+    const { order: row, items: lines } = await loadWorkOrder(client, id);
     setOrder(row);
     setDeviceId(String(row.vehicles?.traccar_device_id || ''));
-    setItems((lines || []).map((line) => ({ ...line, key: line.id })));
+    setItems(lines.map((line) => ({ ...line, key: line.id })));
+    setIssues(await openIssuesOf(client, id));
     // eslint-disable-next-line @eslint-react/exhaustive-deps -- the address fills a new order once
   }, [id, canRead]);
 
@@ -181,19 +211,6 @@ const WorkOrderPage = () => {
       setMaintenance(links.map((link) => link.maintenance));
     },
     [deviceId],
-  );
-
-  const deviceOptions = useMemo(
-    () =>
-      Object.values(devices)
-        .map((device) => ({
-          id: String(device.id),
-          name: device.attributes?.plateNumber
-            ? `${device.name} · ${device.attributes.plateNumber}`
-            : device.name,
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [devices],
   );
 
   const set = (changes) => setOrder((current) => ({ ...current, ...changes }));
@@ -216,7 +233,8 @@ const WorkOrderPage = () => {
   const leave = useLeaveGuard(useConfirm(), t);
   useFormChanges({ order, items, deviceId, invoice: invoice?.name, resetIds }, Boolean(order));
 
-  const handleSave = useCatch(async () => {
+  // ADM-14: a new order can be saved and kept open (the address becomes its own).
+  const handleSave = useCatch(async (stay = false) => {
     setSaving(true);
     try {
       const vehicleId = await ensureVehicle(devices[deviceId], profile);
@@ -231,7 +249,7 @@ const WorkOrderPage = () => {
         }));
       // ARC-05: the order and its lines in one transaction; a new invoice file is removed again
       // if the save fails.
-      await withUploadedFile(
+      const savedId = await withUploadedFile(
         async () => (invoice ? uploadFleetFile(profile.org_id, 'work-orders', invoice) : null),
         (path) => getFleetClient().storage.from(FILES_BUCKET).remove([path]),
         async (uploaded) => {
@@ -244,17 +262,20 @@ const WorkOrderPage = () => {
             odometer_km: order.odometer_km === '' ? null : (order.odometer_km ?? null),
             engine_hours: order.engine_hours === '' ? null : (order.engine_hours ?? null),
             invoice_number: order.invoice_number || null,
+            prices_include_vat: order.prices_include_vat ?? true,
             invoice_path: uploaded || order.invoice_path || null,
             notes: order.notes || null,
             ...statusChange(original, order.status),
             ...(resetIds.length && { traccar_maintenance_id: resetIds[0] }),
           };
-          return fleetSave(
+          const savedId = await fleetSave(
             'work_order',
             id,
             id ? payload : { ...payload, org_id: profile.org_id, created_by: profile.id },
             lines,
           );
+          if (!id) await linkIssues(getFleetClient(), savedId, issueIds);
+          return savedId;
         },
       );
       for (const maintenanceId of resetIds) {
@@ -265,13 +286,56 @@ const WorkOrderPage = () => {
         }
       }
       discardUnsavedChanges();
-      navigate('/fleet/work-orders');
+      dispatch(
+        messagesActions.push({
+          message: t('fleetSavedNamed').replace('{0}', order.title.trim()),
+          severity: 'success',
+        }),
+      );
+      if (stay === true && !id) {
+        navigate(`/fleet/work-order/${savedId}`, { replace: true });
+      } else {
+        navigate('/fleet/work-orders');
+      }
     } finally {
       setSaving(false);
     }
   });
 
   const valid = order && order.title?.trim() && deviceId && devices[deviceId];
+
+  // ADM-19: "Close order" asks for what closing needs (final km, invoice, the maintenance done,
+  // checked by default), then saves the order as done.
+  const [closeForm, setCloseForm] = useState(null);
+  const startClosing = () => {
+    const suggested = odometerKm(positions[deviceId]);
+    setCloseForm({
+      odometer: order.odometer_km ?? (suggested == null ? '' : suggested),
+      invoice: order.invoice_number || '',
+      resetIds: maintenance.map((item) => item.id),
+    });
+    setClosingOpen(true);
+  };
+  const confirmClosing = () => {
+    setOrder((current) => ({
+      ...current,
+      status: 'done',
+      odometer_km: closeForm.odometer === '' ? null : Number(closeForm.odometer),
+      invoice_number: closeForm.invoice,
+    }));
+    setResetIds(closeForm.resetIds);
+    setClosingOpen(false);
+    setCloseRequested(true);
+  };
+  useEffect(() => {
+    if (closeRequested) {
+      setCloseRequested(false);
+      handleSave();
+    }
+    // eslint-disable-next-line @eslint-react/exhaustive-deps -- saves once the closing is applied
+  }, [closeRequested]);
+  const canClose = canWrite && id && order && isOpenStatus(order.status);
+  const vat = vatBreakdown(itemsTotal(items), order?.prices_include_vat ?? true);
 
   return (
     <FormPage
@@ -281,33 +345,56 @@ const WorkOrderPage = () => {
       footer={
         canWrite && (
           <SaveBar
-            onCancel={() => leave(() => goBack(navigate))}
-            onSave={handleSave}
+            onCancel={() => leave(() => goBack(navigate, '/fleet/work-orders'))}
+            onSave={() => handleSave(false)}
+            onSaveAndContinue={id ? undefined : () => handleSave(true)}
             saving={saving}
             disabled={!valid}
-          />
+            disabledHint={order ? t('sharedSaveNeedsRequired') : undefined}
+          >
+            {id && (
+              <Button
+                color="inherit"
+                startIcon={<PrintRoundedIcon />}
+                onClick={() => window.print()}
+              >
+                {t('fleetWorkOrderPrint')}
+              </Button>
+            )}
+            {canClose && (
+              <Button variant="outlined" onClick={startClosing} disabled={!valid || saving}>
+                {t('fleetWorkOrderClose')}
+              </Button>
+            )}
+          </SaveBar>
         )
       }
     >
       <FleetNotice permission="maintenance.read" />
       {order && (
         <>
+          <DocumentPrintHeader
+            kind="WORK ORDER"
+            portrait
+            title={`${t('fleetWorkOrder')} ${order.number || ''}`.trim()}
+            lines={[
+              order.title,
+              devices[deviceId] && `${t('sharedDevice')}: ${devices[deviceId].name}`,
+              selectedVendor && `${t('fleetVendor')}: ${selectedVendor.name}`,
+              order.opened_at &&
+                `${t('fleetWorkOrderOpened')}: ${formatTime(order.opened_at, 'date')}`,
+            ]}
+          />
           <FormSection title={t('fleetWorkOrderDetails')} icon={<HandymanRoundedIcon />}>
             <div className={classes.grid}>
-              <TextField
-                select
-                label={t('fleetEntityVehicle')}
+              <VehicleSelect
+                required
                 value={deviceId}
-                onChange={(event) => chooseDevice(event.target.value)}
+                onChange={chooseDevice}
                 disabled={Boolean(id)}
-              >
-                {deviceOptions.map((option) => (
-                  <MenuItem key={option.id} value={option.id}>
-                    {option.name}
-                  </MenuItem>
-                ))}
-              </TextField>
+              />
               <TextField
+                required
                 label={t('fleetWorkOrderTitle')}
                 value={order.title || ''}
                 onChange={(event) => set({ title: event.target.value })}
@@ -328,7 +415,13 @@ const WorkOrderPage = () => {
                 select
                 label={t('deviceStatus')}
                 value={order.status}
-                onChange={(event) => set({ status: event.target.value })}
+                onChange={(event) => {
+                  set({ status: event.target.value });
+                  // ADM-19: done means the maintenance was done; it is checked by default.
+                  if (event.target.value === 'done' && !resetIds.length) {
+                    setResetIds(maintenance.map((item) => item.id));
+                  }
+                }}
               >
                 {WORK_ORDER_STATUSES.map((status) => (
                   <MenuItem key={status} value={status}>
@@ -370,7 +463,7 @@ const WorkOrderPage = () => {
               </div>
               {garageIssue && (
                 <Alert severity="warning" className={classes.full}>
-                  {t(`safetyGarage${garageIssue.replace(/^\w/, (c) => c.toUpperCase())}Warning`)}
+                  {t(`safetyGarage${capitalize(garageIssue)}Warning`)}
                 </Alert>
               )}
               <DateField
@@ -429,7 +522,7 @@ const WorkOrderPage = () => {
                       >
                         {ITEM_KINDS.map((kind) => (
                           <MenuItem key={kind} value={kind}>
-                            {t(`fleetItemKind${kind.replace(/^\w/, (c) => c.toUpperCase())}`)}
+                            {t(`fleetItemKind${capitalize(kind)}`)}
                           </MenuItem>
                         ))}
                       </TextField>
@@ -498,9 +591,24 @@ const WorkOrderPage = () => {
             >
               {t('fleetItemAdd')}
             </Button>
-            <Typography className={classes.total}>
-              {t('fleetWorkOrderTotal')}: {money(itemsTotal(items))}
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={order.prices_include_vat ?? true}
+                  onChange={(event) => set({ prices_include_vat: event.target.checked })}
+                  disabled={!canWrite}
+                />
+              }
+              label={t('fleetWorkOrderPricesIncludeVat')}
+            />
+            <Typography variant="body2" color="textSecondary">
+              {t('fleetWorkOrderSubtotal')}: {money(vat.subtotal)} · {t('fleetWorkOrderVat')}:{' '}
+              {money(vat.vat)}
             </Typography>
+            <Typography className={classes.total}>
+              {t('fleetWorkOrderTotal')}: {money(vat.total)}
+            </Typography>
+            <InvoiceCheckPanel order={order} items={items} device={devices[deviceId]} />
             <div className={classes.grid}>
               {canWrite && (
                 <ScanDocumentButton
@@ -571,6 +679,65 @@ const WorkOrderPage = () => {
             </FormSection>
           )}
         </>
+      )}
+      {closingOpen && closeForm && (
+        <Dialog open onClose={() => setClosingOpen(false)} fullWidth maxWidth="xs">
+          <DialogTitle>{t('fleetWorkOrderClose')}</DialogTitle>
+          <DialogContent>
+            <div className={classes.closeForm}>
+              <TextField
+                type="number"
+                label={t('fleetWorkOrderFinalKm')}
+                value={closeForm.odometer}
+                onChange={(event) => setCloseForm({ ...closeForm, odometer: event.target.value })}
+                slotProps={{ htmlInput: { min: 0, dir: 'ltr' } }}
+              />
+              <TextField
+                label={t('fleetInvoiceNumber')}
+                value={closeForm.invoice}
+                onChange={(event) => setCloseForm({ ...closeForm, invoice: event.target.value })}
+              />
+              {maintenance.length > 0 && (
+                <>
+                  <Typography variant="subtitle2">{t('fleetWorkOrderResetTitle')}</Typography>
+                  {maintenance.map((item) => (
+                    <FormControlLabel
+                      key={item.id}
+                      control={
+                        <Checkbox
+                          checked={closeForm.resetIds.includes(item.id)}
+                          onChange={(event) =>
+                            setCloseForm({
+                              ...closeForm,
+                              resetIds: event.target.checked
+                                ? [...closeForm.resetIds, item.id]
+                                : closeForm.resetIds.filter((value) => value !== item.id),
+                            })
+                          }
+                        />
+                      }
+                      label={item.name}
+                    />
+                  ))}
+                </>
+              )}
+              <Typography className={classes.total}>
+                {t('fleetWorkOrderTotal')}: {money(vat.total)}
+              </Typography>
+              {issues.length > 0 && (
+                <Alert severity="info">
+                  {t('fleetWorkOrderIssuesClose').replace('{0}', String(issues.length))}
+                </Alert>
+              )}
+            </div>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setClosingOpen(false)}>{t('sharedCancel')}</Button>
+            <Button variant="contained" onClick={confirmClosing}>
+              {t('fleetWorkOrderClose')}
+            </Button>
+          </DialogActions>
+        </Dialog>
       )}
       {addingVendor && (
         <VendorDialog

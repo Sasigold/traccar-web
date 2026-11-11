@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   ButtonBase,
   Chip,
@@ -131,6 +131,7 @@ const CatalogDrawer = ({ open, onClose, onAdd, availability, singletonsUsed }) =
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState(null);
   const [added, setAdded] = useState(null);
+  const closeRef = useRef(null);
 
   const items = useMemo(() => {
     const search = query.trim().toLowerCase();
@@ -151,13 +152,13 @@ const CatalogDrawer = ({ open, onClose, onAdd, availability, singletonsUsed }) =
       anchor="right"
       open={open}
       onClose={onClose}
-      slotProps={{ paper: { className: classes.paper } }}
+      slotProps={{ paper: { className: classes.paper, 'aria-labelledby': 'catalog-title' } }}
     >
       <div className={classes.header}>
-        <Typography component="h2" className={classes.title}>
+        <Typography id="catalog-title" component="h2" className={classes.title}>
           {t('dashboardAddWidget')}
         </Typography>
-        <IconButton aria-label={t('sharedHide')} onClick={onClose}>
+        <IconButton ref={closeRef} aria-label={t('sharedHide')} onClick={onClose}>
           <CloseRoundedIcon />
         </IconButton>
       </div>
@@ -228,6 +229,10 @@ const CatalogDrawer = ({ open, onClose, onAdd, availability, singletonsUsed }) =
                     onClick={() => {
                       onAdd(preset.id);
                       setAdded(preset.id);
+                      // A widget that can be added once turns disabled now: the focus goes to the
+                      // catalog's close button instead of falling out of the catalog (where
+                      // Escape would no longer close it).
+                      if (preset.singleton) closeRef.current?.focus();
                     }}
                   >
                     <span className={classes.icon}>

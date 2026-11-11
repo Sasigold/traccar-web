@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import {
+  Alert,
   Button,
   ButtonBase,
   Dialog,
@@ -110,13 +111,19 @@ const useStyles = makeStyles()((theme) => ({
 
 // Sends a command without leaving the map. Common commands are large buttons; engine stop asks
 // for the plate number and warns when the vehicle is moving.
-const CommandDialog = ({ deviceId, onClose }) => {
+// LIV-25: with `deviceIds`, one command to several vehicles: only the commands all of them
+// support, and never engine stop (that stays one vehicle at a time, with its plate typed).
+const CommandDialog = ({ deviceId, deviceIds, onClose }) => {
   const { classes, cx } = useStyles();
   const t = useTranslation();
   const sendCommand = useSendCommand();
   const limitCommands = useRestriction('limitCommands');
 
-  const device = useSelector((state) => state.devices.items[deviceId]);
+  const ids = deviceIds?.length ? deviceIds.map(Number) : [Number(deviceId)];
+  const group = ids.length > 1;
+  const firstId = ids[0];
+  const idsKey = ids.join(',');
+  const device = useSelector((state) => state.devices.items[firstId]);
 
   const [quickTypes, setQuickTypes] = useState(null);
   const [choice, setChoice] = useState(null);
@@ -133,18 +140,28 @@ const CommandDialog = ({ deviceId, onClose }) => {
         setChoice('other');
         return;
       }
-      const response = await fetchOrThrow(
-        `api/commands/types?${new URLSearchParams({ deviceId }).toString()}`,
-        { signal },
+      // The commands every chosen vehicle supports.
+      const list = idsKey.split(',').map(Number);
+      const lists = await Promise.all(
+        list.slice(0, 50).map(async (id) => {
+          const response = await fetchOrThrow(
+            `api/commands/types?${new URLSearchParams({ deviceId: id }).toString()}`,
+            { signal },
+          );
+          return new Set((await response.json()).map((it) => it.type));
+        }),
       );
-      const supported = new Set((await response.json()).map((it) => it.type));
-      const available = QUICK_COMMANDS.filter((type) => supported.has(type));
+      const available = QUICK_COMMANDS.filter(
+        (type) =>
+          lists.every((supported) => supported.has(type)) &&
+          !(list.length > 1 && isDangerousCommand(type)),
+      );
       setQuickTypes(available);
       if (!available.length) {
         setChoice('other');
       }
     },
-    [deviceId, limitCommands],
+    [idsKey, limitCommands],
   );
 
   // A saved command can be an engine stop too: read its type before it can be sent.
@@ -174,7 +191,9 @@ const CommandDialog = ({ deviceId, onClose }) => {
 
   const dangerous = isDangerousCommand(command?.type);
   const target = confirmationTarget(device);
-  const confirmed = !dangerous || confirmationMatches(confirmation, target.value);
+  const confirmed = !group && (!dangerous || confirmationMatches(confirmation, target.value));
+  // In a group a dangerous command is refused outright.
+  const groupConfirmed = group ? !dangerous : confirmed;
 
   const handleChoice = (value) => {
     setChoice(value);
@@ -184,7 +203,19 @@ const CommandDialog = ({ deviceId, onClose }) => {
   const handleSend = useCatch(async () => {
     setSending(true);
     try {
-      await sendCommand(Number(deviceId), command);
+      if (group) {
+        const results = await Promise.allSettled(ids.map((id) => sendCommand(id, command)));
+        const failed = results.filter((result) => result.status === 'rejected').length;
+        if (failed) {
+          throw Error(
+            t('commandGroupFailed')
+              .replace('{0}', String(failed))
+              .replace('{1}', String(ids.length)),
+          );
+        }
+      } else {
+        await sendCommand(Number(firstId), command);
+      }
       onClose();
     } finally {
       setSending(false);
@@ -216,14 +247,19 @@ const CommandDialog = ({ deviceId, onClose }) => {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          if (command && confirmed && !sending) {
+          if (command && groupConfirmed && !sending) {
             handleSend();
           }
         }}
       >
         <DialogTitle id="command-dialog-title">
           {t('commandDialogTitle')}
-          {device && (
+          {group && (
+            <Typography component="span" className={classes.subtitle}>
+              {t('commandGroupCount').replace('{0}', String(ids.length))}
+            </Typography>
+          )}
+          {!group && device && (
             <Typography component="span" className={classes.subtitle}>
               {device.name}
               {device.attributes?.plateNumber && (
@@ -260,7 +296,7 @@ const CommandDialog = ({ deviceId, onClose }) => {
           {choice === 'other' && (
             <div className={classes.other}>
               <BaseCommandView
-                deviceId={deviceId}
+                deviceId={firstId}
                 item={item}
                 setItem={setItem}
                 includeSaved
@@ -272,12 +308,9 @@ const CommandDialog = ({ deviceId, onClose }) => {
               />
             </div>
           )}
-          {dangerous && (
-            <EngineStopConfirm
-              deviceId={deviceId}
-              value={confirmation}
-              onChange={setConfirmation}
-            />
+          {group && dangerous && <Alert severity="warning">{t('commandGroupNoEngineStop')}</Alert>}
+          {!group && dangerous && (
+            <EngineStopConfirm deviceId={firstId} value={confirmation} onChange={setConfirmation} />
           )}
         </DialogContent>
         <DialogActions>
@@ -286,9 +319,13 @@ const CommandDialog = ({ deviceId, onClose }) => {
             type="submit"
             variant="contained"
             color={dangerous ? 'error' : 'primary'}
-            disabled={!command || !confirmed || sending}
+            disabled={!command || !groupConfirmed || sending}
           >
-            {dangerous ? t('commandEngineStop') : t('commandSend')}
+            {group
+              ? t('commandSendGroup').replace('{0}', String(ids.length))
+              : dangerous
+                ? t('commandEngineStop')
+                : t('commandSend')}
           </Button>
         </DialogActions>
       </form>

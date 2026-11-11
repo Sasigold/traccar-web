@@ -167,6 +167,24 @@ describe('SocketController', () => {
     expect(metrics.take().counters).toMatchObject({ socket_disconnect: 1, socket_reconnect: 1 });
   });
 
+  // PRF-05: a server that stays down is not asked for every vehicle after each failed attempt.
+  it('refreshes over REST at most once a minute while the connection keeps failing', async () => {
+    await start();
+    await waitFor(() => expect(FakeSocket.instances).toHaveLength(1));
+    act(() => lastSocket().open());
+    const now = Date.now();
+    act(() => lastSocket().drop());
+    await waitFor(() => expect(FakeSocket.instances).toHaveLength(2));
+    act(() => lastSocket().drop());
+    await waitFor(() => expect(FakeSocket.instances).toHaveLength(3));
+    const positions = () => api.calls.filter((call) => call.url === 'api/positions').length;
+    expect(positions()).toBe(1);
+
+    vi.spyOn(Date, 'now').mockReturnValue(now + 61000);
+    act(() => lastSocket().drop());
+    await waitFor(() => expect(positions()).toBe(2));
+  });
+
   it('goes to the login page when the session expired', async () => {
     await start({ 'GET api/positions': new Response('', { status: 401 }) });
     await waitFor(() => expect(FakeSocket.instances).toHaveLength(1));

@@ -10,7 +10,13 @@ import { loadPrivacy } from '../common/fleet/privacyData';
 import { money } from '../fleet/fleetData';
 import useReportStyles from './common/useReportStyles';
 import FleetTableReport from './components/FleetTableReport';
-import { underusedVehicles, usageByVehicle } from './common/fleetReports';
+import {
+  engineHoursPerDay,
+  groupComparison,
+  underusedVehicles,
+  usageByVehicle,
+} from './common/fleetReports';
+import { evFit } from '../common/fleet/ev';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -36,19 +42,43 @@ const UsageReportPage = () => {
 
   const load = useCallback(
     async (scope) => {
-      const [trips, stops, privacy] = await Promise.all([
+      const [trips, stops, privacy, summary] = await Promise.all([
         loadReportRows('trips', scope),
         loadReportRows('stops', scope),
         loadPrivacy(scope.from, scope.to),
+        // OPS-04: engine hours come from the summary.
+        loadReportRows('summary', scope).catch(() => []),
       ]);
       const days = Math.max(1, Math.round((Date.parse(scope.to) - Date.parse(scope.from)) / DAY));
-      return usageByVehicle(scope.devices, trips, stops, {
+      // OPS-09: km per driven day, to tell which vehicles could be electric.
+      const daily = {};
+      trips.forEach((trip) => {
+        const key = `${trip.deviceId}|${String(trip.startTime).slice(0, 10)}`;
+        daily[key] = (daily[key] || 0) + (Number(trip.distance) || 0) / 1000;
+      });
+      const rows = usageByVehicle(scope.devices, trips, stops, {
         policy: privacy?.policy,
         periods: privacy?.periods,
         days,
         idleBurn,
         fuelPrice,
+      }).map((row) => {
+        const fit = evFit(
+          Object.entries(daily)
+            .filter(([key]) => key.startsWith(`${row.deviceId}|`))
+            .map(([, value]) => value),
+        );
+        return {
+          ...row,
+          evFits: fit.fits,
+          evLongest: fit.longest,
+          engineHoursPerDay: engineHoursPerDay(summary, row.deviceId, row.activeDays),
+        };
       });
+      // OPS-04: each vehicle against the middle vehicle of its group.
+      const groupOf = (id) => scope.devices.find((device) => device.id === id)?.groupId || null;
+      const compared = groupComparison(rows, groupOf);
+      return rows.map((row, index) => ({ ...row, groupShare: compared[index] }));
     },
     [idleBurn, fuelPrice],
   );
@@ -59,6 +89,18 @@ const UsageReportPage = () => {
     { key: 'distance', labelKey: 'sharedDistance', format: km, exportValue: (v) => v / 1000 },
     { key: 'drivingTime', labelKey: 'dashboardMDrivingTime', format: hours, exportValue: hours },
     { key: 'activeDays', labelKey: 'usageActiveDays' },
+    {
+      key: 'engineHoursPerDay',
+      labelKey: 'usageEngineHoursPerDay',
+      format: (v) => (v == null ? '—' : formatHours(v)),
+      exportValue: (v) => (v == null ? '' : Math.round(v * 10) / 10),
+    },
+    {
+      key: 'groupShare',
+      labelKey: 'usageGroupShare',
+      format: (v) => (v == null ? '—' : `${v}%`),
+      exportValue: (v) => (v == null ? '' : v),
+    },
     {
       key: 'utilization',
       labelKey: 'usageUtilization',
@@ -80,6 +122,17 @@ const UsageReportPage = () => {
     },
     { key: 'restDayDistance', labelKey: 'usageRestDays', format: km, exportValue: (v) => v / 1000 },
     { key: 'privateDistance', labelKey: 'usagePrivate', format: km, exportValue: (v) => v / 1000 },
+    {
+      key: 'evFits',
+      labelKey: 'evFit',
+      format: (v, row) =>
+        v == null
+          ? '—'
+          : v
+            ? t('evFitYes')
+            : t('evFitNo').replace('{0}', km((row.evLongest || 0) * 1000)),
+      exportValue: (v) => (v == null ? '' : t(v ? 'evFitYes' : 'evFitShort')),
+    },
   ];
 
   return (
@@ -87,6 +140,14 @@ const UsageReportPage = () => {
       reportKey="usage"
       titleKey="reportUsage"
       columns={columns}
+      compared={[
+        'distance',
+        'drivingTime',
+        'idleTime',
+        'idleCost',
+        'afterHoursDistance',
+        'privateDistance',
+      ]}
       totals={{
         distance: 'sum',
         drivingTime: 'sum',

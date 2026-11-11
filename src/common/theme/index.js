@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { useMemo } from 'react';
 import { createTheme } from '@mui/material/styles';
 import { heIL, enUS } from '@mui/material/locale';
@@ -42,7 +43,9 @@ const shadowScale = (mode) => {
 // MUI's own words (pagination, close, "no options"…) follow the app language.
 const muiLocales = { he: heIL, en: enUS };
 
-export default (server, darkMode, direction, language) =>
+// A hook (it memoizes the theme), so its name starts with `use` (PRF-04: React Compiler relies
+// on that to keep the hook order).
+const useAppTheme = (server, darkMode, direction, language) =>
   useMemo(
     () =>
       createTheme(
@@ -83,3 +86,5 @@ export default (server, darkMode, direction, language) =>
       ),
     [server, darkMode, direction, language],
   );
+
+export default useAppTheme;

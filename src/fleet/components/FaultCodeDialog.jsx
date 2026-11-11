@@ -21,6 +21,7 @@ import { useAsyncTask } from '../../reactHelper';
 import { aiErrorKey, explainCodes, vehiclesWithCode } from '../../common/fleet/ai';
 import { useAiAvailable } from '../../common/fleet/useAi';
 import { normalizePhone } from '../../common/util/israeliFields';
+import { capitalize } from '../../common/util/stringUtils';
 
 const useStyles = makeStyles()((theme) => ({
   list: {
@@ -45,6 +46,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   code: {
     fontFamily: theme.tokens.font.mono,
+    fontVariantNumeric: 'tabular-nums',
     color: theme.palette.text.secondary,
   },
   title: {
@@ -61,7 +63,6 @@ const useStyles = makeStyles()((theme) => ({
 
 const SEVERITY_COLOR = { low: 'info', medium: 'warning', high: 'error', critical: 'error' };
 const DRIVE_SEVERITY = { yes: 'success', caution: 'warning', no: 'error' };
-const cap = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
 
 // AI-03: a fault code becomes a decision: what it is in plain Hebrew, how urgent, whether the
 // vehicle can finish the day, what it may cost, and what to do next. Known codes come from the
@@ -95,7 +96,7 @@ const FaultCodeDialog = ({ codes, deviceId, driverPhone, onClose }) => {
 
   const phone = normalizePhone(driverPhone);
   const driverText = (item) =>
-    `${device?.name || ''}: ${item.title_he}. ${t(`aiFaultDrive${cap(item.drive_today)}`)}`;
+    `${device?.name || ''}: ${item.title_he}. ${t(`aiFaultDrive${capitalize(item.drive_today)}`)}`;
 
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="sm">
@@ -130,12 +131,12 @@ const FaultCodeDialog = ({ codes, deviceId, driverPhone, onClose }) => {
                     size="small"
                     color={SEVERITY_COLOR[item.severity]}
                     variant={item.severity === 'critical' ? 'filled' : 'outlined'}
-                    label={t(`aiFaultSeverity${cap(item.severity)}`)}
+                    label={t(`aiFaultSeverity${capitalize(item.severity)}`)}
                   />
                 </div>
                 <Alert severity={DRIVE_SEVERITY[item.drive_today]} role="status">
                   <strong>{t('aiFaultCanDrive')}</strong>{' '}
-                  {t(`aiFaultDrive${cap(item.drive_today)}`)}
+                  {t(`aiFaultDrive${capitalize(item.drive_today)}`)}
                 </Alert>
                 {item.explanation_he && (
                   <Typography variant="body2">{item.explanation_he}</Typography>

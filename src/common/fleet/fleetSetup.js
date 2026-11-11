@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 // "Set up your fleet" (ADM-01): the steps a new customer goes through, in order, each done when
 // the data says so. Steps the user may not do are left out. Pure, unit-tested.
 

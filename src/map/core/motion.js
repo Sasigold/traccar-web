@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 // Smooth vehicle motion: pure helpers shared by the live map (markers glide from one GPS fix to
 // the next) and the replay page (the marker drives along the route instead of hopping between
 // points). Everything here is frame-rate independent: callers pass a progress fraction 0..1.

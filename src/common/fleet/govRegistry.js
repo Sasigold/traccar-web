@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 // The Ministry of Transport's open vehicle registry on data.gov.il: make, model, year, VIN, fuel,
 // ownership and the vehicle licence ("test") expiry, by plate number. Free, no key, CORS open.
 //

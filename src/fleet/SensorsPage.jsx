@@ -30,7 +30,7 @@ import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetPermission, useFleetProfile, useFleetReady } from '../common/fleet/useFleet';
 import { sensorRows } from '../common/fleet/sensors';
 import { ensureVehicle } from './fleetData';
-import { toNumber, useFleetRows } from './stage5Data';
+import { toNumber, useFleetRows } from './fleetRows';
 import { keepOnBackdrop } from '../common/util/formDialog';
 
 const useStyles = makeStyles()((theme) => ({
@@ -116,7 +116,7 @@ const LimitsDialog = ({ device, limits, onClose, onSaved }) => {
   );
 };
 
-// Roadmap stage 5 (4.8): EV battery and cold chain temperatures, live, against limits per vehicle.
+// EV battery and cold chain temperatures, live, against limits per vehicle.
 const SensorsPage = () => {
   const { classes } = useStyles();
   const t = useTranslation();

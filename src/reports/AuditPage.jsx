@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { TableRow, TableCell, TableHead, TableBody } from '@mui/material';
+import { Link, TableRow, TableCell, TableHead, TableBody } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
+import { auditAction, auditObject, auditPath } from './common/auditLabels';
 import { formatTime } from '../common/util/formatter';
 import { useTranslation } from '../common/components/LocalizationProvider';
 import PageLayout from '../common/components/PageLayout';
@@ -59,6 +61,20 @@ const AuditPage = () => {
         return formatTime(item[key], 'minutes');
       case 'userId':
         return users.get(item.userId) || item.userId;
+      case 'actionType':
+        return auditAction(item.actionType, t);
+      case 'objectType':
+        return auditObject(item.objectType, t);
+      case 'objectId': {
+        const path = auditPath(item.objectType, item.objectId);
+        return path ? (
+          <Link component={RouterLink} to={path}>
+            {item.objectId}
+          </Link>
+        ) : (
+          item.objectId
+        );
+      }
       default:
         return item[key];
     }

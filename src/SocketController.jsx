@@ -24,6 +24,8 @@ import { countEvent } from './common/telemetry/metrics';
 const logoutCode = 4000;
 // The last-message time is stored at most this often (the pill shows minutes).
 const ACTIVITY_STEP_MS = 5000;
+// PRF-05: the REST refresh after a drop, at most this often.
+const REST_REFRESH_MS = 60000;
 
 const SocketController = () => {
   const dispatch = useDispatch();
@@ -38,6 +40,7 @@ const SocketController = () => {
   const attemptRef = useRef(0);
   const lastMessageRef = useRef(null);
   const lastStoredRef = useRef(0);
+  const lastRestRef = useRef(0);
 
   const clearReconnectTimeout = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -179,22 +182,29 @@ const SocketController = () => {
       dispatch(sessionActions.updateSocket(false));
       if (event.code === logoutCode) return;
       countEvent('socket_disconnect');
-      try {
-        const devicesResponse = await fetch('api/devices');
-        if (socketRef.current !== socket) return;
-        if (devicesResponse.ok) {
-          dispatch(devicesActions.update(await devicesResponse.json()));
+      // PRF-05: the REST refresh covers a drop; during a long outage it runs at most once a
+      // minute, not after every failed attempt.
+      const now = Date.now();
+      const refresh = now - lastRestRef.current >= REST_REFRESH_MS;
+      if (refresh) {
+        lastRestRef.current = now;
+        try {
+          const devicesResponse = await fetch('api/devices');
+          if (socketRef.current !== socket) return;
+          if (devicesResponse.ok) {
+            dispatch(devicesActions.update(await devicesResponse.json()));
+          }
+          const positionsResponse = await fetch('api/positions');
+          if (socketRef.current !== socket) return;
+          if (positionsResponse.ok) {
+            dispatch(sessionActions.updatePositions(await positionsResponse.json()));
+          }
+          if (devicesResponse.status === 401 || positionsResponse.status === 401) {
+            navigate('/login');
+          }
+        } catch {
+          // ignore errors
         }
-        const positionsResponse = await fetch('api/positions');
-        if (socketRef.current !== socket) return;
-        if (positionsResponse.ok) {
-          dispatch(sessionActions.updatePositions(await positionsResponse.json()));
-        }
-        if (devicesResponse.status === 401 || positionsResponse.status === 401) {
-          navigate('/login');
-        }
-      } catch {
-        // ignore errors
       }
       if (socketRef.current !== socket) return;
       clearReconnectTimeout();

@@ -40,3 +40,19 @@ test.describe('sign in', () => {
     await expect(page.getByText(/פנו למנהל החשבון/)).toBeVisible();
   });
 });
+
+// SEC-20: a link with a token asks before it replaces the user signed in now.
+test('a token link asks before replacing a signed-in session', async ({ page }) => {
+  const exchanged = [];
+  await page.route('**/api/session?token=*', (route) => {
+    exchanged.push(route.request().url());
+    return route.fallback();
+  });
+  await gotoReady(page, '/');
+  await page.goto('/?token=abc');
+  const dialog = page.getByRole('dialog', { name: 'להחליף את המשתמש המחובר?' });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: 'ביטול' }).click();
+  await expect(page).not.toHaveURL(/token=/);
+  expect(exchanged).toEqual([]);
+});

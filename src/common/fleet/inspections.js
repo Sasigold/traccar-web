@@ -1,4 +1,4 @@
-// Roadmap stage 2: vehicle inspections / checklists (pure, unit-tested).
+// Vehicle inspections / checklists (pure, unit-tested).
 
 export const ITEM_TYPES = ['pass_fail', 'number_range', 'photo', 'text', 'signature'];
 export const FREQUENCIES = ['per_trip', 'daily', 'weekly', 'monthly', 'quarterly'];

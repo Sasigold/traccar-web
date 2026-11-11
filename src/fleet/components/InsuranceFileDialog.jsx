@@ -21,6 +21,7 @@ import { useAsyncTask } from '../../reactHelper';
 import fetchOrThrow from '../../common/util/fetchOrThrow';
 import { formatTime } from '../../common/util/formatter';
 import { accidentWindow } from '../../common/fleet/accident';
+import TrackSketch from './TrackSketch';
 import { plateOf } from '../../reports/common/vehicle';
 
 const useStyles = makeStyles()((theme) => ({
@@ -148,6 +149,7 @@ const InsuranceFileDialog = ({ incident, deviceId, driverName, photos, onClose }
         {track && !track.rows.length && (
           <Typography color="textSecondary">{t('insuranceFileNoTrack')}</Typography>
         )}
+        {track && track.rows.length > 0 && <TrackSketch rows={track.rows} impact={track.impact} />}
         {track && track.rows.length > 0 && (
           <div className={classes.scroll}>
             <Table size="small">

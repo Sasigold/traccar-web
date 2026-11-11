@@ -47,7 +47,7 @@ const statusFilterLabel = {
 };
 const entityFilters = ['vehicle', 'driver'];
 
-// Roadmap stage 0: every validity date (test, insurance, lease, driving license), soonest first.
+// Every validity date (test, insurance, lease, driving license), soonest first.
 const ExpiriesPage = () => {
   const { classes } = useStyles();
   const theme = useTheme();

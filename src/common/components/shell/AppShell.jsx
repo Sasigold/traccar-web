@@ -12,15 +12,36 @@ import ShellContext from './ShellContext';
 import NavRail from './NavRail';
 import TopBar from './TopBar';
 import MobileTabs from './MobileTabs';
-import CommandPalette from './CommandPalette';
 import ShortcutsDialog from './ShortcutsDialog';
-import EventsDrawer from './EventsDrawer';
+import CommandPalette from './CommandPalette';
 import AlertBanner from './AlertBanner';
 import ImpersonationBanner from './ImpersonationBanner';
 import { useAiAvailable } from '../../fleet/useAi';
 
 // AI-01: loaded the first time it is opened.
 const AssistantPanel = lazy(() => import('../assistant/AssistantPanel'));
+// PRF-04: the alerts list is not in the first load, and listens to the store only from the first
+// time it is opened. The search window (4 KB) is in it, so the first Ctrl+K opens at once and
+// keeps what is typed; it is mounted once the app is idle, or when first opened.
+const loadEvents = () => import('./EventsDrawer');
+const EventsDrawer = lazy(loadEvents);
+const whenIdle = (run) => {
+  if (typeof window.requestIdleCallback === 'function') {
+    const handle = window.requestIdleCallback(run, { timeout: 3000 });
+    return () => window.cancelIdleCallback(handle);
+  }
+  const timer = setTimeout(run, 1500);
+  return () => clearTimeout(timer);
+};
+
+// True from the first time `open` is true (kept mounted afterwards, for the closing motion).
+const useOpenedOnce = (open) => {
+  const [opened, setOpened] = useState(open);
+  if (open && !opened) {
+    setOpened(true);
+  }
+  return opened || open;
+};
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -91,7 +112,22 @@ const AppShell = ({ children }) => {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [eventsOpen, setEventsOpen] = useState(false);
-  const [railCollapsed, setRailCollapsed] = usePersistedState('navRailCollapsed', false);
+  const [idle, setIdle] = useState(false);
+  useEffect(
+    () =>
+      whenIdle(() => {
+        setIdle(true);
+        loadEvents().catch(() => {});
+      }),
+    [],
+  );
+  const paletteMounted = useOpenedOnce(paletteOpen) || idle;
+  const eventsMounted = useOpenedOnce(eventsOpen);
+  // LIV-09: until the user folds or opens it, the rail is folded below a wide screen (a tablet
+  // on its side keeps the room for the map, the list and the card).
+  const wide = useMediaQuery(theme.breakpoints.up('lg'));
+  const [railChoice, setRailChoice] = usePersistedState('navRailCollapsed', null);
+  const railCollapsed = railChoice ?? !wide;
   const aiAvailable = useAiAvailable();
   const t = useTranslation();
 
@@ -125,7 +161,10 @@ const AppShell = ({ children }) => {
   const closePalette = useCallback(() => setPaletteOpen(false), []);
   const openEvents = useCallback(() => setEventsOpen(true), []);
   const closeEvents = useCallback(() => setEventsOpen(false), []);
-  const toggleRail = useCallback(() => setRailCollapsed((value) => !value), [setRailCollapsed]);
+  const toggleRail = useCallback(
+    () => setRailChoice(!railCollapsed),
+    [setRailChoice, railCollapsed],
+  );
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -213,7 +252,11 @@ const AppShell = ({ children }) => {
           {children}
         </main>
         {showTabs && <MobileTabs />}
-        {!features.disableEvents && <EventsDrawer open={eventsOpen} onClose={closeEvents} />}
+        {!features.disableEvents && eventsMounted && (
+          <Suspense fallback={null}>
+            <EventsDrawer open={eventsOpen} onClose={closeEvents} />
+          </Suspense>
+        )}
         {!features.disableEvents && (
           <AlertBanner
             // Clear of the alerts side panel while it is open on desktop.
@@ -224,7 +267,7 @@ const AppShell = ({ children }) => {
             }
           />
         )}
-        <CommandPalette open={paletteOpen} onClose={closePalette} />
+        {paletteMounted && <CommandPalette open={paletteOpen} onClose={closePalette} />}
         <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
         {assistant && aiAvailable && (
           <Suspense fallback={null}>

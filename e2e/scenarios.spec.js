@@ -26,7 +26,7 @@ test('a work order is opened, closed, and resets the service counter', async ({ 
   await page.getByLabel('מה עושים').fill('טיפול 15,000');
   await page.getByRole('textbox', { name: 'תיאור' }).first().fill('החלפת שמן');
   await page.getByRole('spinbutton', { name: 'מחיר ליחידה' }).first().fill('450');
-  await page.getByRole('button', { name: 'שמירה' }).click();
+  await page.getByRole('button', { name: 'שמירה', exact: true }).click();
 
   await expect(page).toHaveURL(/\/fleet\/work-orders$/);
   const row = page.getByRole('row', { name: /טיפול 15,000/ });
@@ -58,7 +58,7 @@ test('a work order is opened, closed, and resets the service counter', async ({ 
   await page.getByRole('combobox', { name: 'סטטוס' }).click();
   await page.getByRole('option', { name: 'בוצעה' }).click();
   await page.getByRole('checkbox', { name: 'Oil service' }).check();
-  await page.getByRole('button', { name: 'שמירה' }).click();
+  await page.getByRole('button', { name: 'שמירה', exact: true }).click();
   await expect(page).toHaveURL(/\/fleet\/work-orders$/);
 
   expect(fleet.tables.work_orders[0].status).toBe('done');
@@ -96,7 +96,7 @@ test('an incident is reported with a photo, and the photo comes back', async ({ 
     buffer: PHOTO,
   });
   await expect(page.getByText(/1 תמונ/)).toBeVisible();
-  await page.getByRole('button', { name: 'שמירה' }).click();
+  await page.getByRole('button', { name: 'שמירה', exact: true }).click();
   await expect(page).toHaveURL(/\/fleet\/incidents$/);
 
   const [incident] = fleet.tables.incidents;

@@ -116,13 +116,16 @@ export const createQueryCache = ({ now = () => Date.now(), gcDelay = GC_DELAY } 
     });
   };
 
-  const latestUpdate = () =>
-    Math.max(
-      0,
-      ...[...entries.values()]
-        .filter((entry) => entry.snapshot.status === 'success')
-        .map((entry) => entry.snapshot.updatedAt),
+  // REP-22: "updated at" is as old as the oldest data on screen, so only entries that a
+  // widget is showing count; with nothing on screen, the newest entry.
+  const latestUpdate = () => {
+    const loaded = [...entries.values()].filter(
+      (entry) => entry.snapshot.status === 'success' && entry.snapshot.updatedAt > 0,
     );
+    const shown = loaded.filter((entry) => entry.listeners.size);
+    if (shown.length) return Math.min(...shown.map((entry) => entry.snapshot.updatedAt));
+    return Math.max(0, ...loaded.map((entry) => entry.snapshot.updatedAt));
+  };
 
   return { get, subscribe, ensure, invalidate, latestUpdate, size: () => entries.size };
 };

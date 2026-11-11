@@ -1,5 +1,6 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { fieldError } from '../util/israeliFields';
-// Roadmap stage 0: structured vehicle and driver details kept in the Traccar `attributes`
+// Structured vehicle and driver details kept in the Traccar `attributes`
 // JSON, so they work without the fleet database. Stage 1 migrates these keys into the
 // `vehicles` / `drivers` tables; keep the keys stable until then.
 //
@@ -27,6 +28,9 @@ export const OWNERSHIP_TYPES = ['owned', 'leased', 'rented'];
 
 export const DRIVER_STATUSES = ['active', 'suspended', 'ended'];
 
+const leased = (attributes) => attributes?.ownership === 'leased';
+
+// when: shown only for these attributes (a lease's fields, for a leased vehicle).
 // type: text | date | select | multiselect | number | multiline | boolean.
 // kind: an Israeli identifier checked and normalized on blur (common/util/israeliFields.js).
 // ltr: values that stay left-to-right in a Hebrew UI (numbers, codes, plates).
@@ -50,10 +54,26 @@ export const vehicleFields = [
     options: OWNERSHIP_TYPES,
     optionPrefix: 'fleetOwnership',
   },
+  // ADM-31: a lease contract's kilometers: the quota for the whole contract, the odometer when it
+  // started and the price of every kilometer over it (with leaseEndDate, under validity).
+  { key: 'leaseStartDate', labelKey: 'fleetLeaseStartDate', type: 'date', when: leased },
+  { key: 'leaseStartKm', labelKey: 'fleetLeaseStartKm', type: 'number', ltr: true, when: leased },
+  { key: 'leaseKmQuota', labelKey: 'fleetLeaseKmQuota', type: 'number', ltr: true, when: leased },
+  {
+    key: 'leaseExcessRate',
+    labelKey: 'fleetLeaseExcessRate',
+    type: 'number',
+    ltr: true,
+    money: true,
+    when: leased,
+  },
   // ISR-05: the list price ("מחיר מחירון"), for the taxable benefit of a company car.
   { key: 'listPrice', labelKey: 'fleetListPrice', type: 'number', ltr: true, money: true },
   // ISR-12: a vehicle new drivers should not get (a truck, a passenger van).
   { key: 'noNewDrivers', labelKey: 'fleetNoNewDrivers', type: 'boolean' },
+  // AI-08: the manufacturer's warranty, so a repair it may cover is flagged on the work order.
+  { key: 'warrantyUntil', labelKey: 'fleetWarrantyUntil', type: 'date' },
+  { key: 'warrantyKm', labelKey: 'fleetWarrantyKm', type: 'number', ltr: true },
 ];
 
 export const vehicleExpiryFields = [

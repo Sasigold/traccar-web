@@ -1,4 +1,4 @@
-// Roadmap stage 2: costs per vehicle (pure, unit-tested).
+// Costs per vehicle (pure, unit-tested).
 
 // vehicle_monthly_costs rows -> one line per vehicle with fuel / maintenance / other / total,
 // most expensive first, plus the fleet totals.
@@ -44,3 +44,15 @@ export const periodStart = (months, now = new Date()) => {
   const pad = (n) => String(n).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-01`;
 };
+
+// ADM-18: shekels per kilometre for each line, from the distance each vehicle drove in the
+// period (meters by vehicle id). No distance, no figure. Pure.
+export const withCostPerKm = (lines, metersByVehicle) =>
+  lines.map((line) => {
+    const km = (metersByVehicle?.[line.vehicleId] || 0) / 1000;
+    return {
+      ...line,
+      km: km > 0 ? Math.round(km) : null,
+      perKm: km >= 1 && line.total > 0 ? Math.round((line.total / km) * 100) / 100 : null,
+    };
+  });

@@ -39,12 +39,14 @@ import { getFleetClient, unwrap } from '../common/fleet/client';
 import { useFleetPermission, useFleetProfile } from '../common/fleet/useFleet';
 import { circleArea, pairVisits, visitTotals } from '../common/fleet/visits';
 import FleetNotice from './components/FleetNotice';
-import { camel, cleanPayload, toNumber, useFleetRows } from './stage5Data';
+import { camel, cleanPayload, toNumber, useFleetRows } from './fleetRows';
 import { keepOnBackdrop } from '../common/util/formDialog';
 import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
 import ImportDialog from './components/ImportDialog';
 import { importEntity } from '../common/fleet/bulkImport';
 import WazeButton from '../common/components/WazeButton';
+import AddressField from '../common/components/AddressField';
+import PickOnMapButton from '../map/picker/PickOnMapButton';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -182,9 +184,32 @@ const PoiDialog = ({ poi, onClose, onSaved }) => {
               </MenuItem>
             ))}
           </TextField>
-          {field('address', 'positionAddress', { className: classes.wide })}
+          {/* ISR-10: the address is looked up as typed, and picking one fills its coordinates. */}
+          <AddressField
+            className={classes.wide}
+            label={t('positionAddress')}
+            value={form.address ?? ''}
+            onChange={(address) => setForm((current) => ({ ...current, address }))}
+            onPick={(picked) =>
+              setForm((current) => ({
+                ...current,
+                address: picked.address,
+                latitude: picked.latitude ?? current.latitude,
+                longitude: picked.longitude ?? current.longitude,
+              }))
+            }
+          />
           {field('latitude', 'positionLatitude', { type: 'number', ...ltr })}
           {field('longitude', 'positionLongitude', { type: 'number', ...ltr })}
+          {/* ADM-20: the place picked on a map, when there is no address to type. */}
+          <PickOnMapButton
+            className={classes.wide}
+            latitude={form.latitude}
+            longitude={form.longitude}
+            onPick={({ latitude, longitude }) =>
+              setForm((current) => ({ ...current, latitude, longitude }))
+            }
+          />
           {field('radius_m', 'fleetPoiRadius', { type: 'number', ...ltr })}
           {field('opening_hours', 'fleetPoiHours')}
           {field('contact_name', 'fleetVendorContact')}
@@ -215,7 +240,7 @@ const PoiDialog = ({ poi, onClose, onSaved }) => {
 
 const views = ['points', 'visits'];
 
-// Roadmap stage 5: points of interest (customers, depots, suppliers) and customer visits.
+// Points of interest (customers, depots, suppliers) and customer visits.
 const PoiPage = () => {
   const { classes } = useStyles();
   const theme = useTheme();

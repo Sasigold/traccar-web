@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
   Alert,
@@ -35,7 +36,7 @@ import { useInvalidateFleet } from '../common/data/fleetQuery';
 import { keepOnBackdrop } from '../common/util/formDialog';
 import { TEMPLATES, backtest, sentence } from '../common/fleet/automations';
 import FleetNotice from './components/FleetNotice';
-import { useFleetRows } from './stage5Data';
+import { useFleetRows } from './fleetRows';
 
 const DAY = 86400000;
 
@@ -61,14 +62,19 @@ const useSentence = () => {
   };
 };
 
-const RuleDialog = ({ onClose, onSaved }) => {
+const RuleDialog = ({ onClose, onSaved, initial = null }) => {
   const t = useTranslation();
   const profile = useFleetProfile();
   const describe = useSentence();
   const devices = useSelector((state) => state.devices.items);
   const geofences = useSelector((state) => state.geofences.items);
-  const [template, setTemplate] = useState('afterHours');
-  const [params, setParams] = useState(TEMPLATES.afterHours.defaults);
+  // LIV-24: an alert in the alert center can open this with its kind already chosen.
+  const start = initial && TEMPLATES[initial.template] ? initial.template : 'afterHours';
+  const [template, setTemplate] = useState(start);
+  const [params, setParams] = useState(() => ({
+    ...TEMPLATES[start].defaults,
+    ...(start === initial?.template ? initial.params : {}),
+  }));
   const [result, setResult] = useState(null);
   const [testing, setTesting] = useState(false);
   const rule = { template, params };
@@ -232,7 +238,20 @@ const AutomationsPage = () => {
   const canRead = useFleetPermission('alerts.read');
   const canManage = useFleetPermission('alerts.manage');
   const invalidate = useInvalidateFleet();
-  const [creating, setCreating] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [creating, setCreating] = useState(() => {
+    const template = searchParams.get('template');
+    if (!template) return false;
+    try {
+      return { template, params: JSON.parse(searchParams.get('params') || '{}') };
+    } catch {
+      return { template, params: {} };
+    }
+  });
+  const closeDialog = () => {
+    setCreating(false);
+    if (searchParams.has('template')) setSearchParams({}, { replace: true });
+  };
   const rules = useFleetRows('automation_rules', {
     order: 'created_at',
     ascending: false,
@@ -304,9 +323,10 @@ const AutomationsPage = () => {
       </DataTable>
       {creating && (
         <RuleDialog
-          onClose={() => setCreating(false)}
+          initial={typeof creating === 'object' ? creating : null}
+          onClose={closeDialog}
           onSaved={() => {
-            setCreating(false);
+            closeDialog();
             invalidate('automation_rules');
           }}
         />

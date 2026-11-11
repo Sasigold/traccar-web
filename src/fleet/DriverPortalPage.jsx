@@ -12,6 +12,8 @@ import { makeStyles } from 'tss-react/mui';
 import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
 import CarCrashRoundedIcon from '@mui/icons-material/CarCrashRounded';
 import QrCodeScannerRoundedIcon from '@mui/icons-material/QrCodeScannerRounded';
+import KeyRoundedIcon from '@mui/icons-material/KeyRounded';
+import LocalGasStationRoundedIcon from '@mui/icons-material/LocalGasStationRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import DirectionsCarRoundedIcon from '@mui/icons-material/DirectionsCarRounded';
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
@@ -29,6 +31,7 @@ import DriverSafetyCard from './components/DriverSafetyCard';
 import DriverSelfReviewCard from './components/DriverSelfReviewCard';
 import { incidentKey } from './IncidentsPage';
 import DispatcherContact, { useOrgContact } from './components/DispatcherContact';
+import DriverCoursesCard from './components/DriverCoursesCard';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -293,12 +296,34 @@ const DriverPortalPage = () => {
                   <QrCodeScannerRoundedIcon />
                   {t('driverCheckIn')}
                 </Button>
+                {/* ISR-11: handing the vehicle over or back, signed. */}
+                <Button
+                  variant="outlined"
+                  className={classes.action}
+                  component={RouterLink}
+                  to="/driver/handover"
+                >
+                  <KeyRoundedIcon />
+                  {t('driverHandover')}
+                </Button>
+                {/* ADM-18: a fueling paid on the road, with the receipt's photo. */}
+                <Button
+                  variant="outlined"
+                  className={classes.action}
+                  component={RouterLink}
+                  to="/driver/fuel"
+                >
+                  <LocalGasStationRoundedIcon />
+                  {t('driverFuel')}
+                </Button>
               </div>
             </Paper>
 
             <DriverJobsCard driverId={data.driver.id} />
 
             <DriverPrivacyCard driverId={data.driver.id} hasVehicle={Boolean(data.assignment)} />
+
+            <DriverCoursesCard />
 
             <DriverSelfReviewCard />
             <DriverSafetyCard driverId={data.driver.id} />

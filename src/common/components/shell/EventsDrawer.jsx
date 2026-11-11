@@ -145,11 +145,17 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: alpha(theme.palette.primary.main, 0.12),
-    '& img': {
+    // BRD-07: the event's icon as a mask in the theme's color, not an image inverted for dark.
+    '& .vf-event-glyph': {
       width: 20,
       height: 20,
-      filter: theme.palette.mode === 'dark' ? 'invert(1) brightness(1.2)' : 'none',
-      opacity: 0.85,
+      backgroundColor: theme.palette.primary.main,
+      maskSize: 'contain',
+      maskRepeat: 'no-repeat',
+      maskPosition: 'center',
+      WebkitMaskSize: 'contain',
+      WebkitMaskRepeat: 'no-repeat',
+      WebkitMaskPosition: 'center',
     },
   },
   // LIV-24: the handling chip: status, and the countdown to the response target.
@@ -434,7 +440,14 @@ const EventsDrawer = ({ open, onClose }) => {
                         onClick={() => openEvent(event)}
                       >
                         <span className={classes.icon}>
-                          <img src={eventIcons[eventIconKey(event.type)]} alt="" />
+                          <span
+                            className="vf-event-glyph"
+                            aria-hidden="true"
+                            style={{
+                              maskImage: `url("${eventIcons[eventIconKey(event.type)]}")`,
+                              WebkitMaskImage: `url("${eventIcons[eventIconKey(event.type)]}")`,
+                            }}
+                          />
                           {severity !== 'info' && (
                             <span className={cx(classes.severity, classes[severity])} />
                           )}

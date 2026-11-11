@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { beat } from '../common/theme/motion';
 import { makeStyles } from 'tss-react/mui';
@@ -8,6 +8,7 @@ import {
   Tooltip,
   Chip,
   Avatar,
+  Checkbox,
   ListItemAvatar,
   ListItemText,
   ListItemButton,
@@ -21,6 +22,7 @@ import BatteryCharging60Icon from '@mui/icons-material/BatteryCharging60Rounded'
 import Battery20Icon from '@mui/icons-material/Battery20Rounded';
 import BatteryCharging20Icon from '@mui/icons-material/BatteryCharging20Rounded';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
+import BuildCircleRoundedIcon from '@mui/icons-material/BuildCircleRounded';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useLivePosition } from '../common/fleet/usePrivacy';
@@ -46,6 +48,7 @@ import useActivityText, { toneColor } from '../common/components/useActivityText
 import { brandTile, statusColor } from '../common/theme/surfaces';
 import Highlight from '../common/components/Highlight';
 import { deviceSearchFields, matchDevice } from '../common/util/deviceSearch';
+import { serviceReasons } from '../common/fleet/predict';
 
 dayjs.extend(relativeTime);
 
@@ -240,7 +243,10 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
+// PRF-04: compiled by React Compiler, and memoized, so a live update re-renders only the rows
+// of the vehicles that changed.
 const DeviceRow = ({ devices, tokens = [], favorites = [], index, style, focusIndex }) => {
+  'use memo';
   const { classes, cx, theme } = useStyles();
   const dispatch = useDispatch();
   const t = useTranslation();
@@ -248,8 +254,11 @@ const DeviceRow = ({ devices, tokens = [], favorites = [], index, style, focusIn
   const admin = useAdministrator();
   const selectedDeviceId = useSelector((state) => state.devices.selectedId);
   const selectTime = useSelector((state) => state.devices.selectTime);
+  // LIV-25: while picking, a tap picks the vehicle instead of opening it.
+  const picking = useSelector((state) => state.devices.picked != null);
 
   const item = devices[index];
+  const picked = useSelector((state) => Boolean(state.devices.picked?.includes(item.id)));
   const position = useLivePosition(item.id);
   const groups = useSelector((state) => state.groups.items);
   const drivers = useSelector((state) => state.drivers.items);
@@ -346,9 +355,21 @@ const DeviceRow = ({ devices, tokens = [], favorites = [], index, style, focusIn
   const batteryLabel =
     position?.attributes.hasOwnProperty('batteryLevel') &&
     `${t('positionBatteryLevel')}: ${formatPercentage(Math.round(position.attributes.batteryLevel))}`;
+  // AI-06: fault codes now, or a weak battery at rest.
+  const service = serviceReasons(position);
+  const serviceLabel =
+    service.length > 0 &&
+    `${t('serviceNeeded')}: ${service
+      .map((reason) =>
+        reason.type === 'faults'
+          ? t('serviceFaults').replace('{0}', reason.codes.join(', '))
+          : t('serviceBattery').replace('{0}', reason.volts.toFixed(1)),
+      )
+      .join(' · ')}`;
   const indicatorLabels = [
     item.disabled && t('deviceDisabledChip'),
     alarmLabel,
+    serviceLabel,
     ignitionLabel,
     batteryLabel,
   ].filter(Boolean);
@@ -382,17 +403,30 @@ const DeviceRow = ({ devices, tokens = [], favorites = [], index, style, focusIn
       <ListItemButton
         ref={rowRef}
         key={item.id}
-        onClick={() => dispatch(devicesActions.selectId(item.id))}
+        onClick={() =>
+          dispatch(
+            picking ? devicesActions.togglePicked(item.id) : devicesActions.selectId(item.id),
+          )
+        }
         disabled={!admin && item.disabled}
         // LIV-30: one tab stop for the whole list; the arrows move between rows (DeviceList).
         tabIndex={focusIndex == null || focusIndex === index ? 0 : -1}
         data-row={index}
-        selected={selectedDeviceId === item.id}
-        aria-pressed={selectedDeviceId === item.id}
+        selected={picking ? picked : selectedDeviceId === item.id}
+        aria-pressed={picking ? picked : selectedDeviceId === item.id}
         className={cx(classes.row, selectedDeviceId === item.id && classes.selected)}
       >
         {selectedDeviceId === item.id && (
           <span key={selectTime} className={classes.flash} aria-hidden />
+        )}
+        {picking && (
+          <Checkbox
+            checked={picked}
+            tabIndex={-1}
+            size="small"
+            sx={{ marginInlineEnd: 0.5 }}
+            slotProps={{ input: { 'aria-hidden': true } }}
+          />
         )}
         <ListItemAvatar className={classes.avatarWrapper}>
           <span className={classes.avatarBox}>
@@ -481,6 +515,13 @@ const DeviceRow = ({ devices, tokens = [], favorites = [], index, style, focusIn
                 </span>
               </Tooltip>
             )}
+            {serviceLabel && (
+              <Tooltip title={serviceLabel}>
+                <span className={classes.indicator} aria-hidden>
+                  <BuildCircleRoundedIcon fontSize="small" className={classes.warning} />
+                </span>
+              </Tooltip>
+            )}
             {position?.attributes.hasOwnProperty('ignition') && (
               <Tooltip title={ignitionLabel}>
                 <span className={classes.indicator} aria-hidden>
@@ -525,4 +566,4 @@ const DeviceRow = ({ devices, tokens = [], favorites = [], index, style, focusIn
   );
 };
 
-export default DeviceRow;
+export default memo(DeviceRow);

@@ -7,6 +7,7 @@ import StoreRoundedIcon from '@mui/icons-material/StoreRounded';
 import { useTranslation } from '../../common/components/LocalizationProvider';
 import { useCatch } from '../../reactHelper';
 import FormSection from '../../settings/components/FormSection';
+import { useFormChanges } from '../../common/components/confirm/unsavedChanges';
 import { saveCustomer } from '../adminApi';
 import { capitalize, customerStatuses } from '../CustomersPage';
 
@@ -38,16 +39,22 @@ const fields = [
   { key: 'address', label: 'adminAddress' },
 ];
 
-const CustomerDetails = ({ customer, editable, onSaved, customers = [] }) => {
+const CustomerDetails = ({ customer, editable, onSaved, onSuspended, customers = [] }) => {
   const { classes } = useStyles();
   const t = useTranslation();
   const [form, setForm] = useState(customer);
   const [saving, setSaving] = useState(false);
+  // ADM-26: leaving the tab (or the page) with changes asks first.
+  useFormChanges(form, true);
 
   const handleSave = useCatch(async () => {
     setSaving(true);
     try {
-      onSaved(await saveCustomer({ ...form, name: form.name.trim() }));
+      const saved = await saveCustomer({ ...form, name: form.name.trim() });
+      onSaved(saved);
+      if (form.status === 'suspended' && customer.status !== 'suspended') {
+        await onSuspended?.(saved);
+      }
     } finally {
       setSaving(false);
     }

@@ -26,6 +26,8 @@ import { REFRESH_OPTIONS } from '../model/schema';
 import { useDashboardData, useLastSynced } from '../data/DashboardDataContext';
 import { PERIOD_KEYS, periodLabel } from './periodLabel';
 import { DateRangeField } from '../../common/components/pickers';
+import { useFleetQuery } from '../../common/data/fleetQuery';
+import { useFleetPermission } from '../../common/fleet/useFleet';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -95,6 +97,14 @@ const DashboardFilterBar = ({ filters, refresh, onFilters, onRefresh }) => {
   const { range, refreshNow } = useDashboardData();
   const synced = useLastSynced();
   const [custom, setCustom] = useState(null);
+  // REP-05: the drivers of the fleet, to see the period through one driver's vehicles.
+  const canDrivers = useFleetPermission('drivers.read');
+  const { data: drivers } = useFleetQuery(
+    'drivers',
+    ['dashboard-filter'],
+    (client) => client.from('drivers').select('id, full_name').order('full_name'),
+    { enabled: canDrivers },
+  );
 
   const groupList = Object.values(groups).sort((a, b) => a.name.localeCompare(b.name));
   const shiftable = filters.period !== 'custom' || Boolean(filters.from);
@@ -190,6 +200,34 @@ const DashboardFilterBar = ({ filters, refresh, onFilters, onRefresh }) => {
           {groupList.map((group) => (
             <MenuItem key={group.id} value={group.id}>
               <ListItemText>{group.name}</ListItemText>
+            </MenuItem>
+          ))}
+        </Select>
+      )}
+      {canDrivers && (drivers?.length > 0 || filters.driverId) && (
+        <Select
+          size="small"
+          displayEmpty
+          className={classes.select}
+          value={filters.driverId || ''}
+          input={<OutlinedInput />}
+          inputProps={{ 'aria-label': t('dashboardDriverFilter') }}
+          onChange={(event) => {
+            onFilters({ ...filters, driverId: event.target.value || undefined });
+          }}
+          renderValue={(value) =>
+            value
+              ? (drivers || []).find((driver) => driver.id === value)?.full_name ||
+                t('sharedDriver')
+              : t('dashboardAllDrivers')
+          }
+        >
+          <MenuItem value="">
+            <ListItemText>{t('dashboardAllDrivers')}</ListItemText>
+          </MenuItem>
+          {(drivers || []).map((driver) => (
+            <MenuItem key={driver.id} value={driver.id}>
+              <ListItemText>{driver.full_name}</ListItemText>
             </MenuItem>
           ))}
         </Select>

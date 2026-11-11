@@ -296,6 +296,21 @@ const MapSelectedDevice = () => {
     startLoop();
   };
 
+  // LIV-15: F follows the selected vehicle again (the physical key, so a Hebrew layout works).
+  const relockRef = useRef(relock);
+  relockRef.current = relock;
+  useEffect(() => {
+    if (!currentId) return undefined;
+    const onKeyDown = (event) => {
+      if (event.code === 'KeyF' && !event.shiftKey && shortcutAllowed(event)) {
+        event.preventDefault();
+        relockRef.current();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [currentId]);
+
   // While the card is open it shows the selection itself; the pill speaks up once it is closed,
   // or when the map was moved away from the vehicle.
   if (!currentId || !(released || (following && cardHidden))) {

@@ -1,5 +1,5 @@
-// Setup for component tests (FND-07). Files that render React start with
-// `// @vitest-environment jsdom`; the rest keep running in node, where this file does nothing.
+// Setup for component tests (FND-07). Files that render React start with a vitest environment
+// comment that asks for jsdom; the rest keep running in node, where this file does nothing.
 import { afterEach } from 'vitest';
 
 if (typeof document !== 'undefined') {

@@ -49,6 +49,13 @@ const useStyles = makeStyles()((theme) => ({
     borderRadius: 1,
     flexShrink: 0,
   },
+  // REP-09: a dashed line, for a comparison series such as the period before.
+  dashed: {
+    width: 14,
+    height: 0,
+    borderTop: '2px dashed',
+    flexShrink: 0,
+  },
   label: {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
@@ -71,7 +78,7 @@ const useStyles = makeStyles()((theme) => ({
 }));
 
 // HTML legend (page direction, real text). Text keeps text colors; the colored mark
-// beside it carries identity. `items`: [{ key, label, color, text?, share? }]
+// beside it carries identity. `items`: [{ key, label, color, text?, share?, shape? }]
 const ChartLegend = ({ items, shape = 'swatch', column = false, onSelect, className }) => {
   const { classes, cx } = useStyles();
   return (
@@ -79,10 +86,14 @@ const ChartLegend = ({ items, shape = 'swatch', column = false, onSelect, classN
       {items.map((item) => {
         const content = (
           <>
-            <span
-              className={shape === 'line' ? classes.line : classes.swatch}
-              style={{ backgroundColor: item.color }}
-            />
+            {(item.shape ?? shape) === 'dashed' ? (
+              <span className={classes.dashed} style={{ borderTopColor: item.color }} />
+            ) : (
+              <span
+                className={(item.shape ?? shape) === 'line' ? classes.line : classes.swatch}
+                style={{ backgroundColor: item.color }}
+              />
+            )}
             <span className={classes.label} title={item.label}>
               {item.label}
             </span>

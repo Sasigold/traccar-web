@@ -104,3 +104,19 @@ export const geofenceAt = (geofences, latitude, longitude) =>
     }
     return false;
   }) || null;
+
+// REP-13: the fleet's point of interest (a customer, a depot...) the point is in, by its radius;
+// the closest when several cover it.
+export const poiAt = (pois, latitude, longitude) => {
+  let found = null;
+  let nearest = Infinity;
+  (pois || []).forEach((poi) => {
+    if (poi?.latitude == null || poi?.longitude == null) return;
+    const distance = distanceMeters(poi.latitude, poi.longitude, latitude, longitude);
+    if (distance <= (poi.radius_m || 100) && distance < nearest) {
+      found = poi;
+      nearest = distance;
+    }
+  });
+  return found;
+};

@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { useCallback, useEffect, useRef } from 'react';
 import { useTheme } from '@mui/material/styles';
 import { useMediaQuery } from '@mui/material';
@@ -8,6 +9,7 @@ import { useCatchCallback } from '../reactHelper';
 import { findFonts, toMapCoordinates } from './core/mapUtil';
 import { createTrack, retargetTrack, trackCoordinates } from './core/motion';
 import { prefersReducedMotion } from './core/movingIcon';
+import { drawRing, parseRing, ringImageExpression } from './core/clusterRing';
 
 // Marker images are 48 px squares; the selection ring sits just outside the disc.
 const MARKER_SIZE = 48;
@@ -55,6 +57,8 @@ const MapMarkers = ({
   cluster,
   direction,
   onClick,
+  // LIV-12: (properties, { x, y }) after a short hover on a marker, (null) when it ends.
+  onHover,
   disabled,
   smooth = false,
   ring = false,
@@ -75,6 +79,26 @@ const MapMarkers = ({
     },
     [onClick],
   );
+
+  const onHoverRef = useRef(onHover);
+  onHoverRef.current = onHover;
+  const hoverTimerRef = useRef(null);
+  const onMarkerEnter = useCallback((event) => {
+    onMouseEnter();
+    clearTimeout(hoverTimerRef.current);
+    const properties = event.features?.[0]?.properties;
+    const { point } = event;
+    if (!onHoverRef.current || !properties) return;
+    hoverTimerRef.current = setTimeout(
+      () => onHoverRef.current?.(properties, { x: point.x, y: point.y }),
+      250,
+    );
+  }, []);
+  const onMarkerLeave = useCallback(() => {
+    onMouseLeave();
+    clearTimeout(hoverTimerRef.current);
+    onHoverRef.current?.(null);
+  }, []);
 
   const onClusterClick = useCatchCallback(async (event) => {
     if (disabledRef.current) return;
@@ -127,7 +151,7 @@ const MapMarkers = ({
         }
       : {}),
     ...(onClick
-      ? { on: { mouseenter: onMouseEnter, mouseleave: onMouseLeave, click: onMarkerClick } }
+      ? { on: { mouseenter: onMarkerEnter, mouseleave: onMarkerLeave, click: onMarkerClick } }
       : {}),
   };
 
@@ -183,6 +207,18 @@ const MapMarkers = ({
   }
 
   if (cluster) {
+    // LIV-29: a ring under the count, split by status in proportion: aqua online, red offline,
+    // slate the rest (the image is drawn on demand, see clusterRing.js).
+    layers.push({
+      key: 'clusterRing',
+      type: 'symbol',
+      filter: ['has', 'point_count'],
+      layout: {
+        'icon-image': ringImageExpression(theme.palette.mode),
+        'icon-allow-overlap': true,
+        'icon-ignore-placement': true,
+      },
+    });
     layers.push({
       key: 'clusters',
       type: 'symbol',
@@ -201,14 +237,60 @@ const MapMarkers = ({
       },
       on: { mouseenter: onMouseEnter, mouseleave: onMouseLeave, click: onClusterClick },
     });
+    // LIV-29: a red dot on a cluster with a vehicle in alarm.
+    layers.push({
+      key: 'clusterAlert',
+      type: 'circle',
+      filter: ['all', ['has', 'point_count'], ['>', ['get', 'alerts'], 0]],
+      paint: {
+        'circle-radius': 5 * iconScale,
+        'circle-color': theme.palette.error.main,
+        'circle-stroke-color': theme.palette.brand.paper,
+        'circle-stroke-width': 2,
+        'circle-translate': [ringRadius * 0.7, -ringRadius * 0.7],
+      },
+    });
   }
+
+  // LIV-29: the split rings are drawn the first time the map asks for one.
+  useEffect(() => {
+    if (!cluster) return undefined;
+    const colors = {
+      online: theme.palette.brand.aqua,
+      offline: theme.palette.error.main,
+      other: theme.palette.brand.slate,
+    };
+    const onMissing = ({ id: name }) => {
+      const ring = parseRing(name);
+      if (!ring || ring.mode !== theme.palette.mode || map.hasImage(name)) return;
+      const ratio = window.devicePixelRatio || 1;
+      map.addImage(
+        name,
+        drawRing(ring.parts, colors, { diameter: (ringRadius + 2.5) * 2, width: 3, ratio }),
+        { pixelRatio: ratio },
+      );
+    };
+    map.on('styleimagemissing', onMissing);
+    return () => map.off('styleimagemissing', onMissing);
+  }, [cluster, ringRadius, theme]);
 
   // Glide state, kept outside React: one track per device (see motion.js).
   const tracksRef = useRef(new Map());
   const animate = smooth && !prefersReducedMotion();
 
   const id = useMapLayer({
-    source: cluster ? { cluster: true, clusterMaxZoom: 14, clusterRadius: 50 } : undefined,
+    source: cluster
+      ? {
+          cluster: true,
+          clusterMaxZoom: 14,
+          clusterRadius: 50,
+          clusterProperties: {
+            online: ['+', ['case', ['==', ['get', 'status'], 'online'], 1, 0]],
+            offline: ['+', ['case', ['==', ['get', 'status'], 'offline'], 1, 0]],
+            alerts: ['+', ['coalesce', ['get', 'alert'], 0]],
+          },
+        }
+      : undefined,
     layers,
     layersDeps: [
       theme.palette.mode,

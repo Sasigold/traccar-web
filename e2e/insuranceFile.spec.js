@@ -52,6 +52,8 @@ test('the incident opens a printable file for the insurer', async ({ page }) => 
   await expect(file).toContainText('פגיעה אחורית ברמזור');
   await expect(file).toContainText('50 קמ"ש');
   await expect(file.getByRole('row')).toHaveCount(4);
+  // SAF-04: the track drawn around the impact.
+  await expect(file.getByRole('img', { name: 'שרטוט המסלול סביב רגע הפגיעה' })).toBeVisible();
 
   // On paper only the file shows.
   await page.emulateMedia({ media: 'print' });

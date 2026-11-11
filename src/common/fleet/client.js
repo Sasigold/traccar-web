@@ -38,6 +38,8 @@ const fetchAndInvalidate = async (input, init = {}) => {
 
 // One Supabase client for the whole app. Every request carries the JWT minted
 // from the Traccar login (see session.js), so RLS sees the right profile.
+// ARC-11: typed by the generated database contract (database.d.ts, tools/db-types.sh).
+/** @returns {import('@supabase/supabase-js').SupabaseClient<import('./database').Database>} */
 export const getFleetClient = () => {
   if (!client) {
     client = createClient(fleetConfig.url, fleetConfig.anonKey, {
@@ -51,6 +53,7 @@ export const getFleetClient = () => {
 
 // Supabase errors carry the code (42501 row security, 23505 duplicate) and the text; throw them
 // as ApiError so the user reads what happened in their language.
+/** @param {{ data: any, error: any, status?: number }} result */
 export const unwrap = ({ data, error, status }) => {
   if (error) {
     const message = error.message || String(error);

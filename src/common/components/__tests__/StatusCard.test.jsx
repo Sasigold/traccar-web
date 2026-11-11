@@ -65,7 +65,8 @@ describe('the vehicle card', () => {
       { state: state() },
     );
     await user.click(await screen.findByRole('button', { name: 'סגירה' }));
-    expect(onClose).toHaveBeenCalled();
+    // LIV-14: the card plays its 160ms exit before it closes.
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
     await user.click(screen.getByRole('button', { name: 'מחוונים חיים' }));
     expect(location.current.pathname).toBe('/telemetry/1');
   });

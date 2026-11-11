@@ -1,9 +1,9 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { useState } from 'react';
 import { kml } from '@tmcw/togeojson';
-import gcoord from 'gcoord';
 import { useTheme } from '@mui/material/styles';
 import { map } from '../core/MapView';
-import { getCoordinateSystem } from '../core/mapState';
+import { getCoordinateSystem, getGcoord } from '../core/mapState';
 import useMapLayer from '../core/useMapLayer';
 import { useAsyncTask } from '../../reactHelper';
 import { usePreference } from '../../common/util/preferences';
@@ -61,8 +61,8 @@ const PoiMap = () => {
       const dom = new DOMParser().parseFromString(await file.text(), 'text/xml');
       const parsed = kml(dom);
       const collection =
-        getCoordinateSystem() === 'gcj02'
-          ? gcoord.transform(parsed, gcoord.WGS84, gcoord.GCJ02)
+        getCoordinateSystem() === 'gcj02' && getGcoord()
+          ? getGcoord().transform(parsed, getGcoord().WGS84, getGcoord().GCJ02)
           : parsed;
       setData(collection);
       const hrefs = [
@@ -95,6 +95,20 @@ const PoiMap = () => {
     [poiLayer],
   );
 
+  // LIV-21: a point of interest opens "nearby vehicles" for it (MapContextMenu listens).
+  const openNearby = (event) => {
+    const feature = event.features?.[0];
+    if (!feature || feature.geometry?.type !== 'Point') return;
+    const [longitude, latitude] = feature.geometry.coordinates;
+    map.fire('vf-nearby', { latitude, longitude, name: feature.properties?.name });
+  };
+  const pointer = () => {
+    map.getCanvas().style.cursor = 'pointer';
+  };
+  const unpointer = () => {
+    map.getCanvas().style.cursor = '';
+  };
+
   useMapLayer({
     layers: [
       {
@@ -116,6 +130,7 @@ const PoiMap = () => {
           'circle-radius': 5,
           'circle-color': ['coalesce', ['get', 'icon-color'], theme.palette.geometry.main],
         },
+        on: { click: openNearby, mouseenter: pointer, mouseleave: unpointer },
       },
       {
         key: 'line',
@@ -137,6 +152,7 @@ const PoiMap = () => {
           'icon-size': ['coalesce', ['get', 'icon-scale'], 1],
           'icon-allow-overlap': true,
         },
+        on: { click: openNearby, mouseenter: pointer, mouseleave: unpointer },
       },
       {
         key: 'title',

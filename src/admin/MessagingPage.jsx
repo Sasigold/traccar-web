@@ -21,14 +21,13 @@ import AdminMenu from './components/AdminMenu';
 import AdminGate from './components/AdminGate';
 import { useAdminAccess } from './useAdmin';
 import { getFleetClient, unwrap } from '../common/fleet/client';
+import { capitalize } from '../common/util/stringUtils';
 
 const CHANNELS = [
   { channel: 'whatsapp', providers: ['meta', 'webhook'], icon: <ChatRoundedIcon /> },
   { channel: 'sms', providers: ['vonage', 'webhook'], icon: <SmsRoundedIcon /> },
   { channel: 'email', providers: ['resend', 'webhook'], icon: <EmailRoundedIcon /> },
 ];
-
-const capital = (value) => value.replace(/^\w/, (c) => c.toUpperCase());
 
 const useStyles = makeStyles()((theme) => ({
   page: {
@@ -86,7 +85,7 @@ const ChannelCard = ({ spec, settings, hasSecret, onSaved }) => {
   const [notice, setNotice] = useState(null);
 
   const client = getFleetClient();
-  const providerKey = capital(values.provider);
+  const providerKey = capitalize(values.provider);
 
   const save = useCatch(async () => {
     unwrap(await client.from('messaging_channels').upsert({ ...values, updated_at: new Date() }));
@@ -108,8 +107,8 @@ const ChannelCard = ({ spec, settings, hasSecret, onSaved }) => {
 
   return (
     <FormSection
-      title={t(`fleetChannel${capital(spec.channel)}`)}
-      description={t(`messagingHelp${capital(spec.channel)}`)}
+      title={t(`fleetChannel${capitalize(spec.channel)}`)}
+      description={t(`messagingHelp${capitalize(spec.channel)}`)}
       icon={spec.icon}
       actions={
         <Chip
@@ -134,7 +133,7 @@ const ChannelCard = ({ spec, settings, hasSecret, onSaved }) => {
         >
           {spec.providers.map((provider) => (
             <MenuItem key={provider} value={provider}>
-              {t(`messagingProvider${capital(provider)}`)}
+              {t(`messagingProvider${capitalize(provider)}`)}
             </MenuItem>
           ))}
         </TextField>
@@ -161,6 +160,18 @@ const ChannelCard = ({ spec, settings, hasSecret, onSaved }) => {
             value={values.template || ''}
             onChange={(event) => setValues({ ...values, template: event.target.value })}
             slotProps={{ htmlInput: { dir: 'ltr' } }}
+          />
+        )}
+        {spec.channel === 'email' && (
+          // BRD-08: the branded email loads its logo from the app and its button opens it.
+          <TextField
+            className={classes.wide}
+            label={t('messagingSiteUrl')}
+            helperText={t('messagingSiteUrlHelp')}
+            value={values.site_url || ''}
+            onChange={(event) => setValues({ ...values, site_url: event.target.value || null })}
+            error={Boolean(values.site_url) && !/^https:\/\/[^\s/]+/.test(values.site_url)}
+            slotProps={{ htmlInput: { dir: 'ltr', inputMode: 'url' } }}
           />
         )}
         <div className={classes.wide}>

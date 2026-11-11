@@ -50,3 +50,31 @@ export const overspeedBand = (attributes) =>
     (Number(attributes?.speed) || 0) * 1.852,
     (Number(attributes?.speedLimit) || 0) * 1.852,
   );
+
+// REP-14: the geofences report by geofence: visits, vehicles, time inside (open visits up to
+// now), the average visit and how many are still inside. Most time first.
+export const byGeofence = (visits, now = Date.now()) => {
+  const groups = new Map();
+  visits.forEach((visit) => {
+    const group = groups.get(visit.geofenceId) || {
+      geofenceId: visit.geofenceId,
+      visits: 0,
+      devices: new Set(),
+      total: 0,
+      inside: 0,
+    };
+    const { open, duration } = visitDuration(visit, now);
+    group.visits += 1;
+    group.devices.add(visit.deviceId);
+    group.total += duration || 0;
+    if (open) group.inside += 1;
+    groups.set(visit.geofenceId, group);
+  });
+  return [...groups.values()]
+    .map(({ devices, ...group }) => ({
+      ...group,
+      vehicles: devices.size,
+      average: group.visits ? group.total / group.visits : 0,
+    }))
+    .sort((a, b) => b.total - a.total);
+};

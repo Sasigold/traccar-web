@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 // ADM-10: what the driver sends waits in the device until it is through. Each send is kept in
 // IndexedDB (photos as Blobs) and done in steps that are safe to repeat: the rows carry ids made
 // here, so a retry after a lost answer finds them instead of adding a second report, and a photo

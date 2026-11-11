@@ -1,3 +1,4 @@
+// @ts-nocheck -- ARC-11: not type-clean yet; remove this line when fixing the file.
 import { eventCategory } from './safety';
 
 // SAF-01: the safety inbox. Pure, unit-tested.
