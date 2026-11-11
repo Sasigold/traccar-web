@@ -57,6 +57,7 @@ import FleetNotice from './components/FleetNotice';
 import RoutePlanDialog from './components/RoutePlanDialog';
 import { DispatchMap, DispatchSchedule } from './components/DispatchViews';
 import AddressField from '../common/components/AddressField';
+import PickOnMapButton from '../map/picker/PickOnMapButton';
 import {
   camel,
   cleanPayload,
@@ -317,6 +318,15 @@ const JobDialog = ({ job, pois, vehicles, drivers, onClose, onSaved }) => {
           />
           {field('latitude', 'positionLatitude', { type: 'number', ...ltr })}
           {field('longitude', 'positionLongitude', { type: 'number', ...ltr })}
+          {/* ADM-20: the place picked on a map, when there is no address to type. */}
+          <PickOnMapButton
+            className={classes.wide}
+            latitude={form.latitude}
+            longitude={form.longitude}
+            onPick={({ latitude, longitude }) =>
+              setForm((current) => ({ ...current, latitude, longitude }))
+            }
+          />
           {select(
             'vehicle_id',
             'fleetEntityVehicle',

@@ -5,7 +5,7 @@ import * as maplibregl from 'maplibre-gl';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { Protocol } from 'pmtiles';
 import { useRef, useLayoutEffect, useEffect, useState, useMemo } from 'react';
-import { useTheme, alpha } from '@mui/material';
+import { useTheme } from '@mui/material';
 import MapSwitcher from '../control/MapSwitcher';
 import { useAttributePreference, usePreference } from '../../common/util/preferences';
 import usePersistedState from '../../common/util/usePersistedState';
@@ -14,6 +14,7 @@ import { getGcoord, loadGcoord, setCoordinateSystem } from './mapState';
 import useMapStyles from './useMapStyles';
 import { localizeStyle } from './mapLanguage';
 import { brandStyle } from './brandStyle';
+import mapControlVariables from './controlVariables';
 import { useLocalization, useTranslation } from '../../common/components/LocalizationProvider';
 import { googleProtocol } from './googleProtocol';
 import { useAsyncTask } from '../../reactHelper';
@@ -221,19 +222,7 @@ const MapView = ({ children }) => {
     };
   }, [containerRef]);
 
-  const controlVariables = useMemo(() => {
-    const dark = theme.palette.mode === 'dark';
-    return {
-      '--map-ctrl-bg': theme.palette.background.paper,
-      '--map-ctrl-border': theme.palette.surface.border,
-      '--map-ctrl-divider': theme.palette.surface.border,
-      '--map-ctrl-hover': alpha(theme.palette.primary.main, 0.1),
-      '--map-ctrl-fg': theme.palette.text.primary,
-      '--map-ctrl-accent': theme.palette.primary.main,
-      '--map-ctrl-icon-filter': dark ? 'invert(1) brightness(1.1)' : 'none',
-      '--map-ctrl-shadow': theme.shadows[3],
-    };
-  }, [theme]);
+  const controlVariables = useMemo(() => mapControlVariables(theme), [theme]);
 
   return (
     <div style={{ width: '100%', height: '100%', ...controlVariables }} ref={containerRef}>

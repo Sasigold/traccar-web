@@ -46,6 +46,7 @@ import ImportDialog from './components/ImportDialog';
 import { importEntity } from '../common/fleet/bulkImport';
 import WazeButton from '../common/components/WazeButton';
 import AddressField from '../common/components/AddressField';
+import PickOnMapButton from '../map/picker/PickOnMapButton';
 
 const useStyles = makeStyles()((theme) => ({
   form: {
@@ -200,6 +201,15 @@ const PoiDialog = ({ poi, onClose, onSaved }) => {
           />
           {field('latitude', 'positionLatitude', { type: 'number', ...ltr })}
           {field('longitude', 'positionLongitude', { type: 'number', ...ltr })}
+          {/* ADM-20: the place picked on a map, when there is no address to type. */}
+          <PickOnMapButton
+            className={classes.wide}
+            latitude={form.latitude}
+            longitude={form.longitude}
+            onPick={({ latitude, longitude }) =>
+              setForm((current) => ({ ...current, latitude, longitude }))
+            }
+          />
           {field('radius_m', 'fleetPoiRadius', { type: 'number', ...ltr })}
           {field('opening_hours', 'fleetPoiHours')}
           {field('contact_name', 'fleetVendorContact')}

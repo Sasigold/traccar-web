@@ -1,4 +1,4 @@
-import { test, expect, gotoReady } from './fixtures';
+import { test, expect, axe, formatViolations, gotoReady } from './fixtures';
 import { fakeFleet, writeMode } from './fakeFleet';
 
 // ADM-20: on the way is normal, late is a warning; a job is duplicated or cancelled from its
@@ -152,4 +152,36 @@ test('the jobs are shown on a map and per driver', async ({ page }) => {
   await views.getByRole('button', { name: 'מפה' }).click();
   await expect(page).toHaveURL(/view=map/);
   await expect(page.locator('.maplibregl-canvas')).toBeVisible();
+});
+
+// ADM-20: a job's place picked on a map: the pin stays on the center, a click moves the map there.
+test('a job place is picked on the map', async ({ page }) => {
+  await writeMode(page);
+  await fakeFleet(page, {
+    users: { 1: dispatcher },
+    rpc: { fleet_features: ['dispatch'] },
+    tables: { dispatch_jobs: [], pois: [], vehicles: [], drivers: [] },
+  });
+  await gotoReady(page, '/fleet/dispatch');
+  await page.getByRole('button', { name: 'משימה חדשה' }).first().click();
+  const form = page.getByRole('dialog', { name: 'משימה חדשה' });
+  await form.getByRole('spinbutton', { name: 'קו רוחב' }).fill('31.5');
+  await form.getByRole('spinbutton', { name: 'קו אורך' }).fill('34.9');
+  await form.getByRole('button', { name: 'בחירה במפה' }).click();
+
+  const picker = page.getByRole('dialog', { name: 'בחירת מקום במפה' });
+  await expect(picker.getByText('31.500000, 34.900000')).toBeVisible();
+  const { violations } = await axe(page).include('[role="dialog"]').analyze();
+  expect(formatViolations(violations)).toBe('');
+  const map = picker.getByTestId('map-point-picker');
+  const box = await map.boundingBox();
+  // A place above the pin is further north.
+  await map.click({ position: { x: box.width / 2, y: box.height / 4 } });
+  await expect(picker.getByText('31.500000, 34.900000')).toHaveCount(0);
+  await picker.getByRole('button', { name: 'בחירת המקום' }).click();
+  await expect(picker).toHaveCount(0);
+  await expect
+    .poll(async () => Number(await form.getByRole('spinbutton', { name: 'קו רוחב' }).inputValue()))
+    .toBeGreaterThan(31.5);
+  await expect(form.getByRole('spinbutton', { name: 'קו אורך' })).toHaveValue(/^34\.9/);
 });
