@@ -1,4 +1,4 @@
--- ADM-18: a driver records a fueling on the vehicle assigned to them now, once per id; a driver
+-- ADM-18: a driver records a fueling on the vehicle assigned to them when it happened, once per id; a driver
 -- without a vehicle, or someone who is not a driver, cannot.
 \set ON_ERROR_STOP 1
 begin;
@@ -45,6 +45,9 @@ do $$ begin
     assert false, 'the receipt is in the organization';
   exception when insufficient_privilege then null;
   end;
+  -- Sent late from the outbox: 20 days ago the driver held the other vehicle.
+  perform public.driver_report_fueling('af100000-0000-0000-0000-0000000000f2',
+    now() - interval '20 days', 150, 20);
   assert public.fleet_file_permission('af100000-0000-0000-0000-000000000000/fuel/r1.jpg', true),
     'the driver uploads the receipt';
   assert not public.fleet_file_permission('af100000-0000-0000-0000-000000000000/fuel/r1.jpg', false),
@@ -70,9 +73,12 @@ do $$
 declare v_row public.fuel_transactions;
 begin
   select * into v_row from public.fuel_transactions
-   where org_id = 'af100000-0000-0000-0000-000000000000';
+   where id = 'af100000-0000-0000-0000-0000000000f1';
   assert (select count(*) from public.fuel_transactions
-           where org_id = 'af100000-0000-0000-0000-000000000000') = 1, 'saved once';
+           where org_id = 'af100000-0000-0000-0000-000000000000') = 2, 'each fueling saved once';
+  assert (select vehicle_id from public.fuel_transactions
+           where id = 'af100000-0000-0000-0000-0000000000f2')
+    = 'af100000-0000-0000-0000-0000000000a2', 'a late report goes to the vehicle held then';
   assert v_row.vehicle_id = 'af100000-0000-0000-0000-0000000000a1', 'on the current vehicle';
   assert v_row.driver_id = 'af100000-0000-0000-0000-0000000000d1', 'by the driver';
   assert v_row.source = 'driver' and v_row.unit_price = 7, 'priced per liter';

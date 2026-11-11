@@ -26,8 +26,9 @@ const litersFactor = (fuelType) =>
 const normalize = (value) => {
   const text = String(value || '').toLowerCase();
   if (/diesel|סולר|דיזל/.test(text)) return 'diesel';
-  if (/lpg|gas|גז/.test(text)) return 'gas';
+  // Petrol first: "gasoline" contains "gas".
   if (/petrol|gasoline|benzin|בנזין|95|98/.test(text)) return 'petrol';
+  if (/lpg|gas|גז/.test(text)) return 'gas';
   return null;
 };
 

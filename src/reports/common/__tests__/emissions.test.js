@@ -40,6 +40,13 @@ describe('CO2 per vehicle (OPS-10)', () => {
     expect(row.co2).toBeCloseTo(10 * 0.164);
   });
 
+  it('reads gasoline as petrol, not as gas', () => {
+    const fuel = [{ deviceId: 2, liters: 10, fuel_type: 'gasoline', occurred_at: '2026-10-02' }];
+    const [, car] = emissionsByVehicle(devices, summary, fuel, fuelTypes);
+    expect(car.co2).toBeCloseTo(10 * 2.31);
+    expect(emissionsByMonth(fuel, fuelTypes)[0].co2).toBeCloseTo(23.1);
+  });
+
   it('sums the fuel by month', () => {
     const fuel = [
       { deviceId: 2, liters: 10, fuel_type: 'בנזין 95', occurred_at: '2026-10-05T08:00:00Z' },

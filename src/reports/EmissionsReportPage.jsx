@@ -4,7 +4,8 @@ import { useTranslation } from '../common/components/LocalizationProvider';
 import { useAttributePreference } from '../common/util/preferences';
 import { formatDistance } from '../common/util/formatter';
 import { useFleetPermission, useFleetStatus } from '../common/fleet/useFleet';
-import { getFleetClient, unwrap } from '../common/fleet/client';
+import { getFleetClient } from '../common/fleet/client';
+import { readAllRows } from '../common/data/fleetQuery';
 import FleetTableReport from './components/FleetTableReport';
 import useReportStyles from './common/useReportStyles';
 import { emissionsByMonth, emissionsByVehicle } from './common/emissions';
@@ -13,14 +14,20 @@ import { loadReportRows } from './UsageReportPage';
 // The fleet database's fuel liters and fuel types, keyed by Traccar device.
 const loadFuel = async (from, to) => {
   const client = getFleetClient();
+  // Every page of both (PostgREST returns 1,000 rows at a time), in a fixed order.
   const [vehicles, fuel] = await Promise.all([
-    client.from('vehicles').select('id, traccar_device_id, fuel_type').then(unwrap),
-    client
-      .from('fuel_transactions')
-      .select('vehicle_id, liters, fuel_type, occurred_at')
-      .gte('occurred_at', from)
-      .lte('occurred_at', to)
-      .then(unwrap),
+    readAllRows('vehicles', () =>
+      client.from('vehicles').select('id, traccar_device_id, fuel_type').order('id'),
+    ),
+    readAllRows('fuel_transactions', () =>
+      client
+        .from('fuel_transactions')
+        .select('id, vehicle_id, liters, fuel_type, occurred_at')
+        .gte('occurred_at', from)
+        .lte('occurred_at', to)
+        .order('occurred_at')
+        .order('id'),
+    ),
   ]);
   const deviceOf = Object.fromEntries((vehicles || []).map((v) => [v.id, v.traccar_device_id]));
   const fuelTypes = Object.fromEntries(

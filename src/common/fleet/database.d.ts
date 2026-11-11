@@ -4250,6 +4250,12 @@ export type Database = {
         };
         Returns: boolean;
       };
+      work_order_recompute: {
+        Args: {
+          p_order: string;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       app_role:

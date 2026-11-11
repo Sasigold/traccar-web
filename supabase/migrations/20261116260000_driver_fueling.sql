@@ -68,7 +68,9 @@ begin
   select a.vehicle_id into v_vehicle
     from public.vehicle_driver_assignments a
    where a.driver_id = v_driver and a.org_id = v_org
-     and a.starts_at <= now() and (a.ends_at is null or a.ends_at > now())
+     -- The vehicle held when the fueling happened: a report sent later from the phone's outbox,
+     -- after the driver changed vehicles, still goes to the vehicle that was fueled.
+     and a.starts_at <= p_occurred_at and (a.ends_at is null or a.ends_at > p_occurred_at)
    order by a.starts_at desc
    limit 1;
   if v_vehicle is null then
