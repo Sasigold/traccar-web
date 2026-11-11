@@ -97,3 +97,30 @@ test('the summary chart draws the period before as a dashed line', async ({ page
   await expect(chart.getByText('התקופה הקודמת')).toBeVisible();
   await expect(chart.locator('path[stroke-dasharray="5 4"]')).toHaveCount(1);
 });
+
+test('the fleet reports show the change from the previous period', async ({ page }) => {
+  const { from, query } = day();
+  await page.route('**/api/reports/trips?*', (route) => {
+    const today = isToday(route, from);
+    const at = new Date(from.getTime() - (today ? 0 : 86400000) + 8 * 3600000);
+    return route.fulfill({
+      json: [
+        {
+          deviceId: 1,
+          startTime: at.toISOString(),
+          endTime: new Date(at.getTime() + 3600000).toISOString(),
+          distance: today ? 60000 : 40000,
+          duration: 3600000,
+        },
+      ],
+    });
+  });
+  await page.route('**/api/reports/stops?*', (route) => route.fulfill({ json: [] }));
+  await gotoReady(page, `/reports/usage?deviceId=1&${query}`);
+  await page.getByLabel('השוואה לתקופה הקודמת').check();
+  await page.getByRole('button', { name: 'הצג', exact: true }).click();
+  const row = page.getByRole('main').getByRole('row', { name: /Delivery Van/ });
+  // 60 km against 40, the same hour behind the wheel.
+  await expect(row.getByLabel('שינוי מהתקופה הקודמת: ▲ 50%')).toBeVisible();
+  await expect(row.getByLabel('שינוי מהתקופה הקודמת: = 0%')).toBeVisible();
+});

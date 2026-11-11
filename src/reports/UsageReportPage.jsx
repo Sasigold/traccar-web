@@ -140,6 +140,14 @@ const UsageReportPage = () => {
       reportKey="usage"
       titleKey="reportUsage"
       columns={columns}
+      compared={[
+        'distance',
+        'drivingTime',
+        'idleTime',
+        'idleCost',
+        'afterHoursDistance',
+        'privateDistance',
+      ]}
       totals={{
         distance: 'sum',
         drivingTime: 'sum',

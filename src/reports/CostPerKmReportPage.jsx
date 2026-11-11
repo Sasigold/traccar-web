@@ -65,6 +65,7 @@ const CostPerKmReportPage = () => {
       reportKey="costPerKm"
       titleKey="reportCostPerKm"
       columns={columns}
+      compared={['distance', 'total', 'perKm']}
       totals={{ distance: 'sum', fuel: 'sum', maintenance: 'sum', other: 'sum', total: 'sum' }}
       load={load}
       filterChildren={!canCosts && <Alert severity="info">{t('costPerKmNoCosts')}</Alert>}

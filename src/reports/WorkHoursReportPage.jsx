@@ -60,6 +60,7 @@ const WorkHoursReportPage = () => {
         drivers[item.driver] ? `/fleet/driver-file/${drivers[item.driver].id}` : null
       }
       columns={columns}
+      compared={['days', 'spanMs', 'drivingMs']}
       totals={{ days: 'sum', spanMs: 'sum', drivingMs: 'sum' }}
       load={load}
     />

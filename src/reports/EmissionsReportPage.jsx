@@ -99,6 +99,7 @@ const EmissionsReportPage = () => {
       reportKey="emissions"
       titleKey="reportEmissions"
       columns={columns}
+      compared={['distance', 'liters', 'co2']}
       totals={{ distance: 'sum', liters: 'sum', co2: 'sum' }}
       load={load}
       filterChildren={
