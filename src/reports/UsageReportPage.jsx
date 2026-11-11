@@ -15,7 +15,9 @@ import {
   groupComparison,
   underusedVehicles,
   usageByVehicle,
+  workingDays,
 } from './common/fleetReports';
+import { DEFAULT_POLICY } from '../common/fleet/privacy';
 import { evFit } from '../common/fleet/ev';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -60,6 +62,8 @@ const UsageReportPage = () => {
         policy: privacy?.policy,
         periods: privacy?.periods,
         days,
+        // ISR-09: utilization over the working days only (no Shabbat, holidays or days off).
+        workDays: workingDays(scope.from, scope.to, privacy?.policy || DEFAULT_POLICY),
         idleBurn,
         fuelPrice,
       }).map((row) => {

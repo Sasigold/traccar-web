@@ -3253,7 +3253,7 @@
     "usageActiveDays": "Active days",
     "usageEngineHoursPerDay": "Engine hours a day",
     "usageGroupShare": "Against the group",
-    "usageUtilization": "Utilization",
+    "usageUtilization": "Utilization (working days)",
     "usageIdleCost": "Idling cost",
     "usageAfterHours": "After hours",
     "usageRestDays": "On rest days",

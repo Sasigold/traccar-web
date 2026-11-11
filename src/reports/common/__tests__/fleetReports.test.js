@@ -5,6 +5,7 @@ import {
   engineHoursPerDay,
   groupComparison,
   usageByVehicle,
+  workingDays,
 } from '../fleetReports';
 
 const devices = [
@@ -130,5 +131,30 @@ describe('engine hours and the group (OPS-04)', () => {
     ];
     const groupOf = (id) => ({ 1: 'a', 2: 'a', 3: 'a', 4: 'b' })[id];
     expect(groupComparison(rows, groupOf)).toEqual([50, 100, 150, null, null]);
+  });
+});
+
+describe('utilization over working days (ISR-09)', () => {
+  const policy = { work_days: [0, 1, 2, 3, 4], timezone: 'Asia/Jerusalem' };
+
+  it('counts Sunday to Thursday without holidays', () => {
+    // Sunday 8.11.2026 to Sunday 15.11.2026: five working days.
+    expect(workingDays('2026-11-07T22:00:00Z', '2026-11-14T22:00:00Z', policy)).toBe(5);
+    // 21–28.9.2025: Rosh Hashana falls on Tuesday 23 and Wednesday 24.9.
+    expect(workingDays('2025-09-20T21:00:00Z', '2025-09-27T21:00:00Z', policy)).toBe(3);
+  });
+
+  it('divides the working days driven by the working days', () => {
+    const trips = [
+      { deviceId: 1, startTime: '2026-11-08T07:00:00Z', distance: 1000, duration: HOUR },
+      { deviceId: 1, startTime: '2026-11-09T07:00:00Z', distance: 1000, duration: HOUR },
+      // Shabbat: counted as a driven day, not as a working day.
+      { deviceId: 1, startTime: '2026-11-14T07:00:00Z', distance: 1000, duration: HOUR },
+    ];
+    const [van] = usageByVehicle(devices, trips, [], { policy, days: 7, workDays: 5 });
+    expect(van.activeDays).toBe(3);
+    expect(van.utilization).toBe(40);
+    const [noWork] = usageByVehicle(devices, trips, [], { policy, days: 7, workDays: 0 });
+    expect(noWork.utilization).toBeNull();
   });
 });

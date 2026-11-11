@@ -7,25 +7,54 @@ import {
   localParts,
 } from '../../common/fleet/privacy';
 
+import { israeliDate, restDayOf } from '../../common/util/israeliCalendar';
+
 const HOUR = 60 * 60 * 1000;
+const DAY = 24 * HOUR;
+
+// ISR-09: a working day is in the organization's work week and is not Shabbat or a holiday.
+const isWorkingDay = (date, policy) =>
+  (policy.work_days || []).includes(date.weekday) && !restDayOf(date);
+
+const dateKey = (date) => `${date.year}-${date.month}-${date.day}`;
+
+// The working days in [from, to), counted on Israeli dates.
+export const workingDays = (from, to, policy = DEFAULT_POLICY) => {
+  const seen = new Set();
+  let count = 0;
+  for (let time = Date.parse(from); time < Date.parse(to); time += DAY / 2) {
+    const date = israeliDate(time);
+    const key = dateKey(date);
+    if (!seen.has(key)) {
+      seen.add(key);
+      if (isWorkingDay(date, policy)) count += 1;
+    }
+  }
+  return count;
+};
 const sum = (rows, value) => rows.reduce((total, row) => total + (Number(value(row)) || 0), 0);
 
 // Usage: how much each vehicle was used, idling and its cost, after hours, rest days, private.
 // `idleBurn` liters per idle hour and `fuelPrice` per liter come from the user; without a price
-// there is no cost.
+// there is no cost. With `workDays` (ISR-09), utilization is the share of working days the
+// vehicle was used on, so Shabbat, holidays and days off do not lower it.
 export const usageByVehicle = (
   devices,
   trips,
   stops,
-  { policy = DEFAULT_POLICY, periods = [], days, idleBurn, fuelPrice },
+  { policy = DEFAULT_POLICY, periods = [], days, workDays, idleBurn, fuelPrice },
 ) =>
   devices.map((device) => {
     const own = trips.filter((trip) => trip.deviceId === device.id);
     const ownStops = stops.filter((stop) => stop.deviceId === device.id);
     const restDay = (trip) =>
       !(policy.work_days || []).includes(localParts(trip.startTime, policy.timezone).day);
-    const activeDays = new Set(
-      own.filter((trip) => trip.distance > 0).map((trip) => String(trip.startTime).slice(0, 10)),
+    const activeDates = own
+      .filter((trip) => trip.distance > 0)
+      .map((trip) => israeliDate(trip.startTime));
+    const activeDays = new Set(activeDates.map(dateKey)).size;
+    const activeWorkDays = new Set(
+      activeDates.filter((date) => isWorkingDay(date, policy)).map(dateKey),
     ).size;
     const idleTime = sum(ownStops, (stop) => stop.engineHours);
     const idleCost =
@@ -38,7 +67,14 @@ export const usageByVehicle = (
       distance: sum(own, (trip) => trip.distance),
       drivingTime: sum(own, (trip) => trip.duration),
       activeDays,
-      utilization: days ? (100 * activeDays) / days : null,
+      utilization:
+        workDays != null
+          ? workDays
+            ? Math.min(100, (100 * activeWorkDays) / workDays)
+            : null
+          : days
+            ? (100 * activeDays) / days
+            : null,
       idleTime,
       idleCost,
       afterHoursDistance: sum(
