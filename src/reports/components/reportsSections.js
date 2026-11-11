@@ -27,6 +27,9 @@ import { useAdministrator, useRestriction } from '../../common/util/permissions'
 import { useFleetPermission } from '../../common/fleet/useFleet';
 import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded';
 import TollRoundedIcon from '@mui/icons-material/TollRounded';
+import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
+import HandshakeRoundedIcon from '@mui/icons-material/HandshakeRounded';
+import SummarizeRoundedIcon from '@mui/icons-material/SummarizeRounded';
 
 const singleDevicePaths = ['/reports/chart', '/reports/route', '/replay'];
 
@@ -62,6 +65,7 @@ export const useReportsSections = () => {
   const fleetSafety = useFleetPermission('safety.read');
   const fleetCosts = useFleetPermission('costs.read');
   const fleetPoi = useFleetPermission('poi.read');
+  const fleetDispatch = useFleetPermission('dispatch.read');
 
   return useMemo(
     () =>
@@ -96,6 +100,17 @@ export const useReportsSections = () => {
               path: '/reports/work-hours',
               match: exact('/reports/work-hours'),
               carry: true,
+            },
+            {
+              // REP-23: the jobs' time windows, per driver.
+              id: 'jobs',
+              descriptionKey: 'reportJobsDescription',
+              titleKey: 'reportJobs',
+              icon: TaskAltRoundedIcon,
+              path: '/reports/jobs',
+              match: exact('/reports/jobs'),
+              carry: true,
+              visible: fleetDispatch,
             },
             {
               id: 'tolls',
@@ -242,6 +257,17 @@ export const useReportsSections = () => {
               visible: fleetCosts,
             },
             {
+              // REP-23: kilometers against the lease's quota (ADM-31's lease fields).
+              id: 'lease',
+              descriptionKey: 'reportLeaseDescription',
+              titleKey: 'reportLease',
+              icon: HandshakeRoundedIcon,
+              path: '/reports/lease',
+              match: exact('/reports/lease'),
+              carry: true,
+              visible: true,
+            },
+            {
               // OPS-10: works from kilometers alone; fuel imports make it exact.
               id: 'emissions',
               descriptionKey: 'reportEmissionsDescription',
@@ -285,6 +311,15 @@ export const useReportsSections = () => {
           id: 'tools',
           titleKey: 'reportsGroupTools',
           items: [
+            {
+              // REP-16, REP-23: the month on one page, to print.
+              id: 'management',
+              descriptionKey: 'reportManagementDescription',
+              titleKey: 'reportManagement',
+              icon: SummarizeRoundedIcon,
+              path: '/reports/management',
+              match: exact('/reports/management'),
+            },
             {
               id: 'deviceHealth',
               descriptionKey: 'reportDeviceHealthDescription',
@@ -335,7 +370,7 @@ export const useReportsSections = () => {
       ]
         .map((group) => ({ ...group, items: group.items.filter((item) => item.visible !== false) }))
         .filter((group) => group.items.length > 0),
-    [admin, readonly, fleetSafety, fleetCosts, fleetPoi],
+    [admin, readonly, fleetSafety, fleetCosts, fleetPoi, fleetDispatch],
   );
 };
 
