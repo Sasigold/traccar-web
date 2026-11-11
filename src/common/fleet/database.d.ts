@@ -2660,6 +2660,11 @@ export type Database = {
           reviewed_by: string | null;
           reviewed_at: string | null;
           created_at: string;
+          dispute_reason: string | null;
+          dispute_note: string | null;
+          disputed_at: string | null;
+          dispute_result: string | null;
+          dispute_resolved_at: string | null;
         };
         Insert: {
           id?: string;
@@ -2680,6 +2685,11 @@ export type Database = {
           reviewed_by?: string | null;
           reviewed_at?: string | null;
           created_at?: string;
+          dispute_reason?: string | null;
+          dispute_note?: string | null;
+          disputed_at?: string | null;
+          dispute_result?: string | null;
+          dispute_resolved_at?: string | null;
         };
         Update: {
           id?: string;
@@ -2700,6 +2710,11 @@ export type Database = {
           reviewed_by?: string | null;
           reviewed_at?: string | null;
           created_at?: string;
+          dispute_reason?: string | null;
+          dispute_note?: string | null;
+          disputed_at?: string | null;
+          dispute_result?: string | null;
+          dispute_resolved_at?: string | null;
         };
         Relationships: [];
       };
@@ -3900,6 +3915,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      driver_my_periods: {
+        Args: {
+          p_from?: string;
+        };
+        Returns: Json[];
+      };
       driver_report_fueling: {
         Args: {
           p_id: string;
@@ -4187,6 +4208,17 @@ export type Database = {
         Args: {
           p_id: string;
           p_answer: string;
+        };
+        Returns: undefined;
+      };
+      safety_driver_dispute: {
+        Args: {
+          p_event: number;
+          p_device: number;
+          p_category: string;
+          p_occurred_at: string;
+          p_reason: string;
+          p_note?: string;
         };
         Returns: undefined;
       };

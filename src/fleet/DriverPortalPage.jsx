@@ -28,6 +28,7 @@ import FleetNotice from './components/FleetNotice';
 import DriverJobsCard from './components/DriverJobsCard';
 import DriverPrivacyCard from './components/DriverPrivacyCard';
 import DriverSafetyCard from './components/DriverSafetyCard';
+import DriverScoreCard from './components/DriverScoreCard';
 import DriverSelfReviewCard from './components/DriverSelfReviewCard';
 import { incidentKey } from './IncidentsPage';
 import DispatcherContact, { useOrgContact } from './components/DispatcherContact';
@@ -326,6 +327,7 @@ const DriverPortalPage = () => {
             <DriverCoursesCard />
 
             <DriverSelfReviewCard />
+            <DriverScoreCard />
             <DriverSafetyCard driverId={data.driver.id} />
 
             <Paper elevation={0} className={classes.card}>

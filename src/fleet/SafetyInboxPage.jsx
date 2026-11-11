@@ -140,7 +140,15 @@ const SafetyInboxPage = () => {
       ),
     [items, driving],
   );
-  const shown = filter === 'all' ? items : items.filter((item) => item.status === filter);
+  // SAF-05: an event the driver disputed and nobody decided since.
+  const isDisputed = (item) => Boolean(item.review?.disputed_at && !item.review.dispute_result);
+  const disputedCount = items.filter(isDisputed).length;
+  let shown = items;
+  if (filter === 'disputed') {
+    shown = items.filter(isDisputed);
+  } else if (filter !== 'all') {
+    shown = items.filter((item) => item.status === filter);
+  }
 
   const driverName = (uniqueId) =>
     Object.values(traccarDrivers).find((driver) => driver.uniqueId === uniqueId)?.name || '—';
@@ -178,13 +186,18 @@ const SafetyInboxPage = () => {
     reload();
   });
 
-  const filterChips = ['pending', 'coaching', 'praise', 'dismissed', 'all'].map((key) => (
+  const chipLabel = (key) => {
+    if (key === 'all') return t('fleetFilterAll');
+    if (key === 'disputed') return `${t('safetyInboxDisputed')} ${disputedCount}`;
+    return `${t(`safetyInbox${capitalize(key)}`)} ${counts[key]}`;
+  };
+  const filterKeys = ['pending', 'coaching', 'praise', 'dismissed', 'all'];
+  if (disputedCount > 0 || filter === 'disputed') filterKeys.splice(1, 0, 'disputed');
+  const filterChips = filterKeys.map((key) => (
     <Chip
       key={key}
       size="small"
-      label={
-        key === 'all' ? t('fleetFilterAll') : `${t(`safetyInbox${capitalize(key)}`)} ${counts[key]}`
-      }
+      label={chipLabel(key)}
       color={filter === key ? 'primary' : 'default'}
       variant={filter === key ? 'filled' : 'outlined'}
       onClick={() => setFilter(key)}
@@ -270,6 +283,21 @@ const SafetyInboxPage = () => {
               </TableCell>
               <TableCell>
                 {t(`safetyStatus${capitalize(item.status)}`)}
+                {item.review?.disputed_at && (
+                  <Typography variant="caption" display="block" color="textSecondary">
+                    {t('safetyInboxDisputeLine').replace(
+                      '{0}',
+                      [
+                        t(`driverDisputeReason${pascalCase(item.review.dispute_reason)}`),
+                        item.review.dispute_note,
+                      ]
+                        .filter(Boolean)
+                        .join(' · '),
+                    )}
+                    {item.review.dispute_result &&
+                      ` · ${t(`driverDispute${capitalize(item.review.dispute_result)}`)}`}
+                  </Typography>
+                )}
                 {item.review?.self_review && (
                   <Typography variant="caption" display="block" color="textSecondary">
                     {item.review.driver_ack_at
