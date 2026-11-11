@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
 import {
-  FormControlLabel,
   IconButton,
-  Switch,
   TableBody,
   TableCell,
   TableHead,
@@ -36,7 +34,8 @@ import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
 import PlayCircleRoundedIcon from '@mui/icons-material/PlayCircleRounded';
 import ResizeHandle from './components/ResizeHandle';
 import usePersistedState from '../common/util/usePersistedState';
-import { delta, formatDelta, previousRange } from './common/compare';
+import { changeHint, fetchPrevious } from './common/previousPeriod';
+import CompareSwitch from './components/CompareSwitch';
 import { useCatch, useAsyncTask, useRunCallback } from '../reactHelper';
 import { useFleetReady } from '../common/fleet/useFleet';
 import { assignmentResolver, loadAssignments } from '../fleet/safetyData';
@@ -249,18 +248,7 @@ const TripReportPage = () => {
         });
         setItems(result.rows);
         setHiddenRows(result.hidden);
-        if (compare) {
-          const before = previousRange(from, to);
-          query.set('from', before.from);
-          query.set('to', before.to);
-          const earlier = await fetchOrThrow(`api/reports/trips?${query.toString()}`, {
-            signal,
-            headers: { Accept: 'application/json' },
-          });
-          setPrevious(await earlier.json());
-        } else {
-          setPrevious(null);
-        }
+        setPrevious(compare ? await fetchPrevious('trips', query, from, to, signal) : null);
       } finally {
         setLoading(false);
         setQueried(true);
@@ -336,11 +324,7 @@ const TripReportPage = () => {
     const maxSpeed = Math.max(0, ...filteredItems.map((item) => item.maxSpeed || 0));
     // REP-09: the change from the period before, under the tile.
     const before = previous ? previous.filter(keep) : null;
-    const change = (current, earlier) => {
-      const value = before ? formatDelta(delta(current, earlier)) : '';
-      // The figure first: on a narrow tile the words are what gets cut.
-      return value ? t('reportChangeShort').replace('{0}', value) : undefined;
-    };
+    const change = (current, earlier) => (before ? changeHint(t, current, earlier) : undefined);
     return [
       {
         key: 'count',
@@ -501,14 +485,7 @@ const TripReportPage = () => {
                 </div>
               )}
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
-              <div className={classes.filterItem}>
-                <FormControlLabel
-                  control={
-                    <Switch checked={compare} onChange={(e) => setCompare(e.target.checked)} />
-                  }
-                  label={t('reportComparePrevious')}
-                />
-              </div>
+              <CompareSwitch checked={compare} onChange={setCompare} />
               <AllAddressesButton
                 className={classes.filterItem}
                 points={[

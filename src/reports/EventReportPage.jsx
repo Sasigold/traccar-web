@@ -38,6 +38,12 @@ import { deviceEquality } from '../common/util/deviceEquality';
 import VehicleCell from './components/VehicleCell';
 import { vehicleName, vehicleTitle } from './common/vehicle';
 import useSelectedRow from './common/useSelectedRow';
+import ReportKpis from './components/ReportKpis';
+import CompareSwitch from './components/CompareSwitch';
+import { changeHint, fetchPrevious } from './common/previousPeriod';
+import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
+import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 
 const columnsArray = [
   // REP-14: when it happened, not when the position was fixed.
@@ -94,6 +100,9 @@ const EventReportPage = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const selectedRowRef = useSelectedRow(selectedItem);
   const [position, setPosition] = useState(null);
+  // REP-09: the events of the period right before, for the change in the tiles.
+  const [compare, setCompare] = usePersistedState('eventsCompare', false);
+  const [previous, setPrevious] = useState(null);
 
   useEffect(() => {
     if (!eventTypes.length) {
@@ -147,6 +156,7 @@ const EventReportPage = () => {
         );
         setItems(events);
         setHiddenRows(result.hidden);
+        setPrevious(compare ? await fetchPrevious('events', query, from, to, signal) : null);
         const positionIds = Array.from(
           new Set(events.map((event) => event.positionId).filter((id) => id)),
         );
@@ -175,8 +185,29 @@ const EventReportPage = () => {
         setQueried(true);
       }
     },
-    [eventTypes, alarmTypes],
+    [eventTypes, alarmTypes, compare],
   );
+
+  // REP-09: what the period had, by kind, against the period before.
+  const kpis = useMemo(() => {
+    if (!items.length) return [];
+    const count = (rows, test) => rows.filter(test).length;
+    const all = () => true;
+    const speeding = (event) => event.type === 'deviceOverspeed';
+    const alarms = (event) => event.type === 'alarm';
+    const tile = (key, label, icon, test) => ({
+      key,
+      label,
+      icon,
+      value: count(items, test),
+      hint: previous ? changeHint(t, count(items, test), count(previous, test)) : undefined,
+    });
+    return [
+      tile('all', t('reportEvents'), <NotificationsActiveRoundedIcon />, all),
+      tile('speeding', t('eventDeviceOverspeed'), <SpeedRoundedIcon />, speeding),
+      tile('alarms', t('eventAlarm'), <WarningAmberRoundedIcon />, alarms),
+    ].filter((item) => item.key === 'all' || item.value > 0 || item.hint);
+  }, [items, previous, t]);
 
   const onExport = useCatch(async () => {
     const sheets = new Map();
@@ -342,6 +373,7 @@ const EventReportPage = () => {
                 </div>
               )}
               <ColumnSelect columns={columns} setColumns={setColumns} columnsArray={columnsArray} />
+              <CompareSwitch checked={compare} onChange={setCompare} />
               <AllAddressesButton
                 className={classes.filterItem}
                 points={
@@ -352,6 +384,7 @@ const EventReportPage = () => {
               />
             </ReportFilter>
           </div>
+          {!loading && <ReportKpis items={kpis} />}
           <DataTable variant="flush">
             <TableHead>
               <TableRow>
