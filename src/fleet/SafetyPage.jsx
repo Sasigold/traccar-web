@@ -58,6 +58,14 @@ import { formatDays } from '../common/util/plural';
 import { violationUrgency, violationsByDriver } from '../common/fleet/violations';
 import { keepOnBackdrop } from '../common/util/formDialog';
 import { capitalize } from '../common/util/stringUtils';
+import HoursRulesEditor from './components/HoursRulesEditor';
+import {
+  activePermits,
+  applyPermits,
+  driverClass,
+  rulesFor,
+  vehicleClass,
+} from '../common/fleet/hoursRules';
 
 const useStyles = makeStyles()((theme) => ({
   groupRow: {
@@ -144,6 +152,7 @@ const SettingsDialog = ({ settings, onClose, onSaved }) => {
               slotProps={{ htmlInput: { dir: 'ltr', min: 0 } }}
             />
           ))}
+          <HoursRulesEditor rules={rules} onChange={setRules} />
           <Alert severity="info" className={classes.heading}>
             {t('fleetSafetyLegalNote')}
           </Alert>
@@ -319,19 +328,35 @@ const SafetyPage = () => {
         byDriver.set(key, [...(byDriver.get(key) || []), trip]);
       }
     });
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
     return [...byDriver.entries()]
       .map(([driver, trips]) => {
-        const result = drivingHours(trips, settings.rules);
+        // ISR-07: the rules of the heaviest kind of vehicle the driver drove, with permits.
+        const cls = driverClass(
+          trips.map((trip) => vehicleClass(devices[trip.deviceId]?.category)),
+        );
+        const rules = rulesFor(settings.rules, cls);
+        const result = drivingHours(trips, rules);
+        // 25 hours of rest in every 8 days, and what is left today before a limit.
+        const { violations, excused } = applyPermits(
+          [...result.violations, ...weeklyRestViolations(trips, rules)],
+          settings.rules,
+          cls,
+        );
         return {
           driver,
           ...result,
-          // ISR-07: 25 hours of rest in every 8 days, and what is left today before a limit.
-          violations: [...result.violations, ...weeklyRestViolations(trips, settings.rules)],
-          allowance: drivingAllowance(trips, settings.rules),
+          cls,
+          violations,
+          excused,
+          permits: activePermits(settings.rules, cls, today),
+          allowance: drivingAllowance(trips, rulesFor(settings.rules, cls, today)),
         };
       })
       .sort((a, b) => b.violations.length - a.violations.length || b.totalMinutes - a.totalMinutes);
-  }, [driving, settings]);
+  }, [driving, settings, devices]);
 
   // One line per active driver: last license check, next one due, last training, open violations.
   const compliance = useMemo(() => {
@@ -625,7 +650,26 @@ const SafetyPage = () => {
               {rows == null && canRead && <TableShimmer columns={4} />}
               {hours?.map((row) => (
                 <TableRow key={row.driver} hover>
-                  <TableCell>{driverName(row.driver)}</TableCell>
+                  <TableCell>
+                    {driverName(row.driver)}
+                    {row.cls !== 'light' && (
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        sx={{ mx: 0.5 }}
+                        label={t(`hoursRulesClass${capitalize(row.cls)}`)}
+                      />
+                    )}
+                    {row.permits.map((permit) => (
+                      <Chip
+                        key={permit.id}
+                        size="small"
+                        color="info"
+                        sx={{ mx: 0.5 }}
+                        label={t('hoursRulesPermitActive').replace('{0}', permit.name)}
+                      />
+                    ))}
+                  </TableCell>
                   <TableCell className={classes.number}>
                     {hoursText(row.totalMinutes)}
                     {row.allowance.level !== 'ok' && (
@@ -646,6 +690,16 @@ const SafetyPage = () => {
                   </TableCell>
                   <TableCell className={classes.number}>{row.daily.length}</TableCell>
                   <TableCell>
+                    {row.excused.length > 0 && (
+                      <Typography variant="caption" display="block" color="textSecondary">
+                        {t('hoursRulesExcused')
+                          .replace('{0}', String(row.excused.length))
+                          .replace(
+                            '{1}',
+                            [...new Set(row.excused.map((item) => item.permit))].join(', '),
+                          )}
+                      </Typography>
+                    )}
                     {row.violations.length === 0
                       ? '—'
                       : row.violations.map((violation) => (
