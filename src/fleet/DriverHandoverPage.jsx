@@ -64,7 +64,11 @@ const DriverHandoverPage = () => {
   const suggestedKm = odometerKm(positions[vehicle?.traccar_device_id]);
 
   const [kind, setKind] = useState('handover');
+  // The odometer is suggested once, when the position arrives; after that the field is the
+  // driver's (clearing it does not bring the suggestion back under their typing).
   const [km, setKm] = useState('');
+  const [kmTouched, setKmTouched] = useState(false);
+  const shownKm = kmTouched ? km : km || (suggestedKm ?? '');
   const [fuel, setFuel] = useState(null);
   const [photos, setPhotos] = useState({});
   const [damages, setDamages] = useState('');
@@ -91,7 +95,7 @@ const DriverHandoverPage = () => {
             vehicle_id: vehicle.vehicle_id,
             driver_id: context.driver.id,
             kind,
-            odometer_km: Number(km || suggestedKm) || null,
+            odometer_km: Number(shownKm) || null,
             fuel_percent: fuel,
             photo_paths: photoPaths,
             damages: damages.trim() || null,
@@ -109,7 +113,7 @@ const DriverHandoverPage = () => {
   });
 
   const vehicleName = devices[vehicle?.traccar_device_id]?.name || vehicle?.plate_number || '';
-  const ready = vehicle && signature && fuel != null && (km || suggestedKm != null);
+  const ready = vehicle && signature && fuel != null && shownKm !== '';
 
   return (
     <PageLayout breadcrumbs={['fleetDriverPortal']} title={t('driverHandover')}>
@@ -139,8 +143,11 @@ const DriverHandoverPage = () => {
             <TextField
               type="number"
               label={t('driverHandoverKm')}
-              value={km || (suggestedKm ?? '')}
-              onChange={(event) => setKm(event.target.value)}
+              value={shownKm}
+              onChange={(event) => {
+                setKmTouched(true);
+                setKm(event.target.value);
+              }}
               slotProps={{ htmlInput: { min: 0, dir: 'ltr', inputMode: 'numeric' } }}
             />
             <div>
