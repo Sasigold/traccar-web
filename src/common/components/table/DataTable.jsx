@@ -38,6 +38,15 @@ const useStyles = makeStyles()((theme) => ({
       overflow: 'visible',
     },
   },
+  body: {
+    flex: 1,
+    minHeight: 0,
+    overflow: 'auto',
+    padding: theme.spacing(2, 3, 3),
+    [theme.breakpoints.down('md')]: {
+      padding: theme.spacing(1.5, 2, 2),
+    },
+  },
   table: {
     '& .MuiTableCell-root': {
       paddingBlock: theme.spacing(1.25),
@@ -74,6 +83,8 @@ const DataTable = ({
   refreshing = false,
   // A11-08: the table's name for screen readers; by default the page's title.
   label,
+  // Content other than a table (a calendar, a board) in the same card, under the same toolbar.
+  body,
 }) => {
   const { classes, cx } = useStyles();
   const card = variant === 'card';
@@ -87,19 +98,22 @@ const DataTable = ({
       {...(card && { elevation: 0 })}
     >
       {toolbar}
-      <TableContainer className={classes.container}>
-        <ResponsiveTable
-          responsive={responsive}
-          stickyHeader={stickyHeader}
-          size="small"
-          className={cx(classes.table, !card && classes.flush, refreshing && classes.refreshing)}
-          aria-busy={refreshing || undefined}
-          {...(label ? { 'aria-label': label } : titled && { 'aria-labelledby': 'page-title' })}
-          style={minWidth ? { minWidth } : undefined}
-        >
-          {children}
-        </ResponsiveTable>
-      </TableContainer>
+      {body && !empty && <div className={classes.body}>{body}</div>}
+      {!body && (
+        <TableContainer className={classes.container}>
+          <ResponsiveTable
+            responsive={responsive}
+            stickyHeader={stickyHeader}
+            size="small"
+            className={cx(classes.table, !card && classes.flush, refreshing && classes.refreshing)}
+            aria-busy={refreshing || undefined}
+            {...(label ? { 'aria-label': label } : titled && { 'aria-labelledby': 'page-title' })}
+            style={minWidth ? { minWidth } : undefined}
+          >
+            {children}
+          </ResponsiveTable>
+        </TableContainer>
+      )}
       {empty && <EmptyState compact {...emptyState} />}
     </Root>
   );

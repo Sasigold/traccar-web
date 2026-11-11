@@ -19,10 +19,13 @@ import fetchOrThrow from '../common/util/fetchOrThrow';
 import usePersistedState from '../common/util/usePersistedState';
 import { loadMaintenanceLinks, useMaintenanceRows } from '../fleet/maintenance';
 import MaintenanceStatusTable from '../fleet/components/MaintenanceStatusTable';
+import MaintenanceCalendar from '../fleet/components/MaintenanceCalendar';
+import BrandLoader from '../common/components/brand/BrandLoader';
 
-const views = ['status', 'definitions'];
+const views = ['status', 'calendar', 'definitions'];
 const viewLabel = {
   status: 'fleetMaintenanceStatusView',
+  calendar: 'fleetMaintenanceCalendarView',
   definitions: 'fleetMaintenanceDefinitions',
 };
 
@@ -48,7 +51,7 @@ const MaintenacesPage = () => {
   useAsyncTask(
     async ({ signal }) => {
       void statusReloadKey;
-      if (view !== 'status') {
+      if (view !== 'status' && view !== 'calendar') {
         return;
       }
       setLinks(null);
@@ -121,6 +124,36 @@ const MaintenacesPage = () => {
     const unit = attributeUnitString(attribute?.dataType, units, t);
     return unit ? `${formatted} ${unit}` : formatted;
   };
+
+  if (view === 'calendar') {
+    return (
+      <PageLayout
+        menu={<SettingsMenu />}
+        breadcrumbs={['fleetTitle', 'sharedMaintenance']}
+        description={t('fleetMaintenanceCalendarDescription')}
+      >
+        <DataTable
+          toolbar={
+            <TableToolbar
+              search={{ value: searchKeyword, onChange: setSearchKeyword }}
+              count={statusRows ? filteredStatusRows.length : undefined}
+              filters={viewChips}
+              addPath="/settings/maintenance"
+            />
+          }
+          empty={statusRows != null && filteredStatusRows.length === 0}
+          emptyState={{
+            title: t(keyword ? 'tableNoMatches' : 'fleetMaintenanceNone'),
+            description: keyword ? undefined : t('fleetMaintenanceNoneDescription'),
+          }}
+          body={
+            statusRows == null ? <BrandLoader /> : <MaintenanceCalendar rows={filteredStatusRows} />
+          }
+        />
+        <AddFab editPath="/settings/maintenance" />
+      </PageLayout>
+    );
+  }
 
   if (view === 'status') {
     return (
